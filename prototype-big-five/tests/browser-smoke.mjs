@@ -171,6 +171,31 @@ try {
     "true",
   );
 
+  for (let index = 0; index < 20; index += 1) {
+    await click('[data-answer="3"]');
+  }
+  await assertScreen("基本結果 / 20問");
+  assert.equal(
+    await evaluate("JSON.parse(localStorage.getItem('bigFivePrototype:v1')).history.filter((result) => result.answerCount === 20).length"),
+    1,
+  );
+  await reload();
+  await assertScreen("基本結果 / 20問");
+  assert.equal(
+    await evaluate("JSON.parse(localStorage.getItem('bigFivePrototype:v1')).history.filter((result) => result.answerCount === 20).length"),
+    1,
+  );
+  await click("#result-history");
+  await assertScreen("結果履歴");
+  await click("#resume-from-history");
+  await assertScreen("基本結果 / 20問");
+  assert.equal(
+    await evaluate("JSON.parse(localStorage.getItem('bigFivePrototype:v1')).history.filter((result) => result.answerCount === 20).length"),
+    1,
+  );
+  await click("#continue-button");
+  await assertScreen("設問 21 / 50");
+
   await click("#brand-link");
   await click("#demo-start");
   await assertScreen("基本結果 / 20問");
@@ -183,6 +208,23 @@ try {
   await click("#result-history");
   await assertScreen("結果履歴");
   assert.ok(await evaluate("document.querySelectorAll('.history-item').length >= 3"));
+  await evaluate(`(() => {
+    const store = JSON.parse(localStorage.getItem("bigFivePrototype:v1"));
+    const twentyItemResults = store.history.filter((result) => result.answerCount === 20);
+    Object.assign(twentyItemResults[0], {
+      completedAt: "2026-07-02T09:00:00.000Z",
+      title: "新しい結果",
+      scores: { O: 75, C: 50, E: 50, A: 50, N: 50 },
+    });
+    Object.assign(twentyItemResults[1], {
+      completedAt: "2026-07-01T09:00:00.000Z",
+      title: "古い結果",
+      scores: { O: 25, C: 50, E: 50, A: 50, N: 50 },
+    });
+    localStorage.setItem("bigFivePrototype:v1", JSON.stringify(store));
+  })()`);
+  await click("#history-start");
+  await click("#history-button");
 
   const selectNextTwenty = `(() => {
     const item = [...document.querySelectorAll('.history-item')]
@@ -192,24 +234,36 @@ try {
   })()`;
   assert.equal(await evaluate(selectNextTwenty), true);
   await delay(40);
+  assert.equal(await evaluate("document.activeElement?.matches('[data-select-index]')"), true);
   assert.equal(await evaluate(selectNextTwenty), true);
   await delay(40);
+  assert.equal(await evaluate("document.activeElement?.id"), "compare-button");
   await click("#compare-button");
   await assertScreen("過去結果との比較");
-  assert.equal(await evaluate("document.querySelectorAll('.comparison-row').length"), 6);
+  assert.equal(await evaluate("document.querySelector('#comparison-heading')?.innerText"), "古い結果 と 新しい結果");
+  assert.deepEqual(
+    await evaluate(`(() => {
+      const row = [...document.querySelectorAll(".comparison-row")]
+        .find((candidate) => candidate.innerText.includes("開放性"));
+      return [...row.children].map((cell) => cell.innerText);
+    })()`),
+    ["開放性", "25", "75", "+50"],
+  );
 
   await click("#compare-back");
   const historyCount = await evaluate("document.querySelectorAll('.history-item').length");
   await click("[data-delete-index]");
   assert.equal(await evaluate("document.querySelectorAll('.history-item').length"), historyCount - 1);
+  assert.equal(await evaluate("document.activeElement?.matches('[data-delete-index], #restart-from-history')"), true);
   await evaluate("window.confirm = () => true");
   await click("#clear-history");
   await assertScreen("保存済みの結果はありません");
+  assert.equal(await evaluate("document.activeElement?.id"), "restart-from-history");
   await click("#restart-from-history");
   await assertScreen("設問 1 / 20");
 
   assert.deepEqual(browserExceptions, []);
-  console.log("Browser smoke passed: manual/back/resume, demo 20→50, history/compare/delete/clear/restart, 360px no overflow.");
+  console.log("Browser smoke passed: checkpoint reload→history→item 21 without duplicates, chronological compare labels/sign, focus restoration, and 360px no overflow.");
 } finally {
   try {
     if (socket?.readyState === WebSocket.OPEN) {

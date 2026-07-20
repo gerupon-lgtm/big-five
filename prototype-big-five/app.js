@@ -3,6 +3,7 @@ import { makeDemoAnswers, scoreAnswers } from "./sample-scoring.js";
 import { initialState, transition } from "./state-machine.js";
 import { buildResultModel } from "./sample-results.js";
 import { drawRadar } from "./radar-chart.js";
+import { orderSelectedResultsChronologically } from "./comparison-order.js";
 import {
   clearHistory,
   compareResults,
@@ -25,7 +26,6 @@ const app = document.querySelector("#app");
 const historyButton = document.querySelector("#history-button");
 const brandLink = document.querySelector("#brand-link");
 let state = initialState();
-let resultCache = new Map();
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (character) => ({
@@ -100,19 +100,22 @@ function persistProgress() {
   }
 }
 
-function createResultId() {
-  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
-  return `sample-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+function createResultId(answerCount) {
+  state = {
+    ...state,
+    startedAt: state.startedAt ?? new Date().toISOString(),
+  };
+  return `sample-${state.startedAt}-${state.mode}-${answerCount}`;
 }
 
 function completeResult(answerCount) {
-  if (resultCache.has(answerCount)) return resultCache.get(answerCount);
-
   const scored = scoreAnswers(state.answers, answerCount);
   const model = buildResultModel(scored);
+  const id = createResultId(answerCount);
+  const storedResult = loadStore(localStorage).history.find((result) => result.id === id);
   const result = {
-    id: createResultId(),
-    completedAt: new Date().toISOString(),
+    id,
+    completedAt: storedResult?.completedAt ?? new Date().toISOString(),
     answerCount,
     mode: state.mode,
     instrumentId: "sample-big-five",
@@ -122,14 +125,19 @@ function completeResult(answerCount) {
     scores: scored.scores,
     title: model.title,
   };
+
   try {
-    saveResult(localStorage, result);
+    if (!storedResult) saveResult(localStorage, result);
+    if (answerCount === 20) saveProgress(localStorage, state);
   } catch {
-    state = { ...state, storageWarning: "結果を履歴へ保存できませんでした。" };
+    state = {
+      ...state,
+      storageWarning: answerCount === 20
+        ? "基本結果は表示できますが、追加30問の再開状態を保存できませんでした。"
+        : "結果を履歴へ保存できませんでした。",
+    };
   }
-  const completed = { scored, model, result };
-  resultCache.set(answerCount, completed);
-  return completed;
+  return { scored, model, result };
 }
 
 function renderScoreRows(scores) {
@@ -163,6 +171,9 @@ function renderStart() {
   const resumeNumber = resumable
     ? Math.min(store.inProgress.currentIndex + 1, SAMPLE_QUESTIONS.length)
     : 1;
+  const resumeLabel = store.inProgress?.currentIndex === 20
+    ? "20問の基本結果から再開"
+    : `設問${resumeNumber}から再開`;
 
   app.innerHTML = `
     ${noticeMarkup()}
@@ -176,7 +187,7 @@ function renderStart() {
       <h2>体験を始める</h2>
       <p class="supporting">基本結果まで約3分、全50問は約7分が目安です。</p>
       <div class="actions compact">
-        ${resumable ? `<button id="resume-button" class="primary" type="button">設問${resumeNumber}から再開</button>` : ""}
+        ${resumable ? `<button id="resume-button" class="primary" type="button">${resumeLabel}</button>` : ""}
         <button id="manual-start" class="${resumable ? "secondary" : "primary"}" type="button">手動で最初から回答</button>
         <button id="demo-start" class="secondary" type="button">デモ回答を自動入力して体験</button>
       </div>
@@ -189,25 +200,19 @@ function renderStart() {
     ${warningMarkup()}
   `;
 
-  document.querySelector("#manual-start").addEventListener("click", () => {
-    resultCache = new Map();
-    state = transition(initialState(), { type: "START", mode: "manual" });
-    persistProgress();
-    render();
-  });
+  document.querySelector("#manual-start").addEventListener("click", startManualRun);
   document.querySelector("#demo-start").addEventListener("click", () => {
-    resultCache = new Map();
     state = transition(initialState(), { type: "START", mode: "demo" });
     state = {
       ...state,
       answers: makeDemoAnswers(50),
       currentIndex: 20,
       screen: "basicResult",
+      startedAt: new Date().toISOString(),
     };
     render();
   });
   document.querySelector("#resume-button")?.addEventListener("click", () => {
-    resultCache = new Map();
     if (restoreProgress()) render();
   });
   document.querySelector("#start-history")?.addEventListener("click", showHistory);
@@ -296,7 +301,7 @@ function renderDetailedGuidance(model) {
 }
 
 function renderResult(answerCount) {
-  const { scored, model, result } = completeResult(answerCount);
+  const { scored, model } = completeResult(answerCount);
   const kind = answerCount === 20 ? "基本結果" : "精密結果";
   const demoBadge = state.mode === "demo" ? '<span class="profile-badge">デモ回答</span>' : "";
 
@@ -317,9 +322,7 @@ function renderResult(answerCount) {
           role="img"
           aria-label="${FACTORS.map((factor) => `${factor.name} ${scored.scores[factor.id]}`).join("、")}"
         ></canvas>
-        <ul class="score-list">
-          ${renderScoreRows(scored.scores)}
-        </ul>
+        <ul class="score-list">${renderScoreRows(scored.scores)}</ul>
       </section>
       <section class="reason-panel" aria-labelledby="reason-heading">
         <h2 id="reason-heading">この結果になった理由</h2>
@@ -361,12 +364,9 @@ function renderResult(answerCount) {
   });
   document.querySelector("#result-history").addEventListener("click", showHistory);
   document.querySelector("#new-run").addEventListener("click", () => {
-    resultCache = new Map();
     state = transition(state, { type: "GO_START" });
     render();
   });
-
-  resultCache.set(answerCount, { scored, model, result });
 }
 
 function validHistoryResults() {
@@ -397,7 +397,12 @@ function showHistory() {
   render();
 }
 
-function renderHistory() {
+function focusHistoryControl(selector) {
+  const target = selector ? document.querySelector(selector) : null;
+  (target ?? app).focus({ preventScroll: true });
+}
+
+function renderHistory(focusSelector = "") {
   const results = validHistoryResults();
   const selected = new Set(state.selectedHistoryIds);
 
@@ -441,24 +446,27 @@ function renderHistory() {
 
   document.querySelectorAll("[data-select-index]").forEach((checkbox) => {
     checkbox.addEventListener("change", () => {
-      const result = results[Number(checkbox.dataset.selectIndex)];
+      const index = Number(checkbox.dataset.selectIndex);
+      const result = results[index];
       const next = new Set(state.selectedHistoryIds);
+      let nextFocus = `[data-select-index="${index}"]`;
       if (checkbox.checked && next.size >= 2) {
-        checkbox.checked = false;
         state = { ...state, storageWarning: "比較対象は2件まで選択できます。" };
       } else if (checkbox.checked) {
         next.add(result.id);
         state = { ...state, selectedHistoryIds: [...next], storageWarning: undefined };
+        if (next.size === 2) nextFocus = "#compare-button";
       } else {
         next.delete(result.id);
         state = { ...state, selectedHistoryIds: [...next], storageWarning: undefined };
       }
-      renderHistory();
+      renderHistory(nextFocus);
     });
   });
   document.querySelectorAll("[data-delete-index]").forEach((button) => {
     button.addEventListener("click", () => {
-      const result = results[Number(button.dataset.deleteIndex)];
+      const index = Number(button.dataset.deleteIndex);
+      const result = results[index];
       try {
         deleteResult(localStorage, result.id);
         state = {
@@ -469,7 +477,11 @@ function renderHistory() {
       } catch {
         state = { ...state, storageWarning: "この結果を削除できませんでした。" };
       }
-      renderHistory();
+      const remainingCount = validHistoryResults().length;
+      const nextFocus = remainingCount
+        ? `[data-delete-index="${Math.min(index, remainingCount - 1)}"]`
+        : "#restart-from-history";
+      renderHistory(nextFocus);
     });
   });
   document.querySelector("#compare-button")?.addEventListener("click", () => {
@@ -484,11 +496,10 @@ function renderHistory() {
     try {
       clearHistory(localStorage);
       state = { ...state, selectedHistoryIds: [], storageWarning: undefined };
-      resultCache = new Map();
     } catch {
       state = { ...state, storageWarning: "端末内データを削除できませんでした。" };
     }
-    renderHistory();
+    renderHistory("#restart-from-history");
   });
   document.querySelector("#resume-from-history")?.addEventListener("click", () => {
     if (restoreProgress()) render();
@@ -498,13 +509,16 @@ function renderHistory() {
     state = transition(state, { type: "GO_START" });
     render();
   });
+
+  if (focusSelector) focusHistoryControl(focusSelector);
 }
 
 function renderCompare() {
   const results = validHistoryResults();
-  const [leftId, rightId] = state.selectedHistoryIds;
-  const left = results.find((result) => result.id === leftId);
-  const right = results.find((result) => result.id === rightId);
+  const [left, right] = orderSelectedResultsChronologically(
+    results,
+    state.selectedHistoryIds,
+  );
   let comparisonMarkup;
 
   if (!left || !right) {
@@ -562,7 +576,6 @@ function renderCompare() {
 }
 
 function startManualRun() {
-  resultCache = new Map();
   state = transition(initialState(), { type: "START", mode: "manual" });
   persistProgress();
   render();
