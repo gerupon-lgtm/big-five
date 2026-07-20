@@ -2,12 +2,25 @@ export const STORAGE_KEY = "bigFivePrototype:v1";
 
 const emptyStore = () => ({ inProgress: null, history: [] });
 
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function sanitizeHistory(history) {
+  if (!Array.isArray(history)) return [];
+  return history.filter(isRecord).map(({ answers: _answers, ...result }) => result);
+}
+
+function normalizeInProgress(inProgress) {
+  return isRecord(inProgress) ? inProgress : null;
+}
+
 export function loadStore(storage = localStorage) {
   try {
     const parsed = JSON.parse(storage.getItem(STORAGE_KEY));
     return {
-      inProgress: parsed?.inProgress ?? null,
-      history: Array.isArray(parsed?.history) ? parsed.history : [],
+      inProgress: normalizeInProgress(parsed?.inProgress),
+      history: sanitizeHistory(parsed?.history),
     };
   } catch {
     return emptyStore();

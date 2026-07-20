@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import {
   canCompare,
   compareResults,
+  clearHistory,
+  deleteResult,
   loadStore,
+  saveProgress,
   saveResult,
 } from "../history.js";
 
@@ -26,10 +29,64 @@ const base = {
 
 test("saveResult prepends a result without persisting answers", () => {
   const storage = memoryStorage();
-  saveResult(storage, { ...base, id: "one", answerCount: 20, scores: { O: 50 }, answers: [1] });
+  const result = { ...base, id: "one", answerCount: 20, scores: { O: 50 }, answers: [1] };
+  saveResult(storage, result);
   const store = loadStore(storage);
   assert.equal(store.history[0].id, "one");
   assert.equal("answers" in store.history[0], false);
+  assert.deepEqual(result.answers, [1]);
+});
+
+test("loadStore returns an empty store for malformed JSON", () => {
+  const storage = memoryStorage();
+  storage.setItem("bigFivePrototype:v1", "{");
+  assert.deepEqual(loadStore(storage), { inProgress: null, history: [] });
+});
+
+test("loadStore normalizes malformed shapes and history entries", () => {
+  const storage = memoryStorage();
+  storage.setItem("bigFivePrototype:v1", JSON.stringify({
+    inProgress: "stale",
+    history: [null, "stale", [], { id: "safe", answers: [1], scores: { O: 50 } }],
+  }));
+  assert.deepEqual(loadStore(storage), {
+    inProgress: null,
+    history: [{ id: "safe", scores: { O: 50 } }],
+  });
+});
+
+test("saveProgress preserves sanitized history without re-persisting answers", () => {
+  const storage = memoryStorage();
+  storage.setItem("bigFivePrototype:v1", JSON.stringify({
+    inProgress: null,
+    history: [{ id: "prior", answers: [1], scores: { O: 50 } }],
+  }));
+  saveProgress(storage, { answers: [2], currentIndex: 1, startedAt: "now", mode: "manual" });
+  assert.deepEqual(loadStore(storage), {
+    inProgress: { answers: [2], currentIndex: 1, startedAt: "now", mode: "manual" },
+    history: [{ id: "prior", scores: { O: 50 } }],
+  });
+});
+
+test("deleteResult preserves in-progress data and ignores malformed history entries", () => {
+  const storage = memoryStorage();
+  storage.setItem("bigFivePrototype:v1", JSON.stringify({
+    inProgress: { answers: [3], currentIndex: 1, startedAt: "now", mode: "manual" },
+    history: [null, { id: "remove" }, { id: "keep" }],
+  }));
+  deleteResult(storage, "remove");
+  assert.deepEqual(loadStore(storage), {
+    inProgress: { answers: [3], currentIndex: 1, startedAt: "now", mode: "manual" },
+    history: [{ id: "keep" }],
+  });
+});
+
+test("clearHistory resets both progress and history", () => {
+  const storage = memoryStorage();
+  saveProgress(storage, { answers: [1], currentIndex: 1, startedAt: "now", mode: "manual" });
+  saveResult(storage, { ...base, id: "one", answerCount: 20, scores: { O: 50 } });
+  clearHistory(storage);
+  assert.deepEqual(loadStore(storage), { inProgress: null, history: [] });
 });
 
 test("20 and 50 item results cannot be compared", () => {
