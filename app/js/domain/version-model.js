@@ -2,6 +2,14 @@ const APP_VERSION_PATTERN = /^(?:mvp-|beta-)?\d+\.\d+\.\d+$/;
 const DEFINITION_VERSION_PATTERN = /^[a-z0-9][a-z0-9._-]*$/i;
 const ISO_8601_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 const DEPLOYMENT_MODES = new Set(["normal", "beta"]);
+const DIAGNOSTIC_VERSION_FIELDS = [
+  "scaleId",
+  "scaleVersion",
+  "questionVersion",
+  "scoringVersion",
+  "resultTextVersion",
+  "titleRuleVersion",
+];
 
 export function isAppVersion(value) {
   return typeof value === "string" && APP_VERSION_PATTERN.test(value);
@@ -13,6 +21,24 @@ function hasDefinitionVersion(value) {
     DEFINITION_VERSION_PATTERN.test(value)
   );
 }
+function hasDiagnosticVersionRegistry(value) {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === DIAGNOSTIC_VERSION_FIELDS.length &&
+    DIAGNOSTIC_VERSION_FIELDS.every(
+      (field) => Object.hasOwn(value, field) && hasDefinitionVersion(value[field]),
+    )
+  );
+}
+
+function copyDiagnosticVersions(value) {
+  return Object.freeze(Object.fromEntries(
+    DIAGNOSTIC_VERSION_FIELDS.map((field) => [field, value[field]]),
+  ));
+}
+
 
 export function validateAppMeta(meta) {
   if (
@@ -26,6 +52,7 @@ export function validateAppMeta(meta) {
     !hasDefinitionVersion(meta.characterManifestVersion) ||
     !hasDefinitionVersion(meta.presentationDefinitionVersion) ||
     typeof meta.releasedAt !== "string" ||
+    !hasDiagnosticVersionRegistry(meta.diagnosticVersions) ||
     !ISO_8601_PATTERN.test(meta.releasedAt) ||
     Number.isNaN(Date.parse(meta.releasedAt)) ||
     !DEPLOYMENT_MODES.has(meta.deploymentMode) ||
@@ -68,6 +95,7 @@ export function createStartVersionViewModel(meta) {
   return Object.freeze({
     appVersion: validMeta.appVersion,
     versionLabel: `バージョン ${validMeta.appVersion}`,
+    diagnosticVersions: copyDiagnosticVersions(validMeta.diagnosticVersions),
   });
 }
 
@@ -76,5 +104,6 @@ export function createShareVersionMetadata(meta) {
 
   return Object.freeze({
     appVersion: validMeta.appVersion,
+    diagnosticVersions: copyDiagnosticVersions(validMeta.diagnosticVersions),
   });
 }

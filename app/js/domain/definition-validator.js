@@ -1,7 +1,7 @@
 const ROOT_FIELDS = ["diagnostic", "factors", "questions"];
 const FACTOR_IDS = [
-  "extraversion", "agreeableness", "conscientiousness", "emotionalStability",
-  "intellectImagination",
+  "intellectImagination", "conscientiousness", "extraversion", "agreeableness",
+  "emotionalStability",
 ];
 const DIRECTIONS = new Set(["positive", "negative"]);
 
@@ -19,16 +19,16 @@ function hasUniqueValues(values) {
   return new Set(values).size === values.length;
 }
 
-function hasVersion(value) {
-  return typeof value === "string" && value.endsWith("-v1");
-}
-
 
 const CANONICAL_DIAGNOSTIC_FIELDS = ["diagnosisId", "scaleId", "scaleName", "scaleVersion", "questionVersion", "scoringVersion", "resultTextVersion", "titleRuleVersion", "factorOrder", "previewQuestionIds", "detailQuestionIds", "source", "limitations"];
 const CANONICAL_FACTOR_FIELDS = ["id", "displayName", "academicName", "lowPole", "highPole", "description"];
 const CANONICAL_QUESTION_FIELDS = ["id", "order", "textJa", "factorId", "keyedDirection", "sourceItemId", "previewIncluded"];
 const CANONICAL_SOURCE_FIELDS = ["id", "url", "label"];
 const AUTHORITY_ROW_FIELDS = ["sourceItemId", "textJa", "factorId", "keyedDirection", "previewIncluded"];
+const AUTHORITY_FIELDS = ["rows", "previewQuestionIds", "previewSourceItemIds"];
+const CANONICAL_VERSION_FIELDS = ["scaleId", "scaleVersion", "questionVersion", "scoringVersion", "resultTextVersion", "titleRuleVersion"];
+const EXPECTED_SOURCE_ITEM_IDS = Array.from({ length: 50 }, (_, index) => String(index + 1));
+
 
 function failStructure() {
   throw new TypeError("DEFINITION_INVALID");
@@ -42,11 +42,12 @@ function hasCanonicalStrings(value, fields) {
   return hasExactFields(value, fields) && fields.every((field) => typeof value[field] === "string" && value[field].length > 0);
 }
 
-export function validateDefinitionStructure(value) {
+export function validateDefinitionStructure(value, canonicalVersions) {
   if (!hasExactFields(value, ROOT_FIELDS)) failStructure();
   const { diagnostic, factors, questions } = value;
   if (!hasExactFields(diagnostic, CANONICAL_DIAGNOSTIC_FIELDS) || !Array.isArray(factors) || factors.length !== 5 || !Array.isArray(questions) || questions.length !== 50) failStructure();
-  if (diagnostic.diagnosisId !== "big-five-ipip-ja" || typeof diagnostic.scaleId !== "string" || typeof diagnostic.scaleName !== "string" || diagnostic.scaleName.length === 0 || !["scaleVersion", "questionVersion", "scoringVersion", "resultTextVersion", "titleRuleVersion"].every((field) => hasVersion(diagnostic[field])) || diagnostic.titleRuleVersion !== "title-rule-v1") failStructure();
+  if (!hasCanonicalStrings(canonicalVersions, CANONICAL_VERSION_FIELDS)) failStructure();
+  if (diagnostic.diagnosisId !== "big-five-ipip-ja" || typeof diagnostic.scaleName !== "string" || diagnostic.scaleName.length === 0 || !CANONICAL_VERSION_FIELDS.every((field) => diagnostic[field] === canonicalVersions[field])) failStructure();
   if (!Array.isArray(diagnostic.factorOrder) || diagnostic.factorOrder.join(",") !== FACTOR_IDS.join(",")) failStructure();
   if (!factors.every((factor) => hasCanonicalStrings(factor, CANONICAL_FACTOR_FIELDS)) || factors.map(({ id }) => id).join(",") !== diagnostic.factorOrder.join(",")) failStructure();
   if (!questions.every((question) => hasExactFields(question, CANONICAL_QUESTION_FIELDS))) failStructure();
@@ -60,13 +61,34 @@ export function validateDefinitionStructure(value) {
   if (!Array.isArray(diagnostic.limitations) || diagnostic.limitations.length < 3 || !diagnostic.limitations.every((limitation) => typeof limitation === "string" && limitation.length > 0)) failStructure();
   return value;
 }
+function validateAuthorityFixture(authorityFixture) {
+  if (!hasExactFields(authorityFixture, AUTHORITY_FIELDS)) failAuthority();
+  const { rows, previewQuestionIds, previewSourceItemIds } = authorityFixture;
+  if (!Array.isArray(rows) || rows.length !== 50 || !rows.every((row) => hasExactFields(row, AUTHORITY_ROW_FIELDS))) failAuthority();
+  if (!rows.every(({ sourceItemId, textJa, factorId, keyedDirection, previewIncluded }) =>
+    typeof sourceItemId === "string" &&
+    typeof textJa === "string" && textJa.length > 0 &&
+    FACTOR_IDS.includes(factorId) && DIRECTIONS.has(keyedDirection) &&
+    typeof previewIncluded === "boolean")) failAuthority();
 
-export function validateDefinitionAuthority(value, authorityFixture) {
-  const validValue = validateDefinitionStructure(value);
-  if (!isRecord(authorityFixture) || !Array.isArray(authorityFixture.rows) || authorityFixture.rows.length !== 50 || !Array.isArray(authorityFixture.previewQuestionIds) || authorityFixture.previewQuestionIds.length !== 20 || !Array.isArray(authorityFixture.previewSourceItemIds) || authorityFixture.previewSourceItemIds.length !== 20) failAuthority();
-  if (!authorityFixture.rows.every((row) => hasExactFields(row, AUTHORITY_ROW_FIELDS))) failAuthority();
+  const sourceItemIds = rows.map(({ sourceItemId }) => sourceItemId);
+  if (!hasUniqueValues(sourceItemIds) || !EXPECTED_SOURCE_ITEM_IDS.every((id) => sourceItemIds.includes(id))) failAuthority();
+  if (!Array.isArray(previewQuestionIds) || previewQuestionIds.length !== 20 || !hasUniqueValues(previewQuestionIds) || !previewQuestionIds.every((id) => typeof id === "string")) failAuthority();
+  if (!Array.isArray(previewSourceItemIds) || previewSourceItemIds.length !== 20 || !hasUniqueValues(previewSourceItemIds) || !previewSourceItemIds.every((id) => typeof id === "string" && EXPECTED_SOURCE_ITEM_IDS.includes(id))) failAuthority();
+  if (!previewSourceItemIds.every((sourceItemId, index) =>
+    previewQuestionIds[index] === `ipip-ja-${sourceItemId.padStart(2, "0")}`)) failAuthority();
+
+  const previewSourceItemIdSet = new Set(previewSourceItemIds);
+  if (!rows.every((row) => row.previewIncluded === previewSourceItemIdSet.has(row.sourceItemId))) failAuthority();
+  return authorityFixture;
+}
+
+
+export function validateDefinitionAuthority(value, canonicalVersions, authorityFixture) {
+  const validValue = validateDefinitionStructure(value, canonicalVersions);
+  const validAuthority = validateAuthorityFixture(authorityFixture);
   const questionBySourceItemId = new Map(validValue.questions.map((question) => [question.sourceItemId, question]));
-  if (!authorityFixture.rows.every((row) => questionBySourceItemId.has(row.sourceItemId) && ["textJa", "factorId", "keyedDirection", "previewIncluded"].every((field) => questionBySourceItemId.get(row.sourceItemId)[field] === row[field]))) failAuthority();
-  if (!authorityFixture.previewQuestionIds.every((id, index) => id === validValue.diagnostic.previewQuestionIds[index]) || !authorityFixture.previewSourceItemIds.every((sourceItemId, index) => sourceItemId === validValue.questions[index].sourceItemId)) failAuthority();
+  if (!validAuthority.rows.every((row) => questionBySourceItemId.has(row.sourceItemId) && ["textJa", "factorId", "keyedDirection", "previewIncluded"].every((field) => questionBySourceItemId.get(row.sourceItemId)[field] === row[field]))) failAuthority();
+  if (!validAuthority.previewQuestionIds.every((id, index) => id === validValue.diagnostic.previewQuestionIds[index]) || !validAuthority.previewSourceItemIds.every((sourceItemId, index) => sourceItemId === validValue.questions[index].sourceItemId)) failAuthority();
   return validValue;
 }

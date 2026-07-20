@@ -30,14 +30,30 @@
 | cardTemplateVersion | string | ○ | 共有カード描画版 |
 | characterManifestVersion | string | ○ | 猫アセット対応版 |
 | presentationDefinitionVersion | string | ○ | 色・香り定義版 |
+| diagnosticVersions | DiagnosticVersionRegistry | ○ | 診断定義が参照する正典版レジストリ |
 | releasedAt | string | ○ | ISO 8601 |
 | deploymentMode | `normal` \| `beta` | ○ | 通常版とベータ版を分離 |
 | betaAggregationEnabled | boolean | ○ | 通常版は必ずfalse |
 | betaApiBaseUrl | string \| null | ○ | ベータ版だけ公開API URL。秘密を含めない |
 
+#### DiagnosticVersionRegistry
+
+`app/js/config/app-meta.js`で深く不変な値として管理し、診断定義、開始画面モデル、共有モデルが同じ値を参照する。
+
+| 項目 | 型 | 必須 | 値 |
+|---|---|---|---|
+| scaleId | string | ○ | `ipip-ja-50` |
+| scaleVersion | string | ○ | `ipip-ja-50-v1` |
+| questionVersion | string | ○ | `ipip-ja-50-question-set-v1` |
+| scoringVersion | string | ○ | `ipip-ja-50-scoring-v1` |
+| resultTextVersion | string | ○ | `result-text-v1` |
+| titleRuleVersion | string | ○ | `title-rule-v1` |
+
 ### 2.2 DiagnosticDefinition
 
 【想定】正典: `app/js/data/diagnostic-definition.js`
+`scaleId`と5つの版フィールドは`AppMeta.diagnosticVersions`を参照し、独立したリテラルを持たない。
+
 
 | 項目 | 型 | 必須 | 制約・説明 |
 |---|---|---|---|

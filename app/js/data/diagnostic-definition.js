@@ -1,10 +1,4 @@
-const FACTORS = [
-  ["extraversion", "外向性"],
-  ["agreeableness", "協調性"],
-  ["conscientiousness", "誠実性"],
-  ["emotionalStability", "情緒的安定性"],
-  ["intellectImagination", "知性・想像力"],
-];
+import { appMeta } from "../config/app-meta.js";
 
 const SOURCE_ITEMS = [
   [1, "盛り上げ役である", "extraversion", "positive"],
@@ -82,18 +76,15 @@ const stagedSourceItemIds = [
   ),
 ];
 
-const FACTOR_METADATA = {
-  extraversion: ["外向性", "Extraversion", "一人で過ごす場面を好む傾向", "人との交流を好む傾向", "人との関わり方や活動の好みの傾向を表します。"],
-  agreeableness: ["協調性", "Agreeableness", "率直に意見を伝える傾向", "相手の気持ちや協力を重視する傾向", "対人場面での配慮や協力の傾向を表します。"],
-  conscientiousness: ["誠実性", "Conscientiousness", "柔軟に進め方を変える傾向", "計画や整理を重視する傾向", "計画、整理、取り組み方の傾向を表します。"],
-  emotionalStability: ["情緒的安定性", "Emotional Stability", "感情の変化を感じやすい傾向", "落ち着きを保ちやすい傾向", "気分やストレスへの反応の傾向を表します。"],
-  intellectImagination: ["知性・想像力", "Intellect/Imagination", "具体的で身近な事柄を好む傾向", "考えや発想を広げることを好む傾向", "考え方や新しい発想への関心の傾向を表します。"],
-};
+const FACTOR_DEFINITION_TABLE = deepFreeze({
+  intellectImagination: { id: "intellectImagination", displayName: "知性・想像力", academicName: "Intellect/Imagination", lowPole: "具体的で身近な事柄を好む傾向", highPole: "考えや発想を広げることを好む傾向", description: "Big Fiveの開放性に対応する領域であり、考え方や新しい発想への関心の傾向を表します。" },
+  conscientiousness: { id: "conscientiousness", displayName: "勤勉性", academicName: "Conscientiousness", lowPole: "柔軟に進め方を変える傾向", highPole: "計画や整理を重視する傾向", description: "計画、整理、取り組み方の傾向を表します。" },
+  extraversion: { id: "extraversion", displayName: "外向性", academicName: "Extraversion", lowPole: "一人で過ごす場面を好む傾向", highPole: "人との交流を好む傾向", description: "人との関わり方や活動の好みの傾向を表します。" },
+  agreeableness: { id: "agreeableness", displayName: "協調性", academicName: "Agreeableness", lowPole: "率直に意見を伝える傾向", highPole: "相手の気持ちや協力を重視する傾向", description: "対人場面での配慮や協力の傾向を表します。" },
+  emotionalStability: { id: "emotionalStability", displayName: "情緒安定性", academicName: "Emotional Stability", lowPole: "感情の変化を感じやすい傾向", highPole: "落ち着きを保ちやすい傾向", description: "神経症傾向と逆方向の尺度であり、気分やストレスへの反応の傾向を表します。" },
+});
 
-export const FactorDefinitions = deepFreeze(FACTORS.map(([id]) => {
-  const [displayName, academicName, lowPole, highPole, description] = FACTOR_METADATA[id];
-  return { id, displayName, academicName, lowPole, highPole, description };
-}));
+export const FactorDefinitions = deepFreeze(Object.values(FACTOR_DEFINITION_TABLE));
 
 export const QuestionDefinitions = deepFreeze(
   stagedSourceItemIds.map((sourceItemId, index) => {
@@ -113,13 +104,13 @@ export const QuestionDefinitions = deepFreeze(
 
 export const DiagnosticDefinition = deepFreeze({
   diagnosisId: "big-five-ipip-ja",
-  scaleId: "ipip-ja-50",
+  scaleId: appMeta.diagnosticVersions.scaleId,
   scaleName: "IPIP日本語50項目版",
-  scaleVersion: "ipip-ja-50-v1",
-  questionVersion: "ipip-ja-50-question-set-v1",
-  scoringVersion: "ipip-ja-50-scoring-v1",
-  resultTextVersion: "result-text-v1",
-  titleRuleVersion: "title-rule-v1",
+  scaleVersion: appMeta.diagnosticVersions.scaleVersion,
+  questionVersion: appMeta.diagnosticVersions.questionVersion,
+  scoringVersion: appMeta.diagnosticVersions.scoringVersion,
+  resultTextVersion: appMeta.diagnosticVersions.resultTextVersion,
+  titleRuleVersion: appMeta.diagnosticVersions.titleRuleVersion,
   factorOrder: FactorDefinitions.map(({ id }) => id),
   previewQuestionIds: QuestionDefinitions.slice(0, 20).map(({ id }) => id),
   detailQuestionIds: QuestionDefinitions.map(({ id }) => id),

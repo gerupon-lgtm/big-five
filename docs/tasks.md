@@ -117,8 +117,9 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 
 #### 完了記録（2026-07-21）
 
-- 状態: 完了（F-002, F-014）。`DiagnosticDefinition`、50件の`QuestionDefinition`、5因子定義、独立authority fixtureと純粋バリデータを実装。
-- 検証: `node --test app/tests/definition-validator.test.js`、`npm.cmd run check`、`npm.cmd test`。
+- 状態: 完了（F-002, F-014）。要件v1.7因子定義、AppMeta診断版レジストリ、50件の`QuestionDefinition`、自己整合を検証する独立authority fixtureと純粋バリデータを実装。
+- 検証: 指定3契約テスト21件成功、静的検証成功、全66件成功、`git diff --check`成功。詳細コマンドは`.superpowers/sdd/task-t002-report.md`を参照。
+
 ### T-003 採点・51分類・結果モデル
 
 - 依存: T-002

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { appMeta } from "../js/config/app-meta.js";
+import { DiagnosticDefinition } from "../js/data/diagnostic-definition.js";
 import {
   createShareVersionMetadata,
   createStartVersionViewModel,
@@ -13,19 +14,35 @@ test("AppMeta is the canonical mvp-0.1.0 normal-build metadata", () => {
   assert.equal(appMeta.betaAggregationEnabled, false);
   assert.equal(appMeta.betaApiBaseUrl, null);
   assert.equal(Object.isFrozen(appMeta), true);
+  assert.equal(Object.isFrozen(appMeta.diagnosticVersions), true);
 });
 
-test("start and share models read the same canonical app version", () => {
+test("diagnostic, start, and share models read the same canonical version registry", () => {
   const startModel = createStartVersionViewModel(appMeta);
   const shareMetadata = createShareVersionMetadata(appMeta);
+  const expectedDiagnosticVersions = {
+    scaleId: "ipip-ja-50",
+    scaleVersion: "ipip-ja-50-v1",
+    questionVersion: "ipip-ja-50-question-set-v1",
+    scoringVersion: "ipip-ja-50-scoring-v1",
+    resultTextVersion: "result-text-v1",
+    titleRuleVersion: "title-rule-v1",
+  };
 
   assert.deepEqual(startModel, {
     appVersion: "mvp-0.1.0",
     versionLabel: "バージョン mvp-0.1.0",
+    diagnosticVersions: expectedDiagnosticVersions,
   });
   assert.deepEqual(shareMetadata, {
     appVersion: "mvp-0.1.0",
+    diagnosticVersions: expectedDiagnosticVersions,
   });
+  assert.deepEqual(appMeta.diagnosticVersions, expectedDiagnosticVersions);
+  assert.deepEqual(
+    Object.fromEntries(Object.keys(expectedDiagnosticVersions).map((field) => [field, DiagnosticDefinition[field]])),
+    expectedDiagnosticVersions,
+  );
 });
 
 test("version models reject incomplete or contradictory metadata", () => {

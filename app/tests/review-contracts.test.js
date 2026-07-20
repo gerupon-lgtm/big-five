@@ -13,6 +13,7 @@ test("AppMeta validates every required version field and release timestamp", () 
     "cardTemplateVersion",
     "characterManifestVersion",
     "presentationDefinitionVersion",
+    "diagnosticVersions",
     "releasedAt",
   ];
 
@@ -27,6 +28,36 @@ test("AppMeta validates every required version field and release timestamp", () 
     /APP_META_INVALID/,
   );
 });
+test("AppMeta validates every exact diagnostic version reference", () => {
+  const expectedFields = [
+    "scaleId",
+    "scaleVersion",
+    "questionVersion",
+    "scoringVersion",
+    "resultTextVersion",
+    "titleRuleVersion",
+  ];
+  assert.deepEqual(Object.keys(appMeta.diagnosticVersions), expectedFields);
+
+  for (const field of expectedFields) {
+    const diagnosticVersions = { ...appMeta.diagnosticVersions };
+    diagnosticVersions[field] = "";
+    assert.throws(
+      () => validateAppMeta({ ...appMeta, diagnosticVersions }),
+      /APP_META_INVALID/,
+      field,
+    );
+  }
+
+  assert.throws(
+    () => validateAppMeta({
+      ...appMeta,
+      diagnosticVersions: { ...appMeta.diagnosticVersions, unexpected: "v1" },
+    }),
+    /APP_META_INVALID/,
+  );
+});
+
 
 test("AppMeta rejects phase contradictions and accepts each version phase", () => {
   assert.throws(
