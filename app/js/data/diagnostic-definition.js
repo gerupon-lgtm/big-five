@@ -82,75 +82,55 @@ const stagedSourceItemIds = [
   ),
 ];
 
-export const FactorDefinitions = deepFreeze(
-  FACTORS.map(([id, name]) => ({
-    id,
-    name,
-    scaleVersion: "ipip-ja-50-v1",
-  })),
-);
+const FACTOR_METADATA = {
+  extraversion: ["外向性", "Extraversion", "一人で過ごす場面を好む傾向", "人との交流を好む傾向", "人との関わり方や活動の好みの傾向を表します。"],
+  agreeableness: ["協調性", "Agreeableness", "率直に意見を伝える傾向", "相手の気持ちや協力を重視する傾向", "対人場面での配慮や協力の傾向を表します。"],
+  conscientiousness: ["誠実性", "Conscientiousness", "柔軟に進め方を変える傾向", "計画や整理を重視する傾向", "計画、整理、取り組み方の傾向を表します。"],
+  emotionalStability: ["情緒的安定性", "Emotional Stability", "感情の変化を感じやすい傾向", "落ち着きを保ちやすい傾向", "気分やストレスへの反応の傾向を表します。"],
+  intellectImagination: ["知性・想像力", "Intellect/Imagination", "具体的で身近な事柄を好む傾向", "考えや発想を広げることを好む傾向", "考え方や新しい発想への関心の傾向を表します。"],
+};
+
+export const FactorDefinitions = deepFreeze(FACTORS.map(([id]) => {
+  const [displayName, academicName, lowPole, highPole, description] = FACTOR_METADATA[id];
+  return { id, displayName, academicName, lowPole, highPole, description };
+}));
 
 export const QuestionDefinitions = deepFreeze(
   stagedSourceItemIds.map((sourceItemId, index) => {
     const [, text, factorId, keyedDirection] = SOURCE_ITEMS[sourceItemId - 1];
     return {
       id: `ipip-ja-${String(sourceItemId).padStart(2, "0")}`,
-      sourceItemId,
-      stagedOrder: index + 1,
-      text,
+      order: index + 1,
+      textJa: text,
       factorId,
       keyedDirection,
+      sourceItemId: String(sourceItemId),
       previewIncluded: previewSourceItemIdSet.has(sourceItemId),
-      questionSetVersion: "ipip-ja-50-question-set-v1",
     };
   }),
 );
 
+
 export const DiagnosticDefinition = deepFreeze({
   diagnosisId: "big-five-ipip-ja",
   scaleId: "ipip-ja-50",
-  scaleName: "IPIP 日本語 50 項目版",
-  definitionVersion: "diagnostic-definition-v1",
   scaleVersion: "ipip-ja-50-v1",
-  questionSetVersion: "ipip-ja-50-question-set-v1",
+  questionVersion: "ipip-ja-50-question-set-v1",
   scoringVersion: "ipip-ja-50-scoring-v1",
   resultTextVersion: "result-text-v1",
   titleRuleVersion: "title-rule-v1",
+  factorOrder: FactorDefinitions.map(({ id }) => id),
   previewQuestionIds: QuestionDefinitions.slice(0, 20).map(({ id }) => id),
   detailQuestionIds: QuestionDefinitions.map(({ id }) => id),
-  sourceReferences: [
-    {
-      id: "ipip-japanese-markers",
-      url: "https://ipip.ori.org/JapaneseBig-FiveFactorMarkers.htm",
-      label: "IPIP Japanese Translation of the Lexical Big-Five Factor Markers",
-    },
-    {
-      id: "ipip-50-item-scale",
-      url: "https://www.ipip.ori.org/New_IPIP-50-item-scale.htm",
-      label: "IPIP 50-item scale",
-    },
-    {
-      id: "donnellan-2006-mini-ipip",
-      url: "https://doi.org/10.1037/1040-3590.18.2.192",
-      label: "Donnellan et al. (2006), Mini-IPIP Appendix A",
-    },
+  source: [
+    { id: "ipip-japanese-markers", url: "https://ipip.ori.org/JapaneseBig-FiveFactorMarkers.htm", label: "IPIP Japanese Translation of the Lexical Big-Five Factor Markers" },
+    { id: "ipip-50-item-scale", url: "https://www.ipip.ori.org/New_IPIP-50-item-scale.htm", label: "IPIP Japanese 50-item scale (IPIP日本語50項目版)" },
+    { id: "donnellan-2006-mini-ipip", url: "https://doi.org/10.1037/1040-3590.18.2.192", label: "Donnellan et al. (2006), Mini-IPIP Appendix A" },
+    { id: "ipip-permission", url: "https://ipip.ori.org/newPermission.htm", label: "IPIP materials are public domain and may be used for commercial or non-commercial purposes." },
   ],
-  publicDomainTerms: {
-    sourceUrl: "https://ipip.ori.org/newPermission.htm",
-    statement: "IPIP materials are in the public domain and may be used for commercial or non-commercial purposes.",
-  },
   limitations: [
-    {
-      id: "translation-validation",
-      text: "IPIPプロジェクトは、この公式日本語訳を妥当性検証していません。",
-    },
-    {
-      id: "preview-validation",
-      text: "20項目の日本語プレビューは、日本語版Mini-IPIPとして独立した妥当性検証を受けていません。",
-    },
-    {
-      id: "intended-use",
-      text: "結果は自己理解のためのものであり、臨床診断、能力、雇用適性、パーセンタイル、母集団内順位を示すものではありません。",
-    },
+    "IPIPプロジェクトは、この公式日本語訳を妥当性検証していません。",
+    "20項目の日本語プレビューは、日本語版Mini-IPIPとして独立した妥当性検証を受けていません。",
+    "結果は自己理解のためのものであり、臨床診断、能力、雇用適性、パーセンタイル、母集団内順位を示すものではありません。",
   ],
 });

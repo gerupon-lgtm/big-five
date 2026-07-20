@@ -15,13 +15,13 @@ const previewSourceItemIds = [1, 17, 23, 39, 15, 6, 22, 28, 9, 20, 31, 42, 33, 2
 const previewSourceItemIdSet = new Set(previewSourceItemIds);
 
 export const IPIP_JA_50_AUTHORITY_FIXTURE = Object.freeze({
-  rows: Object.freeze(rows.map(([sourceItemId, text, factorId, keyedDirection]) => Object.freeze({
-    sourceItemId,
-    text,
+  rows: Object.freeze(rows.map(([sourceItemId, textJa, factorId, keyedDirection]) => Object.freeze({
+    sourceItemId: String(sourceItemId),
+    textJa,
     factorId,
     keyedDirection,
     previewIncluded: previewSourceItemIdSet.has(sourceItemId),
   }))),
   previewQuestionIds: Object.freeze(previewSourceItemIds.map((sourceItemId) => `ipip-ja-${String(sourceItemId).padStart(2, "0")}`)),
-  previewSourceItemIds: Object.freeze(previewSourceItemIds),
+  previewSourceItemIds: Object.freeze(previewSourceItemIds.map(String)),
 });

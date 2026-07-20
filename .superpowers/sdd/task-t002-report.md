@@ -25,6 +25,29 @@
 - `node --test app/tests/definition-validator.test.js` → 6 passed, 0 failed。
 - `npm.cmd run check` → `Static check passed (8 JavaScript files, one canonical runtime version).`
 - `npm.cmd test` → 58 passed, 0 failed。
+
+## レビュー修正（2026-07-21）
+
+### 修正内容
+
+- `docs/data-model.md` 2.2〜2.4を正典として、公開`DiagnosticDefinition`を12フィールド、`QuestionDefinition`を7フィールド、`FactorDefinition`を6フィールドへ厳密に合わせた。`order`は段階出題順、`sourceItemId`は文字列の公式項目IDである。
+- 尺度名・出典・IPIPパブリックドメイン条件は`DiagnosticDefinition.source`、限界は文字列配列`limitations`から取得できる。permission sourceを`source`へ含めた。
+- `validateDefinitionStructure`と`validateDefinitionAuthority`を公開した。後者は常に独立fixtureを必須とし、構造検証後に50行・20項目順・文言・因子・キー・プレビュー包含を照合する。旧任意fixture検証と未文書スキーマは除去した。
+- FactorDefinitionへ価値中立の日本語表示、学術名称、両極説明、説明文を追加した。
+- import契約テストを強化し、runtime definition/validatorからtest fixture、prototype、乱数、ブラウザAPIへの依存がないことを確認する。AST解析は不要な過剰実装と判断した。
+- `docs/基本設計サマリ.md`の現状記述をすべてT-002完了、次実装T-003へ同期した。
+
+### 修正後の検証
+
+- `node --test app/tests/definition-validator.test.js` → 8 passed, 0 failed。
+- `npm.cmd run check` → `Static check passed (8 JavaScript files, one canonical runtime version).`
+- `npm.cmd test` → 60 passed, 0 failed。
+- `git diff --check` → 問題なし。
+
+### 修正ファイルと自己レビュー
+
+- 更新: `app/js/data/diagnostic-definition.js`、`app/js/domain/definition-validator.js`、`app/tests/definition-validator.test.js`、`app/tests/fixtures/ipip-ja-50-authority.fixture.js`、`docs/基本設計サマリ.md`、本報告。
+- 確認: 旧`scaleName`、`definitionVersion`、`questionSetVersion`、`stagedOrder`、`sourceReferences`、`publicDomainTerms`、任意authority検証はruntime sourceから除去済み。runtime definitionはtest fixtureをimportしない。
 - `git diff --check` → 問題なし。
 
 ## 変更ファイル
