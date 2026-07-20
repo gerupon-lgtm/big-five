@@ -422,11 +422,49 @@ button:disabled {
   color: var(--danger);
 }
 
-.share-placeholder {
-  margin: 10px 0 0;
-  text-align: center;
+.share-preview {
+  margin-top: 18px;
+}
+
+.share-card {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 16px auto;
+  border: 1px solid var(--line);
+  background: #f4f6f5;
+}
+
+.share-actions {
+  margin-top: 0;
+}
+
+.share-status,
+.share-text-fallback {
+  margin: 12px 0 0;
   color: var(--muted);
-  font-size: .76rem;
+  font-size: .88rem;
+}
+
+.share-text-fallback label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.share-text {
+  display: block;
+  width: 100%;
+  min-height: 130px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--navy);
+  background: #fff;
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
 }
 
 @media (max-width: 359px) {

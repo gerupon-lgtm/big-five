@@ -47,5 +47,6 @@ test("browser orchestration includes all Task 5 screens and local flow actions",
   }
   assert.match(script, /まったく当てはまらない/);
   assert.match(script, /とても当てはまる/);
-  assert.match(script, /共有機能は次の実装タスクで利用できます/);
+  assert.match(script, /共有プレビューを開く/);
+  assert.match(script, /\bshareResult\b/);
 });

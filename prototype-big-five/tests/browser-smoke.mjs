@@ -175,6 +175,48 @@ try {
     await click('[data-answer="3"]');
   }
   await assertScreen("基本結果 / 20問");
+  await click("#share-preview-button");
+  await assertScreen("共有プレビュー");
+  assert.deepEqual(
+    await evaluate(`(() => {
+      const card = document.querySelector("#share-card");
+      return [card?.width, card?.height, document.querySelector("#share-text") === null];
+    })()`),
+    [1080, 1350, true],
+  );
+  assert.equal(
+    await evaluate("document.querySelector('#share-card')?.getAttribute('aria-label')?.includes('体験用サンプル')"),
+    true,
+  );
+  await evaluate(`(() => {
+    Object.defineProperty(navigator, "canShare", {
+      configurable: true,
+      value: ({ files }) => Array.isArray(files) && files.length === 1,
+    });
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: ({ files, text }) => {
+        window.__sharedResult = { fileName: files[0]?.name, text };
+        return Promise.resolve();
+      },
+    });
+  })()`);
+  await click("#share-result");
+  await delay(180);
+  assert.equal(
+    await evaluate("window.__sharedResult?.fileName === 'big-five-sample-20.png' && window.__sharedResult.text.includes('体験用サンプル')"),
+    true,
+  );
+  assert.match(await evaluate("document.querySelector('#share-status')?.innerText ?? ''"), /端末の共有画面を開きました/);
+  await evaluate(`(() => {
+    Object.defineProperty(navigator, "canShare", { configurable: true, value: undefined });
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+  })()`);
+  await click("#share-result");
+  await delay(180);
+  assert.equal(await evaluate("Boolean(document.querySelector('#share-text'))"), true);
+  assert.match(await evaluate("document.querySelector('#share-status')?.innerText ?? ''"), /下のテキストを選択してコピーしてください/);
   assert.equal(
     await evaluate("JSON.parse(localStorage.getItem('bigFivePrototype:v1')).history.filter((result) => result.answerCount === 20).length"),
     1,
@@ -278,6 +320,10 @@ try {
   const resolvedProfile = resolve(profilePath);
   const resolvedTemp = resolve(tmpdir());
   if (resolvedProfile.startsWith(`${resolvedTemp}\\`)) {
-    rmSync(resolvedProfile, { recursive: true, force: true, maxRetries: 3 });
+    try {
+      rmSync(resolvedProfile, { recursive: true, force: true, maxRetries: 3 });
+    } catch {
+      console.warn("Browser smoke left a temporary profile that Windows still has locked.");
+    }
   }
 }

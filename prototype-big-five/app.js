@@ -3,6 +3,7 @@ import { makeDemoAnswers, scoreAnswers } from "./sample-scoring.js";
 import { initialState, transition } from "./state-machine.js";
 import { buildResultModel } from "./sample-results.js";
 import { drawRadar } from "./radar-chart.js";
+import { buildShareText, drawShareCard, shareResult } from "./share-card.js";
 import { orderSelectedResultsChronologically } from "./comparison-order.js";
 import {
   clearHistory,
@@ -300,10 +301,104 @@ function renderDetailedGuidance(model) {
   `;
 }
 
+function renderShareStatus(message) {
+  const status = document.querySelector("#share-status");
+  if (status) status.textContent = message;
+}
+
+function renderSelectableShareText(text) {
+  const fallback = document.querySelector("#share-text-fallback");
+  if (!fallback) return;
+
+  fallback.hidden = false;
+  fallback.replaceChildren();
+  const label = document.createElement("label");
+  label.htmlFor = "share-text";
+  label.textContent = "共有用テキスト（選択してコピー）";
+  const textarea = document.createElement("textarea");
+  textarea.id = "share-text";
+  textarea.className = "share-text";
+  textarea.readOnly = true;
+  textarea.value = text;
+  fallback.append(label, textarea);
+}
+
+async function copyShareText(text) {
+  const clipboard = globalThis.navigator?.clipboard;
+  if (!clipboard || typeof clipboard.writeText !== "function") {
+    renderSelectableShareText(text);
+    renderShareStatus("このブラウザでは自動コピーできません。下のテキストを選択してコピーしてください。");
+    return;
+  }
+
+  try {
+    await clipboard.writeText(text);
+    renderShareStatus("共有用テキストをクリップボードにコピーしました。");
+  } catch {
+    renderSelectableShareText(text);
+    renderShareStatus("テキストをコピーできませんでした。下のテキストを選択してコピーしてください。");
+  }
+}
+
+function renderSharePreview(result) {
+  const region = document.querySelector("#share-preview-region");
+  if (!region) return;
+
+  const text = buildShareText(result);
+  region.innerHTML = `
+    <section class="share-preview panel" aria-labelledby="share-preview-heading">
+      <h2 id="share-preview-heading" tabindex="-1">共有プレビュー</h2>
+      <p class="supporting">この画像とテキストだけが端末の共有機能・保存・コピーの対象です。回答内容、日時、端末情報、公開URLは含まれません。</p>
+      <canvas id="share-card" class="share-card" width="1080" height="1350" role="img" aria-label="${escapeHtml(`${result.title}。${FACTORS.map((factor) => `${factor.name} ${result.scores[factor.id]}`).join("、")}。体験用サンプル。`)}"></canvas>
+      <div class="actions share-actions">
+        <button id="share-result" class="primary" type="button">共有または画像を保存</button>
+        <button id="copy-share-text" class="secondary" type="button">共有用テキストをコピー</button>
+      </div>
+      <p id="share-status" class="share-status" role="status">画像を確認してから、共有または保存を選べます。</p>
+      <div id="share-text-fallback" class="share-text-fallback" hidden></div>
+    </section>
+  `;
+
+  const canvas = document.querySelector("#share-card");
+  try {
+    drawShareCard(canvas, result);
+  } catch {
+    renderSelectableShareText(text);
+    renderShareStatus("画像を生成できませんでした。共有用テキストを選択してコピーしてください。");
+  }
+
+  document.querySelector("#copy-share-text").addEventListener("click", () => copyShareText(text));
+  document.querySelector("#share-result").addEventListener("click", async () => {
+    const outcome = await shareResult(result, canvas);
+    if (outcome.kind === "shared") {
+      renderShareStatus("端末の共有画面を開きました。");
+    } else if (outcome.kind === "cancelled") {
+      renderShareStatus("共有をキャンセルしました。プレビューはこのまま確認できます。");
+    } else if (outcome.kind === "downloaded") {
+      if (outcome.copied) {
+        renderShareStatus("画像を保存用にダウンロードし、共有用テキストもコピーしました。");
+      } else {
+        renderSelectableShareText(outcome.text);
+        renderShareStatus("画像を保存用にダウンロードしました。下のテキストを選択してコピーしてください。");
+      }
+    } else if (outcome.copied) {
+      renderShareStatus("画像は生成できなかったため、共有用テキストをコピーしました。");
+    } else {
+      renderSelectableShareText(outcome.text);
+      renderShareStatus("画像の保存や自動コピーを使えません。下のテキストを選択してコピーしてください。");
+    }
+  });
+}
 function renderResult(answerCount) {
   const { scored, model } = completeResult(answerCount);
   const kind = answerCount === 20 ? "基本結果" : "精密結果";
   const demoBadge = state.mode === "demo" ? '<span class="profile-badge">デモ回答</span>' : "";
+  const shareModel = {
+    answerCount,
+    title: model.title,
+    summary: model.summary,
+    scores: scored.scores,
+  };
 
   app.innerHTML = `
     ${noticeMarkup()}
@@ -338,11 +433,11 @@ function renderResult(answerCount) {
     `}
     <div class="actions">
       ${answerCount === 20 ? '<button id="continue-button" class="primary" type="button">追加30問へ進む</button>' : ""}
-      <button class="secondary" type="button" disabled aria-describedby="share-help">共有プレビュー</button>
-      <p id="share-help" class="share-placeholder">共有機能は次の実装タスクで利用できます</p>
+      <button id="share-preview-button" class="secondary" type="button">共有プレビューを開く</button>
       <button id="result-history" class="secondary" type="button">履歴を見る</button>
       <button id="new-run" class="text-button" type="button">新しい体験を始める</button>
     </div>
+    <div id="share-preview-region"></div>
     ${warningMarkup()}
   `;
 
@@ -363,6 +458,10 @@ function renderResult(answerCount) {
     render();
   });
   document.querySelector("#result-history").addEventListener("click", showHistory);
+  document.querySelector("#share-preview-button").addEventListener("click", () => {
+    renderSharePreview(shareModel);
+    document.querySelector("#share-preview-heading")?.focus({ preventScroll: true });
+  });
   document.querySelector("#new-run").addEventListener("click", () => {
     state = transition(state, { type: "GO_START" });
     render();
