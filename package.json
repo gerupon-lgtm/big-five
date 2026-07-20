@@ -1,0 +1,9 @@
+{
+  "name": "big-five-ui-prototype",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prototype": "node prototype-big-five/prototype-server.mjs",
+    "test": "node --test prototype-big-five/tests/*.test.js"
+  }
+}
