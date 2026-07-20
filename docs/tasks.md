@@ -114,6 +114,11 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 1項目の因子・方向・IDを故意に壊し、テストが失敗する。
   - 独自言い換えや重複IDを検出する。
 
+
+#### 完了記録（2026-07-21）
+
+- 状態: 完了（F-002, F-014）。`DiagnosticDefinition`、50件の`QuestionDefinition`、5因子定義、独立authority fixtureと純粋バリデータを実装。
+- 検証: `node --test app/tests/definition-validator.test.js`、`npm.cmd run check`、`npm.cmd test`。
 ### T-003 採点・51分類・結果モデル
 
 - 依存: T-002
