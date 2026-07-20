@@ -26,12 +26,13 @@ test("scoreAnswers returns five bounded scale-internal scores", () => {
 
 test("reverse-keyed items invert a response before averaging", () => {
   const answers = Object.fromEntries(
-    SAMPLE_QUESTIONS.slice(0, 20).map((question) => [question.id, 3]),
+    SAMPLE_QUESTIONS.map((question) => [question.id, 3]),
   );
-  const positive = SAMPLE_QUESTIONS.slice(0, 20).find((question) => !question.reverse);
-  const reversed = SAMPLE_QUESTIONS.slice(0, 20).find((question) => question.reverse);
-  answers[positive.id] = 5;
-  answers[reversed.id] = 1;
-  const result = scoreAnswers(answers, 20);
-  assert.ok(Object.values(result.scores).some((score) => score > 50));
+  answers.O1 = 5;
+  answers.O2 = 1;
+  answers.O7 = 1;
+
+  const result = scoreAnswers(answers, 50);
+
+  assert.deepEqual(result.scores, { O: 55, C: 50, E: 50, A: 50, N: 50 });
 });
