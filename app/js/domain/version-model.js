@@ -96,6 +96,12 @@ export function createStartVersionViewModel(meta) {
     appVersion: validMeta.appVersion,
     versionLabel: `バージョン ${validMeta.appVersion}`,
     diagnosticVersions: copyDiagnosticVersions(validMeta.diagnosticVersions),
+    diagnosticVersionLabel: "診断バージョン",
+    diagnosticVersionItems: Object.freeze([
+      `尺度: ${validMeta.diagnosticVersions.scaleVersion}`,
+      `設問: ${validMeta.diagnosticVersions.questionVersion}`,
+      `採点: ${validMeta.diagnosticVersions.scoringVersion}`,
+    ]),
   });
 }
 

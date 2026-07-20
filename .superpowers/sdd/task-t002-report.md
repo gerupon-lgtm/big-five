@@ -2,7 +2,7 @@
 
 ## 実装概要
 
-- F-002 / F-014として、版付きかつ深く不変な`DiagnosticDefinition`、50件の`QuestionDefinition`、5因子定義を`app/js/data/diagnostic-definition.js`へ追加した。
+- F-002とT-002が担当するF-014版レジストリ・開始／共有モデル契約として、版付きかつ深く不変な`DiagnosticDefinition`、50件の`QuestionDefinition`、5因子定義を`app/js/data/diagnostic-definition.js`へ追加した。
 - IPIP公式日本語50項目、公式の項目別因子・キー、Donnellan et al. (2006) Appendix Aの20項目順を固定した。質問表示順は20項目プレビュー後に残り30項目を公式出典順で続け、`sourceItemId`を別保持する。
 - `app/js/domain/definition-validator.js`へ、構造・未知フィールド・版参照・ID・順序・因子件数・プレビュー整合性・入れ子レコード・明示注入を必須とする独立authority fixtureを検証する純粋関数を追加した。エラーコードは`DEFINITION_INVALID`。
 - 実行時定義を参照しない独立fixtureを`app/tests/fixtures/`へ追加し、50行全件、20項目順、改変検知、不変性、プロトタイプ非依存・非ランダムをテストした。
@@ -85,7 +85,7 @@
 
 - 要件v1.7の因子表示名・固定順へ修正し、情緒安定性と神経症傾向の逆方向関係、知性・想像力とBig Five開放性の対応を説明文へ明記した。
 - `FACTORS`と`FACTOR_METADATA`の重複配列を、名前付きオブジェクトの`FACTOR_DEFINITION_TABLE`へ統合し、表自体と公開定義を深く不変にした。
-- `AppMeta.diagnosticVersions`を診断版の唯一の正典とし、`DiagnosticDefinition`、開始画面モデル、共有モデルが同じ6項目を参照するようにした。構造・authority検証はこのレジストリの明示注入と完全一致を必須とし、空`scaleId`と形式上有効な無関係`*-v1`を拒否する。
+- `AppMeta.diagnosticVersions`を診断版の唯一の正典とし、`DiagnosticDefinition`、開始画面モデル・表示、共有モデル契約が同じ6項目を参照するようにした。構造・authority検証はこのレジストリの明示注入と完全一致を必須とし、空`scaleId`と形式上有効な無関係`*-v1`を拒否する。
 - authority fixtureはトップレベル3フィールド、公式ID 1〜50の完全かつ一意な行集合、20件の一意なpreview配列、質問IDと出典IDの対応、各行の`previewIncluded`整合をruntime比較前に検証する。
 - fixtureに依存しない代表公式値として出典ID 1・24・50の日本語文言、因子、方向、preview包含をハードコードした。
 
@@ -119,3 +119,29 @@
 - runtimeの診断版リテラル重複、因子メタデータの位置依存配列、fixtureとの循環参照はない。
 - 通常版の外部送信、ブラウザAPI依存、ランダム抽出、`prototype-big-five/`の変更・移植はない。
 - `package-lock.json`は開始時点からの未追跡ファイルであり、コミット対象外とする。
+
+## Standards最終修正（2026-07-21）
+
+### 指摘と解決
+
+- 開始版モデルへ、`AppMeta.diagnosticVersions`から生成する人向け見出しと尺度版・設問版・採点版の3項目リストを追加した。
+- 開始画面のアプリ版直下へ`section`、見出し、`ul`として描画し、plain textとリスト構造で読み上げ可能にした。画面構成の再設計はしていない。
+- T-002の完了範囲をF-002、およびT-002が担当するF-014の版レジストリ・開始／共有モデル契約に限定した。F-014の実際の共有出力はT-007、結果・履歴を含む全画面統合はT-008、説明画面の版表示はT-009に残る。
+
+### TDD証跡
+
+- RED: `node --test app/tests/app-shell.test.js app/tests/version-contract.test.js` → 4 tests、2 passed、2 failed。開始モデルの人向け版リスト欠落と、開始画面のcanonical尺度版・設問版・採点版の未描画を検出した。
+- GREEN: 同コマンド → 4 passed、0 failed。
+
+### 最終検証
+
+- `node --test app/tests/app-shell.test.js app/tests/version-contract.test.js` → 4 passed、0 failed。
+- `npm.cmd run check` → `Static check passed (8 JavaScript files, one canonical runtime version).`
+- `npm.cmd test` → 66 passed、0 failed。
+- `git diff --check` → 問題なし。
+
+### 変更ファイルと自己レビュー
+
+- 更新: `app/js/domain/version-model.js`、`app/js/presentation/start-screen.js`、`app/tests/app-shell.test.js`、`app/tests/version-contract.test.js`、`docs/tasks.md`、`docs/基本設計サマリ.md`、本報告。
+- 説明画面、結果・履歴画面、共有出力の未実装モジュールは作成していない。`prototype-big-five/`も変更していない。
+- 既存の未追跡`package-lock.json`はコミット対象外とする。

@@ -49,8 +49,23 @@ export function renderStartScreen(host, versionModel) {
     "現在は開始画面と版管理の基盤を構築しています。診断機能は今後のタスクで追加します。",
   );
 
-  appendTextElement(main, "p", versionModel.versionLabel, "version");
+  const appVersion = appendTextElement(main, "p", versionModel.versionLabel, "version");
+  const diagnosticVersion = documentObject.createElement("section");
+  diagnosticVersion.className = "diagnostic-version";
+  diagnosticVersion.setAttribute("aria-labelledby", "diagnostic-version-title");
+  const diagnosticVersionTitle = appendTextElement(
+    diagnosticVersion,
+    "h2",
+    versionModel.diagnosticVersionLabel,
+  );
+  diagnosticVersionTitle.id = "diagnostic-version-title";
+  const diagnosticVersionList = documentObject.createElement("ul");
+  for (const item of versionModel.diagnosticVersionItems) {
+    appendTextElement(diagnosticVersionList, "li", item);
+  }
+  diagnosticVersion.append(diagnosticVersionList);
+  main.append(diagnosticVersion);
   main.prepend(headingGroup);
-  main.insertBefore(status, main.lastElementChild);
+  main.insertBefore(status, appVersion);
   host.replaceChildren(main);
 }

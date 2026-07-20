@@ -33,11 +33,18 @@ test("diagnostic, start, and share models read the same canonical version regist
     appVersion: "mvp-0.1.0",
     versionLabel: "バージョン mvp-0.1.0",
     diagnosticVersions: expectedDiagnosticVersions,
+    diagnosticVersionLabel: "診断バージョン",
+    diagnosticVersionItems: [
+      "尺度: ipip-ja-50-v1",
+      "設問: ipip-ja-50-question-set-v1",
+      "採点: ipip-ja-50-scoring-v1",
+    ],
   });
   assert.deepEqual(shareMetadata, {
     appVersion: "mvp-0.1.0",
     diagnosticVersions: expectedDiagnosticVersions,
   });
+  assert.equal(Object.isFrozen(startModel.diagnosticVersionItems), true);
   assert.deepEqual(appMeta.diagnosticVersions, expectedDiagnosticVersions);
   assert.deepEqual(
     Object.fromEntries(Object.keys(expectedDiagnosticVersions).map((field) => [field, DiagnosticDefinition[field]])),
