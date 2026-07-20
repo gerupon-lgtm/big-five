@@ -1,0 +1,113 @@
+:root {
+  color-scheme: light;
+  font-family:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #19332f;
+  background: #f3f7f4;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 85% 5%, rgb(198 229 215 / 72%), transparent 32rem),
+    #f3f7f4;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+.app-shell {
+  width: min(100% - 32px, 720px);
+  margin-inline: auto;
+  padding-block: clamp(48px, 12vw, 104px) 40px;
+}
+
+.hero {
+  max-width: 640px;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #26705c;
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+h1 {
+  max-width: 12em;
+  margin: 0;
+  font-size: clamp(2rem, 9vw, 4.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.lead {
+  max-width: 38em;
+  margin: 24px 0 0;
+  color: #45635d;
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+  line-height: 1.8;
+}
+
+.status-card {
+  margin-top: clamp(36px, 8vw, 64px);
+  padding: clamp(24px, 5vw, 36px);
+  border: 1px solid #bed4cc;
+  border-radius: 24px;
+  background: rgb(255 255 255 / 82%);
+  box-shadow: 0 18px 50px rgb(42 81 69 / 10%);
+}
+
+.status-card h2 {
+  margin: 0;
+  font-size: clamp(1.2rem, 4vw, 1.6rem);
+}
+
+.status-card p {
+  margin: 12px 0 0;
+  color: #526b66;
+  line-height: 1.75;
+}
+
+.version {
+  margin: 24px 0 0;
+  color: #667d78;
+  font-size: 0.8rem;
+}
+
+noscript {
+  display: block;
+  margin: 24px;
+  padding: 16px;
+  border: 1px solid #9d3d3d;
+  background: #fff4f4;
+  color: #6f1f1f;
+}
+
+@media (max-width: 380px) {
+  .app-shell {
+    width: min(100% - 24px, 720px);
+  }
+
+  .status-card {
+    border-radius: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

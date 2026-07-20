@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "node app/dev-server.mjs",
     "prototype": "node prototype-big-five/prototype-server.mjs",
-    "test": "node --test prototype-big-five/tests/*.test.js"
+    "test": "node --test app/tests/*.test.js prototype-big-five/tests/*.test.js",
+    "test:formal": "node --test app/tests/*.test.js",
+    "check": "node scripts/check-static.mjs"
   }
 }
