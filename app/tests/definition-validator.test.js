@@ -13,7 +13,7 @@ import { IPIP_JA_50_AUTHORITY_FIXTURE } from "./fixtures/ipip-ja-50-authority.fi
 
 test("T-002 F-002 exports the canonical data-model schema", () => {
   assert.deepEqual(Object.keys(DiagnosticDefinition), [
-    "diagnosisId", "scaleId", "scaleVersion", "questionVersion", "scoringVersion",
+    "diagnosisId", "scaleId", "scaleName", "scaleVersion", "questionVersion", "scoringVersion",
     "resultTextVersion", "titleRuleVersion", "factorOrder", "previewQuestionIds",
     "detailQuestionIds", "source", "limitations",
   ]);
@@ -24,6 +24,7 @@ test("T-002 F-002 exports the canonical data-model schema", () => {
     "id", "displayName", "academicName", "lowPole", "highPole", "description",
   ]);
   assert.equal(typeof QuestionDefinitions[0].sourceItemId, "string");
+  assert.equal(DiagnosticDefinition.scaleName, "IPIP\u65e5\u672c\u8a9e50\u9805\u76ee\u7248");
   assert.equal(QuestionDefinitions[0].order, 1);
   assert.equal(Array.isArray(DiagnosticDefinition.limitations), true);
   assert.equal(DiagnosticDefinition.source.some(({ id }) => id === "ipip-permission"), true);

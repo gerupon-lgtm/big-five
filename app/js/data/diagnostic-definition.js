@@ -114,6 +114,7 @@ export const QuestionDefinitions = deepFreeze(
 export const DiagnosticDefinition = deepFreeze({
   diagnosisId: "big-five-ipip-ja",
   scaleId: "ipip-ja-50",
+  scaleName: "IPIP日本語50項目版",
   scaleVersion: "ipip-ja-50-v1",
   questionVersion: "ipip-ja-50-question-set-v1",
   scoringVersion: "ipip-ja-50-scoring-v1",

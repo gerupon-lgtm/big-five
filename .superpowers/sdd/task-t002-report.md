@@ -47,7 +47,7 @@
 ### 修正ファイルと自己レビュー
 
 - 更新: `app/js/data/diagnostic-definition.js`、`app/js/domain/definition-validator.js`、`app/tests/definition-validator.test.js`、`app/tests/fixtures/ipip-ja-50-authority.fixture.js`、`docs/基本設計サマリ.md`、本報告。
-- 確認: 旧`scaleName`、`definitionVersion`、`questionSetVersion`、`stagedOrder`、`sourceReferences`、`publicDomainTerms`、任意authority検証はruntime sourceから除去済み。runtime definitionはtest fixtureをimportしない。
+- 確認: `definitionVersion`、`questionSetVersion`、`sourceReferences`、`publicDomainTerms`、任意authority検証はruntime sourceから除去済み。runtime definitionはtest fixtureをimportしない。
 - `git diff --check` → 問題なし。
 
 ## 変更ファイル
@@ -61,7 +61,7 @@
 
 ## 自己レビュー
 
-- 公式出典番号を表示順と混同せず、`sourceItemId`と`stagedOrder`を分離した。
+- 公式出典番号を表示順と混同せず、`sourceItemId`と`order`を分離した。
 - 実行時定義はテストfixtureをimportせず、authority fixtureは検証関数へ明示注入するため、通常アプリにテストデータを持ち込まない。
 - `prototype-big-five/`へのimport・移植はしていない。ランダム選択・実行時変更も追加していない。
 - `package-lock.json`は開始時点から未追跡だったため、本タスクのコミット対象から除外する。
@@ -69,3 +69,12 @@
 ## 懸念事項
 
 - 当初ブリーフにあった「各因子5 positive / 5 negative」は公式項目別キーと一致しない。公式キーを優先する方針へブリーフが訂正済みであり、本実装は項目別の公式キーをそのまま保持する。
+## scaleName review repair (2026-07-21)
+
+- Finding: T-002 requires retrieval of the diagnostic scale name, but the canonical `DiagnosticDefinition` schema did not expose `scaleName`.
+- Resolution: Added required `scaleName` to `docs/data-model.md` section 2.2, the immutable runtime `DiagnosticDefinition`, the exact-field validator, and the schema regression test. The value is `IPIP日本語50項目版`.
+- Verification:
+  - `node --test app/tests/definition-validator.test.js` -> 8 passed, 0 failed
+  - `npm.cmd run check` -> Static check passed (8 JavaScript files, one canonical runtime version).
+  - `npm.cmd test` -> 60 passed, 0 failed
+  - `git diff --check` -> no issues

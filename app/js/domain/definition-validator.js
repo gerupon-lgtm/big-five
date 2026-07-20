@@ -24,7 +24,7 @@ function hasVersion(value) {
 }
 
 
-const CANONICAL_DIAGNOSTIC_FIELDS = ["diagnosisId", "scaleId", "scaleVersion", "questionVersion", "scoringVersion", "resultTextVersion", "titleRuleVersion", "factorOrder", "previewQuestionIds", "detailQuestionIds", "source", "limitations"];
+const CANONICAL_DIAGNOSTIC_FIELDS = ["diagnosisId", "scaleId", "scaleName", "scaleVersion", "questionVersion", "scoringVersion", "resultTextVersion", "titleRuleVersion", "factorOrder", "previewQuestionIds", "detailQuestionIds", "source", "limitations"];
 const CANONICAL_FACTOR_FIELDS = ["id", "displayName", "academicName", "lowPole", "highPole", "description"];
 const CANONICAL_QUESTION_FIELDS = ["id", "order", "textJa", "factorId", "keyedDirection", "sourceItemId", "previewIncluded"];
 const CANONICAL_SOURCE_FIELDS = ["id", "url", "label"];
@@ -46,7 +46,7 @@ export function validateDefinitionStructure(value) {
   if (!hasExactFields(value, ROOT_FIELDS)) failStructure();
   const { diagnostic, factors, questions } = value;
   if (!hasExactFields(diagnostic, CANONICAL_DIAGNOSTIC_FIELDS) || !Array.isArray(factors) || factors.length !== 5 || !Array.isArray(questions) || questions.length !== 50) failStructure();
-  if (diagnostic.diagnosisId !== "big-five-ipip-ja" || typeof diagnostic.scaleId !== "string" || !["scaleVersion", "questionVersion", "scoringVersion", "resultTextVersion", "titleRuleVersion"].every((field) => hasVersion(diagnostic[field])) || diagnostic.titleRuleVersion !== "title-rule-v1") failStructure();
+  if (diagnostic.diagnosisId !== "big-five-ipip-ja" || typeof diagnostic.scaleId !== "string" || typeof diagnostic.scaleName !== "string" || diagnostic.scaleName.length === 0 || !["scaleVersion", "questionVersion", "scoringVersion", "resultTextVersion", "titleRuleVersion"].every((field) => hasVersion(diagnostic[field])) || diagnostic.titleRuleVersion !== "title-rule-v1") failStructure();
   if (!Array.isArray(diagnostic.factorOrder) || diagnostic.factorOrder.join(",") !== FACTOR_IDS.join(",")) failStructure();
   if (!factors.every((factor) => hasCanonicalStrings(factor, CANONICAL_FACTOR_FIELDS)) || factors.map(({ id }) => id).join(",") !== diagnostic.factorOrder.join(",")) failStructure();
   if (!questions.every((question) => hasExactFields(question, CANONICAL_QUESTION_FIELDS))) failStructure();

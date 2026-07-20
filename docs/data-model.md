@@ -43,6 +43,7 @@
 |---|---|---|---|
 | diagnosisId | string | ○ | `big-five-ipip-ja` |
 | scaleId | string | ○ | 採用尺度ID |
+| scaleName | string | ○ | `IPIP日本語50項目版` |
 | scaleVersion | string | ○ | 原尺度・日本語項目集合の版 |
 | questionVersion | string | ○ | 文言・順序・20問集合の版 |
 | scoringVersion | string | ○ | 因子割当・逆転・換算の版 |
