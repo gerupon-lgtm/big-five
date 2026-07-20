@@ -2,9 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.2 |
+| 設計版 | 0.3 |
 | 作成日 | 2026-07-20 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.6 |
+| 更新日 | 2026-07-21 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.7 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -133,8 +134,11 @@ Q-012確定前は`object-fit: contain`で全体表示し、共有カードでも
 | version | string | ○ | 演出定義版 |
 | label | string | ○ | 利用者向け名称 |
 | colors | object | ○ | background/surface/primary/accent/text/chart |
+| characterSeparation | object | ○ | 猫用の明暗縁取り、影、ニュートラル背景プレート候補。選択色そのものは変更しない |
 | description | string | ○ | 象徴的な提案である説明 |
 | contrastVerified | boolean | ○ | WCAG確認済みか |
+
+同系色の猫を理由にPaletteDefinitionを無効化しない。共有カード描画はCharacterManifest、PaletteDefinition、cardTemplateVersionから視認性補助を決定し、猫の再配色や候補パレットの除外を行わない。
 
 ### 2.9 FragranceSuggestion
 
