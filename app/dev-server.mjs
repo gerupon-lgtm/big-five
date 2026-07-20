@@ -12,14 +12,23 @@ const MIME_TYPES = new Map([
   [".svg", "image/svg+xml"],
 ]);
 
-function resolveRequestPath(rootDir, requestUrl) {
+export function isPathWithinRoot(rootDir, candidatePath, pathApi = path) {
+  const relativeToRoot = pathApi.relative(rootDir, candidatePath);
+
+  return (
+    relativeToRoot !== ".." &&
+    !relativeToRoot.startsWith(`..${pathApi.sep}`) &&
+    !pathApi.isAbsolute(relativeToRoot)
+  );
+}
+
+export function resolveRequestPath(rootDir, requestUrl) {
   const url = new URL(requestUrl, "http://localhost");
   const pathname = decodeURIComponent(url.pathname);
   const relativePath = pathname === "/" ? "index.html" : pathname.slice(1);
-  const absolutePath = path.resolve(rootDir, relativePath);
-  const rootPrefix = `${path.resolve(rootDir)}${path.sep}`.toLowerCase();
-
-  if (!absolutePath.toLowerCase().startsWith(rootPrefix)) {
+  const absoluteRoot = path.resolve(rootDir);
+  const absolutePath = path.resolve(absoluteRoot, relativePath);
+  if (!isPathWithinRoot(absoluteRoot, absolutePath)) {
     return null;
   }
 

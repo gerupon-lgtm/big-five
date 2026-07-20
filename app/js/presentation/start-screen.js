@@ -1,5 +1,6 @@
 function appendTextElement(parent, tagName, text, className) {
-  const element = document.createElement(tagName);
+  const documentObject = parent.ownerDocument ?? document;
+  const element = documentObject.createElement(tagName);
   element.textContent = text;
   if (className) {
     element.className = className;
@@ -9,10 +10,11 @@ function appendTextElement(parent, tagName, text, className) {
 }
 
 export function renderStartScreen(host, versionModel) {
-  const main = document.createElement("main");
+  const documentObject = host.ownerDocument ?? document;
+  const main = documentObject.createElement("main");
   main.className = "app-shell";
 
-  const headingGroup = document.createElement("header");
+  const headingGroup = documentObject.createElement("header");
   headingGroup.className = "hero";
   appendTextElement(
     headingGroup,
@@ -32,7 +34,7 @@ export function renderStartScreen(host, versionModel) {
     "lead",
   );
 
-  const status = document.createElement("section");
+  const status = documentObject.createElement("section");
   status.className = "status-card";
   status.setAttribute("aria-labelledby", "build-status-title");
   const statusTitle = appendTextElement(
