@@ -117,7 +117,9 @@ function downloadBlob(blob, filename) {
   link.href = url;
   link.download = filename;
   link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  if (typeof URL.revokeObjectURL === "function") {
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
   return true;
 }
 

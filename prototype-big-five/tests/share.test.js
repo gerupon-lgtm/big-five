@@ -36,3 +36,45 @@ test("share falls back to selectable text without browser sharing capabilities",
     else delete globalThis.navigator;
   }
 });
+test("share download stays safe when URL cannot revoke an object URL", async () => {
+  const descriptors = Object.fromEntries(
+    ["document", "navigator", "URL", "setTimeout"].map((name) => [name, Object.getOwnPropertyDescriptor(globalThis, name)]),
+  );
+  let clicked = false;
+  Object.defineProperties(globalThis, {
+    document: {
+      configurable: true,
+      value: {
+        createElement: () => ({ click: () => { clicked = true; } }),
+      },
+    },
+    navigator: { configurable: true, value: undefined },
+    URL: {
+      configurable: true,
+      value: { createObjectURL: () => "blob:sample" },
+    },
+    setTimeout: {
+      configurable: true,
+      value: (callback) => { callback(); return 0; },
+    },
+  });
+
+  try {
+    const outcome = await shareResult({
+      answerCount: 20,
+      title: "探究する調整役",
+      scores: { O: 82, C: 68, E: 41, A: 74, N: 57 },
+    }, {
+      toBlob: (callback) => callback(new Blob(["png"], { type: "image/png" })),
+    });
+
+    assert.equal(outcome.kind, "downloaded");
+    assert.equal(outcome.copied, false);
+    assert.equal(clicked, true);
+  } finally {
+    for (const [name, descriptor] of Object.entries(descriptors)) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else delete globalThis[name];
+    }
+  }
+});
