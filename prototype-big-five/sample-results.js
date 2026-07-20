@@ -23,8 +23,8 @@ export function buildResultModel({ answerCount, scores }) {
     summary: `${factorNames[leadingFactors[0]]}と${factorNames[leadingFactors[1]]}が、今回のプロフィールに特に表れています。`,
     reason: `回答の集計: ${factorNames[leadingFactors[0]]} ${scores[leadingFactors[0]]}・${factorNames[leadingFactors[1]]} ${scores[leadingFactors[1]]}です。`,
     detail: answerCount === 50
-      ? "50項目では、傾向に応じた強みと回答のばらつきが十分に少なくなる場面まで確認できます。"
-      : "20項目は粗い差分を捉えた基本結果です。追加30問で結果を使える精度にできます。",
+      ? "50問の回答を使った体験用サンプル結果です。精度・妥当性は検証していません。"
+      : "20問の結果は基本サンプルです。追加30問に答えると、より多くの回答を使ったサンプル結果を表示します。",
     disclaimer: "0〜100は尺度内スコアであり、優劣や能力差ではありません。",
   };
 }

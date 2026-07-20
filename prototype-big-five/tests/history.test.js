@@ -104,3 +104,31 @@ test("compatible results produce factor deltas", () => {
   const right = { ...base, answerCount: 20, scores: { O: 50, C: 25, E: 75, A: 75, N: 50 } };
   assert.deepEqual(compareResults(left, right), { O: 25, C: -25, E: 0, A: 25, N: 25 });
 });
+test("two legacy results missing all comparison metadata cannot be compared", () => {
+  const scores = { O: 25, C: 50, E: 75, A: 50, N: 25 };
+  const left = { answerCount: 20, scores };
+  const right = { answerCount: 20, scores };
+
+  assert.equal(canCompare(left, right).ok, false);
+  assert.throws(() => compareResults(left, right), TypeError);
+});
+
+test("results with partially missing comparison metadata cannot be compared", () => {
+  const scores = { O: 25, C: 50, E: 75, A: 50, N: 25 };
+  const left = { ...base, answerCount: 20, scores };
+  const right = { ...base, answerCount: 20, scores };
+  delete right.scoringVersion;
+
+  assert.equal(canCompare(left, right).ok, false);
+  assert.throws(() => compareResults(left, right), TypeError);
+});
+
+test("comparison rejects invalid answer counts and incomplete scores while current results remain valid", () => {
+  const scores = { O: 25, C: 50, E: 75, A: 50, N: 25 };
+  const validLeft = { ...base, answerCount: 20, scores };
+  const validRight = { ...base, answerCount: 20, scores: { ...scores, O: 50 } };
+
+  assert.equal(canCompare(validLeft, validRight).ok, true);
+  assert.equal(canCompare({ ...validLeft, answerCount: 30 }, validRight).ok, false);
+  assert.equal(canCompare({ ...validLeft, scores: { O: 25 } }, validRight).ok, false);
+});

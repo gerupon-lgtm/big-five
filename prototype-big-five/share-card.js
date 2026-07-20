@@ -123,8 +123,10 @@ function downloadBlob(blob, filename) {
   return true;
 }
 
-export async function shareResult(result, canvas) {
+export async function shareResult(result, canvas, { imageReady = true } = {}) {
   const text = buildShareText(result);
+  if (!imageReady) return { kind: "text", text, copied: await copyText(text) };
+
   let blob;
 
   try {

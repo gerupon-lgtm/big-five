@@ -38,8 +38,14 @@ test("result model uses fixed factor order to break score ties", () => {
 });
 
 test("result model distinguishes the 20- and 50-item result detail", () => {
-  assert.match(buildResultModel({ answerCount: 20, scores: standardScores }).detail, /20項目/);
-  assert.match(buildResultModel({ answerCount: 50, scores: standardScores }).detail, /50項目/);
+  assert.equal(
+    buildResultModel({ answerCount: 20, scores: standardScores }).detail,
+    "20問の結果は基本サンプルです。追加30問に答えると、より多くの回答を使ったサンプル結果を表示します。",
+  );
+  assert.equal(
+    buildResultModel({ answerCount: 50, scores: standardScores }).detail,
+    "50問の回答を使った体験用サンプル結果です。精度・妥当性は検証していません。",
+  );
 });
 
 test("result model and radar reject missing and non-finite scores", () => {

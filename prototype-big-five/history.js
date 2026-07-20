@@ -1,3 +1,5 @@
+import { SCORE_FACTORS, validateScores } from "./score-validation.js";
+
 export const STORAGE_KEY = "bigFivePrototype:v1";
 
 const emptyStore = () => ({ inProgress: null, history: [] });
@@ -65,18 +67,33 @@ export function clearHistory(storage) {
   writeStore(storage, emptyStore());
 }
 
+const COMPARISON_METADATA_FIELDS = ["instrumentId", "instrumentVersion", "scoringVersion"];
+
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+export function isValidComparisonResult(result) {
+  if (!isRecord(result) || ![20, 50].includes(result.answerCount)) return false;
+  if (!COMPARISON_METADATA_FIELDS.every((field) => isNonEmptyString(result[field]))) return false;
+  try {
+    validateScores(result.scores);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function canCompare(left, right) {
-  const fields = ["answerCount", "instrumentId", "instrumentVersion", "scoringVersion"];
+  if (!isValidComparisonResult(left)) return { ok: false, reason: "left result schema is invalid" };
+  if (!isValidComparisonResult(right)) return { ok: false, reason: "right result schema is invalid" };
+  const fields = ["answerCount", ...COMPARISON_METADATA_FIELDS];
   const mismatch = fields.find((field) => left[field] !== right[field]);
-  return mismatch
-    ? { ok: false, reason: `${mismatch} values do not match` }
-    : { ok: true, reason: "" };
+  return mismatch ? { ok: false, reason: `${mismatch} values do not match` } : { ok: true, reason: "" };
 }
 
 export function compareResults(left, right) {
   const compatibility = canCompare(left, right);
   if (!compatibility.ok) throw new TypeError(compatibility.reason);
-  return Object.fromEntries(
-    Object.keys(left.scores).map((factor) => [factor, right.scores[factor] - left.scores[factor]]),
-  );
+  return Object.fromEntries(SCORE_FACTORS.map((factor) => [factor, right.scores[factor] - left.scores[factor]]));
 }

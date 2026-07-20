@@ -9,6 +9,7 @@ import {
   clearHistory,
   compareResults,
   deleteResult,
+  isValidComparisonResult,
   loadStore,
   saveProgress,
   saveResult,
@@ -360,16 +361,21 @@ function renderSharePreview(result) {
   `;
 
   const canvas = document.querySelector("#share-card");
+  const shareButton = document.querySelector("#share-result");
+  let imageReady = true;
   try {
     drawShareCard(canvas, result);
   } catch {
+    imageReady = false;
+    shareButton.disabled = true;
+    shareButton.textContent = "画像を共有・保存できません";
     renderSelectableShareText(text);
-    renderShareStatus("画像を生成できませんでした。共有用テキストを選択してコピーしてください。");
+    renderShareStatus("画像を生成できませんでした。共有用テキストのコピーは利用できます。");
   }
 
   document.querySelector("#copy-share-text").addEventListener("click", () => copyShareText(text));
   document.querySelector("#share-result").addEventListener("click", async () => {
-    const outcome = await shareResult(result, canvas);
+    const outcome = await shareResult(result, canvas, { imageReady });
     if (outcome.kind === "shared") {
       renderShareStatus("端末の共有画面を開きました。");
     } else if (outcome.kind === "cancelled") {
@@ -473,12 +479,7 @@ function validHistoryResults() {
     result &&
     typeof result.id === "string" &&
     typeof result.title === "string" &&
-    [20, 50].includes(result.answerCount) &&
-    result.scores &&
-    FACTORS.every((factor) => {
-      const score = result.scores[factor.id];
-      return Number.isFinite(score) && score >= 0 && score <= 100;
-    })
+    isValidComparisonResult(result)
   ));
 }
 
