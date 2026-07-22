@@ -1,8 +1,6 @@
+import { FACTOR_ORDER } from "../data/factor-order.js";
+
 const ROOT_FIELDS = ["diagnostic", "factors", "questions"];
-const FACTOR_IDS = [
-  "intellectImagination", "conscientiousness", "extraversion", "agreeableness",
-  "emotionalStability",
-];
 const DIRECTIONS = new Set(["positive", "negative"]);
 
 function isRecord(value) {
@@ -48,15 +46,15 @@ export function validateDefinitionStructure(value, canonicalVersions) {
   if (!hasExactFields(diagnostic, CANONICAL_DIAGNOSTIC_FIELDS) || !Array.isArray(factors) || factors.length !== 5 || !Array.isArray(questions) || questions.length !== 50) failStructure();
   if (!hasCanonicalStrings(canonicalVersions, CANONICAL_VERSION_FIELDS)) failStructure();
   if (diagnostic.diagnosisId !== "big-five-ipip-ja" || typeof diagnostic.scaleName !== "string" || diagnostic.scaleName.length === 0 || !CANONICAL_VERSION_FIELDS.every((field) => diagnostic[field] === canonicalVersions[field])) failStructure();
-  if (!Array.isArray(diagnostic.factorOrder) || diagnostic.factorOrder.join(",") !== FACTOR_IDS.join(",")) failStructure();
+  if (!Array.isArray(diagnostic.factorOrder) || diagnostic.factorOrder.join(",") !== FACTOR_ORDER.join(",")) failStructure();
   if (!factors.every((factor) => hasCanonicalStrings(factor, CANONICAL_FACTOR_FIELDS)) || factors.map(({ id }) => id).join(",") !== diagnostic.factorOrder.join(",")) failStructure();
   if (!questions.every((question) => hasExactFields(question, CANONICAL_QUESTION_FIELDS))) failStructure();
-  if (!questions.every(({ id, order, textJa, factorId, keyedDirection, sourceItemId, previewIncluded }) => typeof id === "string" && Number.isInteger(order) && order >= 1 && order <= 50 && typeof textJa === "string" && textJa.length > 0 && FACTOR_IDS.includes(factorId) && DIRECTIONS.has(keyedDirection) && typeof sourceItemId === "string" && /^(?:[1-9]|[1-4][0-9]|50)$/.test(sourceItemId) && typeof previewIncluded === "boolean")) failStructure();
+  if (!questions.every(({ id, order, textJa, factorId, keyedDirection, sourceItemId, previewIncluded }) => typeof id === "string" && Number.isInteger(order) && order >= 1 && order <= 50 && typeof textJa === "string" && textJa.length > 0 && FACTOR_ORDER.includes(factorId) && DIRECTIONS.has(keyedDirection) && typeof sourceItemId === "string" && /^(?:[1-9]|[1-4][0-9]|50)$/.test(sourceItemId) && typeof previewIncluded === "boolean")) failStructure();
   if (!["id", "order", "sourceItemId"].every((field) => hasUniqueValues(questions.map((question) => question[field]))) || !questions.every((question, index) => question.order === index + 1)) failStructure();
   if (!Array.isArray(diagnostic.previewQuestionIds) || diagnostic.previewQuestionIds.length !== 20 || !hasUniqueValues(diagnostic.previewQuestionIds) || !Array.isArray(diagnostic.detailQuestionIds) || diagnostic.detailQuestionIds.length !== 50 || !hasUniqueValues(diagnostic.detailQuestionIds)) failStructure();
   const questionIds = new Set(questions.map(({ id }) => id));
   if (!diagnostic.previewQuestionIds.every((id) => questionIds.has(id)) || !diagnostic.detailQuestionIds.every((id) => questionIds.has(id)) || !questions.every((question, index) => diagnostic.detailQuestionIds[index] === question.id) || !questions.every((question) => question.previewIncluded === diagnostic.previewQuestionIds.includes(question.id))) failStructure();
-  if (!FACTOR_IDS.every((factorId) => questions.filter((question) => question.factorId === factorId).length === 10 && questions.filter((question) => question.factorId === factorId && question.previewIncluded).length === 4)) failStructure();
+  if (!FACTOR_ORDER.every((factorId) => questions.filter((question) => question.factorId === factorId).length === 10 && questions.filter((question) => question.factorId === factorId && question.previewIncluded).length === 4)) failStructure();
   if (!Array.isArray(diagnostic.source) || diagnostic.source.length < 4 || !diagnostic.source.every((reference) => hasCanonicalStrings(reference, CANONICAL_SOURCE_FIELDS)) || !hasUniqueValues(diagnostic.source.map(({ id }) => id)) || !diagnostic.source.some(({ id }) => id === "ipip-permission")) failStructure();
   if (!Array.isArray(diagnostic.limitations) || diagnostic.limitations.length < 3 || !diagnostic.limitations.every((limitation) => typeof limitation === "string" && limitation.length > 0)) failStructure();
   return value;
@@ -68,7 +66,7 @@ function validateAuthorityFixture(authorityFixture) {
   if (!rows.every(({ sourceItemId, textJa, factorId, keyedDirection, previewIncluded }) =>
     typeof sourceItemId === "string" &&
     typeof textJa === "string" && textJa.length > 0 &&
-    FACTOR_IDS.includes(factorId) && DIRECTIONS.has(keyedDirection) &&
+    FACTOR_ORDER.includes(factorId) && DIRECTIONS.has(keyedDirection) &&
     typeof previewIncluded === "boolean")) failAuthority();
 
   const sourceItemIds = rows.map(({ sourceItemId }) => sourceItemId);

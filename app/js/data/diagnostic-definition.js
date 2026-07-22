@@ -1,4 +1,5 @@
 import { appMeta } from "../config/app-meta.js";
+import { FACTOR_ORDER } from "./factor-order.js";
 
 const SOURCE_ITEMS = [
   [1, "盛り上げ役である", "extraversion", "positive"],
@@ -84,7 +85,7 @@ const FACTOR_DEFINITION_TABLE = deepFreeze({
   emotionalStability: { id: "emotionalStability", displayName: "情緒安定性", academicName: "Emotional Stability", lowPole: "感情の変化を感じやすい傾向", highPole: "落ち着きを保ちやすい傾向", description: "神経症傾向と逆方向の尺度であり、気分やストレスへの反応の傾向を表します。" },
 });
 
-export const FactorDefinitions = deepFreeze(Object.values(FACTOR_DEFINITION_TABLE));
+export const FactorDefinitions = deepFreeze(FACTOR_ORDER.map((factorId) => FACTOR_DEFINITION_TABLE[factorId]));
 
 export const QuestionDefinitions = deepFreeze(
   stagedSourceItemIds.map((sourceItemId, index) => {
@@ -111,7 +112,7 @@ export const DiagnosticDefinition = deepFreeze({
   scoringVersion: appMeta.diagnosticVersions.scoringVersion,
   resultTextVersion: appMeta.diagnosticVersions.resultTextVersion,
   titleRuleVersion: appMeta.diagnosticVersions.titleRuleVersion,
-  factorOrder: FactorDefinitions.map(({ id }) => id),
+  factorOrder: FACTOR_ORDER,
   previewQuestionIds: QuestionDefinitions.slice(0, 20).map(({ id }) => id),
   detailQuestionIds: QuestionDefinitions.map(({ id }) => id),
   source: [

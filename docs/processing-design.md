@@ -152,7 +152,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 - 上記の0.1を0.25へ置換
 
-該当時はBoundaryFlagを生成する。称号は変えず、結果モデルへ「複数の傾向が近接している」補足を追加する。
+該当時はBoundaryFlagを生成する。50問のBoundaryFlagは閾値0.1、20問は0.25との組だけを有効とする。称号は変えず、結果モデルへ「複数の傾向が近接している」補足を追加する。
 
 ## 6. 結果モデル生成
 
@@ -185,7 +185,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 8. 表示した文章をResultSnapshotへ複製して当時性を保存。
 9. 生回答をResultSnapshotへ渡さない。
 
-FactorResult、TitleClassification、RenderedResultTextはexact schemaで検証し、未知フィールドやネストした生回答を拒否する。Q-006未確定時は本番結果文を完成扱いにしない。
+FactorResult、TitleClassification、RenderedResultTextはexact schemaで検証し、未知フィールドやネストした生回答、設問数から到達不能な因子平均、設問数と閾値が矛盾するBoundaryFlagを拒否する。Q-006未確定時は本番結果文を完成扱いにしない。
 
 ## 7. 履歴保存
 

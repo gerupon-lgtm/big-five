@@ -53,3 +53,24 @@
 - `npm.cmd test`: 81 passed, 0 failed.
 - `npm.cmd run check`: passed (15 JavaScript files, one canonical runtime version).
 - `git diff --check`: passed.
+
+## P2 re-review remediation
+
+- RED: `rawMean = 4.00000000005` passed 50-item classification although no 10 keyed answers can produce it.
+- GREEN: classification requires `rawMean * itemCount` to be an integer within epsilon; reachable means continue to use epsilon tie handling.
+- RED: result composition accepted BoundaryFlags with 50/0.25 and 20/0.1 pairs.
+- GREEN: only 50/0.1 and 20/0.25 threshold pairs are valid.
+- RED: fixed-text definitions accepted contradictory mode/questionCount and preview-targeted definitions disabled for preview.
+- GREEN: preview20/20 and detail50/50 consistency and preview reachability are enforced; generic detail-capable definitions may remain preview-disabled.
+- RED: selector null and unknown-field inputs escaped the stable definition error contract.
+- GREEN: selector validates an exact `{ definitions, version, context }` record before destructuring.
+- RED: diagnostic definition and validator retained separate factor-order literals.
+- GREEN: diagnostic definitions, validation, scoring, classification, and title profiles share `FactorOrderDefinition.factorIds`; existing T-002 contracts remain green.
+
+## P2 verification
+
+- `node --test app/tests/scoring-title-contract.test.js`: 18 passed, 0 failed.
+- `node --test app/tests/definition-validator.test.js`: 13 passed, 0 failed.
+- `npm.cmd test`: 84 passed, 0 failed.
+- `npm.cmd run check`: passed (15 JavaScript files, one canonical runtime version).
+- `git diff --check`: passed.

@@ -8,6 +8,7 @@ import {
   QuestionDefinitions,
 } from "../js/data/diagnostic-definition.js";
 import { appMeta } from "../js/config/app-meta.js";
+import { FactorOrderDefinition } from "../js/data/factor-order.js";
 import { validateDefinitionAuthority, validateDefinitionStructure } from "../js/domain/definition-validator.js";
 import { IPIP_JA_50_AUTHORITY_FIXTURE } from "./fixtures/ipip-ja-50-authority.fixture.js";
 const definitionVersions = appMeta.diagnosticVersions;
@@ -31,6 +32,7 @@ test("T-002 F-002 exports the canonical data-model schema", () => {
   assert.equal(QuestionDefinitions[0].order, 1);
   assert.equal(Array.isArray(DiagnosticDefinition.limitations), true);
   assert.equal(DiagnosticDefinition.source.some(({ id }) => id === "ipip-permission"), true);
+  assert.equal(DiagnosticDefinition.factorOrder, FactorOrderDefinition.factorIds);
 });
 
 test("T-002 F-014 requires an independent fixture for authority validation", () => {

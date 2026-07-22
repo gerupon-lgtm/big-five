@@ -131,7 +131,7 @@ test("T-003 F-005 converts every answer value with the keyed direction and honor
   }
 
   const exactBoundary = classifyTitle({
-    factorResults: factorResults([2.5, 3.5, 2.5001, 3.4999, 3], {
+    factorResults: factorResults([2.5, 3.5, 3, 3, 3], {
       intellectImagination: { directionalSupportCount: 2 },
       conscientiousness: { directionalSupportCount: 4 },
     }),
@@ -305,19 +305,43 @@ test("T-003 F-016 treats real-answer salience 1.7 and 4.3 as tied before support
   ]);
 });
 
+test("T-003 F-016 rejects means that cannot be reached by the question count", () => {
+  const impossible = factorResults([4.00000000005, 3, 3, 3, 3], {
+    intellectImagination: { directionalSupportCount: 4 },
+  });
+  assert.throws(() => classifyTitle({
+    factorResults: impossible,
+    questionCount: 50,
+    titleProfiles: TitleProfileDefinitions,
+  }), /TITLE_CLASSIFICATION_INVALID/);
+
+  assert.doesNotThrow(() => classifyTitle({
+    factorResults: factorResults([4, 3, 3, 3, 3], {
+      intellectImagination: { directionalSupportCount: 4 },
+    }),
+    questionCount: 50,
+    titleProfiles: TitleProfileDefinitions,
+  }));
+});
+
 test("T-003 F-016 title-rule-v1 flags the correct 20 and 50 item boundary thresholds without changing selection", () => {
-  const closeMeans = factorResults([3.6, 3.51, 3.5, 3, 3], {
+  const previewMeans = factorResults([4, 3.75, 3.5, 3, 3], {
     intellectImagination: { directionalSupportCount: 4 },
     conscientiousness: { directionalSupportCount: 4 },
     extraversion: { directionalSupportCount: 4 },
   });
+  const detailMeans = factorResults([4, 3.6, 3.5, 3, 3], {
+    intellectImagination: { directionalSupportCount: 10 },
+    conscientiousness: { directionalSupportCount: 6 },
+    extraversion: { directionalSupportCount: 5 },
+  });
   const preview = classifyTitle({
-    factorResults: closeMeans,
+    factorResults: previewMeans,
     questionCount: 20,
     titleProfiles: TitleProfileDefinitions,
   });
   const detail = classifyTitle({
-    factorResults: closeMeans,
+    factorResults: detailMeans,
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
   });
@@ -329,12 +353,12 @@ test("T-003 F-016 title-rule-v1 flags the correct 20 and 50 item boundary thresh
   assert.equal(detail.boundaryFlags.some(({ type }) => type === "second-third-salience-near-tie"), true);
 
   const previewOnly = classifyTitle({
-    factorResults: factorResults([3.74, 3, 3, 3, 3], { intellectImagination: { directionalSupportCount: 4 } }),
+    factorResults: factorResults([3.75, 3, 3, 3, 3], { intellectImagination: { directionalSupportCount: 4 } }),
     questionCount: 20,
     titleProfiles: TitleProfileDefinitions,
   });
   const detailOnly = classifyTitle({
-    factorResults: factorResults([3.74, 3, 3, 3, 3], { intellectImagination: { directionalSupportCount: 4 } }),
+    factorResults: factorResults([3.8, 3, 3, 3, 3], { intellectImagination: { directionalSupportCount: 8 } }),
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
   });
@@ -435,6 +459,36 @@ test("T-003 F-005 F-006 result composition rejects raw-answer and unknown-field 
   }
 });
 
+test("T-003 F-005 result composition rejects mismatched BoundaryFlag thresholds", () => {
+  const factors = factorResults([3.5, 3, 3, 3, 3], {
+    intellectImagination: { directionalSupportCount: 4 },
+  });
+  const baseClassification = classifyTitle({
+    factorResults: factors,
+    questionCount: 50,
+    titleProfiles: TitleProfileDefinitions,
+  });
+  const renderedTexts = [{
+    id: "rendered-id",
+    version: "result-text-v1",
+    section: "summary",
+    text: "",
+    evidenceRefs: [],
+  }];
+  const mismatches = [
+    { type: "factor-near-band-boundary", factorId: "intellectImagination", boundary: 3.5, threshold: 0.25, questionCount: 50 },
+    { type: "factor-near-band-boundary", factorId: "intellectImagination", boundary: 3.5, threshold: 0.1, questionCount: 20 },
+  ];
+
+  for (const flag of mismatches) {
+    assert.throws(() => composeResultModel({
+      factors,
+      classification: { ...baseClassification, boundaryFlags: [flag] },
+      renderedTexts,
+    }), /RESULT_MODEL_INVALID/);
+  }
+});
+
 test("T-003 F-006 validates versioned fixed-text structure and selects explicit conditions deterministically", () => {
   const definitions = [
     {
@@ -507,10 +561,35 @@ test("T-003 F-006 rejects malformed fixed-text fields, evidence references, cond
     [{ ...valid, evidenceRefs: [""] }],
     [{ ...valid, appliesTo: { unknown: true } }],
     [{ ...valid, appliesTo: { mode: "unknown" } }],
+    [{ ...valid, appliesTo: { mode: "preview20", questionCount: 50 } }],
+    [{ ...valid, appliesTo: { mode: "detail50", questionCount: 20 } }],
+    [{ ...valid, appliesTo: { mode: "preview20" }, previewAllowed: false }],
+    [{ ...valid, appliesTo: { questionCount: 20 }, previewAllowed: false }],
     [valid, { ...valid }],
   ];
 
   for (const definitions of cases) {
     assert.throws(() => validateResultTextDefinitions(definitions), /RESULT_TEXT_DEFINITION_INVALID/);
+  }
+  assert.doesNotThrow(() => validateResultTextDefinitions([{ ...valid, appliesTo: {}, previewAllowed: false }]));
+});
+
+test("T-003 F-006 selector normalizes malformed input to the definition error code", () => {
+  const definitions = [{
+    id: "valid",
+    version: "result-text-v1",
+    appliesTo: {},
+    section: "summary",
+    text: "",
+    evidenceRefs: [],
+    previewAllowed: true,
+  }];
+  const validInput = {
+    definitions,
+    version: "result-text-v1",
+    context: { mode: "preview20", questionCount: 20 },
+  };
+  for (const input of [null, [], { definitions }, { ...validInput, unknown: true }]) {
+    assert.throws(() => selectResultTextDefinitions(input), /RESULT_TEXT_DEFINITION_INVALID/);
   }
 });

@@ -32,12 +32,20 @@ function validAppliesTo(value) {
     CONDITION_FIELDS.includes(field) && validCondition(field, value[field]));
 }
 
+function validDefinitionReachability(appliesTo, previewAllowed) {
+  if (Object.hasOwn(appliesTo, "mode") && Object.hasOwn(appliesTo, "questionCount") &&
+    ((appliesTo.mode === "preview20") !== (appliesTo.questionCount === 20))) return false;
+  const targetsPreview = appliesTo.mode === "preview20" || appliesTo.questionCount === 20;
+  return !targetsPreview || previewAllowed;
+}
+
 export function validateResultTextDefinitions(definitions) {
   if (!Array.isArray(definitions) || !definitions.every((definition) => hasExactFields(definition, DEFINITION_FIELDS))) invalidDefinition();
   if (!definitions.every(({ id, version, appliesTo, section, text, evidenceRefs, previewAllowed }) =>
     typeof id === "string" && id.length > 0 &&
     typeof version === "string" && version.length > 0 &&
     validAppliesTo(appliesTo) &&
+    validDefinitionReachability(appliesTo, previewAllowed) &&
     SECTIONS.has(section) &&
     typeof text === "string" &&
     Array.isArray(evidenceRefs) &&
@@ -57,7 +65,9 @@ function validateSelectionInput(version, context) {
   if ((context.mode === "preview20") !== (context.questionCount === 20)) invalidDefinition();
 }
 
-export function selectResultTextDefinitions({ definitions, version, context }) {
+export function selectResultTextDefinitions(input) {
+  if (!hasExactFields(input, ["definitions", "version", "context"])) invalidDefinition();
+  const { definitions, version, context } = input;
   validateResultTextDefinitions(definitions);
   validateSelectionInput(version, context);
   const isPreview = context.mode === "preview20";

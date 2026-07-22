@@ -24,6 +24,7 @@ export function isValidFactorResults(factorResults, questionCount = null) {
   const maximumSupport = questionCount === null ? 10 : questionCount / FACTOR_ORDER.length;
   return factorResults.every(({ rawMean, displayScore, band, salience, directionalSupportCount, variance }) =>
     Number.isFinite(rawMean) && rawMean >= 1 && rawMean <= 5 &&
+    (questionCount === null || Math.abs((rawMean * maximumSupport) - Math.round(rawMean * maximumSupport)) <= FLOAT_COMPARISON_EPSILON) &&
     Number.isInteger(displayScore) && displayScore === displayScoreFromMean(rawMean) &&
     band === expectedBand(rawMean) && Math.abs(salience - Math.abs(rawMean - 3)) <= FLOAT_COMPARISON_EPSILON &&
     Number.isInteger(directionalSupportCount) && directionalSupportCount >= 0 && directionalSupportCount <= maximumSupport &&

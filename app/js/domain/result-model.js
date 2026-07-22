@@ -23,18 +23,22 @@ function isExactRecord(value, fields) {
     Object.keys(value).length === fields.length && fields.every((field) => Object.hasOwn(value, field));
 }
 
+function validBoundaryThreshold(questionCount, threshold) {
+  return (questionCount === 50 && threshold === 0.1) || (questionCount === 20 && threshold === 0.25);
+}
+
 function validBoundaryFlag(flag) {
   if (!flag || typeof flag !== "object" || Array.isArray(flag)) return false;
   if (flag.type === "factor-near-band-boundary") {
     return isExactRecord(flag, ["type", "factorId", "boundary", "threshold", "questionCount"]) &&
       FACTOR_ORDER.includes(flag.factorId) && [2.5, 3.5].includes(flag.boundary) &&
-      [0.1, 0.25].includes(flag.threshold) && [20, 50].includes(flag.questionCount);
+      validBoundaryThreshold(flag.questionCount, flag.threshold);
   }
   if (flag.type === "second-third-salience-near-tie") {
     return isExactRecord(flag, ["type", "factorIds", "threshold", "questionCount"]) &&
       Array.isArray(flag.factorIds) && flag.factorIds.length === 2 &&
       new Set(flag.factorIds).size === 2 && flag.factorIds.every((factorId) => FACTOR_ORDER.includes(factorId)) &&
-      [0.1, 0.25].includes(flag.threshold) && [20, 50].includes(flag.questionCount);
+      validBoundaryThreshold(flag.questionCount, flag.threshold);
   }
   return false;
 }

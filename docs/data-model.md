@@ -115,7 +115,7 @@
 | evidenceRefs | string[] | ○ | 根拠対応表の参照ID |
 | previewAllowed | boolean | ○ | 20問結果で使用可能か |
 
-`appliesTo`で許可する条件キーは`mode`、`questionCount`、`factorId`、`band`、`titleId`だけとする。未知フィールド、重複ID、不正な根拠参照を拒否し、20問では`previewAllowed = false`を選択しない。
+`appliesTo`で許可する条件キーは`mode`、`questionCount`、`factorId`、`band`、`titleId`だけとする。`mode`と`questionCount`を併記する場合は`preview20`と20、`detail50`と50を対応させる。20問を明示した定義は`previewAllowed = true`を必須とし、未知フィールド、重複ID、不正な根拠参照、到達不能条件を拒否する。
 
 Q-006確定前は構造だけを実装し、本番文面を仮生成しない。
 
@@ -270,6 +270,8 @@ Q-012確定前は`object-fit: contain`で全体表示し、共有カードでも
 | salience | number | `abs(rawMean - 3)` |
 | directionalSupportCount | integer | 同点解消用 |
 | variance | number | 同点解消用 |
+
+`questionCount`が確定した判定入力では、`rawMean * (questionCount / 5)`が浮動小数許容差内で整数になることを必須とし、実回答から到達不能な平均を拒否する。
 
 ### 3.7 RenderedResultText
 
