@@ -89,3 +89,17 @@
 - `npm.cmd test`: 85 passed, 0 failed.
 - `npm.cmd run check`: passed (15 JavaScript files, one canonical runtime version).
 - `git diff --check`: passed.
+
+## Residual P2 remediation
+
+- RED: a 50-item middle-band record with `rawMean = 3`, `variance = 0.01`, and support 0 passed independent rational checks although no ten 1-to-5 answers can jointly produce those statistics.
+- GREEN: validation caches all reachable `(keyedSum, varianceNumerator, directionalSupportCount)` tuples for item counts 4 and 10 and requires a joint tuple match.
+- GREEN: when question count is absent and a mean fits both item counts, every candidate is checked; a valid 10-item-only statistics tuple is not rejected by the 4-item candidate.
+- GREEN: classification fixtures now derive statistics from concrete answer-count combinations, removing previously impossible hand-authored support/variance pairs while preserving each rule assertion.
+
+## Residual P2 verification
+
+- `node --test app/tests/scoring-title-contract.test.js app/tests/definition-validator.test.js`: 33 passed, 0 failed.
+- `npm.cmd test`: 86 passed, 0 failed.
+- `npm.cmd run check`: passed (15 JavaScript files, one canonical runtime version).
+- `git diff --check`: passed.

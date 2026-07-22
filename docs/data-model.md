@@ -271,7 +271,7 @@ Q-012確定前は`object-fit: contain`で全体表示し、共有カードでも
 | directionalSupportCount | integer | 同点解消用 |
 | variance | number | 同点解消用 |
 
-`questionCount`が確定した判定入力では、`itemCount = questionCount / 5`、`keyedSum = round(rawMean * itemCount)`を導出し、`rawMean === keyedSum / itemCount`を必須とする。`varianceNumerator = round(variance * itemCount * itemCount)`についても、`variance === varianceNumerator / (itemCount * itemCount)`を必須とし、実回答から到達不能な値を拒否する。`FactorResult`の公開フィールドは変更しない。
+`questionCount`が確定した判定入力では、`itemCount = questionCount / 5`、`keyedSum = round(rawMean * itemCount)`を導出し、`rawMean === keyedSum / itemCount`を必須とする。`varianceNumerator = round(variance * itemCount * itemCount)`についても、`variance === varianceNumerator / (itemCount * itemCount)`を必須とする。さらに1〜5の回答値countを列挙し、`keyedSum`、`varianceNumerator`、`directionalSupportCount`が同一回答集合から同時に到達可能であることを検証する。`questionCount`不明時は4項目・10項目の全適合候補を検証し、いずれかで全統計が到達可能なら受理する。`FactorResult`の公開フィールドは変更しない。
 
 ### 3.7 RenderedResultText
 

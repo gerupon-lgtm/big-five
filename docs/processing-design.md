@@ -96,6 +96,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 - `displayScore`は画面・共有だけに使う。
 - 採点結果の検証では`keyedSum = round(rawMean * itemCount)`を再構成し、`rawMean === keyedSum / itemCount`のJS厳密同値を要求する。許容差は使わない。
 - 分散は`varianceNumerator = itemCount * sum(keyed^2) - keyedSum^2`、`variance = varianceNumerator / itemCount^2`として生成し、判定入力でも同じ整数分子へ厳密に再構成できることを要求する。
+- 検証時は回答値1〜5のcount組合せから到達可能統計集合を項目数別に生成し、平均合計・分散分子・方向支持数の同時一致を要求する。項目数が未指定で4・10の両方に平均が適合する場合は、両候補を評価していずれかの全統計一致を採用する。
 
 ### 4.3 補助値
 

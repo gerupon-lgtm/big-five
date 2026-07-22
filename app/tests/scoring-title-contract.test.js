@@ -40,26 +40,48 @@ function answersFromKeyedValues(valuesByFactor) {
 }
 
 function result(factorId, rawMean, {
-  directionalSupportCount = 0,
-  variance = 0,
-} = {}) {
+  directionalSupportCount,
+  variance,
+} = {}, itemCount = 10) {
   const band = rawMean >= 3.5 ? "high" : rawMean <= 2.5 ? "low" : "middle";
+  let statistics = null;
+  for (let count1 = 0; count1 <= itemCount && statistics === null; count1 += 1) {
+    for (let count2 = 0; count2 <= itemCount - count1 && statistics === null; count2 += 1) {
+      for (let count3 = 0; count3 <= itemCount - count1 - count2 && statistics === null; count3 += 1) {
+        for (let count4 = 0; count4 <= itemCount - count1 - count2 - count3; count4 += 1) {
+          const count5 = itemCount - count1 - count2 - count3 - count4;
+          const keyedSum = count1 + (2 * count2) + (3 * count3) + (4 * count4) + (5 * count5);
+          if (rawMean !== keyedSum / itemCount) continue;
+          const support = band === "high" ? count4 + count5 : band === "low" ? count1 + count2 : 0;
+          const squaredSum = count1 + (4 * count2) + (9 * count3) + (16 * count4) + (25 * count5);
+          const candidateVariance = ((itemCount * squaredSum) - (keyedSum ** 2)) / (itemCount ** 2);
+          if ((directionalSupportCount === undefined || directionalSupportCount === support) &&
+            (variance === undefined || variance === candidateVariance)) {
+            statistics = { directionalSupportCount: support, variance: candidateVariance };
+            break;
+          }
+        }
+      }
+    }
+  }
+  assert.notEqual(statistics, null, `test fixture must be reachable: n=${itemCount}, mean=${rawMean}, support=${directionalSupportCount}, variance=${variance}`);
   return {
     factorId,
     rawMean,
     displayScore: Math.floor((((rawMean - 1) * 25) + 0.5) + 1e-10),
     band,
     salience: Math.abs(rawMean - 3),
-    directionalSupportCount: band === "middle" ? 0 : directionalSupportCount,
-    variance,
+    directionalSupportCount: statistics.directionalSupportCount,
+    variance: statistics.variance,
   };
 }
 
-function factorResults(rawMeans, optionsByFactor = {}) {
+function factorResults(rawMeans, optionsByFactor = {}, questionCount = 50) {
   return FACTOR_ORDER.map((factorId, index) => result(
     factorId,
     rawMeans[index],
     optionsByFactor[factorId],
+    questionCount / FACTOR_ORDER.length,
   ));
 }
 
@@ -133,7 +155,7 @@ test("T-003 F-005 converts every answer value with the keyed direction and honor
 
   const exactBoundary = classifyTitle({
     factorResults: factorResults([2.5, 3.5, 3, 3, 3], {
-      intellectImagination: { directionalSupportCount: 2 },
+      intellectImagination: { directionalSupportCount: 3 },
       conscientiousness: { directionalSupportCount: 4 },
     }),
     questionCount: 50,
@@ -224,23 +246,23 @@ test("T-003 F-016 title-rule-v1 resolves 0, 1, 2, and 3+ salient factors without
     titleProfiles: TitleProfileDefinitions,
   });
   const single = classifyTitle({
-    factorResults: factorResults([3, 4, 3, 3, 3], { conscientiousness: { directionalSupportCount: 4 } }),
+    factorResults: factorResults([3, 4, 3, 3, 3], { conscientiousness: { directionalSupportCount: 6 } }),
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
   });
   const pair = classifyTitle({
     factorResults: factorResults([1, 4, 3, 3, 3], {
-      intellectImagination: { directionalSupportCount: 4 },
-      conscientiousness: { directionalSupportCount: 4 },
+      intellectImagination: { directionalSupportCount: 10 },
+      conscientiousness: { directionalSupportCount: 6 },
     }),
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
   });
   const threePlus = classifyTitle({
-    factorResults: factorResults([1, 4, 5, 3, 3], {
-      intellectImagination: { directionalSupportCount: 8 },
+    factorResults: factorResults([1.7, 4, 4.3, 3, 3], {
+      intellectImagination: { directionalSupportCount: 7 },
       conscientiousness: { directionalSupportCount: 6 },
-      extraversion: { directionalSupportCount: 10 },
+      extraversion: { directionalSupportCount: 8 },
     }),
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
@@ -262,24 +284,24 @@ test("T-003 F-016 title-rule-v1 resolves 0, 1, 2, and 3+ salient factors without
 test("T-003 F-016 title-rule-v1 applies support, variance, and fixed factor order as successive tie breaks", () => {
   const support = classifyTitle({
     factorResults: factorResults([4, 4, 3, 3, 3], {
-      intellectImagination: { directionalSupportCount: 2 },
-      conscientiousness: { directionalSupportCount: 3 },
+      intellectImagination: { directionalSupportCount: 5 },
+      conscientiousness: { directionalSupportCount: 6 },
     }),
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
   });
   const variance = classifyTitle({
     factorResults: factorResults([4, 4, 3, 3, 3], {
-      intellectImagination: { directionalSupportCount: 3, variance: 0.5 },
-      conscientiousness: { directionalSupportCount: 3, variance: 0.25 },
+      intellectImagination: { directionalSupportCount: 6, variance: 1.2 },
+      conscientiousness: { directionalSupportCount: 6, variance: 0.8 },
     }),
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
   });
   const fixedOrder = classifyTitle({
     factorResults: factorResults([4, 4, 3, 3, 3], {
-      intellectImagination: { directionalSupportCount: 3, variance: 0.25 },
-      conscientiousness: { directionalSupportCount: 3, variance: 0.25 },
+      intellectImagination: { directionalSupportCount: 6, variance: 0.8 },
+      conscientiousness: { directionalSupportCount: 6, variance: 0.8 },
     }),
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
@@ -293,8 +315,8 @@ test("T-003 F-016 title-rule-v1 applies support, variance, and fixed factor orde
 test("T-003 F-016 treats real-answer salience 1.7 and 4.3 as tied before support", () => {
   const classification = classifyTitle({
     factorResults: factorResults([1.7, 4.3, 3, 3, 3], {
-      intellectImagination: { directionalSupportCount: 2 },
-      conscientiousness: { directionalSupportCount: 4 },
+      intellectImagination: { directionalSupportCount: 7 },
+      conscientiousness: { directionalSupportCount: 8 },
     }),
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
@@ -307,9 +329,11 @@ test("T-003 F-016 treats real-answer salience 1.7 and 4.3 as tied before support
 });
 
 test("T-003 F-016 rejects means that cannot be reached by the question count", () => {
-  const impossible = factorResults([4.000000000005, 3, 3, 3, 3], {
-    intellectImagination: { directionalSupportCount: 4 },
+  const impossible = factorResults([4, 3, 3, 3, 3], {
+    intellectImagination: { directionalSupportCount: 6 },
   });
+  impossible[0].rawMean = 4.000000000005;
+  impossible[0].salience = Math.abs(impossible[0].rawMean - 3);
   assert.throws(() => classifyTitle({
     factorResults: impossible,
     questionCount: 50,
@@ -318,7 +342,7 @@ test("T-003 F-016 rejects means that cannot be reached by the question count", (
 
   assert.doesNotThrow(() => classifyTitle({
     factorResults: factorResults([4, 3, 3, 3, 3], {
-      intellectImagination: { directionalSupportCount: 4 },
+      intellectImagination: { directionalSupportCount: 6 },
     }),
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
@@ -355,12 +379,29 @@ test("T-003 F-005 F-016 accepts scored rational results and rejects unreachable 
   assert.equal(isValidFactorResults(unreachableSalience, 50), false);
 });
 
+test("T-003 F-005 rejects jointly unreachable mean, variance, and support statistics", () => {
+  const impossible = factorResults([3, 3, 3, 3, 3]);
+  impossible[0].variance = 0.01;
+
+  assert.equal(isValidFactorResults(impossible, 50), false);
+  assert.throws(() => classifyTitle({
+    factorResults: impossible,
+    questionCount: 50,
+    titleProfiles: TitleProfileDefinitions,
+  }), /TITLE_CLASSIFICATION_INVALID/);
+
+  const detailOnlyStatistics = factorResults([4, 3, 3, 3, 3], {
+    intellectImagination: { directionalSupportCount: 5, variance: 1 },
+  });
+  assert.equal(isValidFactorResults(detailOnlyStatistics), true);
+});
+
 test("T-003 F-016 title-rule-v1 flags the correct 20 and 50 item boundary thresholds without changing selection", () => {
   const previewMeans = factorResults([4, 3.75, 3.5, 3, 3], {
     intellectImagination: { directionalSupportCount: 4 },
-    conscientiousness: { directionalSupportCount: 4 },
-    extraversion: { directionalSupportCount: 4 },
-  });
+    conscientiousness: { directionalSupportCount: 3 },
+    extraversion: { directionalSupportCount: 2 },
+  }, 20);
   const detailMeans = factorResults([4, 3.6, 3.5, 3, 3], {
     intellectImagination: { directionalSupportCount: 10 },
     conscientiousness: { directionalSupportCount: 6 },
@@ -384,7 +425,7 @@ test("T-003 F-016 title-rule-v1 flags the correct 20 and 50 item boundary thresh
   assert.equal(detail.boundaryFlags.some(({ type }) => type === "second-third-salience-near-tie"), true);
 
   const previewOnly = classifyTitle({
-    factorResults: factorResults([3.75, 3, 3, 3, 3], { intellectImagination: { directionalSupportCount: 4 } }),
+    factorResults: factorResults([3.75, 3, 3, 3, 3], { intellectImagination: { directionalSupportCount: 3 } }, 20),
     questionCount: 20,
     titleProfiles: TitleProfileDefinitions,
   });
@@ -410,8 +451,8 @@ test("T-003 F-016 includes exact 0.1 and 0.25 boundary distances despite floatin
   });
   const preview = classifyTitle({
     factorResults: factorResults([3.75, 3, 3, 3, 3], {
-      intellectImagination: { directionalSupportCount: 4 },
-    }),
+      intellectImagination: { directionalSupportCount: 3 },
+    }, 20),
     questionCount: 20,
     titleProfiles: TitleProfileDefinitions,
   });
@@ -426,11 +467,11 @@ test("T-003 F-016 includes exact 0.1 and 0.25 boundary distances despite floatin
 
 test("T-003 F-005 F-006 result composition retains all caller supplied factors and rendered texts without raw answers", () => {
   const factors = factorResults([1, 2, 3, 4, 5], {
-    intellectImagination: { directionalSupportCount: 4 },
-    conscientiousness: { directionalSupportCount: 4 },
+    intellectImagination: { directionalSupportCount: 10 },
+    conscientiousness: { directionalSupportCount: 5 },
     extraversion: { directionalSupportCount: 0 },
-    agreeableness: { directionalSupportCount: 4 },
-    emotionalStability: { directionalSupportCount: 4 },
+    agreeableness: { directionalSupportCount: 5 },
+    emotionalStability: { directionalSupportCount: 10 },
   });
   const classification = classifyTitle({
     factorResults: factors,
@@ -461,8 +502,8 @@ test("T-003 F-005 F-006 result composition retains all caller supplied factors a
 
 test("T-003 F-005 F-006 result composition rejects raw-answer and unknown-field contamination uniformly", () => {
   const factors = factorResults([2, 3, 3, 3, 4], {
-    intellectImagination: { directionalSupportCount: 4 },
-    emotionalStability: { directionalSupportCount: 4 },
+    intellectImagination: { directionalSupportCount: 5 },
+    emotionalStability: { directionalSupportCount: 5 },
   });
   const classification = classifyTitle({
     factorResults: factors,
