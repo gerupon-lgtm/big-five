@@ -39,7 +39,7 @@
 - RED: rational display scores 1.9/2.3/3.3/4.1 produced 22/32/57/77 instead of half-up 23/33/58/78.
 - GREEN: display scores now round directly from `keyedSum/itemCount`; no fields were added to `FactorResult`.
 - RED: mathematically equal salience at 1.7 and 4.3 was ordered by floating-point noise before support count.
-- GREEN: fixed-epsilon comparisons advance true ties to support, variance, then `factor-order-v1`.
+- GREEN: keyed-answer integer salience advances true ties to support, integer variance numerator, then `factor-order-v1`.
 - RED: exact 50-item 0.1 boundary/tie distances were excluded by binary representation.
 - GREEN: 50-item 0.1 and 20-item 0.25 inclusive boundaries are covered at factor and second/third-rank seams.
 - RED: result-text module was absent (`ERR_MODULE_NOT_FOUND`), and result composition accepted raw-answer/unknown-field contamination.
@@ -56,8 +56,8 @@
 
 ## P2 re-review remediation
 
-- RED: `rawMean = 4.00000000005` passed 50-item classification although no 10 keyed answers can produce it.
-- GREEN: classification requires `rawMean * itemCount` to be an integer within epsilon; reachable means continue to use epsilon tie handling.
+- RED: `rawMean = 4.000000000005` passed 50-item classification although no 10 keyed answers can produce it.
+- GREEN: classification reconstructs `keyedSum` and requires strict identity with `keyedSum / itemCount`; no epsilon is used.
 - RED: result composition accepted BoundaryFlags with 50/0.25 and 20/0.1 pairs.
 - GREEN: only 50/0.1 and 20/0.25 threshold pairs are valid.
 - RED: fixed-text definitions accepted contradictory mode/questionCount and preview-targeted definitions disabled for preview.
@@ -72,5 +72,20 @@
 - `node --test app/tests/scoring-title-contract.test.js`: 18 passed, 0 failed.
 - `node --test app/tests/definition-validator.test.js`: 13 passed, 0 failed.
 - `npm.cmd test`: 84 passed, 0 failed.
+- `npm.cmd run check`: passed (15 JavaScript files, one canonical runtime version).
+- `git diff --check`: passed.
+
+## Final P2 remediation
+
+- RED: a 50-item `rawMean = 4.000000000005` remained inside the former epsilon and reached title classification.
+- GREEN: reachable raw means use strict rational reconstruction; scored 1.7, 3.3, and 4.3 remain valid.
+- RED: a tiny mutation of a scored variance or salience still passed the FactorResult validator.
+- GREEN: scoring generates variance from an integer numerator, and validation strictly reconstructs variance and salience without changing the FactorResult schema.
+- GREEN: title ranking uses integer `abs(keyedSum - 3 * itemCount)`, variance uses its integer numerator, and both band-boundary and second/third near-tie flags use a one-unit inclusive integer threshold for 20 and 50 items.
+
+## Final P2 verification
+
+- `node --test app/tests/scoring-title-contract.test.js app/tests/definition-validator.test.js`: 32 passed, 0 failed.
+- `npm.cmd test`: 85 passed, 0 failed.
 - `npm.cmd run check`: passed (15 JavaScript files, one canonical runtime version).
 - `git diff --check`: passed.

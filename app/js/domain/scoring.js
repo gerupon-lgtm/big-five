@@ -30,10 +30,12 @@ function validateInput(questionDefinitions, answers, questionCount) {
 function factorResult(factorId, questions, answers) {
   const keyedAnswers = questions.map(({ id, keyedDirection }) => keyedDirection === "negative" ? 6 - answers[id] : answers[id]);
   const keyedSum = keyedAnswers.reduce((sum, answer) => sum + answer, 0);
-  const rawMean = keyedSum / keyedAnswers.length;
+  const itemCount = keyedAnswers.length;
+  const rawMean = keyedSum / itemCount;
   const displayNumerator = (keyedSum - keyedAnswers.length) * 25;
   const band = rawMean >= 3.5 ? "high" : rawMean <= 2.5 ? "low" : "middle";
-  const variance = keyedAnswers.reduce((sum, answer) => sum + ((answer - rawMean) ** 2), 0) / keyedAnswers.length;
+  const squaredSum = keyedAnswers.reduce((sum, answer) => sum + (answer ** 2), 0);
+  const variance = ((itemCount * squaredSum) - (keyedSum ** 2)) / (itemCount ** 2);
   return Object.freeze({
     factorId,
     rawMean,

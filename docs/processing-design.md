@@ -94,7 +94,8 @@ displayScore = round((rawMean - 1) / 4 * 100)
 - 50問: 各因子10項目
 - `rawMean`を判定・比較の正とする。
 - `displayScore`は画面・共有だけに使う。
-- JSの浮動小数点比較は、項目合計と件数から導いた有理値として比較するか、十分な固定精度へ整数化して比較する。【想定】`keyedSum`と`itemCount`を保持し、順位比較は交差積で行う。
+- 採点結果の検証では`keyedSum = round(rawMean * itemCount)`を再構成し、`rawMean === keyedSum / itemCount`のJS厳密同値を要求する。許容差は使わない。
+- 分散は`varianceNumerator = itemCount * sum(keyed^2) - keyedSum^2`、`variance = varianceNumerator / itemCount^2`として生成し、判定入力でも同じ整数分子へ厳密に再構成できることを要求する。
 
 ### 4.3 補助値
 
@@ -131,6 +132,8 @@ displayScore = round((rawMean - 1) / 4 * 100)
 3. varianceが小さい
 4. 固定因子順が先
 
+実装上の順位比較は`salience`の浮動値を直接使わず、`abs(keyedSum - 3 * itemCount)`の整数顕著度を使う。分散同点解消も`round(variance * itemCount^2)`の整数分子を使う。
+
 固定因子順:
 
 1. intellectImagination
@@ -151,6 +154,8 @@ displayScore = round((rawMean - 1) / 4 * 100)
 20問:
 
 - 上記の0.1を0.25へ置換
+
+境界判定は平均の浮動差を使わない。20問・50問とも各因子で閾値は`keyedSum` 1点分であり、帯境界までの整数距離が1以下、または2位と3位の整数顕著度差が1以下なら包含する。
 
 該当時はBoundaryFlagを生成する。50問のBoundaryFlagは閾値0.1、20問は0.25との組だけを有効とする。称号は変えず、結果モデルへ「複数の傾向が近接している」補足を追加する。
 

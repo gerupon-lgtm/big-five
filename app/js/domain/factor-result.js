@@ -1,19 +1,27 @@
 import { FACTOR_ORDER } from "../data/factor-order.js";
 
 const FACTOR_RESULT_FIELDS = ["factorId", "rawMean", "displayScore", "band", "salience", "directionalSupportCount", "variance"];
-const FLOAT_COMPARISON_EPSILON = 1e-10;
 
 function isExactRecord(value, fields) {
   return value !== null && typeof value === "object" && !Array.isArray(value) &&
     Object.keys(value).length === fields.length && fields.every((field) => Object.hasOwn(value, field));
 }
 
-function expectedBand(rawMean) {
-  return rawMean >= 3.5 ? "high" : rawMean <= 2.5 ? "low" : "middle";
+function expectedBand(keyedSum, itemCount) {
+  return keyedSum >= 3.5 * itemCount ? "high" : keyedSum <= 2.5 * itemCount ? "low" : "middle";
 }
 
-function displayScoreFromMean(rawMean) {
-  return Math.floor((((rawMean - 1) * 25) + 0.5) + FLOAT_COMPARISON_EPSILON);
+function displayScoreFromRational(keyedSum, itemCount) {
+  return Math.floor((((keyedSum - itemCount) * 25 * 2) + itemCount) / (itemCount * 2));
+}
+
+function reachableRational(rawMean, questionCount) {
+  const itemCounts = questionCount === null ? [4, 10] : [questionCount / FACTOR_ORDER.length];
+  for (const itemCount of itemCounts) {
+    const keyedSum = Math.round(rawMean * itemCount);
+    if (rawMean === keyedSum / itemCount) return { itemCount, keyedSum };
+  }
+  return null;
 }
 
 export function isValidFactorResults(factorResults, questionCount = null) {
@@ -22,12 +30,16 @@ export function isValidFactorResults(factorResults, questionCount = null) {
   if (!factorResults.every((factor) => isExactRecord(factor, FACTOR_RESULT_FIELDS))) return false;
   if (factorResults.map(({ factorId }) => factorId).join(",") !== FACTOR_ORDER.join(",")) return false;
   const maximumSupport = questionCount === null ? 10 : questionCount / FACTOR_ORDER.length;
-  return factorResults.every(({ rawMean, displayScore, band, salience, directionalSupportCount, variance }) =>
-    Number.isFinite(rawMean) && rawMean >= 1 && rawMean <= 5 &&
-    (questionCount === null || Math.abs((rawMean * maximumSupport) - Math.round(rawMean * maximumSupport)) <= FLOAT_COMPARISON_EPSILON) &&
-    Number.isInteger(displayScore) && displayScore === displayScoreFromMean(rawMean) &&
-    band === expectedBand(rawMean) && Math.abs(salience - Math.abs(rawMean - 3)) <= FLOAT_COMPARISON_EPSILON &&
-    Number.isInteger(directionalSupportCount) && directionalSupportCount >= 0 && directionalSupportCount <= maximumSupport &&
-    (band === "middle" ? directionalSupportCount === 0 : true) &&
-    Number.isFinite(variance) && variance >= 0 && variance <= 4);
+  return factorResults.every(({ rawMean, displayScore, band, salience, directionalSupportCount, variance }) => {
+    if (!Number.isFinite(rawMean) || rawMean < 1 || rawMean > 5) return false;
+    const rational = reachableRational(rawMean, questionCount);
+    if (rational === null) return false;
+    const { itemCount, keyedSum } = rational;
+    return Number.isInteger(displayScore) && displayScore === displayScoreFromRational(keyedSum, itemCount) &&
+      band === expectedBand(keyedSum, itemCount) && salience === Math.abs(rawMean - 3) &&
+      Number.isInteger(directionalSupportCount) && directionalSupportCount >= 0 && directionalSupportCount <= maximumSupport &&
+      (band === "middle" ? directionalSupportCount === 0 : true) &&
+      Number.isFinite(variance) && variance >= 0 && variance <= 4 &&
+      (questionCount === null || variance === Math.round(variance * (itemCount ** 2)) / (itemCount ** 2));
+  });
 }

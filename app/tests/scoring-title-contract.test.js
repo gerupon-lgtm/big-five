@@ -10,6 +10,7 @@ import {
   validateTitleProfileDefinitions,
 } from "../js/data/title-profile-definitions.js";
 import { classifyTitle } from "../js/domain/title-classifier.js";
+import { isValidFactorResults } from "../js/domain/factor-result.js";
 import { composeResultModel } from "../js/domain/result-model.js";
 import {
   selectResultTextDefinitions,
@@ -306,7 +307,7 @@ test("T-003 F-016 treats real-answer salience 1.7 and 4.3 as tied before support
 });
 
 test("T-003 F-016 rejects means that cannot be reached by the question count", () => {
-  const impossible = factorResults([4.00000000005, 3, 3, 3, 3], {
+  const impossible = factorResults([4.000000000005, 3, 3, 3, 3], {
     intellectImagination: { directionalSupportCount: 4 },
   });
   assert.throws(() => classifyTitle({
@@ -322,6 +323,36 @@ test("T-003 F-016 rejects means that cannot be reached by the question count", (
     questionCount: 50,
     titleProfiles: TitleProfileDefinitions,
   }));
+});
+
+test("T-003 F-005 F-016 accepts scored rational results and rejects unreachable variance", () => {
+  const scored = scoreDiagnostic({
+    questionDefinitions: QuestionDefinitions,
+    answers: answersFromKeyedValues({
+      intellectImagination: [1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+      conscientiousness: [3, 3, 3, 3, 3, 3, 3, 4, 4, 4],
+      extraversion: [4, 4, 4, 4, 4, 4, 4, 5, 5, 5],
+      agreeableness: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+      emotionalStability: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+    }),
+    questionCount: 50,
+  });
+
+  assert.deepEqual(scored.slice(0, 3).map(({ rawMean }) => rawMean), [1.7, 3.3, 4.3]);
+  assert.equal(isValidFactorResults(scored, 50), true);
+  assert.doesNotThrow(() => classifyTitle({
+    factorResults: scored,
+    questionCount: 50,
+    titleProfiles: TitleProfileDefinitions,
+  }));
+
+  const unreachableVariance = structuredClone(scored);
+  unreachableVariance[0].variance += 0.000000000005;
+  assert.equal(isValidFactorResults(unreachableVariance, 50), false);
+
+  const unreachableSalience = structuredClone(scored);
+  unreachableSalience[0].salience += 0.000000000005;
+  assert.equal(isValidFactorResults(unreachableSalience, 50), false);
 });
 
 test("T-003 F-016 title-rule-v1 flags the correct 20 and 50 item boundary thresholds without changing selection", () => {
