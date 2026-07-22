@@ -1,10 +1,4 @@
-const FACTOR_ORDER = [
-  "intellectImagination",
-  "conscientiousness",
-  "extraversion",
-  "agreeableness",
-  "emotionalStability",
-];
+import { FACTOR_ORDER } from "./factor-order.js";
 
 const DIRECTIONS = ["high", "low"];
 

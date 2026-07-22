@@ -101,6 +101,8 @@
 | highPole | string | ○ | 価値中立の高側説明 |
 | description | string | ○ | 尺度範囲内の説明 |
 
+因子の固定順は`app/js/data/factor-order.js`の`factor-order-v1`を正典とし、採点、称号判定、称号定義が同じ不変配列を参照する。
+
 ### 2.5 ResultTextDefinition
 
 | 項目 | 型 | 必須 | 説明 |
@@ -112,6 +114,8 @@
 | text | string | ○ | 表示文 |
 | evidenceRefs | string[] | ○ | 根拠対応表の参照ID |
 | previewAllowed | boolean | ○ | 20問結果で使用可能か |
+
+`appliesTo`で許可する条件キーは`mode`、`questionCount`、`factorId`、`band`、`titleId`だけとする。未知フィールド、重複ID、不正な根拠参照を拒否し、20問では`previewAllowed = false`を選択しない。
 
 Q-006確定前は構造だけを実装し、本番文面を仮生成しない。
 
@@ -266,6 +270,18 @@ Q-012確定前は`object-fit: contain`で全体表示し、共有カードでも
 | salience | number | `abs(rawMean - 3)` |
 | directionalSupportCount | integer | 同点解消用 |
 | variance | number | 同点解消用 |
+
+### 3.7 RenderedResultText
+
+| 項目 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| id | string | ○ | 選択元の固定テンプレートID |
+| version | string | ○ | 結果文版 |
+| section | enum | ○ | ResultTextDefinitionと同じ節 |
+| text | string | ○ | 診断時に表示した文面 |
+| evidenceRefs | string[] | ○ | 診断時の根拠参照ID |
+
+未知フィールドと生回答を許可せず、結果モデル生成時に深く複製・不変化する。
 
 ## 4. 比較互換性
 

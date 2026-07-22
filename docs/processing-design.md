@@ -176,7 +176,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 処理:
 
 1. TitleProfileDefinitionを取得。
-2. モードに許可された固定結果文を条件一致で取得。
+2. 結果文版を一致させ、`mode`、`questionCount`、`factorId`、`band`、`titleId`の明示条件がすべて一致する固定結果文を定義順で取得する。20問では`previewAllowed = false`を除外する。
 3. 5因子すべての文章を組み立てる。
 4. 20問では詳細節を抑制し、簡易プレビューと限界を明示。
 5. 境界補足を追加。
@@ -185,7 +185,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 8. 表示した文章をResultSnapshotへ複製して当時性を保存。
 9. 生回答をResultSnapshotへ渡さない。
 
-Q-006未確定時は本番結果文を完成扱いにしない。
+FactorResult、TitleClassification、RenderedResultTextはexact schemaで検証し、未知フィールドやネストした生回答を拒否する。Q-006未確定時は本番結果文を完成扱いにしない。
 
 ## 7. 履歴保存
 

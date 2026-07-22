@@ -1,0 +1,55 @@
+# T-003 report
+
+## Status
+
+- Task: T-003 採点・51分類・結果モデル
+- Feature IDs: F-005, F-006, F-008, F-016
+- Date: 2026-07-23
+- Status: complete after independent-review remediation
+- Initial commit: `5a14c19274cdb1fead18e420b28e3205425f75b0`
+- Review-fix commit: the commit containing this tracked report
+
+## RED → GREEN
+
+- RED: `app/tests/scoring-title-contract.test.js` was added before production modules. The first execution failed with `ERR_MODULE_NOT_FOUND` for `app/js/domain/scoring.js`, confirming the public seam had no implementation.
+- GREEN: Added pure scoring, title-profile definition/validation, title classification, and result-model composition modules. The public seam test file now passes 9/9.
+
+## Implemented public seams
+
+- `scoreDiagnostic({ questionDefinitions, answers, questionCount })` returns five immutable `FactorResult` records and rejects incomplete, invalid, or unsupported input.
+- `TitleProfileDefinitions` exposes 51 deeply immutable profiles; `validateTitleProfileDefinitions` rejects duplicate, missing, and unknown combinations.
+- `classifyTitle({ factorResults, questionCount, titleProfiles })` implements `title-rule-v1`, deterministic tie breaking, and 20/50 boundary flags.
+- `composeResultModel({ factors, classification, renderedTexts })` preserves all five factors and caller-provided rendered text records without retaining raw answers or producing prose.
+
+## Verification
+
+- `node --test app/tests/scoring-title-contract.test.js`: 9 passed, 0 failed.
+- `npm.cmd test`: 75 passed, 0 failed.
+- `npm.cmd run check`: passed (12 JavaScript files, one canonical runtime version).
+- `git diff --check`: passed.
+
+## Explicit exclusions
+
+- Q-006: no production result prose, evidence claims, or placeholder prose presented as final.
+- Q-012: no cat imagery, art direction, or asset manifest; only stable 1:1 character IDs.
+- No changes under `prototype-big-five/`.
+
+## Independent review remediation
+
+- RED: rational display scores 1.9/2.3/3.3/4.1 produced 22/32/57/77 instead of half-up 23/33/58/78.
+- GREEN: display scores now round directly from `keyedSum/itemCount`; no fields were added to `FactorResult`.
+- RED: mathematically equal salience at 1.7 and 4.3 was ordered by floating-point noise before support count.
+- GREEN: fixed-epsilon comparisons advance true ties to support, variance, then `factor-order-v1`.
+- RED: exact 50-item 0.1 boundary/tie distances were excluded by binary representation.
+- GREEN: 50-item 0.1 and 20-item 0.25 inclusive boundaries are covered at factor and second/third-rank seams.
+- RED: result-text module was absent (`ERR_MODULE_NOT_FOUND`), and result composition accepted raw-answer/unknown-field contamination.
+- GREEN: added exact-schema versioned result-text validation and deterministic selection; preview suppression, evidence/ID checks, strict result composition, deep copying, and uniform result-model errors are covered.
+- GREEN: scoring rejects null questions, inherited answer maps, and non-exact own key sets with `SCORING_INPUT_INVALID`.
+- GREEN: title rule version reads `appMeta`; factor order is shared from versioned `FactorOrderDefinition`.
+
+## Review verification
+
+- `node --test app/tests/scoring-title-contract.test.js`: 15 passed, 0 failed.
+- `npm.cmd test`: 81 passed, 0 failed.
+- `npm.cmd run check`: passed (15 JavaScript files, one canonical runtime version).
+- `git diff --check`: passed.
