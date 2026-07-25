@@ -481,9 +481,9 @@ test("T-003 F-005 F-006 result composition retains all caller supplied factors a
   const renderedTexts = [{
     id: "caller-approved-text-id",
     version: "result-text-v1",
-    section: "summary",
+    section: "titleSubtitle",
     text: "",
-    evidenceRefs: [],
+    evidenceRefs: ["test-evidence"],
   }];
   const model = composeResultModel({ factors, classification, renderedTexts });
 
@@ -497,7 +497,7 @@ test("T-003 F-005 F-006 result composition retains all caller supplied factors a
   factors[0].answers = [1];
   renderedTexts[0].evidenceRefs.push("late-contamination");
   assert.equal(Object.hasOwn(model.factors[0], "answers"), false);
-  assert.deepEqual(model.renderedTexts[0].evidenceRefs, []);
+  assert.deepEqual(model.renderedTexts[0].evidenceRefs, ["test-evidence"]);
 });
 
 test("T-003 F-005 F-006 result composition rejects raw-answer and unknown-field contamination uniformly", () => {
@@ -513,9 +513,9 @@ test("T-003 F-005 F-006 result composition rejects raw-answer and unknown-field 
   const renderedTexts = [{
     id: "rendered-id",
     version: "result-text-v1",
-    section: "summary",
+    section: "titleSubtitle",
     text: "",
-    evidenceRefs: [],
+    evidenceRefs: ["test-evidence"],
   }];
   const invalidInputs = [
     { factors, classification, renderedTexts, answers: answersWith(3) },
@@ -543,9 +543,9 @@ test("T-003 F-005 result composition rejects mismatched BoundaryFlag thresholds"
   const renderedTexts = [{
     id: "rendered-id",
     version: "result-text-v1",
-    section: "summary",
+    section: "titleSubtitle",
     text: "",
-    evidenceRefs: [],
+    evidenceRefs: ["test-evidence"],
   }];
   const mismatches = [
     { type: "factor-near-band-boundary", factorId: "intellectImagination", boundary: 3.5, threshold: 0.25, questionCount: 50 },
@@ -564,12 +564,13 @@ test("T-003 F-005 result composition rejects mismatched BoundaryFlag thresholds"
 test("T-003 F-006 validates versioned fixed-text structure and selects explicit conditions deterministically", () => {
   const definitions = [
     {
-      id: "summary-detail",
+      id: "title-reason-detail",
       version: "result-text-v1",
       appliesTo: { mode: "detail50", questionCount: 50, titleId: "title-balanced" },
-      section: "summary",
+      section: "titleReason",
+      claimKind: "entertainmentReason",
       text: "",
-      evidenceRefs: [],
+      evidenceRefs: ["test-evidence"],
       previewAllowed: false,
     },
     {
@@ -577,6 +578,7 @@ test("T-003 F-006 validates versioned fixed-text structure and selects explicit 
       version: "result-text-v1",
       appliesTo: { factorId: "extraversion", band: "high" },
       section: "strength",
+      claimKind: "scaleObservation",
       text: "test-only",
       evidenceRefs: ["test-evidence"],
       previewAllowed: true,
@@ -586,8 +588,9 @@ test("T-003 F-006 validates versioned fixed-text structure and selects explicit 
       version: "result-text-v1",
       appliesTo: { factorId: "extraversion", band: "high" },
       section: "tradeoff",
+      claimKind: "scaleObservation",
       text: "",
-      evidenceRefs: [],
+      evidenceRefs: ["test-evidence"],
       previewAllowed: false,
     },
   ];
@@ -614,7 +617,7 @@ test("T-003 F-006 validates versioned fixed-text structure and selects explicit 
       band: "high",
       titleId: "title-balanced",
     },
-  }).map(({ id }) => id), ["summary-detail", "factor-preview", "factor-detail-only"]);
+  }).map(({ id }) => id), ["title-reason-detail", "factor-preview", "factor-detail-only"]);
 });
 
 test("T-003 F-006 rejects malformed fixed-text fields, evidence references, conditions, and duplicate IDs", () => {
@@ -623,13 +626,15 @@ test("T-003 F-006 rejects malformed fixed-text fields, evidence references, cond
     version: "result-text-v1",
     appliesTo: {},
     section: "action",
+    claimKind: "actionHint",
     text: "",
-    evidenceRefs: [],
+    evidenceRefs: ["test-evidence"],
     previewAllowed: true,
   };
   const cases = [
     [{ ...valid, extra: true }],
     [{ ...valid, evidenceRefs: "not-an-array" }],
+    [{ ...valid, evidenceRefs: [] }],
     [{ ...valid, evidenceRefs: [""] }],
     [{ ...valid, appliesTo: { unknown: true } }],
     [{ ...valid, appliesTo: { mode: "unknown" } }],
@@ -651,9 +656,10 @@ test("T-003 F-006 selector normalizes malformed input to the definition error co
     id: "valid",
     version: "result-text-v1",
     appliesTo: {},
-    section: "summary",
+    section: "titleSubtitle",
+    claimKind: "entertainmentReason",
     text: "",
-    evidenceRefs: [],
+    evidenceRefs: ["test-evidence"],
     previewAllowed: true,
   }];
   const validInput = {

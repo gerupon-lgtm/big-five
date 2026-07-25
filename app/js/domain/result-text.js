@@ -1,8 +1,26 @@
 import { FACTOR_ORDER } from "../data/factor-order.js";
 
-const DEFINITION_FIELDS = ["id", "version", "appliesTo", "section", "text", "evidenceRefs", "previewAllowed"];
+const DEFINITION_FIELDS = ["id", "version", "appliesTo", "section", "claimKind", "text", "evidenceRefs", "previewAllowed"];
 const CONDITION_FIELDS = ["mode", "questionCount", "factorId", "band", "titleId"];
-const SECTIONS = new Set(["summary", "strength", "tradeoff", "work", "relationship", "stress", "action"]);
+export const RESULT_TEXT_SECTIONS = Object.freeze([
+  "titleSubtitle", "titleReason", "observation", "strength", "tradeoff",
+  "work", "relationship", "stress", "question", "action",
+]);
+export const RESULT_CLAIM_KINDS = Object.freeze([
+  "scaleObservation", "entertainmentReason", "reflectionPrompt", "actionHint",
+]);
+const CLAIM_KIND_BY_SECTION = Object.freeze({
+  titleSubtitle: "entertainmentReason",
+  titleReason: "entertainmentReason",
+  observation: "scaleObservation",
+  strength: "scaleObservation",
+  tradeoff: "scaleObservation",
+  work: "reflectionPrompt",
+  relationship: "reflectionPrompt",
+  stress: "reflectionPrompt",
+  question: "reflectionPrompt",
+  action: "actionHint",
+});
 const MODES = new Set(["preview20", "detail50"]);
 const QUESTION_COUNTS = new Set([20, 50]);
 const BANDS = new Set(["low", "middle", "high"]);
@@ -39,16 +57,24 @@ function validDefinitionReachability(appliesTo, previewAllowed) {
   return !targetsPreview || previewAllowed;
 }
 
+function validPreviewSection(appliesTo, section) {
+  const targetsPreview = appliesTo.mode === "preview20" || appliesTo.questionCount === 20;
+  return !targetsPreview || ["titleSubtitle", "titleReason", "observation"].includes(section);
+}
+
 export function validateResultTextDefinitions(definitions) {
   if (!Array.isArray(definitions) || !definitions.every((definition) => hasExactFields(definition, DEFINITION_FIELDS))) invalidDefinition();
-  if (!definitions.every(({ id, version, appliesTo, section, text, evidenceRefs, previewAllowed }) =>
+
+  if (!definitions.every(({ id, version, appliesTo, section, claimKind, text, evidenceRefs, previewAllowed }) =>
     typeof id === "string" && id.length > 0 &&
     typeof version === "string" && version.length > 0 &&
     validAppliesTo(appliesTo) &&
     validDefinitionReachability(appliesTo, previewAllowed) &&
-    SECTIONS.has(section) &&
+    validPreviewSection(appliesTo, section) &&
+    RESULT_TEXT_SECTIONS.includes(section) &&
+    RESULT_CLAIM_KINDS.includes(claimKind) && CLAIM_KIND_BY_SECTION[section] === claimKind &&
     typeof text === "string" &&
-    Array.isArray(evidenceRefs) &&
+    Array.isArray(evidenceRefs) && evidenceRefs.length > 0 &&
     evidenceRefs.every((reference) => typeof reference === "string" && reference.length > 0) &&
     new Set(evidenceRefs).size === evidenceRefs.length &&
     typeof previewAllowed === "boolean")) invalidDefinition();

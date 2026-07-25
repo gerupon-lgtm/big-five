@@ -1,4 +1,6 @@
 import { FACTOR_ORDER } from "../data/factor-order.js";
+import { validateResultEvidenceDefinitions } from "./result-evidence.js";
+import { validateResultTextDefinitions } from "./result-text.js";
 
 const ROOT_FIELDS = ["diagnostic", "factors", "questions"];
 const DIRECTIONS = new Set(["positive", "negative"]);
@@ -15,6 +17,10 @@ function hasExactFields(value, fields) {
 
 function hasUniqueValues(values) {
   return new Set(values).size === values.length;
+}
+
+function failResultContent() {
+  throw new TypeError("RESULT_CONTENT_INVALID");
 }
 
 
@@ -89,4 +95,24 @@ export function validateDefinitionAuthority(value, canonicalVersions, authorityF
   if (!validAuthority.rows.every((row) => questionBySourceItemId.has(row.sourceItemId) && ["textJa", "factorId", "keyedDirection", "previewIncluded"].every((field) => questionBySourceItemId.get(row.sourceItemId)[field] === row[field]))) failAuthority();
   if (!validAuthority.previewQuestionIds.every((id, index) => id === validValue.diagnostic.previewQuestionIds[index]) || !validAuthority.previewSourceItemIds.every((sourceItemId, index) => sourceItemId === validValue.questions[index].sourceItemId)) failAuthority();
   return validValue;
+}
+
+export function validateResultContentDefinitions(input) {
+  if (!hasExactFields(input, ["evidenceDefinitions", "textDefinitions", "titleProfiles", "resultTextVersion"])) {
+    failResultContent();
+  }
+  const { evidenceDefinitions, textDefinitions, titleProfiles, resultTextVersion } = input;
+  validateResultEvidenceDefinitions(evidenceDefinitions);
+  validateResultTextDefinitions(textDefinitions);
+  if (!Array.isArray(titleProfiles) || !titleProfiles.every((profile) =>
+    isRecord(profile) && typeof profile.titleId === "string" && profile.titleId.length > 0) ||
+    resultTextVersion !== "result-text-v1") failResultContent();
+  const evidenceIds = new Set(evidenceDefinitions.map(({ evidenceId }) => evidenceId));
+  const titleIds = new Set(titleProfiles.map(({ titleId }) => titleId));
+  if (!textDefinitions.every(({ version, evidenceRefs, appliesTo }) =>
+    version === resultTextVersion &&
+    evidenceRefs.every((id) => evidenceIds.has(id)) &&
+    (!appliesTo.titleId || titleIds.has(appliesTo.titleId))
+  )) failResultContent();
+  return true;
 }

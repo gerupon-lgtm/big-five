@@ -1,10 +1,10 @@
 import { appMeta } from "../config/app-meta.js";
 import { FACTOR_ORDER } from "../data/factor-order.js";
 import { isValidFactorResults } from "./factor-result.js";
+import { RESULT_TEXT_SECTIONS } from "./result-text.js";
 
 const CLASSIFICATION_FIELDS = ["titleRuleVersion", "kind", "titleId", "characterId", "selectedFactors", "boundaryFlags"];
 const RENDERED_TEXT_FIELDS = ["id", "version", "section", "text", "evidenceRefs"];
-const SECTIONS = new Set(["summary", "strength", "tradeoff", "work", "relationship", "stress", "action"]);
 
 function invalidResultModel() {
   throw new TypeError("RESULT_MODEL_INVALID");
@@ -62,7 +62,7 @@ function validRenderedTexts(renderedTexts) {
     isExactRecord(record, RENDERED_TEXT_FIELDS) &&
     typeof record.id === "string" && record.id.length > 0 &&
     typeof record.version === "string" && record.version.length > 0 &&
-    SECTIONS.has(record.section) && typeof record.text === "string" &&
+    RESULT_TEXT_SECTIONS.includes(record.section) && typeof record.text === "string" &&
     Array.isArray(record.evidenceRefs) && record.evidenceRefs.every((reference) => typeof reference === "string" && reference.length > 0) &&
     new Set(record.evidenceRefs).size === record.evidenceRefs.length);
 }
