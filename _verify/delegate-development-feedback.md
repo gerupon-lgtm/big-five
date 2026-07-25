@@ -155,6 +155,12 @@
 - Q-006 Task 6レビューの効果: 実装担当の専用・関連・全体テストがすべて成功した後でも、独立レビューが`Array.prototype.every`のcallback引数混入による非空BoundaryFlag回帰、同section内の因子順入替、exotic array prototypeの3件を検出した。いずれも正常系中心のテストでは見落としやすく、別担当が失敗例から契約を読み直す方式が有効だった。
 - Q-006 Task 6修正評価: 同一実装担当へ3指摘をrecord／failure単位で戻し、各RED→GREEN、全145テスト成功まで1回で収束した。限定再レビューはImportant 0で承認し、非ブロッキングMinorとしてmethod／iterator getterを直接監視するテスト強化だけを残した。軽微提案まで必ず修正往復すると進行が遅くなるため、実装安全性と再発防止価値を分けて受入判断する運用が必要。
 - Q-006 Task 6の責任範囲切り分け: `diagnosisId`の文書差はTask 7、旧`progress-storage`との統合は後続の永続化所有タスクと判定した。`delegate-development`のレビューへ「指摘の有無」だけでなく「今回のblocker／次タスク／別所有」を分類させると、スコープ拡張を防ぎながら懸念を失わずに進められる。
+
+## 2026-07-26 CSV foundation実行での修正指示
+
+- Windowsのlinked worktreeかつ日本語を含む絶対パスで、既定の` sdd-workspace` helperがGit Bash内の`C:/...`をPOSIX absolute pathへ変換できず、`mkdir: cannot create directory 'C:/Users/user': Permission denied`で失敗した。明示`/c/Users/...` pathを`task-brief`と`review-package`へ渡す回避は成功した。
+- repository不良ではなくCodex adapterとPOSIX helperのpath境界不具合として記録する。candidateではdrive-letter変換、MSYS/MINGW検出、PowerShell fallback、明示output pathを実装し、日本語linked worktreeとLinux/macOSの双方で回帰比較する。
+- 詳細な再現条件、修正指示、合格条件は`_verify/skill-evals/delegate-development/reports/2026-07-26-csv-foundation-correction-instructions.md`を正とする。インストール済みskillは比較・ユーザー採用承認前に直接変更しない。
 - Q-006 Task 7レビューの効果: focused・full・静的検証がすべて成功した文書同期でも、独立横断レビューがQ-006のopen/resolved二重掲載、Markdown表破損、`scaleVersion`と`scaleId`の意味矛盾、composer/snapshot責務誤記、F-002 traceability欠落、contract testの節境界不足を検出した。文書は単語存在テストだけでなく、表行・heading・責務対応を別担当が意味監査する必要がある。
 - Q-006 Task 7修正評価: Fix 1で8指摘中7件を解消したが、実装順T-005行だけF-002が残り、限定再レビューが検出した。Fix 2は2ファイル・1行契約へ縮小し、最終再レビューでCritical・Important・Minor 0へ収束した。大量文書の初回修正後も、元指摘ごとのチェックリストを機械的に閉じる再レビューが有効だった。
 - 委譲先から監督者への逆チェック: Fix 2指示の例示で監督者が誤ってF-013を挙げたが、実装担当が詳細節・spec・traceabilityを照合し、正典がF-002/F-005/F-006/F-007/F-008/F-016/F-018であることを指摘した。`delegate-development`は一方向の命令実行ではなく、委譲先に正典照合と異議申立てを明示的に許可すると監督者側の誤りも防げる。
