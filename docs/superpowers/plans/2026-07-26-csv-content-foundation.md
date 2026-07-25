@@ -432,6 +432,8 @@ git commit -m "feat: compile diagnosis CSV content"
 - Create: `scripts/content/compile-result-content.mjs`
 - Create: `app/js/domain/title-profile.js`
 - Create: `app/tests/content-result-compiler.test.js`
+- Modify: `scripts/content/table-loader.mjs`
+- Modify: `app/tests/content-table-schema.test.js`
 - Modify: `app/js/data/title-profile-definitions.js`
 - Modify: `app/js/domain/title-classifier.js`
 - Modify: `app/js/domain/presentation-definition-validator.js`
@@ -446,7 +448,8 @@ git commit -m "feat: compile diagnosis CSV content"
 **Interfaces:**
 - Consumes: `loadCsvTable`
 - Produces: `validateTitleProfileDefinitions(value) -> value` from `app/js/domain/title-profile.js`
-- Produces: `compileResultContent({ profileRows, profileFactorRows, textRows, textEvidenceRows, evidenceRows, resultTextVersion }) -> { titleProfiles, textDefinitions, evidenceDefinitions, resultTextVersion }`
+- Produces: `compileResultContent({ profileRows, profileFactorRows, textRows, textEvidenceRows, evidenceRows, evidenceClaimRows, resultTextVersion }) -> { titleProfiles, textDefinitions, evidenceDefinitions, resultTextVersion }`
+- Produces: `assertReleaseEligible({ rows, approvals }) -> true`; this is a build-time gate consumed by Task 6 and never changes a CSV status.
 
 - [ ] **Step 1: Write failing count, shape, and ordering tests**
 
@@ -471,6 +474,8 @@ Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `compile-result-content.mjs`.
 - [ ] **Step 3: Implement normalized joins without wildcard inference**
 
 First move the pure `validateTitleProfileDefinitions` implementation from `app/js/data/title-profile-definitions.js` to `app/js/domain/title-profile.js`; the data module imports and re-exports it during the migration. Change `title-classifier.js` and `presentation-definition-validator.js` to import the validator from `./title-profile.js`. This keeps the validator available after the static data module is removed.
+
+Before loading `result-texts.csv`, complete the generic optional-cell contract in `table-loader.mjs`: an empty cell is preserved as `""` when `required` is false, while a required empty cell still fails. Add the regression test to `content-table-schema.test.js`; do not trim or otherwise coerce optional text.
 
 ```js
 function appliesToFromRow(row) {
@@ -524,7 +529,7 @@ Expected: PASS without changing the 51-title catalog or 237 literals.
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add scripts/content/compile-result-content.mjs app/js/domain/title-profile.js app/js/domain/title-classifier.js app/js/domain/presentation-definition-validator.js app/js/data/title-profile-definitions.js content/schemas/title-profiles.schema.json content/schemas/title-profile-factors.schema.json content/schemas/result-texts.schema.json content/schemas/result-text-evidence.schema.json content/schemas/result-evidence.schema.json content/schemas/result-evidence-claims.schema.json app/tests/content-result-compiler.test.js app/tests/result-content-definitions.test.js
+git add scripts/content/compile-result-content.mjs scripts/content/table-loader.mjs app/js/domain/title-profile.js app/js/domain/title-classifier.js app/js/domain/presentation-definition-validator.js app/js/data/title-profile-definitions.js content/schemas/title-profiles.schema.json content/schemas/title-profile-factors.schema.json content/schemas/result-texts.schema.json content/schemas/result-text-evidence.schema.json content/schemas/result-evidence.schema.json content/schemas/result-evidence-claims.schema.json app/tests/content-result-compiler.test.js app/tests/content-table-schema.test.js app/tests/result-content-definitions.test.js
 git commit -m "feat: compile result content CSVs"
 ```
 
