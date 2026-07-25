@@ -7,14 +7,10 @@
 
 ## 配布経路
 
-1. 編集用正典  
-   `C:\Users\user\Documents\診断系アプリ開発\.worktrees\big-five-q006\tools\skills\delegate-development`
-2. 配布元  
-   `C:\Users\user\Documents\skills-work\delegate-development`
-3. Codex配布先  
-   `C:\Users\user\.codex\skills\delegate-development`
-4. Claude配布先  
-   `C:\Users\user\.claude\skills\delegate-development`
+1. 編集用正典: `C:\Users\user\Documents\診断系アプリ開発\.worktrees\big-five-q006\tools\skills\delegate-development`
+2. 配布元: `C:\Users\user\Documents\skills-work\delegate-development`
+3. Codex配布先: `C:\Users\user\.codex\skills\delegate-development`
+4. Claude配布先: `C:\Users\user\.claude\skills\delegate-development`
 
 編集用正典から配布元へ書き戻し、配布元からCodex・Claudeへ配布した。配布前後で対象ディレクトリの削除は行わず、確認済み7ファイルだけを上書きした。
 
@@ -60,4 +56,3 @@ DECD08A6DAD906D8566AAAA68B179FE9E261DA23C2846CE4628F9C4189193F73  references\del
 3. baseline SHA-256へ戻ったことを3か所で照合する。
 4. 配布元へ`quick_validate.py`を実行する。
 5. 新しいCodex実行主体で主要triggerをsmoke testする。
-
