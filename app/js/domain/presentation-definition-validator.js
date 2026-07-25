@@ -32,6 +32,10 @@ function hasExactFields(value, fields) {
   return isRecord(value) && Object.keys(value).length === fields.length && fields.every((field) => Object.hasOwn(value, field));
 }
 
+function isDenseArray(value) {
+  return Array.isArray(value) && Object.keys(value).length === value.length;
+}
+
 function isNonEmptyString(value) {
   return typeof value === "string" && value.length > 0;
 }
@@ -57,12 +61,12 @@ function deepFreeze(value) {
 }
 
 function validateScenes(scenes) {
-  if (!Array.isArray(scenes) || scenes.length !== SCENES.length || !scenes.every((scene) => hasExactFields(scene, SCENE_FIELDS))) failDefinition();
+  if (!isDenseArray(scenes) || scenes.length !== SCENES.length || !scenes.every((scene) => hasExactFields(scene, SCENE_FIELDS))) failDefinition();
   if (!scenes.every(({ sceneId, label }, index) => sceneId === SCENES[index].sceneId && label === SCENES[index].label)) failDefinition();
 }
 
 function validatePalettes(palettes, expectedVersion) {
-  if (!Array.isArray(palettes) || !palettes.every((palette) => hasExactFields(palette, PALETTE_FIELDS))) failDefinition();
+  if (!isDenseArray(palettes) || !palettes.every((palette) => hasExactFields(palette, PALETTE_FIELDS))) failDefinition();
   if (!palettes.every(({ paletteId, version, label, baseColors, description }) =>
     PALETTE_ID_PATTERN.test(paletteId) && version === expectedVersion && isNonEmptyString(label) &&
     hasExactFields(baseColors, BASE_COLOR_FIELDS) && BASE_COLOR_FIELDS.every((field) => HEX_COLOR_PATTERN.test(baseColors[field])) &&
@@ -71,7 +75,7 @@ function validatePalettes(palettes, expectedVersion) {
 }
 
 function validateFragrances(fragrances, expectedVersion) {
-  if (!Array.isArray(fragrances) || !fragrances.every((fragrance) => hasExactFields(fragrance, FRAGRANCE_FIELDS))) failDefinition();
+  if (!isDenseArray(fragrances) || !fragrances.every((fragrance) => hasExactFields(fragrance, FRAGRANCE_FIELDS))) failDefinition();
   if (!fragrances.every(({ fragranceId, version, sceneId, accordLabel, description, disclaimerId }) => {
     const idMatch = FRAGRANCE_ID_PATTERN.exec(fragranceId);
     return idMatch !== null && idMatch[1] === sceneId && version === expectedVersion && SCENE_IDS.has(sceneId) &&
@@ -81,14 +85,14 @@ function validateFragrances(fragrances, expectedVersion) {
 }
 
 function validateSelectors(titleSelectors, titleProfiles, paletteIds, fragranceById) {
-  if (!Array.isArray(titleSelectors) || titleSelectors.length !== titleProfiles.length || !titleSelectors.every((selector) => hasExactFields(selector, SELECTOR_FIELDS))) failDefinition();
+  if (!isDenseArray(titleSelectors) || titleSelectors.length !== titleProfiles.length || !titleSelectors.every((selector) => hasExactFields(selector, SELECTOR_FIELDS))) failDefinition();
   const referencedPaletteIds = new Set();
   const referencedFragranceIds = new Set();
 
   titleSelectors.forEach((selector, index) => {
     const profile = titleProfiles[index];
     const { titleId, alternativePaletteIds, fragranceScenes } = selector;
-    if (titleId !== profile.titleId || !Array.isArray(alternativePaletteIds) || alternativePaletteIds.length !== 2 ||
+    if (titleId !== profile.titleId || !isDenseArray(alternativePaletteIds) || alternativePaletteIds.length !== 2 ||
       !alternativePaletteIds.every(isNonEmptyString) || !hasUniqueValues(alternativePaletteIds) ||
       alternativePaletteIds.includes(profile.defaultPaletteId) || !paletteIds.has(profile.defaultPaletteId) ||
       !alternativePaletteIds.every((paletteId) => paletteIds.has(paletteId))) failDefinition();
@@ -96,11 +100,11 @@ function validateSelectors(titleSelectors, titleProfiles, paletteIds, fragranceB
     referencedPaletteIds.add(profile.defaultPaletteId);
     alternativePaletteIds.forEach((paletteId) => referencedPaletteIds.add(paletteId));
 
-    if (!Array.isArray(fragranceScenes) || fragranceScenes.length !== SCENES.length ||
+    if (!isDenseArray(fragranceScenes) || fragranceScenes.length !== SCENES.length ||
       !fragranceScenes.every((scene) => hasExactFields(scene, FRAGRANCE_SCENE_FIELDS))) failDefinition();
     fragranceScenes.forEach((sceneSelector, sceneIndex) => {
       const { sceneId, candidateFragranceIds, shareFragranceId } = sceneSelector;
-      if (sceneId !== SCENES[sceneIndex].sceneId || !Array.isArray(candidateFragranceIds) || candidateFragranceIds.length !== 2 ||
+      if (sceneId !== SCENES[sceneIndex].sceneId || !isDenseArray(candidateFragranceIds) || candidateFragranceIds.length !== 2 ||
         !candidateFragranceIds.every(isNonEmptyString) || !hasUniqueValues(candidateFragranceIds) ||
         !candidateFragranceIds.every((fragranceId) => fragranceById.get(fragranceId)?.sceneId === sceneId) ||
         !candidateFragranceIds.includes(shareFragranceId)) failDefinition();

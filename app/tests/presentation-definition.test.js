@@ -31,10 +31,11 @@ test("T-005 F-018 returns a recursively frozen definition graph", () => {
   assert.equal(Object.isFrozen(validated.titleSelectors[0].fragranceScenes[0].candidateFragranceIds), true);
 });
 
-for (const { name, mutate, error } of invalidPresentationCases) {
+for (const { name, mutate, error, finding } of invalidPresentationCases) {
   test(`T-005 F-018 rejects ${name}`, () => {
     const value = structuredClone(makeValidPresentationDefinitionSet(TitleProfileDefinitions));
     mutate(value);
+    if (finding) assert.deepEqual(lintPresentationCopy(value), [finding]);
     assert.throws(
       () => validatePresentationDefinitionSet(value, {
         titleProfiles: TitleProfileDefinitions,
