@@ -243,7 +243,9 @@ Q-012確定前は`object-fit: contain`で全体表示し、共有カードでも
 - 正式版の保存キーは `big-five-self-understanding:v1` とする。プロトタイプ用キーは読込・更新しない。
 - `ProgressRecord` は `response-state` が exact schema、固定設問順、`VersionTuple`、ISO日時、回答値 `1..5` を検証してから遷移・保存する。`currentIndex` は保存時に `0..49` とする。
 - `continueHidden` は `mode: detail50`、`currentIndex: 20`、`previewDecision: continueHidden` にだけ遷移し、20問のスコア、称号、キャラクター、結果、共有モデルを生成しない。
-- `StorageEnvelope` は schema 1 の正確な外側構造を検証する。対象診断の進捗だけを現在の定義・版で再検証し、他診断の安全な進捗と結果配列は保持する。
+- `showPreview` 後の継続は `mode: detail50`、`currentIndex: 20`、`previewDecision: showPreview` として記録する。表示済みの事実を `continueHidden` へ変更しない。
+- `StorageEnvelope` は schema 1 の正確な外側構造を検証する。対象診断の進捗だけを現在の定義・版で再検証し、save/discard時は無関係進捗・結果も基本schemaで検証して壊れたレコードだけを除去する。
+- `progressId` と `resultId` はRFC 4122 UUID形状、日時は実在するISO 8601日時とする。時刻生成は呼出側で行い、保存・遷移関数は現在時刻を暗黙に生成しない。
 - 将来 `schemaVersion`、壊れたJSON、壊れた対象進捗、版不一致は保存値を上書きしない。保存または削除の失敗はメモリ上の診断進行を破棄しない。
 
 ### 3.5 ResultSnapshot

@@ -10,7 +10,8 @@
 
 1. RED: `response-state.test.js` failed with `ERR_MODULE_NOT_FOUND` for the public response-state seam. GREEN: new progress advances only the fixed current preview question.
 2. RED: back/replacement, preview exits, hidden continuation, and detailed terminal cases exposed the missing back-replacement transition. GREEN: answers remain a single map and replacement resumes at the next unanswered fixed position.
-3. RED: `progress-storage.test.js` failed with `ERR_MODULE_NOT_FOUND` for the injected storage seam. GREEN: save/reload, corrupt/future/version-mismatched values, storage exceptions, confirmation cancellation, and deletion failures return stable outcomes.
+3. RED: review regression tests required a post-preview detail transition and exposed the former terminal-event shape. GREEN: `showPreview` remains recorded through detailed continuation, both detail decisions permit back/replacement, and terminal events retain valid progress at index 49.
+4. RED: `progress-storage.test.js` failed with `ERR_MODULE_NOT_FOUND` for the injected storage seam. GREEN: save/reload, corrupt/future/version-mismatched values, storage exceptions, confirmation cancellation, automatic transition persistence, and deletion failures return stable outcomes.
 
 ## Public contracts implemented
 
@@ -18,12 +19,13 @@
 - The terminal 50-item event contains only a complete answer map for the downstream scoring caller; no history/result/share work is performed here.
 - Storage key is `big-five-self-understanding:v1`. Future schemas and incompatible/corrupt target progress are not overwritten.
 - Save failure returns the valid in-memory progress; delete requires explicit confirmation and reports write failure.
+- `answerAndSave` and generic transition persistence save every event carrying progress. T-005 owns result persistence followed by progress deletion.
 
 ## Verification
 
-- Focused T-004 tests: 9 passing tests.
-- Full suite: 95 passing tests.
-- Static check: passed (17 JavaScript files, one canonical runtime version).
+- Focused T-004 tests: 14 passing tests.
+- Full suite: 100 passing tests.
+- Static check: passed (18 JavaScript files, one canonical runtime version).
 - `git diff --check`: passed.
 
 ## Residual risks

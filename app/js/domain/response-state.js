@@ -20,8 +20,10 @@ const VERSION_FIELDS = [
   "cardTemplateVersion",
   "appVersion",
 ];
-const ISO_8601_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+import { isStrictIsoTimestamp } from "./iso-timestamp.js";
+
 const PREVIEW_DECISIONS = new Set(["undecided", "showPreview", "continueHidden"]);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const RESPONSE_ERROR = Object.freeze({
   INVALID_INPUT: "RESPONSE_INVALID_INPUT",
@@ -53,10 +55,6 @@ function deepFreeze(value) {
     for (const nestedValue of Object.values(value)) deepFreeze(nestedValue);
   }
   return value;
-}
-
-function validIsoTimestamp(value) {
-  return typeof value === "string" && ISO_8601_PATTERN.test(value) && !Number.isNaN(Date.parse(value));
 }
 
 function resolveQuestionIds(definition) {
@@ -123,7 +121,7 @@ function validAnswerPrefix(progress, questionIds) {
   const answeredIndexes = ids.map((id) => Object.hasOwn(answers, id));
   const completed = answeredIndexes.every(Boolean);
   if (answeredIndexes.some((answered, index) => !answered && answeredIndexes.slice(index + 1).some(Boolean))) return false;
-  if (completed) return progress.currentIndex === ids.length - 1;
+  if (completed) return progress.currentIndex >= 0 && progress.currentIndex < ids.length;
   const firstUnanswered = answeredIndexes.findIndex((answered) => !answered);
   return progress.currentIndex <= firstUnanswered;
 }
@@ -141,16 +139,16 @@ export function validateProgressRecord(progress, { definition, meta }) {
   const questionIds = resolveQuestionIds(definition);
   const expectedTuple = createVersionTuple(meta);
   if (!hasOwnDataFields(progress, PROGRESS_FIELDS) ||
-    typeof progress.progressId !== "string" || progress.progressId.length === 0 ||
+    typeof progress.progressId !== "string" || !UUID_PATTERN.test(progress.progressId) ||
     progress.diagnosisId !== definition.diagnosisId ||
     !["preview20", "detail50"].includes(progress.mode) ||
     !matchesVersionTuple(progress.versionTuple, expectedTuple) ||
-    !validIsoTimestamp(progress.startedAt) || !validIsoTimestamp(progress.updatedAt) ||
+    !isStrictIsoTimestamp(progress.startedAt) || !isStrictIsoTimestamp(progress.updatedAt) ||
     !Number.isInteger(progress.currentIndex) || progress.currentIndex < 0 ||
     progress.currentIndex > (progress.mode === "preview20" ? 19 : 49) ||
     !PREVIEW_DECISIONS.has(progress.previewDecision) ||
     (progress.mode === "preview20" && progress.previewDecision === "continueHidden") ||
-    (progress.mode === "detail50" && progress.previewDecision !== "continueHidden") ||
+    (progress.mode === "detail50" && !["showPreview", "continueHidden"].includes(progress.previewDecision)) ||
     !validAnswers(progress.answers, activeQuestionIds(progress, questionIds)) ||
     !validAnswerPrefix(progress, questionIds)) {
     fail(RESPONSE_ERROR.INCOMPATIBLE_PROGRESS);
@@ -158,10 +156,10 @@ export function validateProgressRecord(progress, { definition, meta }) {
   return cloneProgress(progress, {});
 }
 
-export function createProgressRecord({ definition, meta, progressId, now = new Date().toISOString() }) {
+export function createProgressRecord({ definition, meta, progressId, now }) {
   resolveQuestionIds(definition);
   const versionTuple = createVersionTuple(meta);
-  if (typeof progressId !== "string" || progressId.length === 0 || !validIsoTimestamp(now)) {
+  if (typeof progressId !== "string" || !UUID_PATTERN.test(progressId) || !isStrictIsoTimestamp(now)) {
     fail(RESPONSE_ERROR.INVALID_INPUT);
   }
   return deepFreeze({
@@ -193,10 +191,11 @@ function nextUnansweredIndex(progress, questionIds, fromIndex) {
   return null;
 }
 
-export function answerCurrent(progress, answer, { definition, now = new Date().toISOString(), meta } = {}) {
+export function answerCurrent(progress, answer, { definition, now, meta } = {}) {
   const questionIds = resolveQuestionIds(definition);
   const state = validateProgressRecord(progress, { definition, meta });
-  if (!validIsoTimestamp(now) || state.previewDecision !== "undecided" && state.mode === "preview20") {
+  if (!isStrictIsoTimestamp(now)) fail(RESPONSE_ERROR.INVALID_INPUT);
+  if (state.previewDecision !== "undecided" && state.mode === "preview20") {
     fail(RESPONSE_ERROR.INVALID_TRANSITION);
   }
   const ids = activeQuestionIds(state, questionIds);
@@ -213,13 +212,18 @@ export function answerCurrent(progress, answer, { definition, now = new Date().t
   if (state.mode === "preview20") {
     return deepFreeze({ kind: "preview-choice-required", progress: cloneProgress(answered, { currentIndex: 19 }) });
   }
-  return deepFreeze({ kind: "detail-complete", answers: { ...answered.answers } });
+  return deepFreeze({
+    kind: "detail-complete",
+    progress: cloneProgress(answered, { currentIndex: 49 }),
+    answers: { ...answered.answers },
+  });
 }
 
-export function goBack(progress, { definition, meta, now = new Date().toISOString() }) {
+export function goBack(progress, { definition, meta, now }) {
   const questionIds = resolveQuestionIds(definition);
   const state = validateProgressRecord(progress, { definition, meta });
-  if (!validIsoTimestamp(now) || state.previewDecision !== "undecided" || state.currentIndex === 0) {
+  if (!isStrictIsoTimestamp(now) || state.currentIndex === 0 ||
+    (state.mode === "preview20" && state.previewDecision !== "undecided")) {
     fail(RESPONSE_ERROR.INVALID_TRANSITION);
   }
   return deepFreeze({
@@ -228,9 +232,9 @@ export function goBack(progress, { definition, meta, now = new Date().toISOStrin
   });
 }
 
-export function choosePreviewExit(progress, decision, { definition, meta, now = new Date().toISOString() }) {
+export function choosePreviewExit(progress, decision, { definition, meta, now }) {
   const state = validateProgressRecord(progress, { definition, meta });
-  if (!validIsoTimestamp(now) || state.mode !== "preview20" || state.previewDecision !== "undecided" ||
+  if (!isStrictIsoTimestamp(now) || state.mode !== "preview20" || state.previewDecision !== "undecided" ||
     !["showPreview", "continueHidden"].includes(decision) ||
     Object.keys(state.answers).length !== 20) {
     fail(RESPONSE_ERROR.INVALID_TRANSITION);
@@ -247,6 +251,23 @@ export function choosePreviewExit(progress, decision, { definition, meta, now = 
       mode: "detail50",
       currentIndex: 20,
       previewDecision: decision,
+      updatedAt: now,
+    }),
+  });
+}
+
+export function continueAfterPreview(progress, { definition, meta, now }) {
+  const state = validateProgressRecord(progress, { definition, meta });
+  if (!isStrictIsoTimestamp(now) || state.mode !== "preview20" || state.previewDecision !== "showPreview" ||
+    Object.keys(state.answers).length !== 20) {
+    fail(RESPONSE_ERROR.INVALID_TRANSITION);
+  }
+  return deepFreeze({
+    kind: "detail-after-preview",
+    progress: cloneProgress(state, {
+      mode: "detail50",
+      currentIndex: 20,
+      previewDecision: "showPreview",
       updatedAt: now,
     }),
   });

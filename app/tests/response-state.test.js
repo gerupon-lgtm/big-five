@@ -6,17 +6,19 @@ import { DiagnosticDefinition } from "../js/data/diagnostic-definition.js";
 import {
   answerCurrent,
   choosePreviewExit,
+  continueAfterPreview,
   createProgressRecord,
   goBack,
 } from "../js/domain/response-state.js";
 
 const NOW = "2026-07-25T00:00:00.000Z";
+const PROGRESS_ID = "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c001";
 
 function createProgress() {
   return createProgressRecord({
     definition: DiagnosticDefinition,
     meta: appMeta,
-    progressId: "progress-1",
+    progressId: PROGRESS_ID,
     now: NOW,
   });
 }
@@ -126,6 +128,50 @@ test("T-004 F-003 returns only the complete 50-answer map at the detailed termin
   const terminal = answerUntil(hidden.progress, 50, 20);
 
   assert.equal(terminal.kind, "detail-complete");
+  assert.equal(terminal.progress.currentIndex, 49);
+  assert.equal(Object.keys(terminal.progress.answers).length, 50);
   assert.equal(Object.keys(terminal.answers).length, 50);
-  assert.deepEqual(Object.keys(terminal).sort(), ["answers", "kind"]);
+  assert.deepEqual(Object.keys(terminal).sort(), ["answers", "kind", "progress"]);
+});
+
+test("T-004 F-003 continues to detail after a shown preview without relabeling it hidden", () => {
+  const previewChoice = answerUntil(createProgress(), 20).progress;
+  const preview = choosePreviewExit(previewChoice, "showPreview", { definition: DiagnosticDefinition, meta: appMeta, now: NOW });
+  const detail = continueAfterPreview(preview.progress, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T00:21:00.000Z" });
+
+  assert.equal(detail.kind, "detail-after-preview");
+  assert.equal(detail.progress.mode, "detail50");
+  assert.equal(detail.progress.currentIndex, 20);
+  assert.equal(detail.progress.previewDecision, "showPreview");
+  assert.equal(Object.keys(detail.progress.answers).length, 20);
+});
+
+test("T-004 F-003 permits repeated back and replacement from complete preview and both detailed paths", () => {
+  const completePreview = answerUntil(createProgress(), 20).progress;
+  const backTwice = goBack(
+    goBack(completePreview, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T00:21:00.000Z" }).progress,
+    { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T00:22:00.000Z" },
+  );
+  const changedPreview = answerCurrent(backTwice.progress, {
+    questionId: DiagnosticDefinition.previewQuestionIds[17], value: 5,
+  }, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T00:23:00.000Z" });
+  assert.equal(changedPreview.kind, "preview-choice-required");
+
+  for (const detail of [
+    continueAfterPreview(choosePreviewExit(completePreview, "showPreview", { definition: DiagnosticDefinition, meta: appMeta, now: NOW }).progress, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T00:24:00.000Z" }),
+    choosePreviewExit(completePreview, "continueHidden", { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T00:24:00.000Z" }),
+  ]) {
+    let state = detail.progress;
+    for (let index = 0; index < 3; index += 1) state = goBack(state, { definition: DiagnosticDefinition, meta: appMeta, now: `2026-07-25T00:2${5 + index}:00.000Z` }).progress;
+    const changed = answerCurrent(state, { questionId: DiagnosticDefinition.detailQuestionIds[17], value: 2 }, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T00:29:00.000Z" });
+    assert.equal(changed.progress.answers[DiagnosticDefinition.detailQuestionIds[17]], 2);
+    assert.equal(changed.progress.currentIndex, 20);
+  }
+});
+
+test("T-004 F-015 rejects omitted, impossible, and non-UUID progress inputs deterministically", () => {
+  assert.throws(() => createProgressRecord({ definition: DiagnosticDefinition, meta: appMeta, progressId: PROGRESS_ID }), /RESPONSE_INVALID_INPUT/);
+  assert.throws(() => createProgressRecord({ definition: DiagnosticDefinition, meta: appMeta, progressId: "not-a-uuid", now: NOW }), /RESPONSE_INVALID_INPUT/);
+  assert.throws(() => createProgressRecord({ definition: DiagnosticDefinition, meta: appMeta, progressId: PROGRESS_ID, now: "2026-02-30T00:00:00.000Z" }), /RESPONSE_INVALID_INPUT/);
+  assert.throws(() => answerCurrent(createProgress(), { questionId: DiagnosticDefinition.previewQuestionIds[0], value: 1 }, { definition: DiagnosticDefinition, meta: appMeta }), /RESPONSE_INVALID_INPUT/);
 });
