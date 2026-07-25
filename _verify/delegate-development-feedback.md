@@ -145,3 +145,5 @@
 - 2026-07-25 main/worktree整理: worktree作成時、mainの未コミット設計差分を保護するためbranchへ複製・コミットした一方、main側を残したことで同一差分が二重に見える状態になった。ユーザー確認後、branch HEADへ15ファイルが保存済みであることとhashを照合し、main側の重複だけを除去してcleanへ戻した。今後はworktree移行時に「元checkoutへ残る差分」と「branchへ移す差分」を開始報告へ明記する。
 - Q-006 Task 2の計画矛盾: strict schemaが旧`summary`と空`evidenceRefs`を廃止する一方、計画の変更ファイル一覧に旧T-003 fixtureが含まれず、指定回帰テストが3件失敗した。担当が互換性判断を勝手に行わずBLOCKEDで返した点は有効だった。ユーザー判断でstrict Q-006を正とし、fixtureだけを移行する計画補正後に37件成功した。
 - Q-006 Task 2レビューの効果: 初回レビューは、`appliesTo`へpreview条件を明示しない`previewAllowed: true`の`strength`が検証を通る抜けを検出した。Fix round 1でsection制約を`previewAllowed`自体へ結び付け、covering testと旧fixtureを修正し、scoped re-reviewで解消を確認した。実装担当セルフレビューと全テスト成功だけでは見落とした境界であり、task reviewの有効性が高い事例。
+- Q-006 Task 3実装評価: 最も判断力の高い担当へ、確定catalog、禁止表現、統一文法、literal静的定義を限定して委譲した。51 label、102副題・理由、独立fixtureを実装し、focused 26件、full 107件、static check、51件監査を再試行なしで完了した。
+- Q-006 Task 3レビュー評価: 別の高判断力担当が102件を横断し、因子名・high/low方向・titleId、能力・善悪・適職・順位等の禁止表現、日本語の自然さを確認し、重要・軽微指摘0で承認した。創作を自由案ではなく「因子と方向だけの統一文法」へ制約すると、delegate-developmentでもそのまま採用可能な品質へ収束した。
