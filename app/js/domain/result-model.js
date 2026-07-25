@@ -34,16 +34,20 @@ function isPlainDataTree(value, ancestors = new Set()) {
 
   let valid;
   if (Array.isArray(value)) {
-    const keys = Reflect.ownKeys(value);
-    const lengthDescriptor = Object.getOwnPropertyDescriptor(value, "length");
-    valid = keys.length === value.length + 1 &&
-      lengthDescriptor && Object.hasOwn(lengthDescriptor, "value") &&
-      lengthDescriptor.value === value.length &&
-      Array.from({ length: value.length }, (_, index) => {
-        const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
-        return descriptor?.enumerable && Object.hasOwn(descriptor, "value") &&
-          isPlainDataTree(descriptor.value, ancestors);
-      }).every(Boolean);
+    if (Object.getPrototypeOf(value) !== Array.prototype) {
+      valid = false;
+    } else {
+      const keys = Reflect.ownKeys(value);
+      const lengthDescriptor = Object.getOwnPropertyDescriptor(value, "length");
+      valid = keys.length === value.length + 1 &&
+        lengthDescriptor && Object.hasOwn(lengthDescriptor, "value") &&
+        lengthDescriptor.value === value.length &&
+        Array.from({ length: value.length }, (_, index) => {
+          const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+          return descriptor?.enumerable && Object.hasOwn(descriptor, "value") &&
+            isPlainDataTree(descriptor.value, ancestors);
+        }).every(Boolean);
+    }
   } else {
     valid = Object.getPrototypeOf(value) === Object.prototype &&
       Reflect.ownKeys(value).every((key) => {
@@ -91,7 +95,7 @@ function validClassification(classification) {
     selectedFactors.every((factor) => isExactRecord(factor, ["factorId", "direction"]) &&
       FACTOR_ORDER.includes(factor.factorId) && ["high", "low"].includes(factor.direction)) &&
     new Set(selectedFactors.map(({ factorId }) => factorId)).size === selectedFactors.length &&
-    Array.isArray(boundaryFlags) && boundaryFlags.every(validBoundaryFlag);
+    Array.isArray(boundaryFlags) && boundaryFlags.every((flag) => validBoundaryFlag(flag));
 }
 
 function validRenderedTexts(renderedTexts) {

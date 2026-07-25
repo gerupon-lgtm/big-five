@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { TitleProfileDefinitions } from "../js/data/title-profile-definitions.js";
+import { composeResultModel } from "../js/domain/result-model.js";
 import { createResultSnapshot } from "../js/domain/result-snapshot.js";
+import { classifyTitle } from "../js/domain/title-classifier.js";
 
 const FACTOR_IDS = [
   "intellectImagination",
@@ -90,9 +93,17 @@ function makeFactors() {
   }));
 }
 
-function makeRenderedTexts(sections = DETAIL_SECTIONS, version = "result-text-v1") {
+function makeRenderedTexts(
+  sections = DETAIL_SECTIONS,
+  version = "result-text-v1",
+  mode = "detail50",
+) {
   return sections.map((section, index) => ({
-    id: `rendered-${index + 1}`,
+    id: index === 0
+      ? "title-balanced-subtitle"
+      : index === 1
+        ? "title-balanced-reason"
+        : `${mode}-${FACTOR_IDS[(index - 2) % FACTOR_IDS.length]}-middle-${section}`,
     version,
     section,
     text: `診断時の表示文 ${index + 1}`,
@@ -145,7 +156,7 @@ function makePreviewInput() {
   input.mode = "preview20";
   input.resultModel.boundaryFlags[0].threshold = 0.25;
   input.resultModel.boundaryFlags[0].questionCount = 20;
-  input.resultModel.renderedTexts = makeRenderedTexts(PREVIEW_SECTIONS);
+  input.resultModel.renderedTexts = makeRenderedTexts(PREVIEW_SECTIONS, "result-text-v1", "preview20");
   return input;
 }
 
@@ -231,6 +242,39 @@ test("T-006 F-006 accepts the complete preview and detail display shapes", () =>
   assert.deepEqual(preview.renderedTexts.map(({ section }) => section), PREVIEW_SECTIONS);
   assert.equal(detail.renderedTexts.length, 42);
   assert.deepEqual(detail.renderedTexts.map(({ section }) => section), DETAIL_SECTIONS);
+});
+
+test("T-006 F-006 composeResultModel accepts canonical non-empty classification boundary flags", () => {
+  const factors = makeFactors();
+  factors[0] = {
+    factorId: "intellectImagination",
+    rawMean: 3.5,
+    displayScore: 63,
+    band: "high",
+    salience: 0.5,
+    directionalSupportCount: 5,
+    variance: 0.25,
+  };
+  const classification = classifyTitle({
+    factorResults: factors,
+    questionCount: 50,
+    titleProfiles: TitleProfileDefinitions,
+  });
+  assert.equal(classification.boundaryFlags.length > 0, true);
+
+  const model = composeResultModel({
+    factors,
+    classification,
+    renderedTexts: [{
+      id: `${classification.titleId}-subtitle`,
+      version: "result-text-v1",
+      section: "titleSubtitle",
+      text: "境界フラグを含む結果",
+      evidenceRefs: ["evidence-title-rule-v1"],
+    }],
+  });
+
+  assert.deepEqual(model.boundaryFlags, classification.boundaryFlags);
 });
 
 test("T-006 F-006 rejects missing and unknown top-level or result-model fields", () => {
@@ -336,7 +380,7 @@ test("T-006 F-006 preserves coherent historical versions without requiring curre
     cardTemplateVersion: "card-template-v2",
     appVersion: "mvp-0.2.0",
   };
-  input.resultModel.renderedTexts = makeRenderedTexts(DETAIL_SECTIONS, "result-text-v2");
+  input.resultModel.renderedTexts = makeRenderedTexts(DETAIL_SECTIONS, "result-text-v2", "detail50");
   input.cardTemplateVersion = "card-template-v2";
 
   const snapshot = createResultSnapshot(input);
@@ -577,6 +621,53 @@ test("T-006 F-006 rejects incomplete or reordered mode-specific displayed conten
     ["reordered detail", reorderedDetail],
   ]) {
     assertSnapshotInvalid(input, label);
+  }
+});
+
+test("T-006 F-006 rejects swaps within one rendered section and title-ID mismatches", () => {
+  const previewSwap = makePreviewInput();
+  [previewSwap.resultModel.renderedTexts[2], previewSwap.resultModel.renderedTexts[3]] =
+    [previewSwap.resultModel.renderedTexts[3], previewSwap.resultModel.renderedTexts[2]];
+
+  const detailSwap = makeValidInput();
+  [detailSwap.resultModel.renderedTexts[7], detailSwap.resultModel.renderedTexts[8]] =
+    [detailSwap.resultModel.renderedTexts[8], detailSwap.resultModel.renderedTexts[7]];
+
+  const titleMismatch = makeValidInput();
+  titleMismatch.resultModel.titleId = "title-single-intellectImagination-high";
+
+  for (const [label, input] of [
+    ["preview observation swap", previewSwap],
+    ["detail strength swap", detailSwap],
+    ["title ID mismatch", titleMismatch],
+  ]) {
+    assertSnapshotInvalid(input, label);
+  }
+});
+
+test("T-006 F-006 rejects exotic result-model arrays without invoking inherited getters", () => {
+  const cases = [
+    ["factors", (input) => input.resultModel.factors],
+    ["boundaryFlags", (input) => input.resultModel.boundaryFlags],
+    ["factorIds", (input) => input.resultModel.boundaryFlags[0].factorIds],
+    ["renderedTexts", (input) => input.resultModel.renderedTexts],
+    ["evidenceRefs", (input) => input.resultModel.renderedTexts[0].evidenceRefs],
+  ];
+
+  for (const [label, selectArray] of cases) {
+    const input = makeValidInput();
+    let inheritedGetterReads = 0;
+    const exoticPrototype = Object.create(Array.prototype);
+    Object.defineProperty(exoticPrototype, "answers", {
+      get() {
+        inheritedGetterReads += 1;
+        return undefined;
+      },
+    });
+    Object.setPrototypeOf(selectArray(input), exoticPrototype);
+
+    assertSnapshotInvalid(input, label);
+    assert.equal(inheritedGetterReads, 0, label);
   }
 });
 

@@ -72,12 +72,23 @@ function validVersionTuple(value) {
     VERSION_FIELDS.every((field) => typeof value[field] === "string" && value[field].length > 0);
 }
 
-function validRenderedTexts(renderedTexts, mode, resultTextVersion) {
+function validRenderedTexts({ renderedTexts, factors, titleId }, mode, resultTextVersion) {
   const expectedSections = mode === "preview20" ? PREVIEW_SECTIONS : DETAIL_SECTIONS;
+  const factorSections = mode === "preview20"
+    ? ["observation"]
+    : ["observation", "strength", "tradeoff", "work", "relationship", "stress", "question", "action"];
+  const expectedIds = [
+    `${titleId}-subtitle`,
+    `${titleId}-reason`,
+    ...factorSections.flatMap((section) => factors.map(
+      ({ factorId, band }) => `${mode}-${factorId}-${band}-${section}`,
+    )),
+  ];
   return renderedTexts.length === expectedSections.length &&
     renderedTexts.every((record, index) =>
       record.version === resultTextVersion &&
       record.section === expectedSections[index] &&
+      record.id === expectedIds[index] &&
       record.evidenceRefs.length > 0) &&
     new Set(renderedTexts.map(({ id }) => id)).size === renderedTexts.length;
 }
@@ -113,7 +124,7 @@ function buildSnapshot(input) {
     !validVersionTuple(versionTuple) ||
     hasAnswersField(resultModel) ||
     !isValidResultModel(resultModel, questionCount) ||
-    !validRenderedTexts(resultModel.renderedTexts, mode, versionTuple.resultTextVersion) ||
+    !validRenderedTexts(resultModel, mode, versionTuple.resultTextVersion) ||
     !["resultId", "characterAssetVersion", "selectedPaletteId", "cardTemplateVersion"].every(
       (field) => typeof input[field] === "string" && input[field].length > 0,
     ) ||
