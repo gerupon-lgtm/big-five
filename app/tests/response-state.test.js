@@ -122,7 +122,7 @@ test("T-004 F-003 permits only complete-preview exits and keeps continueHidden s
   assert.equal("share" in hidden, false);
 });
 
-test("T-004 F-003 returns only the complete 50-answer map at the detailed terminal exit", () => {
+test("T-004 F-003 returns valid terminal progress and the complete 50-answer map", () => {
   const previewComplete = answerUntil(createProgress(), 20).progress;
   const hidden = choosePreviewExit(previewComplete, "continueHidden", { definition: DiagnosticDefinition, meta: appMeta, now: NOW });
   const terminal = answerUntil(hidden.progress, 50, 20);

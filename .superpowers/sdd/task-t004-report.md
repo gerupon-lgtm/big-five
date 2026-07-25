@@ -16,7 +16,7 @@
 ## Public contracts implemented
 
 - `continueHidden` returns progress at index 20 without preview score, title, character, result, or share payload.
-- The terminal 50-item event contains only a complete answer map for the downstream scoring caller; no history/result/share work is performed here.
+- The terminal 50-item event retains valid, saveable completion progress and a complete answer map for the downstream scoring caller; no history/result/share work is performed here.
 - Storage key is `big-five-self-understanding:v1`. Future schemas and incompatible/corrupt target progress are not overwritten.
 - Save failure returns the valid in-memory progress; delete requires explicit confirmation and reports write failure.
 - `answerAndSave` and generic transition persistence save every event carrying progress. T-005 owns result persistence followed by progress deletion.
