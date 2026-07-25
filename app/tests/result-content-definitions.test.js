@@ -8,6 +8,9 @@ import {
   validateResultTextDefinitions,
 } from "../js/domain/result-text.js";
 import { validateResultContentDefinitions } from "../js/domain/definition-validator.js";
+import { TitleProfileDefinitions } from "../js/data/title-profile-definitions.js";
+import { TitleResultTextDefinitions } from "../js/data/title-result-text-definitions.js";
+import { Q006_TITLE_CATALOG } from "./fixtures/q006-title-catalog.fixture.js";
 
 const evidence = {
   evidenceId: "evidence-title-rule-v1",
@@ -99,4 +102,23 @@ test("Q-006 cross-definition validation rejects unknown outer fields and broken 
     () => validateResultContentDefinitions({ ...valid, textDefinitions: [{ ...text, appliesTo: { titleId: "unknown" } }] }),
     /RESULT_CONTENT_INVALID/,
   );
+});
+
+test("Q-006 title profiles match the approved 51-title catalog", () => {
+  assert.equal(TitleProfileDefinitions.length, 51);
+  assert.deepEqual(
+    TitleProfileDefinitions.map(({ titleId, label }) => ({ titleId, label })),
+    Q006_TITLE_CATALOG,
+  );
+});
+
+test("every title has one subtitle and one reason", () => {
+  assert.equal(TitleResultTextDefinitions.length, 102);
+  for (const { titleId } of Q006_TITLE_CATALOG) {
+    const sections = TitleResultTextDefinitions
+      .filter(({ appliesTo }) => appliesTo.titleId === titleId)
+      .map(({ section }) => section)
+      .sort();
+    assert.deepEqual(sections, ["titleReason", "titleSubtitle"]);
+  }
 });

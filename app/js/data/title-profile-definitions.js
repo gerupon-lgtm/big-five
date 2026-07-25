@@ -2,6 +2,72 @@ import { FACTOR_ORDER } from "./factor-order.js";
 
 const DIRECTIONS = ["high", "low"];
 
+const SINGLE_LABELS = {
+  intellectImagination: {
+    high: "おいかける探究者",
+    low: "手ざわりをたどる散策者",
+  },
+  conscientiousness: {
+    high: "整然たる計画者",
+    low: "風向きに道を変える漂泊者",
+  },
+  extraversion: {
+    high: "にぎわいへ進む交遊者",
+    low: "静謐なる滞在者",
+  },
+  agreeableness: {
+    high: "歩幅をそろえる同伴者",
+    low: "自分の歩幅で進む同行者",
+  },
+  emotionalStability: {
+    high: "静かなる航行者",
+    low: "そよ風に振り向く感受者",
+  },
+};
+
+const PAIR_LABELS = {
+  "intellectImagination-high--conscientiousness-high": "星座盤に印を置く記録者",
+  "intellectImagination-high--conscientiousness-low": "風まかせの空想者",
+  "intellectImagination-low--conscientiousness-high": "素朴な継続者",
+  "intellectImagination-low--conscientiousness-low": "気ままな遊歩者",
+  "intellectImagination-high--extraversion-high": "新風を運ぶ伝達者",
+  "intellectImagination-high--extraversion-low": "静寂に星座盤を見つめる探索者",
+  "intellectImagination-low--extraversion-high": "にぎわいの談話者",
+  "intellectImagination-low--extraversion-low": "窓辺の逗留者",
+  "intellectImagination-high--agreeableness-high": "寄り添う共鳴者",
+  "intellectImagination-high--agreeableness-low": "独歩の開拓者",
+  "intellectImagination-low--agreeableness-high": "分かち合う同席者",
+  "intellectImagination-low--agreeableness-low": "標を示す表明者",
+  "intellectImagination-high--emotionalStability-high": "凪空を仰ぐ観望者",
+  "intellectImagination-high--emotionalStability-low": "鈴音に振り向く探訪者",
+  "intellectImagination-low--emotionalStability-high": "日だまりの静観者",
+  "intellectImagination-low--emotionalStability-low": "雨音に振り向く歩行者",
+  "conscientiousness-high--extraversion-high": "刻限に集う交流者",
+  "conscientiousness-high--extraversion-low": "灯下の記録者",
+  "conscientiousness-low--extraversion-high": "道草の合流者",
+  "conscientiousness-low--extraversion-low": "余白を楽しむ散策者",
+  "conscientiousness-high--agreeableness-high": "輪を整える準備者",
+  "conscientiousness-high--agreeableness-low": "線を引く整頓者",
+  "conscientiousness-low--agreeableness-high": "寄り道をともにする同行者",
+  "conscientiousness-low--agreeableness-low": "自由な独行者",
+  "conscientiousness-high--emotionalStability-high": "凪の計画者",
+  "conscientiousness-high--emotionalStability-low": "揺れ灯の整頓者",
+  "conscientiousness-low--emotionalStability-high": "流れをゆく漂泊者",
+  "conscientiousness-low--emotionalStability-low": "揺れ影の遊歩者",
+  "extraversion-high--agreeableness-high": "輪舞へ踏み出す共演者",
+  "extraversion-high--agreeableness-low": "自分の色を掲げる表明者",
+  "extraversion-low--agreeableness-high": "寄り添う静観者",
+  "extraversion-low--agreeableness-low": "一席を選ぶ滞在者",
+  "extraversion-high--emotionalStability-high": "寛ぐ交遊者",
+  "extraversion-high--emotionalStability-low": "ざわめきへ振り向く参加者",
+  "extraversion-low--emotionalStability-high": "芽吹きを待つ滞在者",
+  "extraversion-low--emotionalStability-low": "薄明に耳を向ける逗留者",
+  "agreeableness-high--emotionalStability-high": "ふたつの杯の相席者",
+  "agreeableness-high--emotionalStability-low": "揺れ布に並ぶ同伴者",
+  "agreeableness-low--emotionalStability-high": "淡々たる表明者",
+  "agreeableness-low--emotionalStability-low": "風鳴る戸口の掲示者",
+};
+
 function deepFreeze(value) {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
     Object.freeze(value);
@@ -15,11 +81,11 @@ function profileId(kind, factors) {
   return suffix ? `${kind}-${suffix}` : kind;
 }
 
-function makeProfile(kind, factors) {
+function makeProfile(kind, factors, label) {
   const stableId = profileId(kind, factors);
   return {
     titleId: `title-${stableId}`,
-    label: `title-${stableId}`,
+    label,
     kind,
     factors,
     characterId: `character-${stableId}`,
@@ -29,13 +95,18 @@ function makeProfile(kind, factors) {
 }
 
 const profileDefinitions = [
-  makeProfile("balanced", []),
-  ...FACTOR_ORDER.flatMap((factorId) => DIRECTIONS.map((direction) => makeProfile("single", [{ factorId, direction }]))),
+  makeProfile("balanced", [], "五つの風を見渡す観測者"),
+  ...FACTOR_ORDER.flatMap((factorId) => DIRECTIONS.map((direction) =>
+    makeProfile("single", [{ factorId, direction }], SINGLE_LABELS[factorId][direction]))),
   ...FACTOR_ORDER.flatMap((firstFactorId, firstIndex) => FACTOR_ORDER.slice(firstIndex + 1).flatMap((secondFactorId) =>
-    DIRECTIONS.flatMap((firstDirection) => DIRECTIONS.map((secondDirection) => makeProfile("pair", [
-      { factorId: firstFactorId, direction: firstDirection },
-      { factorId: secondFactorId, direction: secondDirection },
-    ]))),
+    DIRECTIONS.flatMap((firstDirection) => DIRECTIONS.map((secondDirection) => {
+      const factors = [
+        { factorId: firstFactorId, direction: firstDirection },
+        { factorId: secondFactorId, direction: secondDirection },
+      ];
+      const labelKey = `${firstFactorId}-${firstDirection}--${secondFactorId}-${secondDirection}`;
+      return makeProfile("pair", factors, PAIR_LABELS[labelKey]);
+    })),
   )),
 ];
 
