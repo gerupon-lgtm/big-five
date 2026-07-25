@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "fileName": "factor-definitions.csv",
+  "columns": [
+    { "name": "diagnostic_definition_version", "type": "version", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "factor_id", "type": "enum", "values": ["intellectImagination", "conscientiousness", "extraversion", "agreeableness", "emotionalStability"], "required": true },
+    { "name": "display_name", "type": "text", "required": true },
+    { "name": "academic_name", "type": "text", "required": true },
+    { "name": "low_pole", "type": "text", "required": true },
+    { "name": "high_pole", "type": "text", "required": true },
+    { "name": "description", "type": "text", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

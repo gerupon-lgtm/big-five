@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "fileName": "diagnosis-sets.csv",
+  "columns": [
+    { "name": "diagnosis_id", "type": "id", "required": true },
+    { "name": "diagnostic_definition_version", "type": "version", "required": true },
+    { "name": "scale_id", "type": "id", "required": true },
+    { "name": "scale_name", "type": "text", "required": true },
+    { "name": "scale_version", "type": "version", "required": true },
+    { "name": "question_version", "type": "version", "required": true },
+    { "name": "scoring_version", "type": "version", "required": true },
+    { "name": "result_text_version", "type": "version", "required": true },
+    { "name": "title_rule_version", "type": "version", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}
