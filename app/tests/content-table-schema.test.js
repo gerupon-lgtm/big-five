@@ -201,6 +201,20 @@ test("T-012 table loader preserves an optional empty cell without coercion", asy
   });
 });
 
+test("T-012 table loader does not treat missing or null required as optional", async () => {
+  for (const required of [undefined, null]) {
+    const column = { name: "value", type: "enum", values: ["present"] };
+    if (required !== undefined) column.required = required;
+    const schema = { schemaVersion: 1, fileName: "table.csv", columns: [column] };
+    await withCsv("value\n\n", async (filePath) => {
+      await assert.rejects(
+        loadCsvTable({ filePath, schema }),
+        (error) => error instanceof ContentError && error.code === "CSV_VALUE_INVALID",
+      );
+    });
+  }
+});
+
 test("T-012 report includes source, one-based row, column, code, and Japanese message", () => {
   const report = formatContentErrors([
     new ContentError({

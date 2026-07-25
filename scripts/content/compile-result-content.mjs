@@ -15,7 +15,7 @@ const STATUSES = new Set(["draft", "reviewed", "approved", "rejected"]);
 const TITLE_SECTIONS = new Set(["titleSubtitle", "titleReason"]);
 const FACTOR_SECTIONS = new Set(["observation", "strength", "tradeoff", "work", "relationship", "stress", "question", "action"]);
 const COPY_PROHIBITIONS = [
-  /\b(?:ability|superiority|superior|suitability|compatible|compatibility|diagnos(?:is|tic)|rank(?:ing)?|treat(?:ment)?|cure|heal|improve(?:ment)?|product|essential\s*oil|aroma|ingest(?:ion)?|apply|diffuser)\b/i,
+  /\b(?:ability|superiority|superior|suitability|compatible|compatibility|diagnos(?:is|tic)|rank(?:ing)?|treat(?:ment)?|cure|heal|improve(?:ment)?|product|essential[-\s]*oil|aroma|ingest(?:ion)?|appl(?:y|ication)|diffuser)\b/i,
   /能力|優越|適性|相性|診断|順位|治療|改善|製品|精油|アロマ|摂取|塗布|ディフューザー/,
 ];
 
@@ -77,13 +77,18 @@ function assertStatuses(rowSets) {
   if (!rowSets.every((rows) => rows.every(({ status }) => STATUSES.has(status)))) invalid();
 }
 
-function assertCopySafe(textRows) {
-  if (textRows.some(({ text }) => COPY_PROHIBITIONS.some((pattern) => pattern.test(text)))) invalid();
+function assertCopySafe(profileRows, textRows) {
+  const copies = [
+    ...profileRows.map(({ label }) => label),
+    ...textRows.map(({ text }) => text),
+  ];
+  if (copies.some((copy) => COPY_PROHIBITIONS.some((pattern) => pattern.test(copy)))) invalid();
 }
 
-function projectTitleProfiles(profileRows, profileFactorRows) {
+function projectTitleProfiles(profileRows, profileFactorRows, titleRuleVersion) {
   assertRows(profileRows, 51);
   assertRows(profileFactorRows, 90);
+  if (!profileRows.every(({ title_rule_version }) => title_rule_version === titleRuleVersion)) invalid();
   assertUnique(profileRows, ({ title_id }) => title_id);
   assertUnique(profileFactorRows, ({ title_id, factor_id }) => `${title_id}:${factor_id}`);
   const factorsByTitleId = groupOrdered(profileFactorRows, "title_id");
@@ -135,7 +140,6 @@ function projectTexts(textRows, textEvidenceRows, evidenceDefinitions, resultTex
     !textRows.every(({ result_text_version }) => result_text_version === resultTextVersion) ||
     !textRows.every((row) => RESULT_TEXT_SECTIONS.includes(row.section))) invalid();
   textRows.forEach(assertTextApplicability);
-  assertCopySafe(textRows);
   const textDefinitions = ordered(textRows).map((row) => ({
     id: row.text_id,
     version: row.result_text_version,
@@ -150,6 +154,15 @@ function projectTexts(textRows, textEvidenceRows, evidenceDefinitions, resultTex
   return textDefinitions;
 }
 
+function assertTitleTextReferences(titleProfiles, textDefinitions) {
+  for (const { titleId, summaryTextId } of titleProfiles) {
+    if (!titleId.startsWith("title-") || summaryTextId !== `result-text-${titleId.slice("title-".length)}`) invalid();
+    const titleTexts = textDefinitions.filter(({ appliesTo }) => appliesTo.titleId === titleId);
+    if (titleTexts.filter(({ section }) => section === "titleSubtitle").length !== 1 ||
+      titleTexts.filter(({ section }) => section === "titleReason").length !== 1) invalid();
+  }
+}
+
 export function compileResultContent({
   profileRows,
   profileFactorRows,
@@ -157,14 +170,18 @@ export function compileResultContent({
   textEvidenceRows,
   evidenceRows,
   evidenceClaimRows,
+  titleRuleVersion,
   resultTextVersion,
 }) {
   try {
-    if (typeof resultTextVersion !== "string" || resultTextVersion.length === 0) invalid();
+    if (typeof titleRuleVersion !== "string" || titleRuleVersion.length === 0 ||
+      typeof resultTextVersion !== "string" || resultTextVersion.length === 0) invalid();
     assertStatuses([profileRows, profileFactorRows, textRows, textEvidenceRows, evidenceRows, evidenceClaimRows]);
-    const titleProfiles = projectTitleProfiles(profileRows, profileFactorRows);
+    assertCopySafe(profileRows, textRows);
+    const titleProfiles = projectTitleProfiles(profileRows, profileFactorRows, titleRuleVersion);
     const evidenceDefinitions = projectEvidence(evidenceRows, evidenceClaimRows);
     const textDefinitions = projectTexts(textRows, textEvidenceRows, evidenceDefinitions, resultTextVersion);
+    assertTitleTextReferences(titleProfiles, textDefinitions);
     const compiled = { titleProfiles, textDefinitions, evidenceDefinitions, resultTextVersion };
     validateResultContentDefinitions(compiled);
     return compiled;

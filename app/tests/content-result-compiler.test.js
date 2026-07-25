@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 import { appMeta } from "../js/config/app-meta.js";
+import { FACTOR_ORDER as CONFIG_FACTOR_ORDER } from "../js/config/factor-order.js";
+import { FACTOR_ORDER as DATA_FACTOR_ORDER } from "../js/data/factor-order.js";
 import { ResultEvidenceDefinitions } from "../js/data/result-evidence-definitions.js";
 import { ResultTextDefinitions } from "../js/data/result-text-definitions.js";
 import { TitleProfileDefinitions } from "../js/data/title-profile-definitions.js";
@@ -78,9 +81,24 @@ function validResultRows() {
     textEvidenceRows,
     evidenceRows,
     evidenceClaimRows,
+    titleRuleVersion: appMeta.diagnosticVersions.titleRuleVersion,
     resultTextVersion: appMeta.diagnosticVersions.resultTextVersion,
   };
 }
+
+function assertCompileInvalid(rows) {
+  assert.throws(
+    () => compileResultContent(rows),
+    (error) => error.code === "RESULT_CONTENT_INVALID",
+  );
+}
+
+test("Q-006 title profile domain uses the config factor order authority", async () => {
+  assert.deepEqual(CONFIG_FACTOR_ORDER, DATA_FACTOR_ORDER);
+  const source = await readFile(new URL("../js/domain/title-profile.js", import.meta.url), "utf8");
+  assert.match(source, /config\/factor-order\.js/);
+  assert.doesNotMatch(source, /data\/factor-order\.js/);
+});
 
 test("Q-006 CSV compiler preserves 51 titles and 237 result literals", () => {
   const compiled = compileResultContent(validResultRows());
@@ -141,4 +159,73 @@ test("Q-006 CSV compiler rejects an unknown evidence relation", () => {
     () => compileResultContent(rows),
     (error) => error.code === "RESULT_CONTENT_INVALID",
   );
+});
+
+test("Q-006 CSV compiler rejects wrong catalog counts", () => {
+  const fiftyProfiles = validResultRows();
+  fiftyProfiles.profileRows.pop();
+  assertCompileInvalid(fiftyProfiles);
+
+  const twoHundredThirtyEightTexts = validResultRows();
+  twoHundredThirtyEightTexts.textRows.push({ ...twoHundredThirtyEightTexts.textRows[0], display_order: 238 });
+  assertCompileInvalid(twoHundredThirtyEightTexts);
+});
+
+test("Q-006 CSV compiler rejects blank wildcard applicability", () => {
+  const rows = validResultRows();
+  const factorText = rows.textRows.find(({ section }) => section === "strength");
+  factorText.factor_id = "";
+  assertCompileInvalid(rows);
+});
+
+test("Q-006 CSV compiler rejects duplicate relations and unknown parents", () => {
+  const duplicate = validResultRows();
+  const relationIndex = duplicate.textEvidenceRows.findIndex((row, index, all) =>
+    index > 0 && all[index - 1].text_id === row.text_id);
+  duplicate.textEvidenceRows[relationIndex].evidence_id = duplicate.textEvidenceRows[relationIndex - 1].evidence_id;
+  assertCompileInvalid(duplicate);
+
+  const unknownTitle = validResultRows();
+  unknownTitle.profileFactorRows[0].title_id = "title-unknown";
+  assertCompileInvalid(unknownTitle);
+
+  const unknownFactor = validResultRows();
+  unknownFactor.profileFactorRows[0].factor_id = "unknown-factor";
+  assertCompileInvalid(unknownFactor);
+});
+
+test("Q-006 CSV compiler rejects noncanonical profile factor order", () => {
+  const rows = validResultRows();
+  const pairTitleId = rows.profileRows.find(({ kind }) => kind === "pair").title_id;
+  const factors = rows.profileFactorRows.filter(({ title_id }) => title_id === pairTitleId);
+  [factors[0].display_order, factors[1].display_order] = [factors[1].display_order, factors[0].display_order];
+  assertCompileInvalid(rows);
+});
+
+test("Q-006 CSV compiler rejects title rule version mismatches", () => {
+  const rows = validResultRows();
+  rows.profileRows[0].title_rule_version = "title-rule-v2";
+  assertCompileInvalid(rows);
+});
+
+test("Q-006 CSV compiler rejects broken summary text references", () => {
+  const rows = validResultRows();
+  rows.profileRows[0].summary_text_id = "result-text-unknown";
+  assertCompileInvalid(rows);
+});
+
+test("Q-006 CSV compiler rejects prohibited result and title copy", () => {
+  for (const copy of [
+    "ability", "superiority", "suitability", "compatibility", "diagnosis", "rank",
+    "treatment", "improvement", "product", "essential-oil", "aroma", "ingestion",
+    "application", "diffuser-use",
+  ]) {
+    const resultCopy = validResultRows();
+    resultCopy.textRows[0].text = copy;
+    assertCompileInvalid(resultCopy);
+  }
+
+  const titleCopy = validResultRows();
+  titleCopy.profileRows[0].label = "ability";
+  assertCompileInvalid(titleCopy);
 });

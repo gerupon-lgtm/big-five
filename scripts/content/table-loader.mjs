@@ -30,7 +30,7 @@ function convertValue(value, column, sourceName, lineNumber) {
     });
   }
 
-  if (value === "" && !column.required) return "";
+  if (value === "" && column.required === false) return "";
 
   if (column.type === "integer") {
     if (!INTEGER_PATTERN.test(value)) {

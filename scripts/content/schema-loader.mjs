@@ -41,7 +41,7 @@ function validateColumn(column, sourceName) {
     throw schemaError(sourceName, "列名は空でない文字列で指定してください。");
   }
   if (typeof column.required !== "boolean") {
-    throw schemaError(sourceName, "必須指定は true で指定してください。");
+    throw schemaError(sourceName, "必須指定は true または false で指定してください。");
   }
   if (column.type === "integer" && Object.hasOwn(column, "minimum")
     && (!Number.isSafeInteger(column.minimum))) {

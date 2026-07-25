@@ -1,4 +1,4 @@
-import { FACTOR_ORDER } from "../data/factor-order.js";
+import { FACTOR_ORDER } from "../config/factor-order.js";
 
 const DIRECTIONS = ["high", "low"];
 
