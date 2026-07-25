@@ -305,15 +305,29 @@ test("F-002 maps to T-005 in the trace row, task section, and T-005 spec", async
     readProjectDocument(documentPaths.tasks),
     readProjectDocument(documentPaths.t005Spec),
   ]);
+  const canonicalT005Features = [
+    "F-002",
+    "F-005",
+    "F-006",
+    "F-007",
+    "F-008",
+    "F-016",
+    "F-018",
+  ];
   const traceability = sectionBetween(tasks, "## 1. トレーサビリティ表（正典）", "## 2. 実装順");
   const f002Row = matchingLine(traceability, /^\|\s*F-002\s*\|/, "F-002 traceability row");
+  const implementationOrder = sectionBetween(tasks, "## 2. 実装順", "## 3. フェーズ");
+  const implementationOrderRow = matchingLine(implementationOrder, /^\|\s*T-005\s*\|/, "T-005 implementation order row");
   const t005Task = sectionBetween(tasks, "### T-005 結果画面・猫・レーダー・色香り", "### T-006 履歴・比較・削除");
   const taskFeatureLine = matchingLine(t005Task, /対応機能:/, "T-005 task feature list");
   const specHeader = sectionBetween(t005Spec, "# T-005 結果・キャラクター・色香り設計", "## 1. 目的");
   const specFeatureLine = matchingLine(specHeader, /対象機能:/, "T-005 spec feature list");
 
-  for (const line of [f002Row, taskFeatureLine, specFeatureLine]) {
-    assert.match(line, /F-002/);
-    assert.match(line, /T-005|F-005/);
+  assert.match(f002Row, /\|\s*T-002,\s*T-005\s*\|/);
+  for (const line of [implementationOrderRow, taskFeatureLine, specFeatureLine]) {
+    assert.deepEqual(
+      line.match(/F-\d{3}/g),
+      canonicalT005Features,
+    );
   }
 });
