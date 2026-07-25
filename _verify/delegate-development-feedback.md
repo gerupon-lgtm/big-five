@@ -142,3 +142,6 @@
 - 2026-07-25 worktree開始時の環境差: `sdd-workspace`はWindows既定の`bash.exe`ではWSL起動権限、Git BashではWindows絶対パスの`mkdir`権限で失敗した。補助スクリプトと同じplan別ディレクトリ・自己無視・台帳構造をworktree内へ直接作成して継続した。Windows対応ではPowerShell版ヘルパーまたは出力先を明示できるオプションがあると安定する。
 - Q-006 Task 1実装評価: 実装担当は指定3ファイル、固定6件、focused test、限定コミットへ収束し、未承認のE-1〜E-5を`draft`のまま保持した。タスクレビューは重要指摘0・軽微指摘0で承認。差分だけでは確認できなかった因子別公式項目は、監督者が`DiagnosticDefinition.SOURCE_ITEMS`全50件と照合して一致を確認した。
 - 計画pre-flightの効果: 当初のTask 1には未レビューのE-1〜E-5まで「承認済み」と記録し得る文言があった。実装前に「既承認だけを記録し、未レビューはdraft、承認日を捏造しない」へ補正したことで、委譲担当が会話履歴を推測せず正確な状態を実装できた。
+- 2026-07-25 main/worktree整理: worktree作成時、mainの未コミット設計差分を保護するためbranchへ複製・コミットした一方、main側を残したことで同一差分が二重に見える状態になった。ユーザー確認後、branch HEADへ15ファイルが保存済みであることとhashを照合し、main側の重複だけを除去してcleanへ戻した。今後はworktree移行時に「元checkoutへ残る差分」と「branchへ移す差分」を開始報告へ明記する。
+- Q-006 Task 2の計画矛盾: strict schemaが旧`summary`と空`evidenceRefs`を廃止する一方、計画の変更ファイル一覧に旧T-003 fixtureが含まれず、指定回帰テストが3件失敗した。担当が互換性判断を勝手に行わずBLOCKEDで返した点は有効だった。ユーザー判断でstrict Q-006を正とし、fixtureだけを移行する計画補正後に37件成功した。
+- Q-006 Task 2レビューの効果: 初回レビューは、`appliesTo`へpreview条件を明示しない`previewAllowed: true`の`strength`が検証を通る抜けを検出した。Fix round 1でsection制約を`previewAllowed`自体へ結び付け、covering testと旧fixtureを修正し、scoped re-reviewで解消を確認した。実装担当セルフレビューと全テスト成功だけでは見落とした境界であり、task reviewの有効性が高い事例。
