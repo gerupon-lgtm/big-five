@@ -113,17 +113,18 @@ function compileSelectors(selectorRows, selectorPaletteRows, selectorFragranceRo
   });
 }
 
-export function compilePresentationContent({
-  sceneRows,
-  paletteRows,
-  paletteUsageRows,
-  fragranceRows,
-  selectorRows,
-  selectorPaletteRows,
-  selectorFragranceRows,
-  titleProfiles,
-}, expectedVersion) {
+export function compilePresentationContent(input, expectedVersion) {
   try {
+    const {
+      sceneRows,
+      paletteRows,
+      paletteUsageRows,
+      fragranceRows,
+      selectorRows,
+      selectorPaletteRows,
+      selectorFragranceRows,
+      titleProfiles,
+    } = input;
     if (typeof expectedVersion !== "string" || expectedVersion === "") invalid();
     validateTitleProfileDefinitions(titleProfiles);
     assertRows(sceneRows, 3);

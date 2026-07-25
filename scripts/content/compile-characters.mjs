@@ -3,7 +3,7 @@ import { validateTitleProfileDefinitions } from "../../app/js/domain/title-profi
 
 const STATUSES = new Set(["draft", "reviewed", "approved", "rejected"]);
 const REVIEW_FIELDS = ["art_review_status", "anatomy_review_status", "technical_review_status", "accessibility_review_status"];
-const ALT_CLAIM_PATTERN = /\b(?:title|type|personality|ability|talent|intelligence|smart|intelligent|rank|breed|best|worst)\b|\b(?:first\s+place|number\s+one)\b|称号|タイトル|タイプ|性格|人格|能力|才能|知性|頭が良い|賢い|順位|第(?:[0-9０-９]+|[一二三四五六七八九十百]+)位|一位|トップ|最上|最高|優秀|劣る|ランク|猫種|品種/i;
+const ALT_CLAIM_PATTERN = /\b(?:title|type|personality|ability|talent|intelligence|smart|intelligent|rank|breed|best|worst)\b|\b(?:first\s+place|number\s+one|no(?:\.|\s+)1|1st(?:\s+place)?|top(?:-ranked)?|(?:highest|lowest)(?:\s+ranked)?)\b|#1\b|称号|タイトル|タイプ|性格|人格|能力|才能|知性|頭が良い|賢い|順位|第(?:[0-9０-９]+|[一二三四五六七八九十百]+)位|一位|トップ|最上|最高|優秀|劣る|ランク|猫種|品種/i;
 
 function invalid() {
   throw new Error("CHARACTER_CONTENT_INVALID");
@@ -44,8 +44,9 @@ function validRow(row, expectedVersion, profile) {
     STATUSES.has(row.status) && REVIEW_FIELDS.every((field) => ["pending", "approved", "rejected"].includes(row[field]));
 }
 
-export function compileCharacterContent({ rows, titleProfiles }, expectedVersion) {
+export function compileCharacterContent(input, expectedVersion) {
   try {
+    const { rows, titleProfiles } = input;
     if (typeof expectedVersion !== "string" || expectedVersion === "" || !Array.isArray(rows) || rows.length !== 51) invalid();
     validateTitleProfileDefinitions(titleProfiles);
     if (new Set(rows.map(({ title_id }) => title_id)).size !== 51 ||
@@ -77,7 +78,8 @@ export function compileCharacterContent({ rows, titleProfiles }, expectedVersion
 export function assertCharacterReleaseEligible(rows) {
   if (!Array.isArray(rows) || rows.length !== 51 || !rows.every((row) => row && row.status === "approved" &&
     REVIEW_FIELDS.every((field) => row[field] === "approved") &&
-    typeof row.approved_by === "string" && row.approved_by.trim() !== "" && validUtcIso(row.approved_at))) {
+    typeof row.approved_by === "string" && row.approved_by.trim() !== "" && validUtcIso(row.approved_at) &&
+    row.has_alpha === "true")) {
     throw new ContentError({
       code: "CHARACTER_APPROVAL_PENDING",
       message: "キャラクター承認が完了していません。",

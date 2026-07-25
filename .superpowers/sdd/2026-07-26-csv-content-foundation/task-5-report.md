@@ -66,6 +66,47 @@ None. Real Q-012 artwork inspection, approved production rows/assets, release
 manifest generation, and generated runtime output remain deliberately outside
 this task.
 
+## Task 5b corrective evidence
+
+- The independent `assertCharacterReleaseEligible` gate now requires the
+  source `has_alpha` value to be exactly `"true"`, independently of regular
+  compilation validation. An otherwise fully approved row marked
+  `has_alpha="false"` now returns the stable
+  `CHARACTER_APPROVAL_PENDING` error.
+- Character alt validation now rejects each required English rank/superiority
+  form: `No.1 cat`, `No 1 cat`, `#1 cat`, `1st place cat`, `top cat`,
+  `top-ranked cat`, `the highest ranked cat`, and `the lowest ranked cat`.
+  Existing ordinary observable descriptions, including `A seated cat looking
+  left`, still compile.
+- Both public compilers destructure input only inside their protected error
+  boundary. `undefined` and `null` roots now produce the stable
+  `PRESENTATION_CONTENT_INVALID` and `CHARACTER_CONTENT_INVALID` errors as
+  applicable; nested validation behavior and runtime projections are
+  unchanged.
+
+### Task 5b RED / GREEN evidence
+
+- RED: `node --test app/tests/content-presentation-character-compiler.test.js`
+  failed 3 targeted regressions before the fixes: `No.1 cat` compiled, the
+  all-approved non-alpha row passed the release gate, and an `undefined`
+  presentation root escaped as a JavaScript `TypeError` instead of the stable
+  content error.
+- GREEN: the same compiler test passed 11/11 after the minimal guard and error
+  boundary fixes.
+
+### Task 5b verification
+
+- Focused: `node --test app/tests/content-presentation-character-compiler.test.js app/tests/content-table-schema.test.js app/tests/presentation-definition.test.js` — 82 passed, 0 failed.
+- Full: `npm.cmd test` — 260 passed, 0 failed.
+- Static: `npm.cmd run check` — passed (28 JavaScript files).
+- Diff: `git diff --check` — passed.
+
+### Task 5b concerns
+
+None. The change is limited to the specified compiler guards, regression
+tests, and this evidence; no schema, source CSV, production approval, or
+runtime contract was changed.
+
 ## Review fix round
 
 - Expanded the alt-copy gate to reject the concrete Japanese forms `第1位の猫`

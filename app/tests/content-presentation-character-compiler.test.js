@@ -247,6 +247,14 @@ test("T-005 F-016 rejects Japanese and English title, personality, ability, rank
     "worst cat",
     "first place cat",
     "number one cat",
+    "No.1 cat",
+    "No 1 cat",
+    "#1 cat",
+    "1st place cat",
+    "top cat",
+    "top-ranked cat",
+    "the highest ranked cat",
+    "the lowest ranked cat",
   ];
   for (const alt of prohibitedClaims) {
     const rows = validCharacterRows();
@@ -275,5 +283,21 @@ test("T-005 F-016 separates character approval from compilation", () => {
   assert.doesNotThrow(() => compileCharacterContent({ rows: pendingRows, titleProfiles: TitleProfileDefinitions }, CHARACTER_VERSION));
   assert.throws(() => assertCharacterReleaseEligible(pendingRows), expectContentError("CHARACTER_APPROVAL_PENDING"));
   assert.throws(() => assertCharacterReleaseEligible([]), expectContentError("CHARACTER_APPROVAL_PENDING"));
+  const nonAlphaRows = validCharacterRows();
+  nonAlphaRows[0].has_alpha = "false";
+  assert.throws(() => assertCharacterReleaseEligible(nonAlphaRows), expectContentError("CHARACTER_APPROVAL_PENDING"));
   assert.equal(assertCharacterReleaseEligible(validCharacterRows()), true);
+});
+
+test("T-005 F-016/F-018 convert malformed compiler roots to stable content errors", () => {
+  for (const root of [undefined, null]) {
+    assert.throws(
+      () => compilePresentationContent(root, PRESENTATION_VERSION),
+      expectContentError("PRESENTATION_CONTENT_INVALID"),
+    );
+    assert.throws(
+      () => compileCharacterContent(root, CHARACTER_VERSION),
+      expectContentError("CHARACTER_CONTENT_INVALID"),
+    );
+  }
 });
