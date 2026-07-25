@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.3 |
+| 設計版 | 0.4 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-21 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.7 |
+| 更新日 | 2026-07-26 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.9 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -103,23 +103,42 @@
 
 因子の固定順は`app/js/data/factor-order.js`の`factor-order-v1`を正典とし、採点、称号判定、称号定義が同じ不変配列を参照する。
 
-### 2.5 ResultTextDefinition
+### 2.5 ResultEvidenceDefinition
+
+正典: `app/js/data/result-evidence-definitions.js`
+検証: `app/js/domain/result-evidence.js`
+
+| 項目 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| evidenceId | string | ○ | 根拠台帳内で一意な安定ID |
+| version | string | ○ | 初版は`result-evidence-v1` |
+| sourceType | `primary` \| `internal-contract` | ○ | 一次資料または承認済み内部契約 |
+| sourceLabel | string | ○ | 出典の表示名 |
+| locator | string | ○ | URLまたはリポジトリ内locator |
+| supportedClaims | string[] | ○ | 当該根拠で支持できる主張範囲。1件以上 |
+
+exact schemaとして未知フィールド、空文字、空の`supportedClaims`、重複`evidenceId`を拒否する。実行時定義は`result-evidence-v1`の固定6件だけとし、内容とContent Approval状態の正典は`docs/research/2026-07-25-q006-result-content-evidence.md`とする。
+
+### 2.6 ResultTextDefinition
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
 | id | string | ○ | 固定テンプレートID |
 | version | string | ○ | 結果文版 |
 | appliesTo | object | ○ | 因子、方向、区分、組合せ条件 |
-| section | enum | ○ | summary/strength/tradeoff/work/relationship/stress/action |
+| section | enum | ○ | titleSubtitle/titleReason/observation/strength/tradeoff/work/relationship/stress/question/action |
+| claimKind | enum | ○ | scaleObservation/entertainmentReason/reflectionPrompt/actionHint |
 | text | string | ○ | 表示文 |
 | evidenceRefs | string[] | ○ | 根拠対応表の参照ID |
 | previewAllowed | boolean | ○ | 20問結果で使用可能か |
 
 `appliesTo`で許可する条件キーは`mode`、`questionCount`、`factorId`、`band`、`titleId`だけとする。`mode`と`questionCount`を併記する場合は`preview20`と20、`detail50`と50を対応させる。20問を明示した定義は`previewAllowed = true`を必須とし、未知フィールド、重複ID、不正な根拠参照、到達不能条件を拒否する。
 
-Q-006確定前は構造だけを実装し、本番文面を仮生成しない。
+`claimKind`は節ごとに固定する。`titleSubtitle`と`titleReason`は`entertainmentReason`、`observation`は`scaleObservation`、`strength`から`question`までは`reflectionPrompt`、`action`は`actionHint`とする。20問で許可する節は`titleSubtitle`、`titleReason`、`observation`だけである。
 
-### 2.6 TitleProfileDefinition
+`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件のliteral定義として実装済みである。これは実装・独立レビュー済みの`initial reviewed copy`であり、根拠台帳のE-1〜E-5は`Content Approval pending`のため、Q-006の人手承認完了を意味しない。
+
+### 2.7 TitleProfileDefinition
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
@@ -134,7 +153,7 @@ Q-006確定前は構造だけを実装し、本番文面を仮生成しない。
 全51件、タイトルID重複なし、キャラクターID重複なし、40＋10＋1の組合せ網羅を自動検証する。
 `label`とキャラクター制作意図の現行正典は`docs/title-character-catalog.md`とする。
 
-### 2.7 CharacterManifest
+### 2.8 CharacterManifest
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
@@ -157,7 +176,7 @@ manifestへ`titleId`を重複保持せず、`TitleProfileDefinition.titleId -> c
 
 entriesは51件固定とし、欠落、余剰、重複、孤児ファイルを拒否する。WebP magic、alpha、透明画素、integrityを実ファイルから検証し、非透明bounding boxの四辺接触をトリミング疑いとして拒否する。画面と共有カードは`contain`相当で全体表示する。
 
-### 2.8 PaletteDefinition
+### 2.9 PaletteDefinition
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
@@ -169,7 +188,7 @@ entriesは51件固定とし、欠落、余剰、重複、孤児ファイルを�
 
 用途色への展開、コントラスト、猫用の明暗二重縁取り、影、ニュートラル背景プレートは版付き`PaletteUsageMappingDefinition`で扱う。同系色の猫を理由にPaletteDefinitionを無効化せず、猫の再配色や候補パレットの除外を行わない。
 
-### 2.9 FragranceSuggestion
+### 2.10 FragranceSuggestion
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
@@ -182,7 +201,7 @@ entriesは51件固定とし、欠落、余剰、重複、孤児ファイルを�
 
 商品、用量、滴数、配合、摂取、塗布、ディフューザー使用法の項目は持たない。
 
-### 2.10 PresentationDefinitionSet
+### 2.11 PresentationDefinitionSet
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
@@ -284,7 +303,6 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
 | resultId | string | ○ | 一意ID |
-| diagnosisId | string | ○ | 診断ID |
 | completedAt | string | ○ | ISO 8601 |
 | questionCount | 20 \| 50 | ○ | 精度区分 |
 | mode | `preview20` \| `detail50` | ○ | 表示区分 |
@@ -298,7 +316,11 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 | selectedPaletteId | string | ○ | 未選択時も標準ID |
 | cardTemplateVersion | string | ○ | 再生成用 |
 
-`answers`は持たない。`renderedTexts`は結果文更新後も当時表示を維持するため保存する。
+`app/js/domain/result-snapshot.js`の`createResultSnapshot`が上記13フィールドのexact schemaを生成する。`answers`、`diagnosisId`、`resultModel` wrapper、結果定義、DOM・Canvas状態は持たない。`renderedTexts`は結果文更新後も診断時の表示文と根拠参照を維持するため深く複製する。snapshot全体はdeep freezeされ、入力の後続変更から隔離される。
+
+`VersionTuple.characterManifestVersion`はmanifest全体の版、`characterAssetVersion`は選択された1体の`CharacterManifestEntry.assetVersion`であり、互いに独立して保存する。
+
+現行の`app/js/infrastructure/progress-storage.js`はT-004時点の旧generic result schema（`diagnosisId`を含む）と旧section集合を検証しており、`createResultSnapshot`の本番callerや結果保存APIはまだない。所有タスク外のため本同期ではコードを変更せず、後続永続化統合で更新する。統合時はこの13フィールドschemaを唯一の結果履歴契約とし、旧generic schemaを置き換える。
 
 ### 3.6 FactorResult
 
@@ -324,20 +346,19 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 | text | string | ○ | 診断時に表示した文面 |
 | evidenceRefs | string[] | ○ | 診断時の根拠参照ID |
 
-未知フィールドと生回答を許可せず、結果モデル生成時に深く複製・不変化する。
+`ResultTextDefinition`から`id`、`version`、`section`、`text`、`evidenceRefs`だけを投影するexact 5フィールドschemaである。`claimKind`、`appliesTo`、`previewAllowed`、未知フィールド、生回答を含めない。`composeResultTexts`とsnapshot生成時に深く複製し、各recordと`evidenceRefs`をdeep freezeする。
 
 ## 4. 比較互換性
 
 次のすべてが一致する結果だけを直接比較可能とする。
 
-- diagnosisId
 - scaleVersion
 - questionVersion
 - scoringVersion
 - questionCount
 - 5因子がすべて有限値かつ1〜5範囲
 
-結果文版、称号判定版、猫版、演出版が異なる場合でもスコア比較条件を満たせば比較できるが、表示表現が異なる旨を明示する。【想定】この扱いは基本設計段階の技術判断であり、要件8.5を満たす。
+現行`ResultSnapshot`は`diagnosisId`を持たないため、比較互換条件にも含めない。結果文版、称号判定版、猫版、演出版が異なる場合でもスコア比較条件を満たせば比較できるが、表示表現が異なる旨を明示する。【想定】この扱いは単一診断のMVPと要件8.5を満たす。複数診断を同じ履歴へ格納する変更時は、保存schemaの版更新と比較契約の再設計を先に行う。
 
 ## 5. 更新・削除・復元
 

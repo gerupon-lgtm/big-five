@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.3 |
+| 設計版 | 0.4 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-21 |
-| 要件正典 | 要件定義書v1.7 |
+| 更新日 | 2026-07-26 |
+| 要件正典 | 要件定義書v1.9 |
 | 初期リリース | `mvp-0.1.0` |
 
 ## 1. トレーサビリティ表（正典）
@@ -13,11 +13,11 @@
 | 要件ID | 機能名 | 画面 | 処理 | データ | タスク | 状態 |
 |---|---|---|---|---|---|---|
 | F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008 | 確定 |
-| F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点 | DiagnosticDefinition, QuestionDefinition | T-002 | 確定 |
+| F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approval pending |
 | F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004 | 確定 |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004 | 確定 |
-| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultSnapshot | T-003, T-005 | 確定 |
-| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006本文待ち。51称号ラフ確定 |
+| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006 preview定義・合成・snapshot実装済み。画面統合／Content Approval pending |
+| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006 detail定義・合成・snapshot実装済み。画面統合／Content Approval pending |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005 | 確定 |
 | F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006 | 確定 |
@@ -27,14 +27,14 @@
 | F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006 | 確定 |
 | F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | 確定 |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008 | 確定 |
-| F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, character-loader | TitleProfileDefinition, CharacterManifest | T-003, T-005 | Q-012設計済み。3体パイロット・量産待ち |
+| F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005 | 51称号の副題・理由と失敗時テキスト契約を実装。Q-012アセット・画面統合待ち |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
 | F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013設計済み。実データ待ち |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
 | NF-04 | セキュリティ・プライバシー | 全画面 | CSP、通常版非送信、ベータ集計・ログ制限 | StorageEnvelope, beta_* | T-009, T-010, T-011, T-012 | Q-011運用値以外確定 |
-| NF-05 | 正確性・表現品質 | 結果・説明 | authority fixtures, text rules | 全静的定義 | T-002, T-003, T-005, T-012 | Q-006一部待ち |
+| NF-05 | 正確性・表現品質 | 結果・説明 | authority fixtures, text rules | 全静的定義 | T-002, T-003, T-005, T-012 | Q-006実装レビュー済み。人手Content Approval pending |
 | NF-06 | 運用・可用性 | - | deploy、監視、切戻し、API health・DB backup | release metadata, beta_* | T-010, T-011 | Q-008/Q-010/Q-011一部待ち |
 
 要件F-001〜F-018に未対応行はない。Q待ちの項目は実装漏れではなく、各タスク開始条件として管理する。
@@ -144,7 +144,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 #### 完了記録（2026-07-23）
 
 - 状態: 完了（F-005、F-006の版付き固定結果文構造・条件selector、F-008の`FactorResult`、F-016）。`scoreDiagnostic`、`title-rule-v1`、51件の不変`TitleProfileDefinition`、厳格な結果モデル合成を純粋関数として実装した。表示整数は採点有理数からhalf-upで算出し、判定は丸め前`rawMean`だけを使い、3番目以降の因子も結果モデルに残す。
-- 残作業: Q-006の本番結果文・根拠対応表は未実装で、版付き定義の検証・決定的選択と確定済み`renderedTexts`の受渡しだけを実装した。Q-012の猫画像・アートディレクションは未実装で、安定した`characterId`だけを定義した。結果画面・レーダー・キャラクター読込はT-005、回答状態はT-004で実装する。
+- 現在差分: T-003完了時に未実装だったQ-006の本番結果文・根拠対応表は、後続T-005/Q-006 workstreamで`result-text-v1 initial reviewed copy`として実装・独立レビュー済みとなった。人手Content Approval、結果画面・レーダー・キャラクター読込は引き続きT-005、Q-012の猫画像はasset制作で扱う。
 - 検証: 公開seam契約20件成功（half-up境界、全1〜5正逆採点、入力汚染・到達不能平均・分散・顕著度・統計組拒否、40＋10＋1、0/1/2/3+分類、整数顕著度・分散同点、20/50整数境界と閾値整合、固定結果文選択・矛盾条件拒否、結果モデル汚染拒否）、全86件成功、静的検証成功、`git diff --check`成功。詳細は`.superpowers/sdd/task-t003-report.md`を参照。
 
 ### T-004 回答状態機械・途中保存・削除
@@ -170,15 +170,15 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 #### 完了記録（2026-07-25）
 
 - 状態: 完了（F-003、F-004、F-013、F-015のT-004範囲）。`response-state` に固定順の回答・戻る・置換・20問出口・50問終端を、`progress-storage` に正式キーの保存・再開・対象限定破棄・遷移直後の自動保存coordinatorを実装した。`continueHidden` は進捗だけを返し、20問の結果・称号・キャラクター・共有モデルを生成しない。`showPreview`後の詳細継続は表示済みdecisionを保持する。
-- 保存契約: schema 1、破損JSON、将来schema、壊れた進捗、版不一致、読込不能、容量不足、削除失敗を安定コードへ変換し、既存値を不意に上書きしない。save/discard時は無関係な壊れた進捗・結果だけを除去し、保存失敗時もメモリ上の状態と50問終端回答を維持する。完答結果成立後のProgressRecord削除はT-005の責務である。
+- 保存契約: schema 1、破損JSON、将来schema、壊れた進捗、版不一致、読込不能、容量不足、削除失敗を安定コードへ変換し、既存値を不意に上書きしない。save/discard時は無関係な壊れた進捗・結果だけを除去し、保存失敗時もメモリ上の状態と50問終端回答を維持する。完答結果成立後のResultSnapshot保存とProgressRecord削除は後続永続化統合の責務である。
 - 検証: 公開seam 14件成功（開始・固定順、入力汚染拒否、戻る置換、両20問出口、showPreview後の継続、hidden非露出、50問終端、自動保存、保存再開、破損/将来/版不一致、無関係データsanitize、保存/削除失敗）。詳細は `.superpowers/sdd/task-t004-report.md` を参照。
-- 次タスク: T-005。Q-012とQ-013の構造ゲートは解決済み。Q-006本番文面、3体パイロット、色・香り実データを制作ゲートとして維持する。
+- 次タスク: T-005。Q-012とQ-013の構造ゲートは解決済み。Q-006文面は実装済みだが人手Content Approval pending、3体パイロットと色・香り実データは制作ゲートとして維持する。
 
 ### T-005 結果画面・猫・レーダー・色香り
 
 - 依存: T-003, T-004
 - 開始ゲート:
-  - Q-006: 51称号ラフは確定。本番結果文、因子説明、根拠対応表、採用文献
+  - Q-006: `result-text-v1 initial reviewed copy`、根拠、合成、snapshotは実装済み。E-1〜E-5とX-1〜X-2の人手Content Approval pending
   - Q-012: 仕様は確定。3体パイロット承認後にencoder・余白値を固定
   - Q-013: 構造と選択規則は確定。全パレット・香調・用途色展開データ
 - 作業:
@@ -196,6 +196,18 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 猫404、画像遅延、Canvas不可、無効パレット。
   - 51件のmanifest参照、重複・未参照検出。
   - 360px、200%文字拡大、色覚に依存しない表示。
+
+#### Q-006ドメイン実装記録（2026-07-26）
+
+- 状態: DONE_WITH_CONCERNS。T-005のうちF-002/F-005/F-006/F-016に対応する結果文ドメインは実装・独立レビュー済みだが、T-005全体とQ-006人手承認は未完了。
+- schema: `ResultEvidenceDefinition`固定6件、10 section＋`claimKind`を持つ`ResultTextDefinition`。
+- 定義: title 102件＋factor 135件＝237件の`result-text-v1` literal定義。
+- 合成: `composeResultTexts`がpreview 7件／detail 42件をsection-first・固定因子順・exact IDで合成し、5フィールド`RenderedResultText`へ投影してdeep freezeする。
+- snapshot: `createResultSnapshot`が9フィールド`VersionTuple`と診断時文章を含む13フィールド`ResultSnapshot`を生成する。生回答、`diagnosisId`、結果定義、DOM・Canvas状態を含めず、`characterAssetVersion`と`characterManifestVersion`を分離する。
+- gate: 根拠台帳ではE-0のみapproved、E-1〜E-5は`draft`で承認日なし。T-0〜T-4／F-1〜F-5はimplementation auditと独立レビュー済みだが人手approval recordなし。X-1〜X-2も人手approval recordなし。したがって`Content Approval pending`を維持する。
+- 画面: S-003/S-004、レーダー、character loader、色香り、猫・Canvas失敗時のUIフォールバックは後続T-005統合。
+- 永続化: production ResultSnapshotの本番caller／結果保存APIは未実装。`app/js/infrastructure/progress-storage.js`は旧`diagnosisId`付きgeneric result schemaと旧section集合のため、後続永続化統合で更新する。
+- 検証: `app/tests/result-evidence-definitions.test.js`、`app/tests/result-content-definitions.test.js`、`app/tests/result-composer.test.js`、`app/tests/result-snapshot.test.js`。リポジトリ同期は`app/tests/project-contract.test.js`で検証する。
 
 ### T-006 履歴・比較・削除
 
@@ -336,7 +348,8 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 | 項目 | 理由 | 着手条件 |
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
-| 本番結果文 | 51称号ラフは確定。観察文・問いかけ・行動ヒント・根拠対応表が未制作 | Q-006 |
+| Q-006人手Content Approval | `result-text-v1 initial reviewed copy` 237件と根拠・合成・snapshotは実装済み。E-1〜E-5と全体表示バッチの人手承認記録がない | Q-006 |
+| 結果画面・永続化統合 | Q-006ドメインは実装済み。S-003/S-004、完答caller、ResultSnapshot保存、旧progress-storage schema更新が未実装 | T-005/T-006 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
 | 51猫アセット | 量産仕様は確定。3体パイロットと残り48体が未制作 | Q-012設計を基にT-005で制作 |

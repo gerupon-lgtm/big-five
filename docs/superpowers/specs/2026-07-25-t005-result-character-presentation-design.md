@@ -1,10 +1,10 @@
 # T-005 結果・キャラクター・色香り設計
 
-- 状態: 設計承認済み。コンテンツ制作・実装前
+- 状態: 設計承認済み。Q-006ドメイン実装・独立レビュー済み、人手Content Approval／画面・永続化統合待ち
 - 対象版: `mvp-0.1.0`
 - 対象機能: F-005、F-006、F-007、F-008、F-016、F-018
-- 決定対象: Q-006一部、Q-012、Q-013
-- 更新日: 2026-07-25
+- 決定対象: Q-006継続確認、Q-012、Q-013
+- 更新日: 2026-07-26
 
 ## 1. 目的
 
@@ -45,7 +45,35 @@
 - 振り返り文の後へ `※因子名の「説明を見る」から、それぞれの意味を確認できます。` を小さく控えめな文字で表示する。
 - 履歴には診断時に表示した文章を順序と版ごと保存し、後の文章版から再生成・上書きしない。開閉状態は保存しない。
 
-Q-006の称号ラフは確定したが、全因子・全称号の本番観察文、根拠対応表、採用文献はコンテンツ制作として残る。これらが揃うまでT-005の本番結果文を完成扱いにしない。
+Q-006の称号ラフに加え、版付き根拠、全因子・全称号の文面、決定的合成、診断時文章を保持するsnapshotは実装・独立レビュー済みである。文面は`result-text-v1 initial reviewed copy`であり、根拠台帳のE-1〜E-5は`draft`かつ`Content Approval pending`である。実装レビューを人手内容承認へ読み替えず、Q-006を完全解決またはT-005全体完了とは扱わない。
+
+### 2.3 Q-006実装済み契約
+
+正典実装:
+
+- 根拠schema／定義: `app/js/domain/result-evidence.js`、`app/js/data/result-evidence-definitions.js`
+- 結果文schema／定義: `app/js/domain/result-text.js`、`app/js/data/title-result-text-definitions.js`、`app/js/data/factor-result-text-definitions.js`、`app/js/data/result-text-definitions.js`
+- 合成: `app/js/domain/result-composer.js`
+- 結果モデル／snapshot: `app/js/domain/result-model.js`、`app/js/domain/result-snapshot.js`
+- 根拠台帳: `docs/research/2026-07-25-q006-result-content-evidence.md`
+
+契約:
+
+- `ResultEvidenceDefinition`は`result-evidence-v1`固定6件。
+- `ResultTextDefinition`は10 sectionとsection別`claimKind`を持つ。
+- `result-text-v1`はtitle 102件＋factor 135件＝237件のliteral定義。
+- `composeResultTexts`はpreview 7件、detail 42件をtitle先頭、以後section-first・`FACTOR_ORDER`順で返し、各位置のexact IDを検証する。
+- `RenderedResultText`は`id`、`version`、`section`、`text`、`evidenceRefs`の5フィールド投影で、出力をdeep freezeする。
+- `createResultSnapshot`は13フィールドのexact ResultSnapshotを生成する。9フィールド`VersionTuple`、診断時文章、5因子、称号・キャラクター、境界、パレット、カード版を保持し、`answers`と`diagnosisId`を含めない。
+- `characterAssetVersion`は個別asset版、`VersionTuple.characterManifestVersion`はmanifest全体版として分離する。
+- 猫またはCanvasが失敗しても、称号、結果文、根拠、共有テキストへ到達できる契約を維持する。
+
+### 2.4 Q-006の現在gate
+
+- E-0: 根拠台帳どおりapproved。
+- E-1〜E-5: 根拠台帳どおり`draft`、承認日なし、`Content Approval pending`。
+- T-0〜T-4、F-1〜F-5: implementation auditと独立レビューは完了したが、人手approval recordはないため`approved`と記録しない。
+- X-1〜X-2: 人手approval recordなし。preview／detail全体のContent Approvalとして残す。
 
 ## 3. Q-012 キャラクター
 
@@ -216,6 +244,10 @@ FragranceSceneSelector<S> = exact {
 
 ## 6. 検証
 
+- Q-006 focused: `node --test app/tests/result-evidence-definitions.test.js app/tests/result-content-definitions.test.js app/tests/result-composer.test.js app/tests/result-snapshot.test.js`
+- repository contract: `node --test app/tests/project-contract.test.js`
+- full: `npm.cmd test`
+- static: `npm.cmd run check`
 - 20問／50問、balanced／single／pair、境界あり／なし。
 - 51称号、51 characterId、51 manifest entryの完全対応と孤児0件。
 - exact schema、未知フィールド、生回答・得点・猫色条件の拒否。
@@ -228,8 +260,10 @@ FragranceSceneSelector<S> = exact {
 
 ## 7. 残作業
 
-1. Q-006の全本番結果文、因子説明、根拠対応表、採用文献。
-2. Q-012の3体パイロット制作・承認、encoderと余白値の固定、残り48体の量産。
-3. Q-013の全パレット・香調・用途色展開データ。
-4. Q-007の共有画像寸法・文字量。
-5. 上記コンテンツを前提にしたT-005実装計画とTDD。
+1. Q-006: E-1〜E-5とX-1〜X-2の人手Content Approvalを根拠台帳へ記録する。承認までは`result-text-v1 initial reviewed copy`として扱う。
+2. Q-006/T-005: `composeResultTexts`／`createResultSnapshot`を完答controller、S-003/S-004、履歴保存へ統合する。
+3. 永続化: `app/js/infrastructure/progress-storage.js`の旧`diagnosisId`付きgeneric result schemaと旧section集合を、13フィールドResultSnapshotへ後続永続化統合で更新する。
+4. Q-012: 3体パイロット制作・承認、encoderと余白値の固定、残り48体の量産。
+5. Q-013: 全パレット・香調・用途色展開データ。
+6. Q-007: 共有画像寸法・文字量。
+7. T-005: 結果画面、レーダー、character loader、色香り表示、猫・Canvas失敗時のUIフォールバックを実装・検証する。

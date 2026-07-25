@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.3 |
+| 設計版 | 0.4 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-21 |
-| 入力要件 | 要件定義書v1.7 |
+| 更新日 | 2026-07-26 |
+| 入力要件 | 要件定義書v1.9 |
 | 実行方式 | 通常版はブラウザ内完結。ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -170,38 +170,51 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 ## 6. 結果モデル生成
 
-入力:
+### 6.1 `result-text-v1`定義選択
 
-- mode、questionCount
-- FactorResult[5]
-- TitleClassification
-- VersionTuple
-- ResultTextDefinition
-- TitleProfileDefinition
-- CharacterManifest
-- PaletteDefinition
-- FragranceSuggestion
+`ResultEvidenceDefinition`、`ResultTextDefinition`、`TitleProfileDefinition`の参照整合を起動時に検証する。`result-text-v1`はtitle 102件＋factor 135件＝237件のliteral定義であり、実行時生成しない。結果文選択へ生回答、DOM、Canvas、localStorage、ネットワーク、猫色、パレット、香りを渡さない。
 
-出力:
+### 6.2 `composeResultTexts`
 
-- ResultSnapshot
-- ResultViewModel
+実装: `app/js/domain/result-composer.js`
+
+入力は次のexact 6フィールドとする。
+
+- `definitions`
+- `version`
+- `mode`
+- `questionCount`
+- `factors`
+- `titleId`
 
 処理:
 
-1. TitleProfileDefinitionを取得。
-2. 結果文版を一致させ、`mode`、`questionCount`、`factorId`、`band`、`titleId`の明示条件がすべて一致する固定結果文を定義順で取得する。20問では`previewAllowed = false`を除外する。
-3. 5因子すべての文章を組み立てる。
-4. 20問では詳細節を抑制し、簡易プレビューと限界を明示。
-5. 境界補足を追加。
-6. 猫IDと標準パレットを設定。
-7. 香調候補を利用場面別に複数設定。
-8. 表示した文章をResultSnapshotへ複製して当時性を保存。
-9. 生回答をResultSnapshotへ渡さない。
+1. `preview20`と20、`detail50`と50の組だけを許可する。
+2. 全定義が要求`version`と一致することを確認し、混在版を拒否する。
+3. titleは`titleId`に対する`titleSubtitle`、`titleReason`を各1件だけ選ぶ。
+4. factorは`mode`、`questionCount`、`factorId`、`band`がexact一致する定義を、必要な節ごとに各1件だけ選ぶ。
+5. title 2件を先頭に置き、その後をsection-first、各section内を`FACTOR_ORDER`の固定順にする。
+6. 各位置のexact IDを`<titleId>-subtitle/reason`または`<mode>-<factorId>-<band>-<section>`として検証する。
 
-FactorResult、TitleClassification、RenderedResultTextはexact schemaで検証し、未知フィールドやネストした生回答、設問数から到達不能な因子平均、設問数と閾値が矛盾するBoundaryFlagを拒否する。Q-006未確定時は本番結果文を完成扱いにしない。
+出力は`RenderedResultText`の5フィールド（`id`、`version`、`section`、`text`、`evidenceRefs`）だけへ投影する。previewはtitle 2件＋5観察文の7件、detailはtitle 2件＋5因子×8節の42件である。配列、各record、複製した`evidenceRefs`をdeep freezeし、入力を変更・freezeしない。
+
+### 6.3 ResultModelとResultSnapshot
+
+`composeResultModel`はFactorResult、TitleClassification、RenderedResultTextをexact schemaで検証し、5因子、称号・キャラクターID、境界フラグ、表示文を深く複製する。未知フィールド、設問数から到達不能な因子統計、設問数と閾値が矛盾するBoundaryFlagを拒否する。
+
+`createResultSnapshot`は次を実施する。
+
+1. exact 9フィールド入力、`preview20`/20または`detail50`/50、厳密ISO日時を検証する。
+2. `VersionTuple`の9フィールドと、mode別7件／42件のRenderedResultTextのsection、factor順、exact IDを検証する。
+3. 表示した文章と根拠参照をResultSnapshotへ複製し、後の`result-text-v1`定義変更から診断時文面を隔離する。
+4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
+5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
+
+上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。また、回答完答からの本番caller、S-003/S-004への画面統合、`progress-storage.js`への結果保存統合は後続タスクである。
 
 ## 7. 履歴保存
+
+以下は後続永続化統合の処理契約であり、`createResultSnapshot`自体は実装済みだが、結果保存APIと本番callerは未実装である。現行`progress-storage.js`の旧generic result schemaはこの統合で置き換える。
 
 1. `crypto.randomUUID()`でresultIdを生成。
 2. ResultSnapshotを検証。
@@ -226,7 +239,6 @@ FactorResult、TitleClassification、RenderedResultTextはexact schemaで検証�
 
 または安定コード:
 
-- COMPARE_DIAGNOSIS_MISMATCH
 - COMPARE_SCALE_MISMATCH
 - COMPARE_QUESTION_VERSION_MISMATCH
 - COMPARE_SCORING_VERSION_MISMATCH
@@ -256,7 +268,7 @@ FactorResult、TitleClassification、RenderedResultTextはexact schemaで検証�
 3. manifestの該当1件だけを読み込む。
 4. `loading=lazy`相当で必要時にロード。
 5. 読込成功時は透明WebPを比率維持・全体表示する。
-6. 失敗時はalt、称号、結果文を維持し、共有カードは猫なしレイアウトへ切り替える。
+6. 失敗時はalt、称号、結果文、根拠参照、共有テキストへの経路を維持し、共有カードは猫なしレイアウトへ切り替える。
 
 51画像を開始時にプリロードしない。
 
@@ -381,8 +393,8 @@ FactorResult、TitleClassification、RenderedResultTextはexact schemaで検証�
 | 容量不足 | 結果を返す | 履歴未保存＋削除導線 | 不要履歴削除後に再試行 | QuotaExceededError |
 | 定義不整合 | 採点停止 | 結果を作らず説明 | 再読込・更新待ち | 件数・参照破損 |
 | 途中回答版不一致 | 再開拒否 | 理由と新規開始 | 旧値を上書きしない | version tuple変更 |
-| 猫読込失敗 | 結果を維持 | 代替文 | 猫なし共有 | 404を模擬 |
-| Canvas失敗 | 画像なし | テキスト共有 | コピー／手動選択 | toBlob失敗 |
+| 猫読込失敗 | 結果を維持 | 称号・結果文・根拠を維持 | 猫なし共有と共有テキスト | 404を模擬 |
+| Canvas失敗 | 画像なし | 称号・結果文・根拠を維持 | 共有テキストのコピー／手動選択 | toBlob失敗 |
 | OS共有なし | 共有ボタン非表示 | 保存・コピー | 段階代替 | capability stub |
 | Clipboard拒否 | コピー失敗 | 選択可能文 | 手動コピー | NotAllowedError |
 | 比較非互換 | 差を計算しない | 理由表示 | 履歴で再選択 | 各版不一致 |
