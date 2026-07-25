@@ -47,7 +47,7 @@
 
 ### New schemas and source
 
-- `content/schemas/*.schema.json` — 固定列順、型、enum、空欄許可を表すCSV schema descriptor。
+- `content/schemas/<csv-base-name>.schema.json` — 1 CSVにつき1ファイルで、固定列順、型、enum、空欄許可を表すCSV schema descriptor。
 - `content/source/releases/release-manifest.csv` — 公開候補。基盤完了時点ではヘッダーのみ。
 - `content/source/releases/release-history.csv` — 追記専用公開履歴。基盤完了時点ではヘッダーのみ。
 - `content/source/diagnoses/<version>/diagnosis-sets.csv`
@@ -224,14 +224,8 @@ git commit -m "feat: add strict CSV input foundation"
 ### Task 2: Exact Table Schemas and Japanese Reports
 
 **Files:**
-- Create: `content/schemas/releases.schema.json`
-- Create: `content/schemas/diagnoses.schema.json`
 - Create: `content/schemas/questions.schema.json`
-- Create: `content/schemas/titles.schema.json`
-- Create: `content/schemas/result-texts.schema.json`
-- Create: `content/schemas/evidence.schema.json`
-- Create: `content/schemas/presentation.schema.json`
-- Create: `content/schemas/characters.schema.json`
+- Create: `content/schemas/preview-questions.schema.json`
 - Create: `scripts/content/schema-loader.mjs`
 - Create: `scripts/content/table-loader.mjs`
 - Create: `scripts/content/report-content-errors.mjs`
@@ -336,8 +330,10 @@ git commit -m "feat: validate CSV table contracts"
 **Files:**
 - Create: `scripts/content/compile-diagnosis.mjs`
 - Create: `app/tests/content-diagnosis-compiler.test.js`
-- Modify: `content/schemas/diagnoses.schema.json`
-- Modify: `content/schemas/questions.schema.json`
+- Create: `content/schemas/diagnosis-sets.schema.json`
+- Create: `content/schemas/diagnosis-sources.schema.json`
+- Create: `content/schemas/diagnosis-limitations.schema.json`
+- Create: `content/schemas/factor-definitions.schema.json`
 
 **Interfaces:**
 - Consumes: `loadCsvTable`
@@ -424,7 +420,7 @@ Expected: PASS for the authority fixture and all negative cases.
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add scripts/content/compile-diagnosis.mjs content/schemas/diagnoses.schema.json content/schemas/questions.schema.json app/tests/content-diagnosis-compiler.test.js
+git add scripts/content/compile-diagnosis.mjs content/schemas/diagnosis-sets.schema.json content/schemas/diagnosis-sources.schema.json content/schemas/diagnosis-limitations.schema.json content/schemas/factor-definitions.schema.json app/tests/content-diagnosis-compiler.test.js
 git commit -m "feat: compile diagnosis CSV content"
 ```
 
@@ -440,9 +436,12 @@ git commit -m "feat: compile diagnosis CSV content"
 - Modify: `app/js/domain/title-classifier.js`
 - Modify: `app/js/domain/presentation-definition-validator.js`
 - Modify: `app/tests/result-content-definitions.test.js`
-- Modify: `content/schemas/titles.schema.json`
-- Modify: `content/schemas/result-texts.schema.json`
-- Modify: `content/schemas/evidence.schema.json`
+- Create: `content/schemas/title-profiles.schema.json`
+- Create: `content/schemas/title-profile-factors.schema.json`
+- Create: `content/schemas/result-texts.schema.json`
+- Create: `content/schemas/result-text-evidence.schema.json`
+- Create: `content/schemas/result-evidence.schema.json`
+- Create: `content/schemas/result-evidence-claims.schema.json`
 
 **Interfaces:**
 - Consumes: `loadCsvTable`
@@ -525,7 +524,7 @@ Expected: PASS without changing the 51-title catalog or 237 literals.
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add scripts/content/compile-result-content.mjs app/js/domain/title-profile.js app/js/domain/title-classifier.js app/js/domain/presentation-definition-validator.js app/js/data/title-profile-definitions.js content/schemas/titles.schema.json content/schemas/result-texts.schema.json content/schemas/evidence.schema.json app/tests/content-result-compiler.test.js app/tests/result-content-definitions.test.js
+git add scripts/content/compile-result-content.mjs app/js/domain/title-profile.js app/js/domain/title-classifier.js app/js/domain/presentation-definition-validator.js app/js/data/title-profile-definitions.js content/schemas/title-profiles.schema.json content/schemas/title-profile-factors.schema.json content/schemas/result-texts.schema.json content/schemas/result-text-evidence.schema.json content/schemas/result-evidence.schema.json content/schemas/result-evidence-claims.schema.json app/tests/content-result-compiler.test.js app/tests/result-content-definitions.test.js
 git commit -m "feat: compile result content CSVs"
 ```
 
@@ -537,8 +536,14 @@ git commit -m "feat: compile result content CSVs"
 - Create: `scripts/content/compile-presentation.mjs`
 - Create: `scripts/content/compile-characters.mjs`
 - Create: `app/tests/content-presentation-character-compiler.test.js`
-- Modify: `content/schemas/presentation.schema.json`
-- Modify: `content/schemas/characters.schema.json`
+- Create: `content/schemas/scenes.schema.json`
+- Create: `content/schemas/palettes.schema.json`
+- Create: `content/schemas/palette-usage-mappings.schema.json`
+- Create: `content/schemas/fragrances.schema.json`
+- Create: `content/schemas/presentation-selectors.schema.json`
+- Create: `content/schemas/selector-palettes.schema.json`
+- Create: `content/schemas/selector-fragrances.schema.json`
+- Create: `content/schemas/characters.schema.json`
 
 **Interfaces:**
 - Produces: `compilePresentationContent(tables, expectedVersion) -> PresentationDefinition`
@@ -611,7 +616,7 @@ Expected: PASS for exact schema and FAIL cases covering missing scenes, extra al
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add scripts/content/compile-presentation.mjs scripts/content/compile-characters.mjs content/schemas/presentation.schema.json content/schemas/characters.schema.json app/tests/content-presentation-character-compiler.test.js
+git add scripts/content/compile-presentation.mjs scripts/content/compile-characters.mjs content/schemas/scenes.schema.json content/schemas/palettes.schema.json content/schemas/palette-usage-mappings.schema.json content/schemas/fragrances.schema.json content/schemas/presentation-selectors.schema.json content/schemas/selector-palettes.schema.json content/schemas/selector-fragrances.schema.json content/schemas/characters.schema.json app/tests/content-presentation-character-compiler.test.js
 git commit -m "feat: compile presentation and character CSVs"
 ```
 
@@ -624,6 +629,8 @@ git commit -m "feat: compile presentation and character CSVs"
 - Create: `scripts/content/validate-content.mjs`
 - Create: `scripts/content/build-content.mjs`
 - Create: `app/tests/content-compiler.test.js`
+- Create: `content/schemas/release-manifest.schema.json`
+- Create: `content/schemas/release-history.schema.json`
 
 **Interfaces:**
 - Consumes: all four domain compilers.
@@ -736,7 +743,7 @@ Expected: PASS for deterministic build, approval rejection, reference rejection,
 - [ ] **Step 7: Commit**
 
 ```powershell
-git add scripts/content/content-compiler.mjs scripts/content/validate-content.mjs scripts/content/build-content.mjs app/tests/content-compiler.test.js
+git add scripts/content/content-compiler.mjs scripts/content/validate-content.mjs scripts/content/build-content.mjs app/tests/content-compiler.test.js content/schemas/release-manifest.schema.json content/schemas/release-history.schema.json
 git commit -m "feat: build deterministic content releases"
 ```
 
