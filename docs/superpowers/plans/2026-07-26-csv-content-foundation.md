@@ -405,7 +405,7 @@ export function compileDiagnosisContent({
 }
 ```
 
-`buildAndValidateDiagnosis`は`diagnosis-sources.csv`、`diagnosis-limitations.csv`、`factor-definitions.csv`を`display_order`順に投影し、`validateDefinitionStructure`と`validateDefinitionAuthority`を呼ぶ。実装はID、`textJa`、因子、`keyedDirection`、20問集合を`app/tests/fixtures/ipip-ja-50-authority.fixture.js`と比較する。ランダム化、IDによる暗黙sort、同一版の変更は禁止する。
+`buildAndValidateDiagnosis`は`diagnosis-sources.csv`、`diagnosis-limitations.csv`、`factor-definitions.csv`を`display_order`順に投影し、`validateDefinitionStructure`を呼ぶ。独立fixtureをbuild moduleへ暗黙importせず、focused testが生成結果へ`validateDefinitionAuthority(compiled, definitionVersions, IPIP_JA_50_AUTHORITY_FIXTURE)`を適用する。これにより通常編集者はCSVだけを更新でき、現行v1のID、`textJa`、因子、`keyedDirection`、20問集合は独立fixtureで検証される。ランダム化、IDによる暗黙sort、同一版の変更は禁止する。
 
 - [ ] **Step 4: Add negative contract cases**
 
