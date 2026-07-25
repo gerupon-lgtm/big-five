@@ -151,3 +151,4 @@
 - Q-006 Task 4レビューの効果: 独立レビューは全135件を確認し、自動テストと実装担当セルフレビューが通った後でも、strength/tradeoff全30件の根拠契約違反、20問選定外へ広がったpreview 4件、尺度外推論14件を検出した。修正担当へrecord ID単位で戻し、限定再レビューでCritical・Important・Minor 0まで収束した。結果文のように「構造は正しいが意味の境界がずれる」領域では、実装とコンテンツ監査を分離する手順が特に有効だった。
 - Q-006 Task 4で見えた改善点: `strength`と`tradeoff`というsection名が観察文を誘発した一方、根拠台帳は`reflectionPrompt`を要求していた。委譲briefの冒頭に「section名とclaimKindの対応表」を貼り、各sectionの肯定例・禁止例を1件ずつ示せば初回の30件修正を減らせる。また20問previewは因子名だけでなく、選定4項目の番号と包含可能な語彙をbrief内へ直接列挙すると尺度外拡張を防ぎやすい。
 - Q-006 Task 4の承認状態管理: 実装・自動検証・独立レビューが完了しても、E-1〜E-5を自動的に`approved`へ進めなかった。`delegate-development`は実装品質ゲートとユーザー／人手のContent Approval Gateを分離して記録する運用と相性が良く、承認履歴の捏造を防げた。
+- Q-006 Task 5実装・レビュー評価: 実装担当は純粋関数、exact input、欠落・重複・版混在、7件／42件の固定順、出力投影、参照分離とdeep freezeを所有2ファイルへ収束させた。独立レビューはCritical・Important・Minor 0で承認した。文面創作を含まない明確なdomain契約では、詳細brief＋TDD＋限定差分レビューの委譲が再修正なしで高品質に完了した。
