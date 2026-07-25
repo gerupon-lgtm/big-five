@@ -147,3 +147,7 @@
 - Q-006 Task 2レビューの効果: 初回レビューは、`appliesTo`へpreview条件を明示しない`previewAllowed: true`の`strength`が検証を通る抜けを検出した。Fix round 1でsection制約を`previewAllowed`自体へ結び付け、covering testと旧fixtureを修正し、scoped re-reviewで解消を確認した。実装担当セルフレビューと全テスト成功だけでは見落とした境界であり、task reviewの有効性が高い事例。
 - Q-006 Task 3実装評価: 最も判断力の高い担当へ、確定catalog、禁止表現、統一文法、literal静的定義を限定して委譲した。51 label、102副題・理由、独立fixtureを実装し、focused 26件、full 107件、static check、51件監査を再試行なしで完了した。
 - Q-006 Task 3レビュー評価: 別の高判断力担当が102件を横断し、因子名・high/low方向・titleId、能力・善悪・適職・順位等の禁止表現、日本語の自然さを確認し、重要・軽微指摘0で承認した。創作を自由案ではなく「因子と方向だけの統一文法」へ制約すると、delegate-developmentでもそのまま採用可能な品質へ収束した。
+- Q-006 Task 4実装評価: 実装担当は135件のliteral定義、237件の集約、先行RED、focused/full/checkを一担当で完了した。大量文面でも件数・ID・順序・帯域・sectionの構造整合は初回から保たれており、機械契約が明確な反復実装への委譲は有効だった。
+- Q-006 Task 4レビューの効果: 独立レビューは全135件を確認し、自動テストと実装担当セルフレビューが通った後でも、strength/tradeoff全30件の根拠契約違反、20問選定外へ広がったpreview 4件、尺度外推論14件を検出した。修正担当へrecord ID単位で戻し、限定再レビューでCritical・Important・Minor 0まで収束した。結果文のように「構造は正しいが意味の境界がずれる」領域では、実装とコンテンツ監査を分離する手順が特に有効だった。
+- Q-006 Task 4で見えた改善点: `strength`と`tradeoff`というsection名が観察文を誘発した一方、根拠台帳は`reflectionPrompt`を要求していた。委譲briefの冒頭に「section名とclaimKindの対応表」を貼り、各sectionの肯定例・禁止例を1件ずつ示せば初回の30件修正を減らせる。また20問previewは因子名だけでなく、選定4項目の番号と包含可能な語彙をbrief内へ直接列挙すると尺度外拡張を防ぎやすい。
+- Q-006 Task 4の承認状態管理: 実装・自動検証・独立レビューが完了しても、E-1〜E-5を自動的に`approved`へ進めなかった。`delegate-development`は実装品質ゲートとユーザー／人手のContent Approval Gateを分離して記録する運用と相性が良く、承認履歴の捏造を防げた。
