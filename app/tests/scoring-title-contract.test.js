@@ -581,7 +581,7 @@ test("T-003 F-006 validates versioned fixed-text structure and selects explicit 
       claimKind: "scaleObservation",
       text: "test-only",
       evidenceRefs: ["test-evidence"],
-      previewAllowed: true,
+      previewAllowed: false,
     },
     {
       id: "factor-detail-only",
@@ -606,7 +606,7 @@ test("T-003 F-006 validates versioned fixed-text structure and selects explicit 
       band: "high",
       titleId: "title-balanced",
     },
-  }).map(({ id }) => id), ["factor-preview"]);
+  }).map(({ id }) => id), []);
   assert.deepEqual(selectResultTextDefinitions({
     definitions,
     version: "result-text-v1",

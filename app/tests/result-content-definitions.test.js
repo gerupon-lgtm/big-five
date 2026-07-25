@@ -67,6 +67,16 @@ test("Q-006 text schema requires the section-specific claim kind and preview-saf
     () => validateResultTextDefinitions([{ ...text, evidenceRefs: [evidence.evidenceId, evidence.evidenceId] }]),
     /RESULT_TEXT_DEFINITION_INVALID/,
   );
+  assert.throws(
+    () => validateResultTextDefinitions([{
+      ...text,
+      appliesTo: { factorId: "extraversion", band: "high" },
+      section: "strength",
+      claimKind: "scaleObservation",
+      previewAllowed: true,
+    }]),
+    /RESULT_TEXT_DEFINITION_INVALID/,
+  );
 });
 
 test("Q-006 cross-definition validation rejects unknown outer fields and broken references", () => {

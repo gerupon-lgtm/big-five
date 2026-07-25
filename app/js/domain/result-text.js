@@ -57,9 +57,8 @@ function validDefinitionReachability(appliesTo, previewAllowed) {
   return !targetsPreview || previewAllowed;
 }
 
-function validPreviewSection(appliesTo, section) {
-  const targetsPreview = appliesTo.mode === "preview20" || appliesTo.questionCount === 20;
-  return !targetsPreview || ["titleSubtitle", "titleReason", "observation"].includes(section);
+function validPreviewSection(previewAllowed, section) {
+  return !previewAllowed || ["titleSubtitle", "titleReason", "observation"].includes(section);
 }
 
 export function validateResultTextDefinitions(definitions) {
@@ -70,7 +69,7 @@ export function validateResultTextDefinitions(definitions) {
     typeof version === "string" && version.length > 0 &&
     validAppliesTo(appliesTo) &&
     validDefinitionReachability(appliesTo, previewAllowed) &&
-    validPreviewSection(appliesTo, section) &&
+    validPreviewSection(previewAllowed, section) &&
     RESULT_TEXT_SECTIONS.includes(section) &&
     RESULT_CLAIM_KINDS.includes(claimKind) && CLAIM_KIND_BY_SECTION[section] === claimKind &&
     typeof text === "string" &&
