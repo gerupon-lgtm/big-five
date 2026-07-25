@@ -62,6 +62,9 @@ content/
       release-history.csv
     diagnoses/<diagnosticDefinitionVersion>/
       diagnosis-sets.csv
+      diagnosis-sources.csv
+      diagnosis-limitations.csv
+      factor-definitions.csv
     questions/<questionVersion>/
       questions.csv
       preview-questions.csv
@@ -164,6 +167,7 @@ question_id,question_version,display_order,text,factor_id,direction,source_ref,s
 ```
 
 - `direction`: `positive` / `reverse`
+- 生成時は`positive`をruntimeの`positive`、`reverse`をruntimeの`negative`へ明示的に変換する。
 - 同じ`questionVersion`で50件固定
 - ID、文面、順序、因子、方向を同じ版の中で変更しない
 
