@@ -6,6 +6,7 @@ import { decodeCsvBytes } from "./encoding.mjs";
 import { parseCsv } from "./csv-parser.mjs";
 
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const REFERENCE_PATTERN = /^[A-Za-z0-9]+(?:-{1,2}[A-Za-z0-9]+)*$/;
 const VERSION_PATTERN = /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/;
 const INTEGER_PATTERN = /^(?:0|[1-9]\d*)$/;
 
@@ -57,6 +58,7 @@ function convertValue(value, column, sourceName, lineNumber) {
   }
 
   const valid = (column.type === "id" && ID_PATTERN.test(value))
+    || (column.type === "reference" && REFERENCE_PATTERN.test(value))
     || (column.type === "version" && VERSION_PATTERN.test(value))
     || (column.type === "text")
     || (column.type === "enum" && column.values.includes(value));

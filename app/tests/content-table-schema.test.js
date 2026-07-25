@@ -215,6 +215,36 @@ test("T-012 table loader does not treat missing or null required as optional", a
   }
 });
 
+test("T-005 schema and table loaders accept compatibility references without weakening ids", async () => {
+  const schema = {
+    schemaVersion: 1,
+    fileName: "references.csv",
+    columns: [{ name: "title_id", type: "reference", required: true }],
+  };
+  await withSchema(schema, async (schemaPath) => {
+    assert.deepEqual(await loadTableSchema(schemaPath), schema);
+  });
+  await withCsv("title_id\ntitle-single-intellectImagination-high\n", async (filePath) => {
+    assert.deepEqual(await loadCsvTable({ filePath, schema }), {
+      encoding: "utf-8",
+      rows: [{ title_id: "title-single-intellectImagination-high" }],
+    });
+  });
+  for (const value of ["title--pair", "title---pair", "title pair", "title/pair", "-title", "title-"]) {
+    await withCsv(`title_id\n${value}\n`, async (filePath) => {
+      const valid = value === "title--pair";
+      if (valid) {
+        assert.equal((await loadCsvTable({ filePath, schema })).rows[0].title_id, value);
+      } else {
+        await assert.rejects(
+          loadCsvTable({ filePath, schema }),
+          (error) => error instanceof ContentError && error.code === "CSV_VALUE_INVALID",
+        );
+      }
+    });
+  }
+});
+
 test("T-012 report includes source, one-based row, column, code, and Japanese message", () => {
   const report = formatContentErrors([
     new ContentError({

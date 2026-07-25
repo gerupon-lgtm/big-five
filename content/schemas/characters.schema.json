@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "fileName": "characters.csv",
+  "columns": [
+    { "name": "title_id", "type": "reference", "required": true },
+    { "name": "character_manifest_version", "type": "version", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "character_id", "type": "reference", "required": true },
+    { "name": "asset_version", "type": "version", "required": true },
+    { "name": "delivery_webp_path", "type": "text", "required": true },
+    { "name": "delivery_sha256", "type": "text", "required": true },
+    { "name": "width", "type": "integer", "minimum": 1, "required": true },
+    { "name": "height", "type": "integer", "minimum": 1, "required": true },
+    { "name": "byte_length", "type": "integer", "minimum": 1, "required": true },
+    { "name": "has_alpha", "type": "enum", "values": ["true", "false"], "required": true },
+    { "name": "alt", "type": "text", "required": true },
+    { "name": "art_review_status", "type": "enum", "values": ["pending", "approved", "rejected"], "required": true },
+    { "name": "anatomy_review_status", "type": "enum", "values": ["pending", "approved", "rejected"], "required": true },
+    { "name": "technical_review_status", "type": "enum", "values": ["pending", "approved", "rejected"], "required": true },
+    { "name": "accessibility_review_status", "type": "enum", "values": ["pending", "approved", "rejected"], "required": true },
+    { "name": "approved_by", "type": "text", "required": true },
+    { "name": "approved_at", "type": "text", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "fileName": "result-text-evidence.csv",
+  "fileName": "presentation-selectors.csv",
   "columns": [
-    { "name": "text_id", "type": "reference", "required": true },
+    { "name": "title_id", "type": "reference", "required": true },
+    { "name": "presentation_definition_version", "type": "version", "required": true },
     { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
-    { "name": "evidence_id", "type": "id", "required": true },
     { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
   ]
 }

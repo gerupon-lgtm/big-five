@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "fileName": "result-texts.csv",
   "columns": [
-    { "name": "text_id", "type": "id", "required": true },
+    { "name": "text_id", "type": "reference", "required": true },
     { "name": "result_text_version", "type": "version", "required": true },
     { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
     { "name": "section", "type": "enum", "values": ["titleSubtitle", "titleReason", "observation", "strength", "tradeoff", "work", "relationship", "stress", "question", "action"], "required": true },
@@ -10,7 +10,7 @@
     { "name": "mode", "type": "enum", "values": ["preview20", "detail50"], "required": false },
     { "name": "factor_id", "type": "enum", "values": ["intellectImagination", "conscientiousness", "extraversion", "agreeableness", "emotionalStability"], "required": false },
     { "name": "band", "type": "enum", "values": ["low", "middle", "high"], "required": false },
-    { "name": "title_id", "type": "id", "required": false },
+    { "name": "title_id", "type": "reference", "required": false },
     { "name": "preview_allowed", "type": "enum", "values": ["true", "false"], "required": true },
     { "name": "text", "type": "text", "required": true },
     { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }

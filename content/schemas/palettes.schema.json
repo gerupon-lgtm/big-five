@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "fileName": "palettes.csv",
+  "columns": [
+    { "name": "palette_id", "type": "id", "required": true },
+    { "name": "presentation_definition_version", "type": "version", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "label", "type": "text", "required": true },
+    { "name": "description", "type": "text", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

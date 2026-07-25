@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "fileName": "title-profiles.csv",
   "columns": [
-    { "name": "title_id", "type": "id", "required": true },
+    { "name": "title_id", "type": "reference", "required": true },
     { "name": "title_rule_version", "type": "version", "required": true },
     { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
     { "name": "label", "type": "text", "required": true },
     { "name": "kind", "type": "enum", "values": ["balanced", "single", "pair"], "required": true },
-    { "name": "character_id", "type": "id", "required": true },
-    { "name": "summary_text_id", "type": "id", "required": true },
+    { "name": "character_id", "type": "reference", "required": true },
+    { "name": "summary_text_id", "type": "reference", "required": true },
     { "name": "default_palette_id", "type": "id", "required": true },
     { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
   ]

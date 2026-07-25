@@ -4,7 +4,7 @@ import { ContentError } from "./content-error.mjs";
 
 const ROOT_FIELDS = ["schemaVersion", "fileName", "columns"];
 const BASE_COLUMN_FIELDS = ["name", "type", "required"];
-const SUPPORTED_TYPES = new Set(["id", "version", "integer", "text", "enum"]);
+const SUPPORTED_TYPES = new Set(["id", "reference", "version", "integer", "text", "enum"]);
 
 function schemaError(sourceName, message) {
   return new ContentError({

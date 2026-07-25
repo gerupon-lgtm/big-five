@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "fileName": "palette-usage-mappings.csv",
+  "columns": [
+    { "name": "palette_id", "type": "id", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "usage", "type": "enum", "values": ["primary", "secondary", "accent"], "required": true },
+    { "name": "color", "type": "text", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

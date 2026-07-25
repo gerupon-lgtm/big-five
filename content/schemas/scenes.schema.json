@@ -1,10 +1,11 @@
 {
   "schemaVersion": 1,
-  "fileName": "result-text-evidence.csv",
+  "fileName": "scenes.csv",
   "columns": [
-    { "name": "text_id", "type": "reference", "required": true },
+    { "name": "scene_id", "type": "id", "required": true },
+    { "name": "presentation_definition_version", "type": "version", "required": true },
     { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
-    { "name": "evidence_id", "type": "id", "required": true },
+    { "name": "label", "type": "text", "required": true },
     { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
   ]
 }

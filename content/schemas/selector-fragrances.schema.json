@@ -1,11 +1,12 @@
 {
   "schemaVersion": 1,
-  "fileName": "title-profile-factors.csv",
+  "fileName": "selector-fragrances.csv",
   "columns": [
     { "name": "title_id", "type": "reference", "required": true },
+    { "name": "scene_id", "type": "id", "required": true },
     { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
-    { "name": "factor_id", "type": "enum", "values": ["intellectImagination", "conscientiousness", "extraversion", "agreeableness", "emotionalStability"], "required": true },
-    { "name": "direction", "type": "enum", "values": ["high", "low"], "required": true },
+    { "name": "fragrance_id", "type": "id", "required": true },
+    { "name": "share_selected", "type": "enum", "values": ["true", "false"], "required": true },
     { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
   ]
 }
