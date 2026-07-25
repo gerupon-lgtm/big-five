@@ -3,7 +3,7 @@ import { validateTitleProfileDefinitions } from "../../app/js/domain/title-profi
 
 const STATUSES = new Set(["draft", "reviewed", "approved", "rejected"]);
 const REVIEW_FIELDS = ["art_review_status", "anatomy_review_status", "technical_review_status", "accessibility_review_status"];
-const ALT_CLAIM_PATTERN = /\b(?:title|personality|ability|rank|breed)\b|称号|タイトル|性格|人格|能力|才能|ランク|順位|猫種|品種/i;
+const ALT_CLAIM_PATTERN = /\b(?:title|type|personality|ability|talent|intelligence|smart|intelligent|rank|breed|best|worst)\b|\b(?:first\s+place|number\s+one)\b|称号|タイトル|タイプ|性格|人格|能力|才能|知性|頭が良い|賢い|順位|第(?:[0-9０-９]+|[一二三四五六七八九十百]+)位|一位|トップ|最上|最高|優秀|劣る|ランク|猫種|品種/i;
 
 function invalid() {
   throw new Error("CHARACTER_CONTENT_INVALID");

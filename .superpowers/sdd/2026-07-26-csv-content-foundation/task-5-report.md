@@ -31,9 +31,15 @@ Complete. Commit: `feat: compile presentation and character CSVs`.
 - Character compilation requires 51 ordered title/character mappings, 1024px
   square alpha art metadata, safe relative `.webp` delivery paths, non-empty
   non-claiming alt text, and a 64-character lowercase SHA-256 value.
-- Tests cover missing/duplicate/orphan/order/version/cardinality failures,
-  prohibited fragrance copy, external paths, invalid hashes, dimensions,
-  alpha, alt claims, pending approvals, and the canonical manifest field set.
+- Tests cover count failures in all seven presentation input sets, orphaned
+  selector-fragrance parents and children, duplicate order in all three
+  relation kinds, each palette/selector/fragrance cardinality rule, and
+  version mismatches in every versioned presentation catalog.
+- Character negatives cover prohibited Japanese and English title/type,
+  personality, ability/intelligence, rank, and breed claims while retaining
+  observable pose, accessory, gaze, and direction descriptions. External
+  paths, invalid hashes, dimensions, alpha, pending approvals, and the exact
+  canonical manifest field set remain covered.
 
 ## RED / GREEN evidence
 
@@ -44,12 +50,12 @@ Complete. Commit: `feat: compile presentation and character CSVs`.
 - RED 3: release eligibility incorrectly accepted an empty row set; the
   regression failed with a missing expected approval exception.
 - GREEN: focused presentation, character, table-schema, and presentation
-  definition tests passed 76/76 after the minimal implementations.
+  definition tests passed after the minimal implementations.
 
 ## Verification
 
-- Focused: `node --test app/tests/content-presentation-character-compiler.test.js app/tests/content-table-schema.test.js app/tests/presentation-definition.test.js` — 76 passed, 0 failed.
-- Full: `npm.cmd test` — 254 passed, 0 failed.
+- Focused: `node --test app/tests/content-presentation-character-compiler.test.js app/tests/content-table-schema.test.js app/tests/presentation-definition.test.js` — 81 passed, 0 failed.
+- Full: `npm.cmd test` — 259 passed, 0 failed.
 - Static: `npm.cmd run check` — passed.
 - New schemas: all eight descriptors loaded through `loadTableSchema`.
 - `git diff --check` — passed.
@@ -59,3 +65,21 @@ Complete. Commit: `feat: compile presentation and character CSVs`.
 None. Real Q-012 artwork inspection, approved production rows/assets, release
 manifest generation, and generated runtime output remain deliberately outside
 this task.
+
+## Review fix round
+
+- Expanded the alt-copy gate to reject the concrete Japanese forms `第1位の猫`
+  and `賢い猫`, numbered/ordinal and superiority claims, plus the contracted
+  Japanese and English title/type, personality, ability/intelligence, rank,
+  and breed vocabulary. Ordinary observable alt text remains accepted.
+- Added explicit table-driven negatives for every presentation input count,
+  selector-fragrance orphan direction, all relation-group duplicate orders,
+  palette usage, selector palette, and selector fragrance cardinalities, and
+  every versioned catalog.
+- Review RED: the concrete `第1位の猫` fixture compiled without an exception
+  before the alt gate was expanded. The presentation coverage cases already
+  passed against the implemented gates and now protect those branches.
+- Review GREEN: compiler tests passed 10/10; the final focused suite passed
+  81/81 and the full suite passed 259/259. Static check and all eight schema
+  loads passed; final diff validation is recorded before the fix commit.
+- No production Q-012/Q-013 row, approval, asset, or hash was added or changed.

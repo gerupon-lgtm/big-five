@@ -104,6 +104,15 @@ function expectContentError(code) {
   return (error) => error instanceof ContentError && error.code === code;
 }
 
+function assertPresentationRejected(mutate) {
+  const rows = validPresentationRows();
+  mutate(rows);
+  assert.throws(
+    () => compilePresentationContent(rows, PRESENTATION_VERSION),
+    expectContentError("PRESENTATION_CONTENT_INVALID"),
+  );
+}
+
 test("T-005 F-018 Q-013 normalized CSVs compile to the exact presentation definition", () => {
   const compiled = compilePresentationContent(validPresentationRows(), PRESENTATION_VERSION);
   assert.deepEqual(compiled, makeValidPresentationDefinitionSet(TitleProfileDefinitions));
@@ -129,6 +138,55 @@ test("T-005 F-018 rejects incomplete, unordered, orphaned, and unsafe normalized
       expectContentError("PRESENTATION_CONTENT_INVALID"),
     );
   }
+});
+
+test("T-005 F-018 rejects an invalid count in each normalized presentation input set", () => {
+  for (const rowSetName of [
+    "sceneRows",
+    "paletteRows",
+    "paletteUsageRows",
+    "fragranceRows",
+    "selectorRows",
+    "selectorPaletteRows",
+    "selectorFragranceRows",
+  ]) {
+    assertPresentationRejected((rows) => rows[rowSetName].pop());
+  }
+});
+
+test("T-005 F-018 rejects duplicate relation-group orders and selector-fragrance orphans", () => {
+  const cases = [
+    ["palette usage order", (rows) => { rows.paletteUsageRows[1].display_order = 1; }],
+    ["selector palette order", (rows) => { rows.selectorPaletteRows[1].display_order = 1; }],
+    ["selector fragrance order", (rows) => { rows.selectorFragranceRows[1].display_order = 1; }],
+    ["selector fragrance parent", (rows) => { rows.selectorFragranceRows[0].title_id = "title-missing"; }],
+    ["selector fragrance child", (rows) => { rows.selectorFragranceRows[0].fragrance_id = "fragrance-pause-missing"; }],
+  ];
+  for (const [, mutate] of cases) assertPresentationRejected(mutate);
+});
+
+test("T-005 F-018 rejects relation cardinality violations without changing global row counts", () => {
+  const cases = [
+    ["three palette usages", (rows) => { rows.paletteUsageRows[0].palette_id = rows.paletteUsageRows[3].palette_id; }],
+    ["two selector palettes", (rows) => { rows.selectorPaletteRows[0].title_id = rows.selectorPaletteRows[2].title_id; }],
+    ["three fragrance scenes", (rows) => {
+      rows.selectorFragranceRows[0].title_id = rows.selectorFragranceRows[6].title_id;
+      rows.selectorFragranceRows[1].title_id = rows.selectorFragranceRows[6].title_id;
+    }],
+    ["two fragrance candidates", (rows) => { rows.selectorFragranceRows[0].title_id = rows.selectorFragranceRows[6].title_id; }],
+    ["one shared fragrance", (rows) => { rows.selectorFragranceRows[0].share_selected = "false"; }],
+  ];
+  for (const [, mutate] of cases) assertPresentationRejected(mutate);
+});
+
+test("T-005 F-018 rejects version mismatches in every versioned presentation catalog", () => {
+  const cases = [
+    (rows) => { rows.sceneRows[0].presentation_definition_version = "presentation-v2"; },
+    (rows) => { rows.paletteRows[0].presentation_definition_version = "presentation-v2"; },
+    (rows) => { rows.fragranceRows[0].presentation_definition_version = "presentation-v2"; },
+    (rows) => { rows.selectorRows[0].presentation_definition_version = "presentation-v2"; },
+  ];
+  for (const mutate of cases) assertPresentationRejected(mutate);
 });
 
 test("T-005 F-016 Q-012 compiler emits only the canonical character manifest fields", () => {
@@ -159,6 +217,53 @@ test("T-005 F-016 rejects unsafe character paths, hashes, art constraints, and a
     assert.throws(
       () => compileCharacterContent({ rows, titleProfiles: TitleProfileDefinitions }, CHARACTER_VERSION),
       expectContentError("CHARACTER_CONTENT_INVALID"),
+    );
+  }
+});
+
+test("T-005 F-016 rejects Japanese and English title, personality, ability, rank, and breed claims in alt text", () => {
+  const prohibitedClaims = [
+    "第1位の猫",
+    "賢い猫",
+    "特別な称号の猫",
+    "外交的なタイプの猫",
+    "明るい性格の猫",
+    "優れた人格の猫",
+    "能力が高い猫",
+    "才能ある猫",
+    "知性の高い猫",
+    "頭が良い猫",
+    "順位が高い猫",
+    "一位の猫",
+    "トップの猫",
+    "最上の猫",
+    "優秀な猫",
+    "他より劣る猫",
+    "特定の猫種の猫",
+    "特定の品種の猫",
+    "smart cat",
+    "intelligent cat",
+    "best cat",
+    "worst cat",
+    "first place cat",
+    "number one cat",
+  ];
+  for (const alt of prohibitedClaims) {
+    const rows = validCharacterRows();
+    rows[0].alt = alt;
+    assert.throws(
+      () => compileCharacterContent({ rows, titleProfiles: TitleProfileDefinitions }, CHARACTER_VERSION),
+      expectContentError("CHARACTER_CONTENT_INVALID"),
+      alt,
+    );
+  }
+
+  for (const alt of ["前足をそろえて座る猫", "青い首輪を付けて左を見る猫", "A seated cat looking left"]) {
+    const rows = validCharacterRows();
+    rows[0].alt = alt;
+    assert.doesNotThrow(
+      () => compileCharacterContent({ rows, titleProfiles: TitleProfileDefinitions }, CHARACTER_VERSION),
+      alt,
     );
   }
 });
