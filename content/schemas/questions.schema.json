@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "fileName": "questions.csv",
+  "columns": [
+    { "name": "question_id", "type": "id", "required": true },
+    { "name": "question_version", "type": "version", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "text", "type": "text", "required": true },
+    { "name": "factor_id", "type": "enum", "values": ["intellectImagination", "conscientiousness", "extraversion", "agreeableness", "emotionalStability"], "required": true },
+    { "name": "direction", "type": "enum", "values": ["positive", "reverse"], "required": true },
+    { "name": "source_ref", "type": "text", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

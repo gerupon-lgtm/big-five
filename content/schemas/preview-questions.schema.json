@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "fileName": "preview-questions.csv",
+  "columns": [
+    { "name": "question_version", "type": "version", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "question_id", "type": "id", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}
