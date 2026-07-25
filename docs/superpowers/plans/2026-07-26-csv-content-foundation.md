@@ -430,8 +430,11 @@ git commit -m "feat: compile diagnosis CSV content"
 
 **Files:**
 - Create: `scripts/content/compile-result-content.mjs`
+- Create: `app/js/config/factor-order.js`
 - Create: `app/js/domain/title-profile.js`
 - Create: `app/tests/content-result-compiler.test.js`
+- Modify: `app/js/data/factor-order.js`
+- Modify: `scripts/content/schema-loader.mjs`
 - Modify: `scripts/content/table-loader.mjs`
 - Modify: `app/tests/content-table-schema.test.js`
 - Modify: `app/js/data/title-profile-definitions.js`
@@ -448,7 +451,7 @@ git commit -m "feat: compile diagnosis CSV content"
 **Interfaces:**
 - Consumes: `loadCsvTable`
 - Produces: `validateTitleProfileDefinitions(value) -> value` from `app/js/domain/title-profile.js`
-- Produces: `compileResultContent({ profileRows, profileFactorRows, textRows, textEvidenceRows, evidenceRows, evidenceClaimRows, resultTextVersion }) -> { titleProfiles, textDefinitions, evidenceDefinitions, resultTextVersion }`
+- Produces: `compileResultContent({ profileRows, profileFactorRows, textRows, textEvidenceRows, evidenceRows, evidenceClaimRows, titleRuleVersion, resultTextVersion }) -> { titleProfiles, textDefinitions, evidenceDefinitions, resultTextVersion }`
 - Produces: `assertReleaseEligible({ rows, approvals }) -> true`; this is a build-time gate consumed by Task 6 and never changes a CSV status.
 
 - [ ] **Step 1: Write failing count, shape, and ordering tests**
@@ -529,7 +532,7 @@ Expected: PASS without changing the 51-title catalog or 237 literals.
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add scripts/content/compile-result-content.mjs scripts/content/table-loader.mjs app/js/domain/title-profile.js app/js/domain/title-classifier.js app/js/domain/presentation-definition-validator.js app/js/data/title-profile-definitions.js content/schemas/title-profiles.schema.json content/schemas/title-profile-factors.schema.json content/schemas/result-texts.schema.json content/schemas/result-text-evidence.schema.json content/schemas/result-evidence.schema.json content/schemas/result-evidence-claims.schema.json app/tests/content-result-compiler.test.js app/tests/content-table-schema.test.js app/tests/result-content-definitions.test.js
+git add scripts/content/compile-result-content.mjs scripts/content/schema-loader.mjs scripts/content/table-loader.mjs app/js/config/factor-order.js app/js/domain/title-profile.js app/js/domain/title-classifier.js app/js/domain/presentation-definition-validator.js app/js/data/factor-order.js app/js/data/title-profile-definitions.js content/schemas/title-profiles.schema.json content/schemas/title-profile-factors.schema.json content/schemas/result-texts.schema.json content/schemas/result-text-evidence.schema.json content/schemas/result-evidence.schema.json content/schemas/result-evidence-claims.schema.json app/tests/content-result-compiler.test.js app/tests/content-table-schema.test.js app/tests/result-content-definitions.test.js
 git commit -m "feat: compile result content CSVs"
 ```
 
@@ -541,6 +544,13 @@ git commit -m "feat: compile result content CSVs"
 - Create: `scripts/content/compile-presentation.mjs`
 - Create: `scripts/content/compile-characters.mjs`
 - Create: `app/tests/content-presentation-character-compiler.test.js`
+- Modify: `scripts/content/schema-loader.mjs`
+- Modify: `scripts/content/table-loader.mjs`
+- Modify: `app/tests/content-table-schema.test.js`
+- Modify: `content/schemas/title-profiles.schema.json`
+- Modify: `content/schemas/title-profile-factors.schema.json`
+- Modify: `content/schemas/result-texts.schema.json`
+- Modify: `content/schemas/result-text-evidence.schema.json`
 - Create: `content/schemas/scenes.schema.json`
 - Create: `content/schemas/palettes.schema.json`
 - Create: `content/schemas/palette-usage-mappings.schema.json`
@@ -551,8 +561,9 @@ git commit -m "feat: compile result content CSVs"
 - Create: `content/schemas/characters.schema.json`
 
 **Interfaces:**
-- Produces: `compilePresentationContent(tables, expectedVersion) -> PresentationDefinition`
-- Produces: `compileCharacterContent(rows, expectedVersion) -> CharacterManifest`
+- Produces: `compilePresentationContent({ sceneRows, paletteRows, paletteUsageRows, fragranceRows, selectorRows, selectorPaletteRows, selectorFragranceRows, titleProfiles }, expectedVersion) -> PresentationDefinition`
+- Produces: `compileCharacterContent({ rows, titleProfiles }, expectedVersion) -> CharacterManifest`
+- Produces: `assertCharacterReleaseEligible(rows) -> true`
 
 - [ ] **Step 1: Write failing normalized-join tests**
 
@@ -589,28 +600,19 @@ Project normalized rows to `schemaVersion`, `presentationDefinitionVersion`, `sc
 
 - [ ] **Step 4: Implement exact character manifest projection**
 
-```js
-export function compileCharacterContent(rows, expectedVersion) {
-  assertCount(rows, 51, "CHARACTER_COUNT_INVALID");
-  assertUnique(rows, "title_id");
-  assertUnique(rows, "character_id");
-  const entries = rows.toSorted(byDisplayOrder).map((row) => ({
-    titleId: row.title_id,
-    characterId: row.character_id,
-    assetVersion: row.asset_version,
-    src: assertSameOriginAssetPath(row.delivery_webp_path),
-    sha256: assertLowerHexSha256(row.delivery_sha256),
-    width: row.width,
-    height: row.height,
-    byteLength: row.byte_length,
-    hasAlpha: row.has_alpha === "true",
-    alt: row.alt,
-  }));
-  return deepFreeze({ schemaVersion: 1, characterManifestVersion: expectedVersion, entries });
+Project the exact canonical runtime contract from `docs/data-model.md`:
+
+```text
+CharacterManifest = exact {
+  characterManifestVersion,
+  entries: exact [{
+    characterId, assetVersion, imagePath,
+    width, height, alt, integrity
+  }][51]
 }
 ```
 
-Require all four Q-012 review statuses, `approvedBy`, and `approvedAt` before a row is release eligible. Compiler tests use synthetic approved fixtures only; do not mark production rows approved or invent image hashes.
+The manifest does not duplicate `titleId`, byte length, alpha, or approval metadata. Entries follow `titleProfiles` order. Convert the lowercase hexadecimal delivery hash to `sha256-<Base64>` for `integrity`. Require all four Q-012 review statuses, `approvedBy`, `approvedAt`, `has_alpha=true`, and row `status=approved` in the separate `assertCharacterReleaseEligible` gate before release. Compiler tests use synthetic approved fixtures only; do not mark production rows approved or invent image hashes.
 
 - [ ] **Step 5: Run focused presentation/character tests**
 
@@ -621,7 +623,7 @@ Expected: PASS for exact schema and FAIL cases covering missing scenes, extra al
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add scripts/content/compile-presentation.mjs scripts/content/compile-characters.mjs content/schemas/scenes.schema.json content/schemas/palettes.schema.json content/schemas/palette-usage-mappings.schema.json content/schemas/fragrances.schema.json content/schemas/presentation-selectors.schema.json content/schemas/selector-palettes.schema.json content/schemas/selector-fragrances.schema.json content/schemas/characters.schema.json app/tests/content-presentation-character-compiler.test.js
+git add scripts/content/compile-presentation.mjs scripts/content/compile-characters.mjs scripts/content/schema-loader.mjs scripts/content/table-loader.mjs app/tests/content-table-schema.test.js content/schemas/title-profiles.schema.json content/schemas/title-profile-factors.schema.json content/schemas/result-texts.schema.json content/schemas/result-text-evidence.schema.json content/schemas/scenes.schema.json content/schemas/palettes.schema.json content/schemas/palette-usage-mappings.schema.json content/schemas/fragrances.schema.json content/schemas/presentation-selectors.schema.json content/schemas/selector-palettes.schema.json content/schemas/selector-fragrances.schema.json content/schemas/characters.schema.json app/tests/content-presentation-character-compiler.test.js
 git commit -m "feat: compile presentation and character CSVs"
 ```
 

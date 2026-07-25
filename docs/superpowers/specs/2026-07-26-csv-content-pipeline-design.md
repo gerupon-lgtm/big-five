@@ -123,6 +123,7 @@ app/
 - 改行コードはCRLFとLFを受け付ける。
 - 先頭・末尾空白を値の一部として扱い、変換側で暗黙にtrimしない。
 - ID、版、日時、数値は列schemaに従って検証し、Excelの表示形式を正典にしない。
+- 新規の人向けIDは小文字kebabの`id`型を使う。既存runtime IDを参照する列は`reference`型を使い、lowerCamelCase部分と称号pairの`--`を保持する。空白、スラッシュ、先頭・末尾ハイフン、3連続以上のハイフンは許可しない。
 - 配列や複数参照を1セルへ区切り文字で詰め込まない。対応表CSVへ分離する。
 - 未知列を拒否する。
 - 列順は固定する。生成JSONの決定性とExcel上の比較可能性を保つ。
@@ -248,11 +249,55 @@ evidence_id,display_order,supported_claim,status
 scene_id,presentation_definition_version,display_order,label,status
 ```
 
+`palettes.csv`:
+
+```text
+palette_id,presentation_definition_version,display_order,label,description,status
+```
+
+`palette-usage-mappings.csv`:
+
+```text
+palette_id,display_order,usage,color,status
+```
+
+`usage`は`primary`、`secondary`、`accent`の3件を固定順で持つ。
+
+`fragrances.csv`:
+
+```text
+fragrance_id,presentation_definition_version,display_order,scene_id,accord_label,description,disclaimer_id,status
+```
+
+`presentation-selectors.csv`:
+
+```text
+title_id,presentation_definition_version,display_order,status
+```
+
+`selector-palettes.csv`:
+
+```text
+title_id,display_order,palette_id,status
+```
+
+`selector-fragrances.csv`:
+
+```text
+title_id,scene_id,display_order,fragrance_id,share_selected,status
+```
+
 色選択はカード演出だけを変更し、スコア、称号、文章、猫、香り候補を変更しない。商品、精油量、使用法、治療・改善・能力効果を示す文言を拒否する。
 
 ### 6.5 キャラクター
 
-`characters.csv`は画像本体ではなく、版付きmanifestメタデータを保持する。51称号と51キャラクターの1対1、WebP寸法、alpha、integrity、alt、パスを検証する。公開未承認の画像を生成manifestへ含めない。
+`characters.csv`は画像本体ではなく、版付きmanifestメタデータを保持する。
+
+```text
+title_id,character_manifest_version,display_order,character_id,asset_version,delivery_webp_path,delivery_sha256,width,height,byte_length,has_alpha,alt,art_review_status,anatomy_review_status,technical_review_status,accessibility_review_status,approved_by,approved_at,status
+```
+
+51称号と51キャラクターの1対1、WebP寸法、alpha、integrity、alt、パスを検証する。公開未承認の画像を生成manifestへ含めない。生成する`CharacterManifest`は`docs/data-model.md`のexact schemaを正とし、`titleId`、byte数、alpha、承認情報をruntime JSONへ重複保持しない。
 
 ## 7. 公開release
 
