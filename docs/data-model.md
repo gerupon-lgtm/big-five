@@ -238,6 +238,14 @@ Q-012確定前は`object-fit: contain`で全体表示し、共有カードでも
 | cardTemplateVersion | string | 共有カード版 |
 | appVersion | string | アプリ版 |
 
+### 3.4.1 T-004実装済みの進捗・保存契約
+
+- 正式版の保存キーは `big-five-self-understanding:v1` とする。プロトタイプ用キーは読込・更新しない。
+- `ProgressRecord` は `response-state` が exact schema、固定設問順、`VersionTuple`、ISO日時、回答値 `1..5` を検証してから遷移・保存する。`currentIndex` は保存時に `0..49` とする。
+- `continueHidden` は `mode: detail50`、`currentIndex: 20`、`previewDecision: continueHidden` にだけ遷移し、20問のスコア、称号、キャラクター、結果、共有モデルを生成しない。
+- `StorageEnvelope` は schema 1 の正確な外側構造を検証する。対象診断の進捗だけを現在の定義・版で再検証し、他診断の安全な進捗と結果配列は保持する。
+- 将来 `schemaVersion`、壊れたJSON、壊れた対象進捗、版不一致は保存値を上書きしない。保存または削除の失敗はメモリ上の診断進行を破棄しない。
+
 ### 3.5 ResultSnapshot
 
 | 項目 | 型 | 必須 | 説明 |
@@ -315,10 +323,11 @@ Q-012確定前は`object-fit: contain`で全体表示し、共有カードでも
 | コード | 条件 | 回復 |
 |---|---|---|
 | STORAGE_UNAVAILABLE | API無効・セキュリティ例外 | メモリで継続、保存不可を通知 |
-| STORAGE_QUOTA_EXCEEDED | 容量不足 | 画面結果を維持、削除導線 |
-| STORAGE_SCHEMA_UNSUPPORTED | 未対応の将来版 | 読込せず新規開始、既存値を上書きしない |
-| STORAGE_RECORD_INVALID | 一部レコード破損 | 当該レコードだけ除外、残りを維持 |
-| PROGRESS_VERSION_MISMATCH | 設問・尺度版不一致 | 継続不可理由と新規開始 |
+| STORAGE_SAVE_FAILED | 容量不足または保存拒否 | メモリ状態を維持、保存不可を通知 |
+| STORAGE_DELETE_FAILED | 削除時の保存拒否 | 削除完了と表示せず再試行導線 |
+| STORAGE_INCOMPATIBLE | 未対応の将来schema | 読込・上書きをせず既存値を維持 |
+| STORAGE_CORRUPT | JSONまたはエンベロープ・対象進捗破損 | 安全な新規開始導線を表示 |
+| PROGRESS_INCOMPATIBLE | 設問・尺度を含むVersionTuple不一致 | 継続不可理由と新規開始 |
 
 エラーコードを利用者へそのまま表示せず、`docs/screens.md`の文言へ変換する。
 
