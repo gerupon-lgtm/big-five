@@ -22,8 +22,10 @@ const DETAIL_SECTIONS = [
   "observation", "strength", "tradeoff", "work",
   "relationship", "stress", "question", "action",
 ];
-const SCALE_SECTIONS = new Set(["observation", "strength", "tradeoff"]);
-const PROMPT_SECTIONS = new Set(["work", "relationship", "stress", "question", "action"]);
+const SCALE_SECTIONS = new Set(["observation"]);
+const PROMPT_SECTIONS = new Set([
+  "strength", "tradeoff", "work", "relationship", "stress", "question", "action",
+]);
 
 const evidence = {
   evidenceId: "evidence-title-rule-v1",
@@ -43,6 +45,22 @@ const text = {
   text: "5因子がいずれも中間域にあるプロフィール",
   evidenceRefs: ["evidence-title-rule-v1"],
   previewAllowed: true,
+};
+
+const detailStrengthText = {
+  id: "detail50-extraversion-low-strength",
+  version: "result-text-v1",
+  appliesTo: {
+    mode: "detail50",
+    questionCount: 50,
+    factorId: "extraversion",
+    band: "low",
+  },
+  section: "strength",
+  claimKind: "reflectionPrompt",
+  text: "人との集まりで、少人数や静かな場所を選んだ場面はありましたか。",
+  evidenceRefs: ["evidence-result-presentation-contract"],
+  previewAllowed: false,
 };
 
 const titleProfiles = [{ titleId: "title-balanced" }];
@@ -71,12 +89,20 @@ test("Q-006 schemas reject unknown fields and unsupported claim kinds", () => {
 });
 
 test("Q-006 text schema requires the section-specific claim kind and preview-safe sections", () => {
+  assert.equal(validateResultTextDefinitions([detailStrengthText]).length, 1);
+  assert.throws(
+    () => validateResultTextDefinitions([{
+      ...detailStrengthText,
+      claimKind: "scaleObservation",
+    }]),
+    /RESULT_TEXT_DEFINITION_INVALID/,
+  );
   assert.throws(
     () => validateResultTextDefinitions([{ ...text, claimKind: "scaleObservation" }]),
     /RESULT_TEXT_DEFINITION_INVALID/,
   );
   assert.throws(
-    () => validateResultTextDefinitions([{ ...text, section: "strength", claimKind: "scaleObservation", appliesTo: { mode: "preview20" } }]),
+    () => validateResultTextDefinitions([{ ...text, section: "strength", claimKind: "reflectionPrompt", appliesTo: { mode: "preview20" } }]),
     /RESULT_TEXT_DEFINITION_INVALID/,
   );
   assert.throws(
@@ -88,7 +114,7 @@ test("Q-006 text schema requires the section-specific claim kind and preview-saf
       ...text,
       appliesTo: { factorId: "extraversion", band: "high" },
       section: "strength",
-      claimKind: "scaleObservation",
+      claimKind: "reflectionPrompt",
       previewAllowed: true,
     }]),
     /RESULT_TEXT_DEFINITION_INVALID/,
@@ -202,6 +228,23 @@ test("20-question preview copy stays within the four-item observation contract",
   }
 });
 
+test("preview observations use only the four selected items for each reviewed factor", () => {
+  const byId = new Map(FactorResultTextDefinitions.map((definition) => [
+    definition.id,
+    definition,
+  ]));
+  for (const band of BANDS) {
+    const extraversion = byId.get(`preview20-extraversion-${band}-observation`);
+    assert.match(extraversion.text, /人との会話や集まりでのふるまい/);
+    assert.doesNotMatch(extraversion.text, /自分から話しかけ|注目を集め/);
+  }
+  const emotionalStabilityLow = byId.get(
+    "preview20-emotionalStability-low-observation",
+  );
+  assert.match(emotionalStabilityLow.text, /慌て|気分の揺れ|落ち込み/);
+  assert.doesNotMatch(emotionalStabilityLow.text, /心配/);
+});
+
 test("50-question detail copy separates scale observations from presentation prompts", () => {
   const detailDefinitions = FactorResultTextDefinitions.filter(
     ({ appliesTo }) => appliesTo.mode === "detail50",
@@ -225,7 +268,8 @@ test("50-question detail copy separates scale observations from presentation pro
     if (definition.section === "observation") {
       assert.match(definition.text, /^今回の50問では/);
     }
-    if (["work", "relationship", "stress", "question"].includes(definition.section)) {
+    if (PROMPT_SECTIONS.has(definition.section) && definition.section !== "action") {
+      assert.equal(definition.claimKind, "reflectionPrompt");
       assert.match(definition.text, /ましたか。$/);
     }
     if (definition.section === "action") {
@@ -249,17 +293,30 @@ test("factor copy avoids prohibited labels, guarantees, and abstract wording", (
         definition.id,
       );
     }
-    if (definition.section === "strength") {
-      assert.match(definition.text, /面がうかがえます。$/, definition.id);
-    }
-    if (definition.section === "tradeoff") {
-      assert.match(
+    if (["strength", "tradeoff"].includes(definition.section)) {
+      assert.doesNotMatch(
         definition.text,
-        /^場面によっては.*ありそうです。$/,
+        /面がうかがえます|こともありそうです/,
         definition.id,
       );
+      assert.match(definition.text, /ましたか。$/, definition.id);
     }
   }
+});
+
+test("reviewed strength and tradeoff copy opens concrete reflection without opposite-strength claims", () => {
+  const reflectionDefinitions = FactorResultTextDefinitions.filter(
+    ({ section }) => ["strength", "tradeoff"].includes(section),
+  );
+  assert.equal(reflectionDefinitions.length, 30);
+  assert.equal(
+    reflectionDefinitions.every(({ claimKind }) => claimKind === "reflectionPrompt"),
+    true,
+  );
+  const extraversionLowStrength = reflectionDefinitions.find(
+    ({ id }) => id === "detail50-extraversion-low-strength",
+  );
+  assert.match(extraversionLowStrength.text, /少人数|静かな場所/);
 });
 
 test("factor content is an explicit literal catalog without runtime generation", async () => {
