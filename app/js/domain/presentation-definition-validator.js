@@ -19,7 +19,8 @@ const HEX_COLOR_PATTERN = /^#[0-9A-F]{6}$/;
 
 const COPY_RULES = [
   { code: "forbidden-product", pattern: /\b(?:buy|purchase|shop|brand|product)\b|商品|ブランド|購入|販売|https?:\/\/|www\./i },
-  { code: "forbidden-essential-oil", pattern: /\b(?:essential\s*oil|lavender|eucalyptus|peppermint)\b|精油|植物|ラベンダー|ユーカリ|ペパーミント|アロマオイル/i },
+  { code: "forbidden-essential-oil", pattern: /\bessential\s*oil\b|精油|アロマオイル/i },
+  { code: "forbidden-plant", pattern: /\b(?:plant|lavender|eucalyptus|peppermint)\b|植物|ラベンダー|ユーカリ|ペパーミント/i },
   { code: "forbidden-usage", pattern: /\b(?:\d+(?:\.\d+)?\s*(?:drops?|ml|%)|use|apply|ingest|drink|diffuser|recipe|blend)\b|滴|濃度|配合|摂取|飲用|塗布|肌|ディフューザー|使用(?:方法)?|手順|レシピ/i },
   { code: "forbidden-effect", pattern: /\b(?:treat(?:ment)?|cure|heal|improve(?:s|ment)?|boost|enhance|ability|performance)\b|治療|改善|効果|能力|成績|集中力/i },
 ];
