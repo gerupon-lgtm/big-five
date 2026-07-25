@@ -241,9 +241,9 @@ export const ResultEvidenceDefinitions = Object.freeze([
 ]);
 ```
 
-- [ ] **Step 4: Write the human-readable claim matrix and complete gates E-0〜E-5**
+- [ ] **Step 4: Write the human-readable claim matrix and record gates E-0〜E-5 accurately**
 
-In `docs/research/2026-07-25-q006-result-content-evidence.md`, record one row per evidence ID with source, locator, supported claim, unsupported claim, and approval date. For each factor, list the exact official items used to justify high/middle/low observation wording. Mark work, relationship, stress, question, and action sections as reflection prompts rather than measured facts. Record the approved wording decisions from gates E-0〜E-5 in the same file.
+In `docs/research/2026-07-25-q006-result-content-evidence.md`, record one row per evidence ID with source, locator, supported claim, unsupported claim, review status, and approval date when actually approved. For each factor, list the exact official items used to justify high/middle/low observation wording. Mark work, relationship, stress, question, and action sections as reflection prompts rather than measured facts. Record already approved wording decisions from gates E-0〜E-5 and mark every unreviewed factor wording gate `draft`; never invent an approval date. Task 4 moves a factor gate to `approved` only after its wording batch has been reviewed under the Content Approval Gates.
 
 - [ ] **Step 5: Run the authority test**
 
