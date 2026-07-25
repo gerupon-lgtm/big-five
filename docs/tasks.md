@@ -17,7 +17,7 @@
 | F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004 | 確定 |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004 | 確定 |
 | F-005 | 基本結果 | S-003 | scoring, result-composer | ResultSnapshot | T-003, T-005 | 確定 |
-| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006待ち |
+| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006本文待ち。51称号ラフ確定 |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005 | 確定 |
 | F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006 | 確定 |
@@ -27,9 +27,9 @@
 | F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006 | 確定 |
 | F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | 確定 |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008 | 確定 |
-| F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, character-loader | TitleProfileDefinition, CharacterManifest | T-003, T-005 | Q-012一部待ち |
+| F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, character-loader | TitleProfileDefinition, CharacterManifest | T-003, T-005 | Q-012設計済み。3体パイロット・量産待ち |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
-| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013待ち |
+| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013設計済み。実データ待ち |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -172,15 +172,15 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 状態: 完了（F-003、F-004、F-013、F-015のT-004範囲）。`response-state` に固定順の回答・戻る・置換・20問出口・50問終端を、`progress-storage` に正式キーの保存・再開・対象限定破棄・遷移直後の自動保存coordinatorを実装した。`continueHidden` は進捗だけを返し、20問の結果・称号・キャラクター・共有モデルを生成しない。`showPreview`後の詳細継続は表示済みdecisionを保持する。
 - 保存契約: schema 1、破損JSON、将来schema、壊れた進捗、版不一致、読込不能、容量不足、削除失敗を安定コードへ変換し、既存値を不意に上書きしない。save/discard時は無関係な壊れた進捗・結果だけを除去し、保存失敗時もメモリ上の状態と50問終端回答を維持する。完答結果成立後のProgressRecord削除はT-005の責務である。
 - 検証: 公開seam 14件成功（開始・固定順、入力汚染拒否、戻る置換、両20問出口、showPreview後の継続、hidden非露出、50問終端、自動保存、保存再開、破損/将来/版不一致、無関係データsanitize、保存/削除失敗）。詳細は `.superpowers/sdd/task-t004-report.md` を参照。
-- 次タスク: T-005。Q-006、Q-012、Q-013の開始ゲートは未解決のまま維持する。
+- 次タスク: T-005。Q-012とQ-013の構造ゲートは解決済み。Q-006本番文面、3体パイロット、色・香り実データを制作ゲートとして維持する。
 
 ### T-005 結果画面・猫・レーダー・色香り
 
 - 依存: T-003, T-004
 - 開始ゲート:
-  - Q-006: 本番結果文と根拠対応
-  - Q-012: 猫の最終仕様。未確定時は基準画像・仮アセットだけ
-  - Q-013: 色・香り分類。未確定時は構造だけ
+  - Q-006: 51称号ラフは確定。本番結果文、因子説明、根拠対応表、採用文献
+  - Q-012: 仕様は確定。3体パイロット承認後にencoder・余白値を固定
+  - Q-013: 構造と選択規則は確定。全パレット・香調・用途色展開データ
 - 作業:
   - S-003/S-004の結果モデルと画面を実装。
   - レーダー＋代替テキストを実装。
@@ -336,10 +336,10 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 | 項目 | 理由 | 着手条件 |
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
-| 本番結果文 | 根拠対応表未決 | Q-006 |
+| 本番結果文 | 51称号ラフは確定。観察文・問いかけ・行動ヒント・根拠対応表が未制作 | Q-006 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
-| 51猫の量産仕様 | アート仕様未完 | Q-012 |
-| 色・香りの最終定義 | 生成・分類・文言未決 | Q-013 |
+| 51猫アセット | 量産仕様は確定。3体パイロットと残り48体が未制作 | Q-012設計を基にT-005で制作 |
+| 色・香り実データ | 候補数・分類・選択規則は確定。全パレット・香調・用途色が未制作 | Q-013設計を基にT-005で制作 |
 
 これは要件漏れではなく、要件書19章に期限付きで残る後続決定である。

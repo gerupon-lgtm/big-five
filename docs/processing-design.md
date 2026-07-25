@@ -252,10 +252,11 @@ FactorResult、TitleClassification、RenderedResultTextはexact schemaで検証�
 ## 10. 猫アセット
 
 1. titleIdからcharacterIdを取得。
-2. manifestの1件だけを読み込む。
-3. `loading=lazy`相当で必要時にロード。
-4. 読込成功時は比率維持で表示。
-5. 失敗時はalt、称号、結果文を維持し、共有カードは猫なしレイアウトへ切り替える。
+2. TitleProfileDefinitions固定順と51件manifestの完全対応、版、integrityを検証する。
+3. manifestの該当1件だけを読み込む。
+4. `loading=lazy`相当で必要時にロード。
+5. 読込成功時は透明WebPを比率維持・全体表示する。
+6. 失敗時はalt、称号、結果文を維持し、共有カードは猫なしレイアウトへ切り替える。
 
 51画像を開始時にプリロードしない。
 
@@ -263,16 +264,19 @@ FactorResult、TitleClassification、RenderedResultTextはexact schemaで検証�
 
 ### 色
 
-- 結果モデルに標準＋複数候補を含める。
+- `selectPresentation`はTitleProfileDefinitionとPresentationDefinitionSetだけを受け取る純粋関数とし、生回答、得点、因子band、猫色、DOM、Canvas、localStorage、ネットワークを受け取らない。
+- 結果モデルは`standard`に標準1件、`alternatives`に代替2件を分けて保持し、画面では標準、代替1、代替2の固定順で表示する。
 - 利用者選択はpresentation stateとselectedPaletteIdだけを更新。
-- 配色適用前に必要な色キーとコントラスト検証フラグを確認。
+- `resolvePaletteUsage`で主・副・差の3基調色を背景、表面、アクセント、文字、グラフへ決定的に展開し、コントラストと猫用の分離補助を確認する。
 - 不正パレットは標準へ戻す。
+- 同系色の猫でも候補を除外、差替え、再配色しない。
 
 ### 香り
 
-- 利用場面別の候補を同時表示。
+- `pause`、`reset`、`quiet-focus`の固定順で、各2件、合計6件を同時表示する。
+- 共有は各場面の`shareFragranceId`を1件、合計3件へ要約する。
 - ユーザー状態を推測する入力・処理を持たない。
-- 商品、具体使用法、治療・改善効果のデータを定義スキーマで禁止する。
+- 商品、ブランド、購入URL、植物・精油名、量、滴数、濃度、配合、摂取、塗布、ディフューザー等の使用法、治療・改善・能力向上効果のデータを定義スキーマで禁止する。
 
 ## 12. 共有カード
 

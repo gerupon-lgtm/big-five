@@ -132,20 +132,30 @@ Q-006確定前は構造だけを実装し、本番文面を仮生成しない。
 | defaultPaletteId | string | ○ | 未選択時の共有配色 |
 
 全51件、タイトルID重複なし、キャラクターID重複なし、40＋10＋1の組合せ網羅を自動検証する。
+`label`とキャラクター制作意図の現行正典は`docs/title-character-catalog.md`とする。
 
-### 2.7 CharacterManifestEntry
+### 2.7 CharacterManifest
+
+| 項目 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| characterManifestVersion | string | ○ | AppMeta・VersionTupleと一致 |
+| entries | CharacterManifestEntry[51] | ○ | TitleProfileDefinitionsと同じ固定順 |
+
+manifestへ`titleId`を重複保持せず、`TitleProfileDefinition.titleId -> characterId`を唯一の対応元とする。
+
+#### CharacterManifestEntry
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
 | characterId | string | ○ | TitleProfileDefinitionと一致 |
 | assetVersion | string | ○ | アセット版 |
-| imagePath | string | ○ | 同一オリジンの相対パス |
-| width | integer | ○ | 元画像幅 |
-| height | integer | ○ | 元画像高 |
-| alt | string | ○ | 画像がなくても意味が通る代替文 |
-| integrity | string | - | 【想定】ビルド時検証用ハッシュ |
+| imagePath | string | ○ | 同一オリジン相対パスの`.webp` |
+| width | integer | ○ | 1024 |
+| height | integer | ○ | 1024 |
+| alt | string | ○ | 画像で観察できる姿勢・視線・小物 |
+| integrity | string | ○ | `sha256-<Base64>` |
 
-Q-012確定前は`object-fit: contain`で全体表示し、共有カードでも比率を維持する。
+entriesは51件固定とし、欠落、余剰、重複、孤児ファイルを拒否する。WebP magic、alpha、透明画素、integrityを実ファイルから検証し、非透明bounding boxの四辺接触をトリミング疑いとして拒否する。画面と共有カードは`contain`相当で全体表示する。
 
 ### 2.8 PaletteDefinition
 
@@ -154,12 +164,10 @@ Q-012確定前は`object-fit: contain`で全体表示し、共有カードでも
 | paletteId | string | ○ | 一意ID |
 | version | string | ○ | 演出定義版 |
 | label | string | ○ | 利用者向け名称 |
-| colors | object | ○ | background/surface/primary/accent/text/chart |
-| characterSeparation | object | ○ | 猫用の明暗縁取り、影、ニュートラル背景プレート候補。選択色そのものは変更しない |
+| baseColors | object | ○ | primary/secondary/accentの大文字6桁HEX |
 | description | string | ○ | 象徴的な提案である説明 |
-| contrastVerified | boolean | ○ | WCAG確認済みか |
 
-同系色の猫を理由にPaletteDefinitionを無効化しない。共有カード描画はCharacterManifest、PaletteDefinition、cardTemplateVersionから視認性補助を決定し、猫の再配色や候補パレットの除外を行わない。
+用途色への展開、コントラスト、猫用の明暗二重縁取り、影、ニュートラル背景プレートは版付き`PaletteUsageMappingDefinition`で扱う。同系色の猫を理由にPaletteDefinitionを無効化せず、猫の再配色や候補パレットの除外を行わない。
 
 ### 2.9 FragranceSuggestion
 
@@ -167,12 +175,35 @@ Q-012確定前は`object-fit: contain`で全体表示し、共有カードでも
 |---|---|---|---|
 | fragranceId | string | ○ | 一意ID |
 | version | string | ○ | 演出定義版 |
-| scene | string | ○ | 利用場面 |
+| sceneId | `pause` \| `reset` \| `quiet-focus` | ○ | 利用場面 |
 | accordLabel | string | ○ | 香調名 |
 | description | string | ○ | 雰囲気の説明 |
 | disclaimerId | string | ○ | 共通注意書き |
 
 商品、用量、滴数、配合、摂取、塗布、ディフューザー使用法の項目は持たない。
+
+### 2.10 PresentationDefinitionSet
+
+| 項目 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| schemaVersion | `1` | ○ | exact schema版 |
+| presentationDefinitionVersion | string | ○ | 色・香り定義版 |
+| scenes | SceneDefinition[3] | ○ | pause/reset/quiet-focus固定順 |
+| palettes | PaletteDefinition[] | ○ | 版付きパレットライブラリ |
+| fragrances | FragranceSuggestion[] | ○ | 版付き香調ライブラリ |
+| titleSelectors | TitlePresentationSelector[51] | ○ | 称号ごとの候補参照 |
+
+sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを切り替えたい`、`quiet-focus = 静かに取り組みたい`とする。
+
+#### TitlePresentationSelector
+
+| 項目 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| titleId | string | ○ | TitleProfileDefinitionと一致 |
+| alternativePaletteIds | [string, string] | ○ | 標準以外の2候補 |
+| fragranceScenes | FragranceSceneSelector[3] | ○ | 3場面固定順 |
+
+標準パレットは`TitleProfileDefinition.defaultPaletteId`だけを正典とし、selectorへ重複保持しない。各FragranceSceneSelectorは同じ場面の候補2件と、その候補内の共有代表1件を持つ。未知フィールド、ID重複、版不一致、参照切れ、個数・順序違反、生回答・得点・猫色による条件を拒否する。
 
 ## 3. 端末内ストレージ
 
