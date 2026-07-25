@@ -1,4 +1,4 @@
 interface:
   display_name: "Delegate Development"
-  short_description: "Safely delegate designed implementation tasks and verify results"
-  default_prompt: "Review the requirements and basic design, delegate safe independent implementation tasks, then integrate and verify the results."
+  short_description: "Safely delegate designed tasks and verify results"
+  default_prompt: "Use $delegate-development to delegate designed implementation tasks with explicit contracts, bounded reviews, and verified integration."
