@@ -2,7 +2,7 @@
 
 - 状態: 設計承認済み。Q-006ドメイン実装・独立レビュー済み、人手Content Approval／画面・永続化統合待ち
 - 対象版: `mvp-0.1.0`
-- 対象機能: F-005、F-006、F-007、F-008、F-016、F-018
+- 対象機能: F-002、F-005、F-006、F-007、F-008、F-016、F-018
 - 決定対象: Q-006継続確認、Q-012、Q-013
 - 更新日: 2026-07-26
 
@@ -62,18 +62,20 @@ Q-006の称号ラフに加え、版付き根拠、全因子・全称号の文面
 - `ResultEvidenceDefinition`は`result-evidence-v1`固定6件。
 - `ResultTextDefinition`は10 sectionとsection別`claimKind`を持つ。
 - `result-text-v1`はtitle 102件＋factor 135件＝237件のliteral定義。
-- `composeResultTexts`はpreview 7件、detail 42件をtitle先頭、以後section-first・`FACTOR_ORDER`順で返し、各位置のexact IDを検証する。
+- `composeResultTexts`はdefinitionの条件選択、欠落・重複・件数、`version`、section-first・`FACTOR_ORDER`順を検証し、preview 7件／detail 42件を5フィールドへ投影する。
 - `RenderedResultText`は`id`、`version`、`section`、`text`、`evidenceRefs`の5フィールド投影で、出力をdeep freezeする。
-- `createResultSnapshot`は13フィールドのexact ResultSnapshotを生成する。9フィールド`VersionTuple`、診断時文章、5因子、称号・キャラクター、境界、パレット、カード版を保持し、`answers`と`diagnosisId`を含めない。
+- `createResultSnapshot`は各位置のexact production record IDを検証し、13フィールドのexact ResultSnapshotを生成する。9フィールド`VersionTuple`、診断時文章、5因子、称号・キャラクター、境界、パレット、カード版を保持し、`answers`と`diagnosisId`を含めない。
 - `characterAssetVersion`は個別asset版、`VersionTuple.characterManifestVersion`はmanifest全体版として分離する。
 - 猫またはCanvasが失敗しても、称号、結果文、根拠、共有テキストへ到達できる契約を維持する。
 
 ### 2.4 Q-006の現在gate
 
+- 状態: `result-text-v1 initial reviewed copy`。全gateの必要な人手approval recordが揃うまでは`Content Approval pending`。
 - E-0: 根拠台帳どおりapproved。
 - E-1〜E-5: 根拠台帳どおり`draft`、承認日なし、`Content Approval pending`。
 - T-0〜T-4、F-1〜F-5: implementation auditと独立レビューは完了したが、人手approval recordはないため`approved`と記録しない。
 - X-1〜X-2: 人手approval recordなし。preview／detail全体のContent Approvalとして残す。
+- 完全解決条件: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateについて必要な人手approval recordがすべて揃うこと。
 
 ## 3. Q-012 キャラクター
 
@@ -260,7 +262,7 @@ FragranceSceneSelector<S> = exact {
 
 ## 7. 残作業
 
-1. Q-006: E-1〜E-5とX-1〜X-2の人手Content Approvalを根拠台帳へ記録する。承認までは`result-text-v1 initial reviewed copy`として扱う。
+1. Q-006: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordを根拠台帳へ記録する。承認までは`result-text-v1 initial reviewed copy`かつ`Content Approval pending`として扱う。
 2. Q-006/T-005: `composeResultTexts`／`createResultSnapshot`を完答controller、S-003/S-004、履歴保存へ統合する。
 3. 永続化: `app/js/infrastructure/progress-storage.js`の旧`diagnosisId`付きgeneric result schemaと旧section集合を、13フィールドResultSnapshotへ後続永続化統合で更新する。
 4. Q-012: 3体パイロット制作・承認、encoderと余白値の固定、残り48体の量産。

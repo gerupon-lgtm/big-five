@@ -193,10 +193,10 @@ displayScore = round((rawMean - 1) / 4 * 100)
 2. 全定義が要求`version`と一致することを確認し、混在版を拒否する。
 3. titleは`titleId`に対する`titleSubtitle`、`titleReason`を各1件だけ選ぶ。
 4. factorは`mode`、`questionCount`、`factorId`、`band`がexact一致する定義を、必要な節ごとに各1件だけ選ぶ。
-5. title 2件を先頭に置き、その後をsection-first、各section内を`FACTOR_ORDER`の固定順にする。
-6. 各位置のexact IDを`<titleId>-subtitle/reason`または`<mode>-<factorId>-<band>-<section>`として検証する。
+5. 条件選択後に必要なdefinitionの欠落・重複・件数を検証する。
+6. title 2件を先頭に置き、その後をsection-first、各section内を`FACTOR_ORDER`の固定factor順にする。
 
-出力は`RenderedResultText`の5フィールド（`id`、`version`、`section`、`text`、`evidenceRefs`）だけへ投影する。previewはtitle 2件＋5観察文の7件、detailはtitle 2件＋5因子×8節の42件である。配列、各record、複製した`evidenceRefs`をdeep freezeし、入力を変更・freezeしない。
+`composeResultTexts`の責務はdefinitionの条件選択、欠落・重複・件数、`version`、section-first／`FACTOR_ORDER`のsection・factor順を検証し、`RenderedResultText`の5フィールド（`id`、`version`、`section`、`text`、`evidenceRefs`）だけへ投影することである。previewはtitle 2件＋5観察文の7件、detailはtitle 2件＋5因子×8節の42件である。配列、各record、複製した`evidenceRefs`をdeep freezeし、入力を変更・freezeしない。
 
 ### 6.3 ResultModelとResultSnapshot
 
@@ -205,7 +205,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 `createResultSnapshot`は次を実施する。
 
 1. exact 9フィールド入力、`preview20`/20または`detail50`/50、厳密ISO日時を検証する。
-2. `VersionTuple`の9フィールドと、mode別7件／42件のRenderedResultTextのsection、factor順、exact IDを検証する。
+2. `VersionTuple`の9フィールドと、mode別7件／42件のRenderedResultTextの`version`、section・factor順、各位置のexact production record IDをsnapshot境界で検証する。
 3. 表示した文章と根拠参照をResultSnapshotへ複製し、後の`result-text-v1`定義変更から診断時文面を隔離する。
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。

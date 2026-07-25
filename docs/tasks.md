@@ -177,8 +177,9 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 ### T-005 結果画面・猫・レーダー・色香り
 
 - 依存: T-003, T-004
+- 対応機能: F-002, F-005, F-006, F-007, F-008, F-016, F-018
 - 開始ゲート:
-  - Q-006: `result-text-v1 initial reviewed copy`、根拠、合成、snapshotは実装済み。E-1〜E-5とX-1〜X-2の人手Content Approval pending
+  - Q-006: `result-text-v1 initial reviewed copy`、根拠、合成、snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordが揃うまで`Content Approval pending`
   - Q-012: 仕様は確定。3体パイロット承認後にencoder・余白値を固定
   - Q-013: 構造と選択規則は確定。全パレット・香調・用途色展開データ
 - 作業:
@@ -199,12 +200,13 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 
 #### Q-006ドメイン実装記録（2026-07-26）
 
-- 状態: DONE_WITH_CONCERNS。T-005のうちF-002/F-005/F-006/F-016に対応する結果文ドメインは実装・独立レビュー済みだが、T-005全体とQ-006人手承認は未完了。
+- 状態: DONE_WITH_CONCERNS。T-005のうちF-002/F-005/F-006/F-016に対応する結果文ドメインは実装・独立レビュー済みで、文面は`result-text-v1 initial reviewed copy`かつ`Content Approval pending`である。T-005全体とQ-006人手承認は未完了。
 - schema: `ResultEvidenceDefinition`固定6件、10 section＋`claimKind`を持つ`ResultTextDefinition`。
 - 定義: title 102件＋factor 135件＝237件の`result-text-v1` literal定義。
-- 合成: `composeResultTexts`がpreview 7件／detail 42件をsection-first・固定因子順・exact IDで合成し、5フィールド`RenderedResultText`へ投影してdeep freezeする。
-- snapshot: `createResultSnapshot`が9フィールド`VersionTuple`と診断時文章を含む13フィールド`ResultSnapshot`を生成する。生回答、`diagnosisId`、結果定義、DOM・Canvas状態を含めず、`characterAssetVersion`と`characterManifestVersion`を分離する。
+- 合成: `composeResultTexts`がdefinitionの条件選択、欠落・重複・件数、`version`、section-first・固定factor順を検証し、preview 7件／detail 42件を5フィールド`RenderedResultText`へ投影してdeep freezeする。
+- snapshot: `createResultSnapshot`が各位置のexact production record IDを検証し、9フィールド`VersionTuple`と診断時文章を含む13フィールド`ResultSnapshot`を生成する。生回答、`diagnosisId`、結果定義、DOM・Canvas状態を含めず、`characterAssetVersion`と`characterManifestVersion`を分離する。
 - gate: 根拠台帳ではE-0のみapproved、E-1〜E-5は`draft`で承認日なし。T-0〜T-4／F-1〜F-5はimplementation auditと独立レビュー済みだが人手approval recordなし。X-1〜X-2も人手approval recordなし。したがって`Content Approval pending`を維持する。
+- 完全解決条件: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateについて必要な人手approval recordがすべて揃うこと。
 - 画面: S-003/S-004、レーダー、character loader、色香り、猫・Canvas失敗時のUIフォールバックは後続T-005統合。
 - 永続化: production ResultSnapshotの本番caller／結果保存APIは未実装。`app/js/infrastructure/progress-storage.js`は旧`diagnosisId`付きgeneric result schemaと旧section集合のため、後続永続化統合で更新する。
 - 検証: `app/tests/result-evidence-definitions.test.js`、`app/tests/result-content-definitions.test.js`、`app/tests/result-composer.test.js`、`app/tests/result-snapshot.test.js`。リポジトリ同期は`app/tests/project-contract.test.js`で検証する。
@@ -348,7 +350,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 | 項目 | 理由 | 着手条件 |
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
-| Q-006人手Content Approval | `result-text-v1 initial reviewed copy` 237件と根拠・合成・snapshotは実装済み。E-1〜E-5と全体表示バッチの人手承認記録がない | Q-006 |
+| Q-006人手Content Approval | `result-text-v1 initial reviewed copy` 237件と根拠・合成・snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordがすべて揃うまで`Content Approval pending` | Q-006 |
 | 結果画面・永続化統合 | Q-006ドメインは実装済み。S-003/S-004、完答caller、ResultSnapshot保存、旧progress-storage schema更新が未実装 | T-005/T-006 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |

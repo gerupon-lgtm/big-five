@@ -38,6 +38,12 @@ function assertIncludesAll(text, required, documentName) {
   }
 }
 
+function matchingLine(section, pattern, label) {
+  const line = section.split(/\r?\n/).find((candidate) => pattern.test(candidate));
+  assert.ok(line, `missing ${label}`);
+  return line;
+}
+
 test("formal app satisfies the static project contract", async () => {
   const result = await validateProject(projectRoot);
 
@@ -98,6 +104,14 @@ test("Q-006 data model documents the exact evidence, text, rendered, and snapsho
     "cardTemplateVersion",
     "appVersion",
   ]);
+  assert.match(
+    versionTupleSection,
+    /\|\s*scaleVersion\s*\|[^|\n]*\|[^|\n]*尺度[^|\n]*識別[^|\n]*改訂[^|\n]*一意な版ID/,
+  );
+  assert.match(
+    versionTupleSection,
+    /\|\s*characterManifestVersion\s*\|[^|\n]*\|[^|\n]*キャラクターmanifest全体版/,
+  );
 
   const snapshotSection = sectionBetween(text, "### 3.5 ResultSnapshot", "### 3.6 FactorResult");
   assert.deepEqual(tableFieldNames(snapshotSection), [
@@ -136,27 +150,71 @@ test("Q-006 data model documents the exact evidence, text, rendered, and snapsho
   assertIncludesAll(renderedSection, ["5フィールド", "deep freeze"], documentPaths.dataModel);
 });
 
-test("Q-006 processing and screen documents preserve composition order and fallback access", async () => {
-  const [processing, screens] = await Promise.all([
-    readProjectDocument(documentPaths.processing),
-    readProjectDocument(documentPaths.screens),
+test("VersionTuple scaleVersion preserves scale identity and revision without adding scaleId", async () => {
+  const [requirements, dataModel] = await Promise.all([
+    readProjectDocument(documentPaths.requirements),
+    readProjectDocument(documentPaths.dataModel),
   ]);
+  const requirementCompatibility = sectionBetween(requirements, "### 8.5 履歴・比較", "### 8.6 共有");
+  const dataCompatibility = sectionBetween(dataModel, "## 4. 比較互換性", "## 5. 更新・削除・復元");
+  const versionTupleSection = sectionBetween(dataModel, "### 3.4 VersionTuple", "### 3.4.1");
 
-  assertIncludesAll(processing, [
-    "composeResultTexts",
-    "result-text-v1",
-    "7件",
-    "42件",
+  for (const [section, documentName] of [
+    [requirementCompatibility, documentPaths.requirements],
+    [dataCompatibility, documentPaths.dataModel],
+  ]) {
+    assertIncludesAll(section, ["scaleVersion", "尺度の識別", "改訂版", "一意な版ID"], documentName);
+    assert.match(section, /別(?:の)?`?scaleId`?(?:フィールド)?を要求しない/);
+  }
+  assert.doesNotMatch(versionTupleSection, /^\|\s*scaleId\s*\|/m);
+});
+
+test("Q-006 processing assigns selection validation to the composer and production IDs to snapshots", async () => {
+  const [processing, t005Spec, tasks] = await Promise.all([
+    readProjectDocument(documentPaths.processing),
+    readProjectDocument(documentPaths.t005Spec),
+    readProjectDocument(documentPaths.tasks),
+  ]);
+  const composerSection = sectionBetween(processing, "### 6.2 `composeResultTexts`", "### 6.3 ResultModelとResultSnapshot");
+  const snapshotSection = sectionBetween(processing, "### 6.3 ResultModelとResultSnapshot", "## 7. 履歴保存");
+
+  assertIncludesAll(composerSection, [
+    "条件選択",
+    "欠落",
+    "重複",
+    "件数",
     "section-first",
     "FACTOR_ORDER",
-    "exact ID",
-    "RenderedResultText",
-    "deep freeze",
-    "ResultSnapshot",
-    "characterAssetVersion",
-    "characterManifestVersion",
-    "生回答",
+    "version",
+    "5フィールド",
   ], documentPaths.processing);
+  assert.doesNotMatch(composerSection, /exact (?:production record )?ID/);
+  assertIncludesAll(snapshotSection, [
+    "exact production record ID",
+    "7件",
+    "42件",
+    "section",
+    "factor",
+    "version",
+  ], documentPaths.processing);
+
+  const specContract = sectionBetween(t005Spec, "### 2.3 Q-006実装済み契約", "### 2.4 Q-006の現在gate");
+  const specComposerLine = matchingLine(specContract, /composeResultTexts/, "T-005 spec composer contract");
+  const specSnapshotLine = matchingLine(specContract, /createResultSnapshot/, "T-005 spec snapshot contract");
+  assertIncludesAll(specComposerLine, ["条件選択", "欠落", "重複", "件数", "section-first", "version", "5フィールド"], documentPaths.t005Spec);
+  assert.doesNotMatch(specComposerLine, /exact (?:production record )?ID/);
+  assert.match(specSnapshotLine, /exact production record ID/);
+
+  const taskContract = sectionBetween(tasks, "#### Q-006ドメイン実装記録（2026-07-26）", "### T-006 履歴・比較・削除");
+  const taskComposerLine = matchingLine(taskContract, /合成:.*composeResultTexts/, "T-005 task composer contract");
+  const taskSnapshotLine = matchingLine(taskContract, /snapshot:.*createResultSnapshot/, "T-005 task snapshot contract");
+  assertIncludesAll(taskComposerLine, ["条件選択", "欠落", "重複", "件数", "section-first", "version", "5フィールド"], documentPaths.tasks);
+  assert.doesNotMatch(taskComposerLine, /exact (?:production record )?ID/);
+  assert.match(taskSnapshotLine, /exact production record ID/);
+});
+
+test("Q-006 screens preserve text sharing fallbacks independently in preview and detail", async () => {
+  const screens = await readProjectDocument(documentPaths.screens);
 
   const previewScreen = sectionBetween(screens, "## 7. S-003 基本結果", "## 8. S-004 詳細結果");
   assertIncludesAll(previewScreen, [
@@ -165,6 +223,11 @@ test("Q-006 processing and screen documents preserve composition order and fallb
     "5因子それぞれの観察文",
     "7件",
     "20問簡易プレビュー",
+    "猫画像",
+    "Canvas",
+    "共有API",
+    "共有テキスト",
+    "選択可能テキスト",
   ], documentPaths.screens);
 
   const detailScreen = sectionBetween(screens, "## 8. S-004 詳細結果", "## 9. 色候補の任意操作");
@@ -182,61 +245,75 @@ test("Q-006 processing and screen documents preserve composition order and fallb
     "42件",
     "説明を見る",
     "※因子名の「説明を見る」から、それぞれの意味を確認できます。",
-  ], documentPaths.screens);
-
-  assertIncludesAll(screens, [
-    "猫画像またはCanvasが失敗しても",
-    "称号",
-    "結果文",
-    "根拠",
+    "猫画像",
+    "Canvas",
+    "共有API",
     "共有テキスト",
+    "選択可能テキスト",
   ], documentPaths.screens);
 });
 
-test("Q-006 status documents separate reviewed implementation from pending human approval", async () => {
+test("Q-006 stays only in the open table until every gate has a human approval record", async () => {
   const [requirements, t005Spec, tasks] = await Promise.all([
     readProjectDocument(documentPaths.requirements),
     readProjectDocument(documentPaths.t005Spec),
     readProjectDocument(documentPaths.tasks),
   ]);
+  const gateSection = sectionBetween(requirements, "#### 8.3.2 Q-006 `result-text-v1`実装・承認状態", "### 8.4 途中回答");
+  const openSection = sectionBetween(requirements, "## 19. 要確認事項", "### 19.1 解決済み事項");
+  const resolvedSection = sectionBetween(requirements, "### 19.1 解決済み事項", "## 20. 基本設計への引き渡し");
 
-  assertIncludesAll(requirements, [
+  assertIncludesAll(gateSection, [
     "result-text-v1",
     "docs/research/2026-07-25-q006-result-content-evidence.md",
     "実装・独立レビュー済み",
     "initial reviewed copy",
     "Content Approval pending",
-    "E-1〜E-5",
+    "E-0〜E-5",
+    "T-0〜T-4",
+    "F-1〜F-5",
+    "X-1〜X-2",
   ], documentPaths.requirements);
-  assert.doesNotMatch(requirements, /Q-006（解決済み）|Q-006は完全解決済み/);
+  assert.match(gateSection, /E-0[^。\n]*approved/);
+  assert.match(gateSection, /E-1〜E-5[^。\n]*draft[^。\n]*承認日なし/);
+  assert.match(gateSection, /T-0〜T-4[^。\n]*F-1〜F-5[^。\n]*(?:clean|通過)[^。\n]*人手(?:内容)?承認[^。\n]*代替[^。\n]*ない/);
+  assert.match(gateSection, /X-1〜X-2[^。\n]*(?:未承認|人手approval record[^。\n]*ない)/);
+  assert.match(gateSection, /完全解決[^。\n]*E-0〜E-5[^。\n]*T-0〜T-4[^。\n]*F-1〜F-5[^。\n]*X-1〜X-2[^。\n]*人手approval record/);
 
-  assertIncludesAll(t005Spec, [
+  assert.match(openSection, /\|(?:\s*---\s*\|){6}\r?\n\|\s*Q-006\s*\|/);
+  assert.match(openSection, /^\|\s*Q-006\s*\|.*Content Approval/m);
+  assert.doesNotMatch(resolvedSection, /^\|\s*Q-006(?:\s|\()/m);
+
+  const specGate = sectionBetween(t005Spec, "### 2.4 Q-006の現在gate", "## 3. Q-012 キャラクター");
+  assertIncludesAll(specGate, [
     "result-text-v1",
-    "102",
-    "135",
-    "237",
-    "composeResultTexts",
-    "createResultSnapshot",
-    "実装・独立レビュー済み",
     "initial reviewed copy",
     "Content Approval pending",
+    "E-0",
     "E-1〜E-5",
+    "T-0〜T-4",
+    "F-1〜F-5",
+    "X-1〜X-2",
   ], documentPaths.t005Spec);
 
-  assertIncludesAll(tasks, [
-    "T-005",
-    "F-002",
-    "F-005",
-    "F-006",
-    "F-016",
-    "ResultEvidenceDefinition",
-    "ResultTextDefinition",
-    "ResultSnapshot",
-    "progress-storage.js",
-    "後続永続化統合で更新",
-    "Content Approval pending",
-    "Q-007",
-    "Q-012",
-    "Q-013",
-  ], documentPaths.tasks);
+  const taskGate = sectionBetween(tasks, "#### Q-006ドメイン実装記録（2026-07-26）", "### T-006 履歴・比較・削除");
+  assertIncludesAll(taskGate, ["initial reviewed copy", "Content Approval pending", "E-0", "E-1〜E-5", "T-0〜T-4", "F-1〜F-5", "X-1〜X-2"], documentPaths.tasks);
+});
+
+test("F-002 maps to T-005 in the trace row, task section, and T-005 spec", async () => {
+  const [tasks, t005Spec] = await Promise.all([
+    readProjectDocument(documentPaths.tasks),
+    readProjectDocument(documentPaths.t005Spec),
+  ]);
+  const traceability = sectionBetween(tasks, "## 1. トレーサビリティ表（正典）", "## 2. 実装順");
+  const f002Row = matchingLine(traceability, /^\|\s*F-002\s*\|/, "F-002 traceability row");
+  const t005Task = sectionBetween(tasks, "### T-005 結果画面・猫・レーダー・色香り", "### T-006 履歴・比較・削除");
+  const taskFeatureLine = matchingLine(t005Task, /対応機能:/, "T-005 task feature list");
+  const specHeader = sectionBetween(t005Spec, "# T-005 結果・キャラクター・色香り設計", "## 1. 目的");
+  const specFeatureLine = matchingLine(specHeader, /対象機能:/, "T-005 spec feature list");
+
+  for (const line of [f002Row, taskFeatureLine, specFeatureLine]) {
+    assert.match(line, /F-002/);
+    assert.match(line, /T-005|F-005/);
+  }
 });

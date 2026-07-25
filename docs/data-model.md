@@ -278,12 +278,12 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 
 | 項目 | 型 | 説明 |
 |---|---|---|
-| scaleVersion | string | 尺度版 |
+| scaleVersion | string | 尺度の識別と改訂版を兼ねる一意な版ID |
 | questionVersion | string | 設問版 |
 | scoringVersion | string | 採点版 |
 | resultTextVersion | string | 結果文版 |
 | titleRuleVersion | string | 称号判定版 |
-| characterManifestVersion | string | 猫アセット版 |
+| characterManifestVersion | string | キャラクターmanifest全体版 |
 | presentationDefinitionVersion | string | 色・香り版 |
 | cardTemplateVersion | string | 共有カード版 |
 | appVersion | string | アプリ版 |
@@ -358,7 +358,9 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 - questionCount
 - 5因子がすべて有限値かつ1〜5範囲
 
-現行`ResultSnapshot`は`diagnosisId`を持たないため、比較互換条件にも含めない。結果文版、称号判定版、猫版、演出版が異なる場合でもスコア比較条件を満たせば比較できるが、表示表現が異なる旨を明示する。【想定】この扱いは単一診断のMVPと要件8.5を満たす。複数診断を同じ履歴へ格納する変更時は、保存schemaの版更新と比較契約の再設計を先に行う。
+`scaleVersion`（例: `ipip-ja-50-v1`）は尺度の識別と改訂版を兼ねる一意な版IDであり、その一致によって尺度ID・版一致の互換性条件を満たす。VersionTupleへ別の`scaleId`フィールドを要求しない。
+
+現行`ResultSnapshot`は`diagnosisId`を持たないため、比較互換条件にも含めない。結果文版、称号判定版、猫版、演出版が異なる場合でもスコア比較条件を満たせば比較できるが、表示表現が異なる旨を明示する。【想定】この扱いは単一診断のMVPと要件8.5を満たし、尺度識別の互換性条件を弱めない。複数診断を同じ履歴へ格納する変更時は、保存schemaの版更新と比較契約の再設計を先に行う。
 
 ## 5. 更新・削除・復元
 
