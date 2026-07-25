@@ -1,4 +1,4 @@
-import { validateTitleProfileDefinitions } from "../data/title-profile-definitions.js";
+import { validateTitleProfileDefinitions } from "./title-profile.js";
 import { appMeta } from "../config/app-meta.js";
 import { FACTOR_ORDER } from "../data/factor-order.js";
 import { isValidFactorResults } from "./factor-result.js";

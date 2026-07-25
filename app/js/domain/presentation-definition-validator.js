@@ -1,4 +1,4 @@
-import { validateTitleProfileDefinitions } from "../data/title-profile-definitions.js";
+import { validateTitleProfileDefinitions } from "./title-profile.js";
 
 const ROOT_FIELDS = ["schemaVersion", "presentationDefinitionVersion", "scenes", "palettes", "fragrances", "titleSelectors"];
 const SCENE_FIELDS = ["sceneId", "label"];

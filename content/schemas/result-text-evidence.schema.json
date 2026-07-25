@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "fileName": "result-text-evidence.csv",
+  "columns": [
+    { "name": "text_id", "type": "id", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "evidence_id", "type": "id", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

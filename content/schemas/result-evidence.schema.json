@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "fileName": "result-evidence.csv",
+  "columns": [
+    { "name": "evidence_id", "type": "id", "required": true },
+    { "name": "result_evidence_version", "type": "version", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "source_type", "type": "enum", "values": ["primary", "internal-contract"], "required": true },
+    { "name": "source_label", "type": "text", "required": true },
+    { "name": "locator", "type": "text", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

@@ -40,7 +40,7 @@ function validateColumn(column, sourceName) {
   if (typeof column.name !== "string" || column.name === "") {
     throw schemaError(sourceName, "列名は空でない文字列で指定してください。");
   }
-  if (column.required !== true) {
+  if (typeof column.required !== "boolean") {
     throw schemaError(sourceName, "必須指定は true で指定してください。");
   }
   if (column.type === "integer" && Object.hasOwn(column, "minimum")

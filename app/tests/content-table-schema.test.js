@@ -77,6 +77,27 @@ test("T-012 schema loader accepts only the exact descriptor shape", async () => 
   }
 });
 
+test("T-012 schema loader accepts boolean required and rejects non-boolean values", async () => {
+  const optionalSchema = {
+    ...validSchema,
+    columns: [{ name: "question_id", type: "id", required: false }],
+  };
+  await withSchema(optionalSchema, async (schemaPath) => {
+    assert.deepEqual(await loadTableSchema(schemaPath), optionalSchema);
+  });
+
+  for (const required of [undefined, "false", 0, null]) {
+    const column = { name: "question_id", type: "id" };
+    if (required !== undefined) column.required = required;
+    await withSchema({ ...validSchema, columns: [column] }, async (schemaPath) => {
+      await assert.rejects(
+        loadTableSchema(schemaPath),
+        (error) => error instanceof ContentError && error.code === "CSV_SCHEMA_INVALID",
+      );
+    });
+  }
+});
+
 test("T-012 table loader requires exact headers and converts only valid integers", async () => {
   const schema = {
     schemaVersion: 1,
@@ -160,6 +181,24 @@ test("T-012 table loader reports required, value, and integer errors at their so
       },
     );
   }
+});
+
+test("T-012 table loader preserves an optional empty cell without coercion", async () => {
+  const schema = {
+    schemaVersion: 1,
+    fileName: "table.csv",
+    columns: [
+      { name: "required_id", type: "id", required: true },
+      { name: "optional_mode", type: "enum", values: ["preview20", "detail50"], required: false },
+    ],
+  };
+
+  await withCsv("required_id,optional_mode\nitem-1,\n", async (filePath) => {
+    assert.deepEqual(await loadCsvTable({ filePath, schema }), {
+      encoding: "utf-8",
+      rows: [{ required_id: "item-1", optional_mode: "" }],
+    });
+  });
 });
 
 test("T-012 report includes source, one-based row, column, code, and Japanese message", () => {
