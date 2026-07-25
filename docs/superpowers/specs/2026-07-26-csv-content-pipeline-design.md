@@ -76,7 +76,9 @@ content/
       result-text-evidence.csv
     evidence/<resultEvidenceVersion>/
       result-evidence.csv
+      result-evidence-claims.csv
     presentation/<presentationDefinitionVersion>/
+      scenes.csv
       palettes.csv
       palette-usage-mappings.csv
       fragrances.csv
@@ -222,9 +224,29 @@ text_id,display_order,evidence_id,status
 
 現行`result-text-v1`の初期データは、51称号×2節の102件と因子定義135件、合計237件を移植する。
 
+`result-evidence.csv`:
+
+```text
+evidence_id,result_evidence_version,display_order,source_type,source_label,locator,status
+```
+
+`result-evidence-claims.csv`:
+
+```text
+evidence_id,display_order,supported_claim,status
+```
+
+1根拠が複数のclaimを支持する場合も、claim一覧を1セルへ詰めず対応表で保持する。
+
 ### 6.4 色・香り・演出
 
 パレット、用途色、香り、selectorはQ-013のexact schemaをCSVの行へ正規化する。標準パレット、代替2件、固定3場面、各2候補、共有代表1件の関係を対応表で保持する。
+
+`scenes.csv`:
+
+```text
+scene_id,presentation_definition_version,display_order,label,status
+```
 
 色選択はカード演出だけを変更し、スコア、称号、文章、猫、香り候補を変更しない。商品、精油量、使用法、治療・改善・能力効果を示す文言を拒否する。
 

@@ -61,6 +61,7 @@
 - `content/source/result-texts/<version>/result-texts.csv`
 - `content/source/result-texts/<version>/result-text-evidence.csv`
 - `content/source/evidence/<version>/result-evidence.csv`
+- `content/source/evidence/<version>/result-evidence-claims.csv`
 - `content/fixtures/invalid/` — 文字コード、列、参照、承認状態の失敗fixture。
 
 ### Tests and existing files
@@ -758,6 +759,7 @@ git commit -m "feat: build deterministic content releases"
 - Create: `content/source/result-texts/result-text-v1/result-texts.csv`
 - Create: `content/source/result-texts/result-text-v1/result-text-evidence.csv`
 - Create: `content/source/evidence/result-evidence-v1/result-evidence.csv`
+- Create: `content/source/evidence/result-evidence-v1/result-evidence-claims.csv`
 - Create: `app/tests/content-migration-parity.test.js`
 
 **Interfaces:**

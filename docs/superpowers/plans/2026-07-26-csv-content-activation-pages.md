@@ -49,6 +49,7 @@
 ### Task 1: Import Approved Q-012/Q-013 Data and Select a Release
 
 **Files:**
+- Create: `content/source/presentation/presentation-v1/scenes.csv`
 - Create: `content/source/presentation/presentation-v1/palettes.csv`
 - Create: `content/source/presentation/presentation-v1/palette-usage-mappings.csv`
 - Create: `content/source/presentation/presentation-v1/fragrances.csv`
