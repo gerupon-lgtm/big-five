@@ -268,6 +268,7 @@ git commit -m "docs: add Q-006 result evidence ledger"
 - Modify: `app/js/domain/definition-validator.js`
 - Test: `app/tests/result-content-definitions.test.js`
 - Test: `app/tests/definition-validator.test.js`
+- Test: `app/tests/scoring-title-contract.test.js`
 
 **Interfaces:**
 - Consumes: `ResultEvidenceDefinitions` from Task 1 and `FACTOR_ORDER`.
@@ -406,13 +407,15 @@ export function validateResultContentDefinitions({
 
 - [ ] **Step 6: Run schema and regression tests**
 
+Migrate only the legacy result-text fixtures in `app/tests/scoring-title-contract.test.js` to the new contract: replace valid `summary` records with the appropriate new section, add the required `claimKind` to definition fixtures, and give valid records a non-empty test evidence reference. Keep explicit invalid fixtures for empty evidence references. Do not change scoring, title-classification, boundary, or immutability expectations.
+
 Run: `node --test app/tests/result-content-definitions.test.js app/tests/definition-validator.test.js app/tests/scoring-title-contract.test.js`  
 Expected: PASS for all tests.
 
 - [ ] **Step 7: Commit only schema files**
 
 ```bash
-git add app/js/domain/result-evidence.js app/js/domain/result-text.js app/js/domain/result-model.js app/js/domain/definition-validator.js app/tests/result-content-definitions.test.js app/tests/definition-validator.test.js
+git add app/js/domain/result-evidence.js app/js/domain/result-text.js app/js/domain/result-model.js app/js/domain/definition-validator.js app/tests/result-content-definitions.test.js app/tests/definition-validator.test.js app/tests/scoring-title-contract.test.js
 git commit -m "feat: validate Q-006 result content schemas"
 ```
 
