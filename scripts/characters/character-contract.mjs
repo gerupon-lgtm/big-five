@@ -75,7 +75,7 @@ function assertNonEmptyString(value, label) {
 }
 
 function assertNullableString(value, label) {
-  if (value !== null && typeof value !== "string") invalid(`${label} must be a string or null`);
+  if (value !== null) assertNonEmptyString(value, `${label}`);
 }
 
 function assertNullableInteger(value, label) {
@@ -90,8 +90,29 @@ function assertNullableReviewStatus(value, label) {
   if (value !== null && !REVIEW_STATUSES.has(value)) invalid(`${label} must be an approved/rejected status or null`);
 }
 
+function assertNullableAssetPath(value, label, expectedPath) {
+  if (value === null) return;
+  assertNonEmptyString(value, label);
+  if (value !== expectedPath || /[\\?#]/.test(value)) invalid(`${label} must be ${expectedPath}`);
+}
+
+function assertNullableSha256(value, label) {
+  if (value === null) return;
+  if (typeof value !== "string" || !/^sha256-[A-Za-z0-9+/]{43}=$/.test(value)) {
+    invalid(`${label} must be a sha256-Base64 digest or null`);
+  }
+}
+
+function assertNullableIsoTimestamp(value, label) {
+  if (value === null) return;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value) || Number.isNaN(Date.parse(value))) {
+    invalid(`${label} must be an ISO-8601 UTC timestamp or null`);
+  }
+}
+
 function assertStageValue(entry, field, label) {
   if (entry[field] === null) invalid(`${label} requires ${field}`);
+  if (typeof entry[field] === "string") assertNonEmptyString(entry[field], `${label}.${field}`);
 }
 
 function assertApproved(entry, field, label) {
@@ -125,6 +146,104 @@ function assertTechnicalApproved(entry, label) {
     assertStageValue(entry, field, label);
   }
   assertApproved(entry, "technicalReviewStatus", label);
+}
+
+function assertFieldsNull(entry, fields, label) {
+  for (const field of fields) {
+    if (entry[field] !== null) invalid(`${label} requires ${field}=null`);
+  }
+}
+
+function assertStatusOwnership(entry, label) {
+  const laterThanBrief = [
+    "catReferenceKind",
+    "catReferencePath",
+    "referenceRightsNote",
+    "prohibitedRepresentationCheck",
+    "sourcePngPath",
+    "sourceSha256",
+    "deliveryWebpPath",
+    "deliverySha256",
+    "width",
+    "height",
+    "byteLength",
+    "webpEncoder",
+    "webpSettings",
+    "artReviewStatus",
+    "anatomyReviewStatus",
+    "technicalReviewStatus",
+    "accessibilityReviewStatus",
+    "approvedBy",
+    "approvedAt",
+    "rejectionReason",
+  ];
+  if (entry.productionStatus === "brief") {
+    assertFieldsNull(entry, laterThanBrief, label);
+    return;
+  }
+
+  const laterThanArt = [
+    "deliveryWebpPath",
+    "deliverySha256",
+    "width",
+    "height",
+    "byteLength",
+    "webpEncoder",
+    "webpSettings",
+    "technicalReviewStatus",
+    "accessibilityReviewStatus",
+  ];
+  const laterThanGenerated = [
+    ...laterThanArt,
+    "approvedBy",
+    "approvedAt",
+  ];
+  if (entry.productionStatus === "generated") {
+    assertGenerated(entry, label);
+    assertFieldsNull(entry, laterThanGenerated, label);
+    for (const field of ["artReviewStatus", "anatomyReviewStatus"]) {
+      if (entry[field] !== null && entry[field] !== "rejected") {
+        invalid(`${label} requires ${field}=null or rejected while generated`);
+      }
+    }
+    if (entry.artReviewStatus === "rejected" || entry.anatomyReviewStatus === "rejected") {
+      assertStageValue(entry, "rejectionReason", label);
+    } else {
+      assertFieldsNull(entry, ["rejectionReason"], label);
+    }
+    return;
+  }
+
+  if (entry.productionStatus === "art-approved") {
+    assertArtApproved(entry, label);
+    assertFieldsNull(entry, [...laterThanArt, "rejectionReason"], label);
+    return;
+  }
+
+  if (entry.productionStatus === "converted") {
+    assertArtApproved(entry, label);
+    for (const field of [
+      "deliveryWebpPath",
+      "deliverySha256",
+      "width",
+      "height",
+      "byteLength",
+      "webpEncoder",
+      "webpSettings",
+    ]) assertStageValue(entry, field, label);
+    assertFieldsNull(entry, ["technicalReviewStatus", "accessibilityReviewStatus", "rejectionReason"], label);
+    return;
+  }
+
+  if (entry.productionStatus === "technical-approved") {
+    assertTechnicalApproved(entry, label);
+    assertFieldsNull(entry, ["accessibilityReviewStatus", "rejectionReason"], label);
+    return;
+  }
+
+  assertTechnicalApproved(entry, label);
+  assertApproved(entry, "accessibilityReviewStatus", label);
+  assertFieldsNull(entry, ["rejectionReason"], label);
 }
 
 export function validateCharacterLedger(ledger, titleProfiles) {
@@ -169,6 +288,20 @@ export function validateCharacterLedger(ledger, titleProfiles) {
     for (const field of ["artReviewStatus", "anatomyReviewStatus", "technicalReviewStatus", "accessibilityReviewStatus"]) {
       assertNullableReviewStatus(entry[field], `${label}.${field}`);
     }
+    assertNullableAssetPath(
+      entry.sourcePngPath,
+      `${label}.sourcePngPath`,
+      `docs/assets/character-production/source-png/${entry.characterId}.png`,
+    );
+    assertNullableAssetPath(
+      entry.deliveryWebpPath,
+      `${label}.deliveryWebpPath`,
+      `app/assets/characters/${entry.characterId}.webp`,
+    );
+    assertNullableSha256(entry.sourceSha256, `${label}.sourceSha256`);
+    assertNullableSha256(entry.deliverySha256, `${label}.deliverySha256`);
+    assertNullableIsoTimestamp(entry.approvedAt, `${label}.approvedAt`);
+    assertStatusOwnership(entry, label);
 
     if (entry.titleId !== titleProfile.titleId || entry.characterId !== titleProfile.characterId) {
       invalid(`${label} does not match title profile order or IDs`);
