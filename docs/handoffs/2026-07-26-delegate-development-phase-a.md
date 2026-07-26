@@ -30,9 +30,14 @@
   `/<drive>/...`として分離する。
 - controller skillを子担当へ再読込させない。実際に必要なskillが読めない場合は
   `DELEGATE_SKILL_ACCESS_DENIED`で停止する。
-- 通常sandboxからworkspace外のインストール済み`SKILL.md`を直接読む操作は、
-  Codex/Claudeとも`UnauthorizedAccessException`のまま。配布hashと実体回帰は
-  escalated readで確認済みだが、read-only権限伝播はplatform側の残課題である。
+- Codexの通常sandboxからインストール済み`SKILL.md`を読めなかった原因は、
+  配下17項目中11ファイルでWindows ACL継承が無効だったことである。2026-07-27に
+  `C:\Users\user\.codex\skills\delegate-development`内だけで継承を有効化し、
+  `SKILL.md`、必須references、必要scriptsの通常read全8件成功、
+  ACL継承無効0件を確認した。platform側read-only権限伝播を実原因とした初期結論は
+  失効し、修正・再発防止は
+  `_verify/skill-evals/delegate-development/reports/2026-07-26-codex-installed-skill-read-access-correction.md`
+  へ記録した。Claude配布先の通常sandbox読取りは別環境で未検証のままである。
 
 ## アプリ状態
 

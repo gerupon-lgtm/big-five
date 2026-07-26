@@ -1,16 +1,66 @@
-# Codexインストール済みskill read-only権限 修正指示書
+# Codexインストール済みskill read-only権限 修正・解消記録
 
 - 作成日: 2026-07-26
-- 対象境界: Codex skill loader / sandbox permission propagation
+- 解消日: 2026-07-27
+- 対象境界: Codexインストール済みskillのWindows ACL
 - 安定エラーコード: `DELEGATE_SKILL_ACCESS_DENIED`
 - 今回の再現主体: `root`
-- 状態: platform側未解消
+- 状態: ローカルACL修正で解消済み
+
+## 2026-07-27 解消記録
+
+追加診断により、初期の「skill loader / sandbox permission propagationが原因」という
+結論は失効した。実原因は、インストール済み`delegate-development`配下の一部ファイルで
+Windows ACL継承が無効化されていたことである。
+
+- 親ディレクトリ
+  `C:\Users\user\.codex\skills\delegate-development`には
+  `DESKTOP-C3FJ7AA\CodexSandboxUsers: ReadAndExecute`が継承済みだった。
+- 配下17項目中11ファイルは`AreAccessRulesProtected=True`で、ACLに
+  `OWNER RIGHTS`、`SYSTEM`、`Administrators`しかなく、
+  `CodexSandboxUsers`の読取り権限を継承していなかった。
+- 通常sandboxで読める
+  `C:\Users\user\.codex\skills\.system\imagegen\SKILL.md`は
+  `AreAccessRulesProtected=False`で、同じ親系統の
+  `CodexSandboxUsers: ReadAndExecute`を継承していた。
+- 対象ファイルは暗号化されておらず、文字コード、日本語path、helperのpath変換は
+  原因ではなかった。
+
+次の限定コマンドで、既存権限を削除せず対象skill配下だけのACL継承を有効化した。
+
+```powershell
+icacls "C:\Users\user\.codex\skills\delegate-development" /inheritance:e /T /C
+```
+
+実行結果は18項目成功、失敗0件。昇格なしの通常sandboxで次を再検証した。
+
+- `SKILL.md`
+- `references/delegation-policy.md`
+- `references/codex-adapter.md`
+- `references/claude-adapter.md`
+- `references/improvement-policy.md`
+- `scripts/sdd-workspace`
+- `scripts/task-brief`
+- `scripts/review-package`
+
+全8対象の読取りが成功し、配下の`AreAccessRulesProtected=True`は0件となった。
+skill本文・references・scriptsの内容は変更していない。
+
+### 再発防止
+
+- 配布処理は配布元ファイルの保護ACLを宛先へ持ち込まず、宛先ディレクトリの
+  read-only ACLを継承させる。
+- 配布後検証へ、rootの通常sandboxによる`SKILL.md`、必須references、必要scriptsの
+  非昇格readを追加する。
+- `Get-Item`や昇格readの成功だけで配布完了としない。
+- 同じ症状が再発した場合は、platform修正へ進む前に親・対象ファイル・読取可能な
+  system skillの`AreAccessRulesProtected`と`AccessToString`を差分比較する。
 
 ## 位置付け
 
-本書は、配布済み`delegate-development`の正典やインストール済みコピーを
-修正する指示ではない。選択済みskill packageを通常sandboxから読めるようにする、
-Codexのplatform adapter境界に対する修正指示である。
+以下は2026-07-26時点の初期診断記録である。配布済み`delegate-development`の
+正典や本文を修正しない方針は維持するが、platform adapterを実原因とした記述と
+根本修正案は、上記ACL証拠により【失効】した。
 
 `delegate-development`側には、controller skillを子担当へ再読させない契約と、
 実際に必要なskillを読めない場合に`DELEGATE_SKILL_ACCESS_DENIED`で停止する契約が
@@ -106,7 +156,11 @@ skillは選択済みでも、workspace外にあるインストール済みpackag
    限定して使用する。
 5. インストール済みskillを編集、複製、workspaceへ持ち込み、権限変更して回避しない。
 
-## 根本修正案
+## 【失効】初期のplatform根本修正案
+
+この節は2026-07-26時点の仮説に基づく修正案であり、2026-07-27のACL差分診断により
+実原因への修正案としては失効した。将来、ACLが正常でも同じ症状を再現した場合の
+platform調査観点としてのみ残す。
 
 修正箇所はCodex skill loaderとsandbox permission propagationの接続部とする。
 
@@ -201,7 +255,7 @@ helper起動、review package生成、配布整合を壊さない。
 合格条件: 呼出側が文字列解析なしで同じ失敗を判定でき、安全な診断情報だけを
 取得できる。
 
-## 完了判定
+## 初期完了判定（platform案は失効）
 
 次をすべて満たしたときだけplatform側解消とする。
 
@@ -211,3 +265,7 @@ helper起動、review package生成、配布整合を壊さない。
 - `DELEGATE_SKILL_ACCESS_DENIED`の安定エラー契約がある。
 - 既存helper回帰が成功する。
 - 配布済みskillの正典・インストール済みコピーを変更していない。
+
+2026-07-27時点ではplatform変更を行わず、冒頭のACL修正によって今回の再現条件を
+解消した。通常sandbox read、対象skill内のread-only継承、controller skillを
+子担当へ再読させない契約、本文非変更を確認済みである。
