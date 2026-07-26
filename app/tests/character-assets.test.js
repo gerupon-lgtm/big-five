@@ -10,6 +10,7 @@ import {
   normalizeEncoderSettings,
 } from "../../scripts/characters/convert-characters.mjs";
 import { inspectCharacterAsset } from "../../scripts/characters/inspect-character.mjs";
+import { CHARACTER_MANIFEST_PILOT_FIXTURE } from "./fixtures/character-manifest-pilot.fixture.js";
 
 const SETTINGS = Object.freeze({
   quality: 82,
@@ -24,6 +25,11 @@ const ENCODER_SETTINGS = Object.freeze({
   metadata: "none",
   size: 1024,
 });
+
+const PILOT_LEDGER = JSON.parse(await readFile(
+  new URL("../../docs/assets/character-production/ledger.json", import.meta.url),
+  "utf8",
+));
 
 async function withTemporaryDirectory(run) {
   const directory = await mkdtemp(join(tmpdir(), "q012-"));
@@ -175,6 +181,24 @@ test("T-005 F-016 normalizes the fixed encoder settings file for the converter",
       /CHARACTER_ASSET_INVALID/,
     );
   }
+});
+
+test("T-005 F-016 pilot fixture exactly mirrors approved delivery evidence", () => {
+  const expected = PILOT_LEDGER.entries.slice(0, 3).map((entry) => ({
+    characterId: entry.characterId,
+    assetVersion: entry.assetVersion,
+    imagePath: entry.deliveryWebpPath.replace(/^app\//, ""),
+    width: entry.width,
+    height: entry.height,
+    alt: entry.alt,
+    integrity: entry.deliverySha256,
+  }));
+
+  assert.deepEqual(CHARACTER_MANIFEST_PILOT_FIXTURE.entries, expected);
+  assert.deepEqual(
+    Object.keys(CHARACTER_MANIFEST_PILOT_FIXTURE.entries[0]),
+    ["characterId", "assetVersion", "imagePath", "width", "height", "alt", "integrity"],
+  );
 });
 
 test("T-005 F-016 inspector rejects invalid format, geometry, alpha, and bounds", async () => {
