@@ -171,3 +171,4 @@
 - 2026-07-26 skill読込境界の切り分け: controller skillを子担当へ再読込させず、task artifactだけを渡すadapter契約と、実際に必要なskillが読めない場合の`DELEGATE_SKILL_ACCESS_DENIED`をcandidateへ追加した。workspace外skillへのread-only権限伝播はCodex sandbox側の責務であり、skill単体では変更できないため、配布後もplatform側未解消の可能性を独立して確認する。
 - 2026-07-26 candidate独立レビュー: 初回案はCritical 0、Important 4で配布停止となった。固定見出しだけの空review package、別worktree planの受入、WSLでのdrive path誤変換、不正Task番号のawk注入を検出した。forward testはさらにWindows absolute helper pathから同梱commonを解決できない起動不良を検出した。
 - 2026-07-26 candidateレビュー修正: helper自身のWindows path bootstrap、plan/current worktree一致、WSLとMSYS/MINGW/Cygwinの変換分離、1以上のTask番号、非空commit rangeと実diffを必須化し、各失敗を安定error codeで返すようにした。指摘fixtureを回帰へ追加し、修正後のWindows回帰は成功した。
+- 2026-07-26 helper hardening配布完了: candidate `bdc9af2`を指定の正規配布元へ展開し、正規配布元からCodex／Claudeへ同期した。対象13ファイルは全件SHA-256一致し、正規配布元・Codex・Claude各実体のWindows回帰が成功した。通常sandboxからインストール済み`SKILL.md`を直接読む操作だけは両配布先で`UnauthorizedAccessException`のままで、platform側残課題として維持する。

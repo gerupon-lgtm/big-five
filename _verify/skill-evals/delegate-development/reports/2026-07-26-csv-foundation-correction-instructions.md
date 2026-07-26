@@ -209,3 +209,19 @@ issue 1・2は修正済み、issue 3はskill側mitigation済み／platform側未
 
 回帰fixtureはWindows absolute helper path、別worktree plan、不正Task番号、
 空review range、WSL path mappingを追加した。修正後の同一回帰は成功した。
+
+## 2026-07-26 配布結果
+
+candidate commit `bdc9af2`を正規配布元
+`C:\Users\user\Documents\skills-work\delegate-development`へ展開し、
+そこからCodex／Claudeへ同期した。正規配布元と2配布先の対象13ファイルは
+`skill_sync.py check`で全件`MATCH`となった。
+
+正規配布元、Codex配布先、Claude配布先のそれぞれから
+`evals/helper-regression.ps1`を実行し、全て成功した。SHA-256 manifestは
+`C:\Users\user\Documents\skills-work\_verify\delegate-development-manifest-2026-07-26.json`
+へ保存した。
+
+通常sandboxからインストール済みCodex／Claudeの`SKILL.md`を直接読む操作は
+引き続き`UnauthorizedAccessException`となる。配布自体とskill側mitigationは
+完了したが、read-only権限伝播はplatform側未解消として残す。

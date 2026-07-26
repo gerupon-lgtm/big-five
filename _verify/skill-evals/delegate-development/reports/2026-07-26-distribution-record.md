@@ -1,5 +1,44 @@
 # delegate-development 配布記録
 
+## 2026-07-26 helper hardening再配布
+
+この節は、以下の初回7ファイル配布記録を上書きせずに後続状態を記録する。
+
+- 採用candidate commit: `bdc9af2`
+- 配布対象: 13ファイル
+- 編集用正典:
+  `C:\Users\user\Documents\診断系アプリ開発\.worktrees\big-five-q006\tools\skills\delegate-development`
+- 正規配布元:
+  `C:\Users\user\Documents\skills-work\delegate-development`
+- Codex配布先:
+  `C:\Users\user\.codex\skills\delegate-development`
+- Claude配布先:
+  `C:\Users\user\.claude\skills\delegate-development`
+- manifest:
+  `C:\Users\user\Documents\skills-work\_verify\delegate-development-manifest-2026-07-26.json`
+
+配布順は編集用正典から正規配布元、正規配布元からCodex／Claudeとした。
+編集用正典と正規配布元は余剰・欠落0、全13ファイルSHA-256一致。
+配布後の`skill_sync.py check --skill delegate-development`は、Codex／Claudeの
+全対象ファイルで`MATCH`、終了コード0となった。Claudeは設定どおり
+`agents/openai.yaml`を配布対象外とする。
+
+検証結果:
+
+- `quick_validate.py`: 編集用正典・正規配布元とも`Skill is valid!`
+- helper回帰: 編集用正典・正規配布元・Codex配布先・Claude配布先で成功
+- Windows absolute helper path、日本語path、linked worktree、別worktree拒否、
+  不正Task番号、空review range、`wc`/`tr`なし、WSL mappingを確認
+- candidate独立再レビュー: Critical 0、Important 0
+- Big Five: `npm.cmd test` 297/297、`npm.cmd run check`成功
+- skills-work: 同期ツール回帰43/43成功
+
+通常sandboxからインストール済みCodex／Claudeの`SKILL.md`を直接読む操作は、
+いずれも`UnauthorizedAccessException`で失敗した。一方、同期ツールによる
+SHA-256照合と、両配布先の実体を使う回帰はescalated readで成功している。
+したがって配布は完了、controller skillの不要な子担当再読を避けるmitigationも
+完了とし、workspace外skillへのread-only権限伝播だけをplatform側残課題とする。
+
 - 配布日: 2026-07-26
 - 採用candidate commit: `d323b79`
 - 比較レポートcommit: `cadeb54`

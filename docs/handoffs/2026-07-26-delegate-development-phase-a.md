@@ -2,19 +2,35 @@
 
 - 作成日: 2026-07-26
 - 作業branch: `codex/big-five-q006`
-- 採用スキルcommit: `d323b79`
+- 採用スキルcommit: `bdc9af2`
 - 配布記録: `_verify/skill-evals/delegate-development/reports/2026-07-26-distribution-record.md`
 - 比較レポート: `_verify/skill-evals/delegate-development/reports/2026-07-26-baseline-candidate-comparison.md`
 
 ## Phase A完了状態
 
-- 配布元、Codex、Claudeへfinal candidateを配布済み。
-- 3か所の7ファイルはSHA-256一致。
+- 配布元、Codex、Claudeへhelper hardening後のfinal candidateを配布済み。
+- 3か所の13ファイルは同期ツール上でSHA-256一致。
 - `quick_validate.py`成功。
+- 正規配布元、Codex配布先、Claude配布先の各実体でWindows helper回帰成功。
 - Codex新規実行主体のtrigger・契約衝突smoke成功。
 - Claude実環境smokeは未実施。
 - 配布前baselineは`C:\Users\user\Documents\skills-work\_backups\delegate-development\2026-07-26-before-d323b79`へ保存。
-- アプリ全テストは151件成功、静的検証成功。
+- 配布manifestは`C:\Users\user\Documents\skills-work\_verify\delegate-development-manifest-2026-07-26.json`。
+- アプリ全テストは297件成功、静的検証成功。
+
+## helper hardening追補
+
+- Windows absolute helper path、日本語path、linked worktreeを同梱回帰で検証した。
+- planとcurrent worktreeが異なる場合は`SDD_PLAN_WORKTREE_MISMATCH`で停止する。
+- Task番号は1以上の整数へ限定し、空commit range・空diffを成功扱いしない。
+- `wc`/`tr`がない場合もreview package本体を検証し、byte統計だけを明示省略する。
+- WSLのdrive pathは`/mnt/<drive>/...`、MSYS/MINGW/Cygwinは
+  `/<drive>/...`として分離する。
+- controller skillを子担当へ再読込させない。実際に必要なskillが読めない場合は
+  `DELEGATE_SKILL_ACCESS_DENIED`で停止する。
+- 通常sandboxからworkspace外のインストール済み`SKILL.md`を直接読む操作は、
+  Codex/Claudeとも`UnauthorizedAccessException`のまま。配布hashと実体回帰は
+  escalated readで確認済みだが、read-only権限伝播はplatform側の残課題である。
 
 ## アプリ状態
 
