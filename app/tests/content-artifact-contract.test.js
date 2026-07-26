@@ -77,6 +77,20 @@ test("artifact inspector rejects each unapproved authoring status structurally",
   }
 });
 
+test("artifact inspector normalizes authoring metadata and status key naming variants", async () => {
+  for (const [key, value] of [
+    ["approvalDate", "2026-07-26"],
+    ["review_note", "human review"],
+    ["review-note", "human review"],
+    ["Status", "draft"],
+  ]) {
+    await assertArtifactRejected(
+      { "runtime.json": JSON.stringify({ [key]: value }) },
+      /ARTIFACT_INSPECTION_FAILED/,
+    );
+  }
+});
+
 test("artifact inspector rejects approval metadata and notes structurally", async () => {
   await assertArtifactRejected(
     { "runtime.json": JSON.stringify({ approval: { approved_by: "user" } }) },
@@ -97,8 +111,39 @@ test("artifact inspector rejects local paths, credentials, and undisclosed exter
   }
 });
 
+test("artifact inspector rejects embedded local paths without rejecting legal locators", async () => {
+  await withArtifactFixture({
+    "runtime.json": JSON.stringify({
+      locator: "docs/requirements/2026-07-20-big-five-self-understanding-requirements.md#831",
+      sourceUrl: EVIDENCE_URL,
+      copy: "通常の説明文です。",
+    }),
+  }, async (rootDir) => {
+    assert.deepEqual(inspectArtifact(rootDir), { checkedFiles: 1, checkedJsonFiles: 1 });
+  });
+
+  for (const value of [
+    "private artifact is file:///tmp/private.json",
+    "private artifact is C:\\private\\artifact.json",
+    "private artifact is /srv/private/artifact.json",
+  ]) {
+    await assertArtifactRejected(
+      { "runtime.json": JSON.stringify({ value }) },
+      /ARTIFACT_INSPECTION_FAILED/,
+    );
+  }
+});
+
 test("artifact inspector rejects invalid JSON and symlinks without following them", async (t) => {
   await assertArtifactRejected({ "runtime.json": "{not json" }, /ARTIFACT_INSPECTION_FAILED.*invalid JSON/);
+
+  const invalidUtf8Root = await mkdtemp(path.join(os.tmpdir(), "big-five-artifact-utf8-"));
+  try {
+    await writeFile(path.join(invalidUtf8Root, "runtime.json"), Buffer.from([0xc3, 0x28]));
+    assert.throws(() => inspectArtifact(invalidUtf8Root), /ARTIFACT_INSPECTION_FAILED.*invalid UTF-8/);
+  } finally {
+    await rm(invalidUtf8Root, { recursive: true, force: true });
+  }
 
   const rootDir = await mkdtemp(path.join(os.tmpdir(), "big-five-artifact-symlink-"));
   const target = path.join(rootDir, "target.json");

@@ -25,6 +25,7 @@ const ALLOWED_EVIDENCE_URLS = new Set([
 const PROHIBITED_ARTIFACT_EXTENSIONS = new Set([".csv", ".md", ".map"]);
 const AUTHORING_METADATA_KEYS = new Set([
   "approval",
+  "approval_date",
   "approval_note",
   "approval_notes",
   "approval_status",
@@ -39,10 +40,16 @@ const AUTHORING_METADATA_KEYS = new Set([
   "reviewer",
   "note",
   "notes",
-]);
+].map(normalizeArtifactKey));
 const CREDENTIAL_KEY = /(?:token|secret|password|credential|api[_-]?key|access[_-]?key|private[_-]?key)/i;
 const CREDENTIAL_VALUE = /(?:token|secret|password|credential|api[_-]?key|access[_-]?key|private[_-]?key)\s*[:=]\s*\S+/i;
 const HTTP_URL = /https?:\/\/[^\s"'<>]+/gi;
+const WINDOWS_ABSOLUTE_PATH = /(?:^|[^A-Za-z0-9_])[A-Za-z]:[\\/]/;
+const POSIX_ABSOLUTE_PATH = /(?:^|[\s"'([{:;,=])\/(?![\/\s])/;
+
+function normalizeArtifactKey(key) {
+  return key.replace(/[^A-Za-z0-9]/g, "").toLowerCase();
+}
 
 function collectJavaScriptFiles(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -77,10 +84,9 @@ function decodeUtf8(filePath) {
 }
 
 function assertArtifactStringIsSafe(value, relativePath) {
-  const trimmed = value.trim();
-  assertArtifact(!/^[A-Za-z]:[\\/]/.test(trimmed), `Windows local absolute path in ${relativePath}`);
-  assertArtifact(!/^\/(?!\/)/.test(trimmed), `POSIX local absolute path in ${relativePath}`);
-  assertArtifact(!/^file:\/\//i.test(trimmed), `file URL in ${relativePath}`);
+  assertArtifact(!WINDOWS_ABSOLUTE_PATH.test(value), `Windows local absolute path in ${relativePath}`);
+  assertArtifact(!POSIX_ABSOLUTE_PATH.test(value), `POSIX local absolute path in ${relativePath}`);
+  assertArtifact(!/file:\/\//i.test(value), `file URL in ${relativePath}`);
   assertArtifact(!CREDENTIAL_VALUE.test(value), `credential-like value in ${relativePath}`);
 
   for (const url of value.match(HTTP_URL) ?? []) {
@@ -100,9 +106,10 @@ function inspectJsonValue(value, relativePath) {
   if (!value || typeof value !== "object") return;
 
   for (const [key, nestedValue] of Object.entries(value)) {
-    assertArtifact(!AUTHORING_METADATA_KEYS.has(key.toLowerCase()), `authoring metadata key ${key} in ${relativePath}`);
+    const normalizedKey = normalizeArtifactKey(key);
+    assertArtifact(!AUTHORING_METADATA_KEYS.has(normalizedKey), `authoring metadata key ${key} in ${relativePath}`);
     assertArtifact(!CREDENTIAL_KEY.test(key), `credential-like key ${key} in ${relativePath}`);
-    if (key === "status") {
+    if (normalizedKey === "status") {
       assertArtifact(
         !["draft", "reviewed", "rejected"].includes(nestedValue),
         `authoring status ${nestedValue} in ${relativePath}`,
