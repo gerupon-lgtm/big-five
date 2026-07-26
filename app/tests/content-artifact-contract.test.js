@@ -118,6 +118,41 @@ test("artifact inspector rejects local paths, credentials, and undisclosed exter
   }
 });
 
+test("artifact inspector rejects realistic standalone tokens without exposing their values", async () => {
+  const tokens = [
+    "ghp_1234567890abcdefghijklmnopqrstuvwxyz",
+    "github_pat_1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghij",
+    "sk-proj-1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "sk-1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  ];
+
+  for (const token of tokens) {
+    for (const [relativePath, contents] of [
+      ["runtime.json", JSON.stringify({ value: token })],
+      ["copy.txt", `Generated artifact copy contains ${token} for this fixture.`],
+    ]) {
+      await withArtifactFixture({ [relativePath]: contents }, async (rootDir) => {
+        assert.throws(
+          () => inspectArtifact(rootDir),
+          (error) => {
+            assert.match(error.message, /ARTIFACT_INSPECTION_FAILED.*credential-like value/);
+            assert.equal(error.message.includes(token), false);
+            return true;
+          },
+        );
+      });
+    }
+  }
+});
+
+test("artifact inspector permits short token examples and ordinary identifiers in safe prose", async () => {
+  await withArtifactFixture({
+    "copy.txt": "Examples: ghp_..., github_pat_..., sk-proj-..., and sk-... are redacted placeholders. Build ID: sk-preview-build-2026-release-candidate-identifier.",
+  }, async (rootDir) => {
+    assert.deepEqual(inspectArtifact(rootDir), { checkedFiles: 1, checkedJsonFiles: 0 });
+  });
+});
+
 test("artifact inspector rejects embedded local paths without rejecting legal locators", async () => {
   await withArtifactFixture({
     "runtime.json": JSON.stringify({
