@@ -264,7 +264,7 @@ FragranceSceneSelector<S> = exact {
 
 1. Q-006: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordを根拠台帳へ記録する。承認までは`result-text-v1 initial reviewed copy`かつ`Content Approval pending`として扱う。
 2. Q-006/T-005: `composeResultTexts`／`createResultSnapshot`／`saveResultSnapshot`を完答controllerとS-003/S-004へ統合する。
-3. T-006: 実装済みの`loadResultHistory`／`deleteResultSnapshot`／`deleteAllData`／`compareResultSnapshots`をS-006/S-007へ統合し、変動注意文を表示する。
+3. T-006/T-005: S-006/S-007初期画面と変動注意文は統合済み。履歴カードから独立したS-003/S-004を開く遷移を、結果画面実装時に接続する。
 4. Q-012: 3体パイロット制作・承認、encoderと余白値の固定、残り48体の量産。
 5. Q-013: 全パレット・香調・用途色展開データ。
 6. Q-007: 共有画像寸法・文字量。

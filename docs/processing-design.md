@@ -216,11 +216,11 @@ displayScore = round((rawMean - 1) / 4 * 100)
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
-上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合も完了した。回答完答からの本番callerとS-003/S-004、S-006/S-007への画面統合は後続タスクである。
+上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合とS-006/S-007初期画面接続も完了した。回答完答からの本番caller、S-003/S-004、履歴から独立結果画面を開く遷移は後続T-005である。
 
 ## 7. 履歴保存
 
-`createResultSnapshot`、保存済み13フィールドを再検証する`validateResultSnapshot`、結果保存API`saveResultSnapshot({ storage, snapshot, diagnosisId, definition, meta, now })`、履歴読込API`loadResultHistory({ storage, now })`、個別削除API`deleteResultSnapshot({ storage, resultId, confirmed, now })`、全削除API`deleteAllData({ storage, confirmed, now })`は実装済みである。回答完答からの本番callerと履歴画面への接続は未実装である。
+`createResultSnapshot`、保存済み13フィールドを再検証する`validateResultSnapshot`、結果保存API`saveResultSnapshot({ storage, snapshot, diagnosisId, definition, meta, now })`、履歴読込API`loadResultHistory({ storage, now })`、個別削除API`deleteResultSnapshot({ storage, resultId, confirmed, now })`、全削除API`deleteAllData({ storage, confirmed, now })`は実装済みである。S-006はこれらの履歴・削除APIへ接続済みで、回答完答からの本番callerは未実装である。
 
 1. `crypto.randomUUID()`でRFC 4122 UUID形状のresultIdを生成する。
 2. ResultSnapshotの13フィールドexact schemaを検証する。`answers`と`diagnosisId`は受け付けない。
@@ -235,6 +235,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 11. 履歴順は`completedAt`の実時刻降順、同時刻は`resultId`辞書順とする。返却配列と各snapshotはdeep freezeする。
 12. 個別削除は確認後、指定`resultId`と一致する最初の有効ResultSnapshotだけを削除する。途中回答、非対象結果、破損結果の構造と順序を保持し、対象なしでは書き込まない。
 13. 全削除は確認後、現行StorageEnvelopeの`progressByDiagnosis`と`results`だけを空にする。確認取消、壊れたJSON、将来schema、保存失敗では既存値を変更しない。
+14. S-006は履歴0件でも全削除導線を表示する。比較1件目は取消・再選択でき、互換結果だけを2件目候補として有効化する。
 
 状態遷移:
 
@@ -288,6 +289,8 @@ displayScore = round((rawMean - 1) / 4 * 100)
 - 差はrawMean同士で計算し、表示時だけ0〜100相当へ変換・丸める。
 - 互換結果と因子差分配列はdeep freezeし、生回答、表示整数、ResultSnapshot全体を返さない。
 - 「上がった／下がった」だけでなく、「回答時の状況でも変動する」と表示する。
+- S-007は保存履歴から両IDを再検証し、欠落・削除済み・破損・非互換では差を計算しない。ID不足の直接URLはS-006へ戻す。
+- 結果文・称号・猫manifest・個別猫アセット・演出・カード・アプリ版が異なってもスコア互換なら比較し、表示表現の版差を補足する。
 
 ## 9. レーダーチャート
 
