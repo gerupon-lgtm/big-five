@@ -328,7 +328,9 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 
 `VersionTuple.characterManifestVersion`はmanifest全体の版、`characterAssetVersion`は選択された1体の`CharacterManifestEntry.assetVersion`であり、互いに独立して保存する。
 
-`app/js/domain/result-snapshot.js`の`validateResultSnapshot`と`app/js/infrastructure/progress-storage.js`の`saveResultSnapshot`は、この13フィールドschemaを唯一の結果履歴契約として実装済みである。旧`diagnosisId`付きgeneric result schemaと旧section集合は置き換えた。保存APIは`storage`、`snapshot`、`diagnosisId`、`definition`、`meta`、`now`を受け、対象ProgressRecordを現行定義・版で検証してから保存する。破損・版不一致の対象進捗は上書き・削除しない。回答完答からの本番callerとS-003/S-004画面統合は後続T-005で実装する。
+`app/js/domain/result-snapshot.js`の`validateResultSnapshot`と`app/js/infrastructure/progress-storage.js`の`saveResultSnapshot`は、この13フィールドschemaを唯一の結果履歴契約として実装済みである。旧`diagnosisId`付きgeneric result schemaと旧section集合は置き換えた。保存APIは`storage`、`snapshot`、`diagnosisId`、`definition`、`meta`、`now`を受け、対象ProgressRecordを現行定義・版で検証してから保存する。破損・版不一致の対象進捗は上書き・削除しない。
+
+同ファイルの`loadResultHistory`は各ResultSnapshotを再検証し、破損レコードだけを除外して`completedAt`実時刻の降順、同時刻は`resultId`辞書順で返す。`deleteResultSnapshot`は確認後に指定IDと一致する最初の有効ResultSnapshotだけを削除し、途中回答と他の有効・破損結果を保持する。`deleteAllData`は確認後に途中回答と結果履歴を空にする。回答完答からの本番callerとS-003/S-004、S-006/S-007画面統合は後続T-005/T-006で実装する。
 
 ### 3.6 FactorResult
 
@@ -369,6 +371,8 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 `scaleVersion`（例: `ipip-ja-50-v1`）は尺度の識別と改訂版を兼ねる一意な版IDであり、その一致によって尺度ID・版一致の互換性条件を満たす。VersionTupleへ別の`scaleId`フィールドを要求しない。
 
 現行`ResultSnapshot`は`diagnosisId`を持たないため、比較互換条件にも含めない。結果文版、称号判定版、猫版、演出版が異なる場合でもスコア比較条件を満たせば比較できるが、表示表現が異なる旨を明示する。【想定】この扱いは単一診断のMVPと要件8.5を満たし、尺度識別の互換性条件を弱めない。複数診断を同じ履歴へ格納する変更時は、保存schemaの版更新と比較契約の再設計を先に行う。
+
+`app/js/domain/result-comparison.js`の`compareResultSnapshots`は両snapshotを再検証し、不一致を安定コードで返す。互換時は実時刻で古い結果をbefore、新しい結果をafterとし、同時刻は`resultId`辞書順で安定化する。返却値は両resultId・completedAtと、固定因子順の`beforeRawMean`、`afterRawMean`、`deltaRawMean`だけを含むdeep freeze済みモデルであり、生回答、表示整数、ResultSnapshot全体を含めない。
 
 ## 5. 更新・削除・復元
 

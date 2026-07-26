@@ -238,13 +238,15 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 個別削除の誤対象防止、全削除の取消／確定。
   - 容量不足でも現在結果を維持。
 
-#### ResultSnapshot永続化基盤の実装記録（2026-07-26）
+#### ResultSnapshot・履歴・比較基盤の実装記録（2026-07-26）
 
-- 状態: 部分完了。13フィールドexact validator、RFC 4122 UUID検証、結果保存、同一ID冪等、ID衝突拒否、`preview20`進捗保持、`detail50`の結果追加・進捗削除の原子的書込みを実装した。
-- 安全性: 対象ProgressRecordを現行定義・版で検証し、破損・版不一致・将来StorageEnvelopeを上書きしない。詳細結果の保存失敗時は対象進捗を再検証してbest-effort削除し、結果と返却値へ生回答を含めない。
-- 未実装: 本番caller、履歴一覧読込・新しい順表示、個別／全削除、比較互換判定と差分表示。
-- レビュー: `delegate-development`で契約監査、限定実装、独立レビュー、1回の差し戻し、再レビューを実施し、最終指摘なし。
-- 検証: 集中37件、全307件、`npm.cmd run check`、`git diff --check`成功。
+- 状態: 基盤完了、画面統合待ち。13フィールドexact validator、RFC 4122 UUID検証、結果保存、同一ID冪等、ID衝突拒否、`preview20`進捗保持、`detail50`の結果追加・進捗削除の原子的書込みを実装した。
+- 履歴・削除: `loadResultHistory`が破損結果だけを除外し、実時刻の新しい順・同時刻resultId辞書順で有効snapshotを返す。`deleteResultSnapshot`は確認後に指定IDの有効な1件だけを削除し、途中回答と他の有効・破損結果を保持する。`deleteAllData`は確認後に途中回答と結果を全削除する。
+- 比較: `compareResultSnapshots`が両snapshotを再検証し、尺度版・設問版・採点版・設問数・因子値の不一致を安定コードへ分離する。互換時は古い→新しい順、固定因子順の`beforeRawMean`・`afterRawMean`・`deltaRawMean`だけをdeep freezeして返す。
+- 安全性: 対象ProgressRecordを現行定義・版で検証し、破損・版不一致・将来StorageEnvelopeを上書きしない。詳細結果の保存失敗時は対象進捗を再検証してbest-effort削除し、結果・履歴・比較の返却値へ生回答を含めない。履歴読込は保存値を書き換えない。
+- 未実装: 回答完答からの本番caller、S-003/S-004結果画面、S-006履歴一覧、S-007比較画面への接続、比較時の変動注意文表示。
+- レビュー: `delegate-development`で履歴・削除と比較を非重複委譲し、独立レビューを実施した。個別削除が非対象の破損データまでsanitizeするP1を1回差し戻し、対象1件以外を保持する修正後の再レビューは指摘なし。
+- 検証: 履歴・比較・契約集中34件、全320件、`npm.cmd run check`、`git diff --check`成功。
 
 ### T-007 共有カード・保存・コピー
 
@@ -368,7 +370,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
 | Q-006人手Content Approval | `result-text-v1 initial reviewed copy` 237件と根拠・合成・snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordがすべて揃うまで`Content Approval pending` | Q-006 |
-| 結果画面・永続化統合 | Q-006ドメインは実装済み。S-003/S-004、完答caller、ResultSnapshot保存、旧progress-storage schema更新が未実装 | T-005/T-006 |
+| 結果・履歴画面統合 | Q-006ドメインとResultSnapshot保存・履歴・削除・比較基盤は実装済み。S-003/S-004、S-006/S-007、完答callerへの接続が未実装 | T-005/T-006 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
 | 51猫アセット | 量産仕様は確定。3体パイロットと残り48体が未制作 | Q-012設計を基にT-005で制作 |

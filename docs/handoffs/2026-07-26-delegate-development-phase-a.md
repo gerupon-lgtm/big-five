@@ -36,10 +36,10 @@
 
 - Q-006の実装・独立レビューは完了済み。
 - Q-006の人手Content Approvalは引き続きpending。
-- S-003/S-004結果画面、本番完答caller、ResultSnapshot保存、旧`progress-storage` schema統合は未実装。
+- handoff作成時はS-003/S-004結果画面、本番完答caller、ResultSnapshot保存、旧`progress-storage` schema統合が未実装だった。再開後にResultSnapshot保存・履歴・削除・比較基盤まで実装し、画面とcaller接続が残っている。
 - Q-012画像、Q-013演出データ、T-005 UIは各計画と人手ゲートを維持する。
 
-## forward-testで検出した実装前blocker
+## forward-testで検出した実装前blocker（再開後に解消）
 
 ResultSnapshot永続化へ進む前に、次を正典・実装・test間で解消する。
 
@@ -53,6 +53,8 @@ ResultSnapshot永続化へ進む前に、次を正典・実装・test間で解�
 4. 結果保存API、本番完答caller、戻り値、重複・保存失敗・削除失敗の状態行列
 
 上記を推測で解決せず、共有契約表へ`confirmed / conflicting / unknown`で整理してから実装タスクを委譲する。
+
+再開後、4件すべてを`docs/data-model.md`と`docs/processing-design.md`で契約化し、ResultSnapshotのexact validator、RFC 4122 UUID、結果保存、完答時の原子的削除・best-effort cleanup、履歴読込、個別・全削除、比較純粋関数を実装した。残作業は本番callerとS-003/S-004、S-006/S-007への接続である。
 
 ## 再開手順
 

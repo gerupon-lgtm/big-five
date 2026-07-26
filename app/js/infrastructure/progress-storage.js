@@ -128,6 +128,86 @@ function sanitizeEnvelope(envelope) {
   };
 }
 
+function compareHistoryResults(left, right) {
+  const timeDifference = Date.parse(right.completedAt) - Date.parse(left.completedAt);
+  if (timeDifference !== 0) return timeDifference;
+  if (left.resultId < right.resultId) return -1;
+  if (left.resultId > right.resultId) return 1;
+  return 0;
+}
+
+/**
+ * Load only valid, answer-free snapshots in deterministic display order.
+ * T-006 F-009: reads never repair or rewrite persisted storage.
+ */
+export function loadResultHistory({ storage, now }) {
+  const read = readEnvelope(storage, now);
+  if (read.status === "error") return read;
+  const results = read.envelope.results
+    .map(canonicalResultOrNull)
+    .filter(Boolean)
+    .sort(compareHistoryResults);
+  return { status: "ok", results: Object.freeze(results) };
+}
+
+/**
+ * Delete one exact valid snapshot after an explicit confirmation.
+ * T-006 F-013: malformed and future envelopes are never overwritten.
+ */
+export function deleteResultSnapshot({ storage, resultId, confirmed, now }) {
+  if (!confirmed) return { status: "cancelled" };
+  if (typeof resultId !== "string" || !UUID_PATTERN.test(resultId) || !isStrictIsoTimestamp(now)) {
+    return { status: "error", code: STORAGE_ERROR.DELETE_FAILED };
+  }
+  const read = readEnvelope(storage, now);
+  if (read.status === "error") return { status: "error", code: STORAGE_ERROR.DELETE_FAILED };
+
+  const { results: storedResults } = read.envelope;
+  let deleted = false;
+  const results = storedResults.filter((result) => {
+    const canonical = canonicalResultOrNull(result);
+    if (!deleted && canonical && canonical.resultId === resultId) {
+      deleted = true;
+      return false;
+    }
+    return true;
+  });
+  if (!deleted) return { status: "ok", deleted: false };
+  if (!storage || typeof storage.setItem !== "function") {
+    return { status: "error", code: STORAGE_ERROR.DELETE_FAILED };
+  }
+  try {
+    storage.setItem(FORMAL_STORAGE_KEY, JSON.stringify({ ...read.envelope, updatedAt: now, results }));
+    return { status: "ok", deleted: true };
+  } catch {
+    return { status: "error", code: STORAGE_ERROR.DELETE_FAILED };
+  }
+}
+
+/**
+ * Clear progress and history only after an explicit confirmation.
+ * T-006 F-015: preserve inaccessible, malformed, and future storage verbatim.
+ */
+export function deleteAllData({ storage, confirmed, now }) {
+  if (!confirmed) return { status: "cancelled" };
+  if (!isStrictIsoTimestamp(now)) return { status: "error", code: STORAGE_ERROR.DELETE_FAILED };
+  const read = readEnvelope(storage, now);
+  if (read.status === "error" || !storage || typeof storage.setItem !== "function") {
+    return { status: "error", code: STORAGE_ERROR.DELETE_FAILED };
+  }
+  try {
+    storage.setItem(FORMAL_STORAGE_KEY, JSON.stringify({
+      ...read.envelope,
+      updatedAt: now,
+      progressByDiagnosis: {},
+      results: [],
+    }));
+    return { status: "ok" };
+  } catch {
+    return { status: "error", code: STORAGE_ERROR.DELETE_FAILED };
+  }
+}
+
 export function loadProgress({ storage, definition, meta, now }) {
   const read = readEnvelope(storage, now);
   if (read.status === "error") return read;

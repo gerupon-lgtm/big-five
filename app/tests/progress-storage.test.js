@@ -8,8 +8,11 @@ import { createResultSnapshot } from "../js/domain/result-snapshot.js";
 import { scoreDiagnostic } from "../js/domain/scoring.js";
 import {
   FORMAL_STORAGE_KEY,
+  deleteAllData,
+  deleteResultSnapshot,
   discardProgress,
   answerAndSave,
+  loadResultHistory,
   loadProgress,
   saveResultSnapshot,
   saveProgress,
@@ -45,7 +48,7 @@ function progress() {
   });
 }
 
-function validResult(resultId = "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c003", mode = "detail50") {
+function validResult(resultId = "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c003", mode = "detail50", completedAt = NOW) {
   const questionCount = mode === "preview20" ? 20 : 50;
   const questionDefinitions = questionCount === 20
     ? QuestionDefinitions.filter(({ id }) => DiagnosticDefinition.previewQuestionIds.includes(id))
@@ -56,7 +59,7 @@ function validResult(resultId = "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c003", mode = "
   const factorIds = ["intellectImagination", "conscientiousness", "extraversion", "agreeableness", "emotionalStability"];
   return createResultSnapshot({
     resultId,
-    completedAt: NOW,
+    completedAt,
     questionCount,
     mode,
     versionTuple: progress().versionTuple,
@@ -370,4 +373,122 @@ test("T-005 T-006 preserves a valid preview ProgressRecord and writes detail com
   assert.equal(writes, 1);
   assert.equal(JSON.parse(stored).progressByDiagnosis[DiagnosticDefinition.diagnosisId], undefined);
   assert.equal(JSON.parse(stored).results.length, 1);
+});
+
+test("T-006 F-009 loads an isolated newest-first history without rewriting storage", () => {
+  const oldest = validResult("7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c021", "detail50", "2026-07-24T23:00:00.000Z");
+  const sameTimeLaterId = validResult("7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c023", "preview20", "2026-07-25T09:00:00.000+09:00");
+  const sameTimeFirstId = validResult("7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c022", "detail50", "2026-07-25T00:00:00.000Z");
+  let writes = 0;
+  const raw = JSON.stringify({
+    schemaVersion: 1, updatedAt: NOW, progressByDiagnosis: { [DiagnosticDefinition.diagnosisId]: progress() },
+    results: [oldest, { broken: true }, sameTimeLaterId, sameTimeFirstId],
+  });
+  const storage = {
+    getItem: () => raw,
+    setItem: () => { writes += 1; },
+  };
+
+  const loaded = loadResultHistory({ storage, now: NOW });
+
+  assert.equal(loaded.status, "ok");
+  assert.deepEqual(loaded.results.map(({ resultId }) => resultId), [sameTimeFirstId.resultId, sameTimeLaterId.resultId, oldest.resultId]);
+  assert.equal(writes, 0);
+  assert.equal(Object.isFrozen(loaded.results), true);
+  assert.equal(Object.isFrozen(loaded.results[0]), true);
+  assert.equal(Object.hasOwn(loaded.results[0], "answers"), false);
+  assert.equal(Object.hasOwn(loaded, "progressByDiagnosis"), false);
+});
+
+test("T-006 F-009 returns the existing read error for malformed or future history envelopes", () => {
+  for (const [raw, code] of [
+    ["{", "STORAGE_CORRUPT"],
+    [JSON.stringify({ schemaVersion: 2, updatedAt: NOW, progressByDiagnosis: {}, results: [] }), "STORAGE_INCOMPATIBLE"],
+  ]) {
+    assert.deepEqual(loadResultHistory({ storage: memoryStorage(raw), now: NOW }), { status: "error", code });
+  }
+});
+
+test("T-006 F-013 deletes exactly one valid matching ResultSnapshot and retains generic progress", () => {
+  const target = validResult("7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c024");
+  const retained = validResult("7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c025", "preview20");
+  const invalidSameId = { resultId: target.resultId, broken: true };
+  const invalidOther = { broken: true };
+  let raw = JSON.stringify({
+    schemaVersion: 1, updatedAt: NOW,
+    progressByDiagnosis: { unrelated: { ...progress(), diagnosisId: "unrelated" }, invalid: { bad: true } },
+    results: [invalidSameId, retained, target, invalidOther],
+  });
+  let writes = 0;
+  const storage = {
+    getItem: () => raw,
+    setItem: (_key, value) => { writes += 1; raw = value; },
+  };
+
+  assert.deepEqual(deleteResultSnapshot({ storage, resultId: target.resultId, confirmed: true, now: "2026-07-25T00:02:00.000Z" }), {
+    status: "ok", deleted: true,
+  });
+  const persisted = JSON.parse(raw);
+  assert.equal(writes, 1);
+  assert.deepEqual(persisted.results, [invalidSameId, retained, invalidOther]);
+  assert.ok(persisted.progressByDiagnosis.unrelated);
+  assert.deepEqual(persisted.progressByDiagnosis.invalid, { bad: true });
+});
+
+test("T-006 F-013 cancellation, a missing or invalid target, and unsafe envelopes never write", () => {
+  const retained = validResult("7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c026");
+  const safeRaw = JSON.stringify({ schemaVersion: 1, updatedAt: NOW, progressByDiagnosis: {}, results: [retained] });
+  const futureRaw = JSON.stringify({ schemaVersion: 2, updatedAt: NOW, progressByDiagnosis: {}, results: [] });
+  for (const [raw, args, expected] of [
+    [safeRaw, { resultId: retained.resultId, confirmed: false, now: NOW }, { status: "cancelled" }],
+    [safeRaw, { resultId: "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c027", confirmed: true, now: NOW }, { status: "ok", deleted: false }],
+    [safeRaw, { resultId: "not-a-uuid", confirmed: true, now: NOW }, { status: "error", code: "STORAGE_DELETE_FAILED" }],
+    [futureRaw, { resultId: retained.resultId, confirmed: true, now: NOW }, { status: "error", code: "STORAGE_DELETE_FAILED" }],
+  ]) {
+    let writes = 0;
+    const storage = { getItem: () => raw, setItem: () => { writes += 1; } };
+    assert.deepEqual(deleteResultSnapshot({ storage, ...args }), expected);
+    assert.equal(writes, 0);
+  }
+});
+
+test("T-006 F-013 maps unavailable and write-failed result deletion to STORAGE_DELETE_FAILED", () => {
+  const target = validResult("7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c028");
+  const raw = JSON.stringify({ schemaVersion: 1, updatedAt: NOW, progressByDiagnosis: {}, results: [target] });
+  assert.deepEqual(deleteResultSnapshot({
+    storage: { getItem: () => { throw new Error("denied"); } }, resultId: target.resultId, confirmed: true, now: NOW,
+  }), { status: "error", code: "STORAGE_DELETE_FAILED" });
+  assert.deepEqual(deleteResultSnapshot({
+    storage: { getItem: () => raw, setItem: () => { throw new Error("quota"); } }, resultId: target.resultId, confirmed: true, now: NOW,
+  }), { status: "error", code: "STORAGE_DELETE_FAILED" });
+});
+
+test("T-006 F-015 deletes all progress and results only after confirmation", () => {
+  const snapshot = validResult("7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c029");
+  let raw = JSON.stringify({ schemaVersion: 1, updatedAt: NOW, progressByDiagnosis: { [DiagnosticDefinition.diagnosisId]: progress() }, results: [snapshot] });
+  let writes = 0;
+  const storage = { getItem: () => raw, setItem: (_key, value) => { writes += 1; raw = value; } };
+
+  assert.deepEqual(deleteAllData({ storage, confirmed: false, now: NOW }), { status: "cancelled" });
+  assert.equal(writes, 0);
+  assert.deepEqual(deleteAllData({ storage, confirmed: true, now: "2026-07-25T00:03:00.000Z" }), { status: "ok" });
+  assert.equal(writes, 1);
+  assert.deepEqual(JSON.parse(raw), {
+    schemaVersion: 1, updatedAt: "2026-07-25T00:03:00.000Z", progressByDiagnosis: {}, results: [],
+  });
+});
+
+test("T-006 F-015 preserves malformed, future, unavailable, and write-failed all-data storage", () => {
+  const malformed = "{";
+  const future = JSON.stringify({ schemaVersion: 2, updatedAt: NOW, progressByDiagnosis: {}, results: [] });
+  for (const raw of [malformed, future]) {
+    let writes = 0;
+    assert.deepEqual(deleteAllData({ storage: { getItem: () => raw, setItem: () => { writes += 1; } }, confirmed: true, now: NOW }), {
+      status: "error", code: "STORAGE_DELETE_FAILED",
+    });
+    assert.equal(writes, 0);
+  }
+  assert.deepEqual(deleteAllData({ storage: { getItem: () => null, setItem: () => { throw new Error("quota"); } }, confirmed: true, now: NOW }), {
+    status: "error", code: "STORAGE_DELETE_FAILED",
+  });
 });
