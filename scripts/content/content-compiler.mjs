@@ -1,9 +1,12 @@
 import { createHash } from "node:crypto";
-import { lstat, mkdir, mkdtemp, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { appMeta } from "../../app/js/config/app-meta.js";
+import { validateDefinitionStructure, validateResultContentDefinitions } from "../../app/js/domain/definition-validator.js";
+import { validatePresentationDefinitionSet } from "../../app/js/domain/presentation-definition-validator.js";
+import { validateTitleProfileDefinitions } from "../../app/js/domain/title-profile.js";
 import { assertCharacterReleaseEligible, compileCharacterContent } from "./compile-characters.mjs";
 import { compileDiagnosisContent } from "./compile-diagnosis.mjs";
 import { compilePresentationContent } from "./compile-presentation.mjs";
@@ -48,8 +51,18 @@ const TABLES = Object.freeze([
   ["selectorFragranceRows", "presentation", "presentation_definition_version", "selector-fragrances.csv"],
   ["characterRows", "characters", "character_manifest_version", "characters.csv"],
 ]);
+const CORE_TABLE_NAMES = new Set([
+  "diagnosisRows", "sourceRows", "limitationRows", "factorRows", "questionRows",
+  "previewRows", "profileRows", "profileFactorRows", "textRows", "textEvidenceRows",
+  "evidenceRows", "evidenceClaimRows",
+]);
+const CORE_TABLES = TABLES.filter(([name]) => CORE_TABLE_NAMES.has(name));
+const OPTIONAL_TABLES = TABLES.filter(([name]) => !CORE_TABLE_NAMES.has(name));
+const PRESENTATION_TABLES = OPTIONAL_TABLES.filter(([, topDir]) => topDir === "presentation");
+const CHARACTER_TABLES = OPTIONAL_TABLES.filter(([, topDir]) => topDir === "characters");
 const MANIFEST_ORDER = ["schemaVersion", "releaseId", "appVersion", "diagnosisId", "versions", "resources"];
 const VERSION_ORDER = ["diagnosticDefinitionVersion", "scaleVersion", "questionVersion", "scoringVersion", "resultEvidenceVersion", "resultTextVersion", "titleRuleVersion", "characterManifestVersion", "presentationDefinitionVersion", "cardTemplateVersion"];
+const CHARACTER_ALT_CLAIM_PATTERN = /\b(?:title|type|personality|ability|talent|intelligence|smart|intelligent|rank|breed|best|worst)\b|称号|タイトル|タイプ|性格|人格|能力|才能|知性|頭が良い|賢い|順位|一位|トップ|最高|優秀|劣る|ランク|猫種|品種/i;
 
 function contentError(code, message = "コンテンツ定義を確認してください。", extra = {}) {
   return new ContentError({ code, message, ...extra });
@@ -96,6 +109,23 @@ async function loadNamedTable(sourceDir, segments, schemaName) {
     if (error instanceof ContentError) throw error;
     throw contentError("RELEASE_RESOURCE_MISSING");
   }
+}
+
+async function discoverVersion(sourceDir, topDir, { optional = false } = {}) {
+  let directory;
+  try {
+    directory = await safeSourcePath(sourceDir, [topDir]);
+  } catch (error) {
+    if (optional && error instanceof ContentError && error.code === "RELEASE_RESOURCE_MISSING") return null;
+    throw error;
+  }
+  const entries = await readdir(directory, { withFileTypes: true }).catch(() => {
+    throw contentError("RELEASE_RESOURCE_MISSING");
+  });
+  const versions = entries.filter((entry) => entry.isDirectory() && !entry.isSymbolicLink()).map(({ name }) => name).sort();
+  if (versions.length === 0 && optional) return null;
+  if (versions.length !== 1 || !safeReleaseId(versions[0])) throw contentError("RELEASE_VERSION_REFERENCE_INVALID");
+  return versions[0];
 }
 
 function validateHistory(rows) {
@@ -147,9 +177,9 @@ function freezeCatalogs(catalogs) {
   })])));
 }
 
-async function loadReleaseTables(sourceDir, row) {
+async function loadTables(sourceDir, row, definitions) {
   const result = {};
-  for (const [name, topDir, versionField, fileName] of TABLES) {
+  for (const [name, topDir, versionField, fileName] of definitions) {
     const version = row[versionField];
     if (!safeReleaseId(version)) throw contentError("RELEASE_VERSION_REFERENCE_INVALID");
     result[name] = await loadNamedTable(sourceDir, [topDir, version], fileName);
@@ -157,7 +187,7 @@ async function loadReleaseTables(sourceDir, row) {
   return result;
 }
 
-function compileCatalogs(catalogs, row) {
+function compileCoreCatalogs(catalogs, row) {
   try {
     const get = (name) => catalogs[name].rows;
     const diagnosis = compileDiagnosisContent({
@@ -166,11 +196,29 @@ function compileCatalogs(catalogs, row) {
     const result = compileResultContent({
       profileRows: get("profileRows"), profileFactorRows: get("profileFactorRows"), textRows: get("textRows"), textEvidenceRows: get("textEvidenceRows"), evidenceRows: get("evidenceRows"), evidenceClaimRows: get("evidenceClaimRows"), titleRuleVersion: row.title_rule_version, resultTextVersion: row.result_text_version,
     });
-    const presentation = compilePresentationContent({
-      sceneRows: get("sceneRows"), paletteRows: get("paletteRows"), paletteUsageRows: get("paletteUsageRows"), fragranceRows: get("fragranceRows"), selectorRows: get("selectorRows"), selectorPaletteRows: get("selectorPaletteRows"), selectorFragranceRows: get("selectorFragranceRows"), titleProfiles: result.titleProfiles,
-    }, row.presentation_definition_version);
-    const characters = compileCharacterContent({ rows: get("characterRows"), titleProfiles: result.titleProfiles }, row.character_manifest_version);
-    return { diagnosis, result, presentation, characters };
+    return { diagnosis, result };
+  } catch (error) {
+    if (error instanceof ContentError) throw error;
+    throw contentError("RELEASE_VERSION_REFERENCE_INVALID", "コンテンツの版参照が不正です。");
+  }
+}
+
+function compilePresentationCatalog(catalogs, row, titleProfiles) {
+  const get = (name) => catalogs[name].rows;
+  return compilePresentationContent({
+    sceneRows: get("sceneRows"), paletteRows: get("paletteRows"), paletteUsageRows: get("paletteUsageRows"), fragranceRows: get("fragranceRows"), selectorRows: get("selectorRows"), selectorPaletteRows: get("selectorPaletteRows"), selectorFragranceRows: get("selectorFragranceRows"), titleProfiles,
+  }, row.presentation_definition_version);
+}
+
+function compileCharacterCatalog(catalogs, row, titleProfiles) {
+  return compileCharacterContent({ rows: catalogs.characterRows.rows, titleProfiles }, row.character_manifest_version);
+}
+
+function compileOptionalCatalogs(catalogs, row, core) {
+  try {
+    const presentation = compilePresentationCatalog(catalogs, row, core.result.titleProfiles);
+    const characters = compileCharacterCatalog(catalogs, row, core.result.titleProfiles);
+    return { ...core, presentation, characters };
   } catch (error) {
     if (error instanceof ContentError) throw error;
     throw contentError("RELEASE_VERSION_REFERENCE_INVALID", "コンテンツの版参照が不正です。");
@@ -190,13 +238,60 @@ async function loadBaseCatalogs(sourceDir) {
 export async function validateAuthoringTree({ sourceDir }) {
   const base = await loadBaseCatalogs(sourceDir);
   const catalogs = { releaseManifest: base.releaseManifest, releaseHistory: base.releaseHistory, approvals: base.approvals };
+  const extraWarnings = [];
+  let release;
   if (base.releaseManifest.rows.length === 1) {
-    const release = base.releaseManifest.rows[0];
-    Object.assign(catalogs, await loadReleaseTables(sourceDir, release));
-    compileCatalogs(catalogs, release);
+    release = { ...base.releaseManifest.rows[0] };
+  } else {
+    release = {
+      diagnostic_definition_version: await discoverVersion(sourceDir, "diagnoses"),
+      question_version: await discoverVersion(sourceDir, "questions"),
+      title_rule_version: await discoverVersion(sourceDir, "titles"),
+      result_text_version: await discoverVersion(sourceDir, "result-texts"),
+      result_evidence_version: await discoverVersion(sourceDir, "evidence"),
+    };
+  }
+  Object.assign(catalogs, await loadTables(sourceDir, release, CORE_TABLES));
+  const core = compileCoreCatalogs(catalogs, release);
+  if (base.releaseManifest.rows.length === 1) assertReleaseVersionReferences(catalogs, core, release);
+  if (base.releaseManifest.rows.length === 0) {
+    extraWarnings.push({ sourceName: "releases/release-manifest.csv", lineNumber: 1, code: "RELEASE_NOT_SELECTED", message: "公開するリリースが選択されていません。" });
+  }
+  const optionalVersions = {
+    presentation_definition_version: release.presentation_definition_version ??
+      await discoverVersion(sourceDir, "presentation", { optional: true }),
+    character_manifest_version: release.character_manifest_version ??
+      await discoverVersion(sourceDir, "characters", { optional: true }),
+  };
+  for (const [field, code, sourceName, definitions, compile] of [
+    ["presentation_definition_version", "PRESENTATION_CATALOG_PENDING", "presentation", PRESENTATION_TABLES, compilePresentationCatalog],
+    ["character_manifest_version", "CHARACTER_CATALOG_PENDING", "characters", CHARACTER_TABLES, compileCharacterCatalog],
+  ]) {
+    if (typeof optionalVersions[field] === "string") {
+      try {
+        await safeSourcePath(sourceDir, [sourceName, optionalVersions[field]]);
+      } catch (error) {
+        if (!(error instanceof ContentError) || error.code !== "RELEASE_RESOURCE_MISSING" ||
+          (base.releaseManifest.rows.length === 1 && release.status === "approved")) throw error;
+        optionalVersions[field] = null;
+      }
+    }
+    if (optionalVersions[field] === null || optionalVersions[field] === undefined) {
+      if (base.releaseManifest.rows.length === 1 && release.status === "approved") throw contentError("RELEASE_RESOURCE_MISSING");
+      extraWarnings.push({ sourceName, code, message: "公開用カタログは準備中です。" });
+    } else {
+      release[field] = optionalVersions[field];
+      Object.assign(catalogs, await loadTables(sourceDir, release, definitions));
+      try {
+        compile(catalogs, release, core.result.titleProfiles);
+      } catch (error) {
+        if (error instanceof ContentError) throw error;
+        throw contentError("RELEASE_VERSION_REFERENCE_INVALID", "コンテンツの版参照が不正です。");
+      }
+    }
   }
   const frozen = freezeCatalogs(catalogs);
-  return Object.freeze({ catalogs: frozen, warnings: warningRows(frozen) });
+  return Object.freeze({ catalogs: frozen, warnings: Object.freeze([...warningRows(frozen), ...extraWarnings.map(Object.freeze)]) });
 }
 
 function sameRelease(left, right) {
@@ -212,7 +307,9 @@ function assertApprovedRows(catalogs) {
 
 function assertReleaseVersionReferences(catalogs, compiled, release) {
   const diagnostic = compiled.diagnosis.diagnostic;
-  if (diagnostic.diagnosisId !== release.diagnosis_id ||
+  const diagnosisVersionRows = ["diagnosisRows", "sourceRows", "limitationRows", "factorRows"].flatMap((name) => catalogs[name].rows);
+  if (!diagnosisVersionRows.every((row) => row.diagnostic_definition_version === release.diagnostic_definition_version) ||
+    diagnostic.diagnosisId !== release.diagnosis_id ||
     diagnostic.scaleVersion !== release.scale_version ||
     diagnostic.questionVersion !== release.question_version ||
     diagnostic.scoringVersion !== release.scoring_version ||
@@ -228,6 +325,18 @@ function resourcePath(releaseId, kind) {
   return `./${releaseId}/${kind}.json`;
 }
 
+function hasExactKeys(value, keys) {
+  return value !== null && typeof value === "object" && !Array.isArray(value) &&
+    Object.getPrototypeOf(value) === Object.prototype &&
+    Object.keys(value).join(",") === keys.join(",");
+}
+
+function hasExactProperties(value, keys) {
+  return value !== null && typeof value === "object" && !Array.isArray(value) &&
+    Object.getPrototypeOf(value) === Object.prototype &&
+    Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
+}
+
 function orderedObject(value) {
   if (value === null || typeof value !== "object") {
     if (typeof value === "number" && !Number.isFinite(value)) throw new TypeError("CANONICAL_JSON_INVALID");
@@ -238,7 +347,7 @@ function orderedObject(value) {
     if (Object.keys(value).length !== value.length) throw new TypeError("CANONICAL_JSON_INVALID");
     return value.map(orderedObject);
   }
-  if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) throw new TypeError("CANONICAL_JSON_INVALID");
+  if (Object.getPrototypeOf(value) !== Object.prototype) throw new TypeError("CANONICAL_JSON_INVALID");
   const keys = Object.keys(value);
   const order = keys.length === MANIFEST_ORDER.length && MANIFEST_ORDER.every((key) => Object.hasOwn(value, key)) ? MANIFEST_ORDER
     : keys.length === VERSION_ORDER.length && VERSION_ORDER.every((key) => Object.hasOwn(value, key)) ? VERSION_ORDER
@@ -251,8 +360,24 @@ export function canonicalJson(value) {
   function guard(item) {
     if (item && typeof item === "object") {
       if (seen.has(item)) throw new TypeError("CANONICAL_JSON_INVALID");
+      if (Object.getOwnPropertySymbols(item).length > 0) throw new TypeError("CANONICAL_JSON_INVALID");
+      const descriptors = Object.getOwnPropertyDescriptors(item);
+      const arrayValue = Array.isArray(item);
+      if (arrayValue) {
+        const expectedKeys = [...Array.from({ length: item.length }, (_, index) => String(index)), "length"];
+        if (Reflect.ownKeys(item).join(",") !== expectedKeys.join(",")) throw new TypeError("CANONICAL_JSON_INVALID");
+      } else if (Object.getPrototypeOf(item) !== Object.prototype) {
+        throw new TypeError("CANONICAL_JSON_INVALID");
+      }
+      for (const [key, descriptor] of Object.entries(descriptors)) {
+        if (!(arrayValue && key === "length") && (!descriptor.enumerable || !Object.hasOwn(descriptor, "value"))) {
+          throw new TypeError("CANONICAL_JSON_INVALID");
+        }
+      }
       seen.add(item);
-      if (Array.isArray(item)) item.forEach(guard); else Object.values(item).forEach(guard);
+      for (const [key, descriptor] of Object.entries(descriptors)) {
+        if (!(arrayValue && key === "length") && Object.hasOwn(descriptor, "value")) guard(descriptor.value);
+      }
       seen.delete(item);
     }
   }
@@ -276,7 +401,9 @@ export async function compileRelease({ sourceDir, releaseId = undefined }) {
   const contentRows = ["profileRows", "profileFactorRows", "textRows", "textEvidenceRows", "evidenceRows", "evidenceClaimRows"].flatMap((name) => validated.catalogs[name].rows);
   assertReleaseEligible({ rows: contentRows, approvals: approvalStatus });
   assertCharacterReleaseEligible(validated.catalogs.characterRows.rows);
-  const compiled = compileCatalogs(validated.catalogs, release);
+  if (!validated.catalogs.sceneRows || !validated.catalogs.characterRows) throw contentError("RELEASE_RESOURCE_MISSING");
+  const core = compileCoreCatalogs(validated.catalogs, release);
+  const compiled = compileOptionalCatalogs(validated.catalogs, release, core);
   assertReleaseVersionReferences(validated.catalogs, compiled, release);
   const values = new Map([
     ["diagnosis", { diagnostic: compiled.diagnosis.diagnostic, factors: compiled.diagnosis.factors }],
@@ -314,12 +441,84 @@ export async function compileRelease({ sourceDir, releaseId = undefined }) {
 function assertCompiled(compiled) {
   if (!compiled || !(compiled.resources instanceof Map) || !compiled.manifest ||
     compiled.resources.size !== RESOURCE_KINDS.length || [...compiled.resources.keys()].join(",") !== RESOURCE_KINDS.join(",") ||
-    !Array.isArray(compiled.manifest.resources) || compiled.manifest.resources.length !== RESOURCE_KINDS.length) throw contentError("RELEASE_RESOURCE_MISSING");
+    !hasExactKeys(compiled.manifest, MANIFEST_ORDER) ||
+    compiled.manifest.schemaVersion !== 1 ||
+    !safeReleaseId(compiled.manifest.releaseId) ||
+    !safeReleaseId(compiled.manifest.appVersion) ||
+    typeof compiled.manifest.diagnosisId !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(compiled.manifest.diagnosisId) ||
+    !hasExactKeys(compiled.manifest.versions, VERSION_ORDER) ||
+    !VERSION_ORDER.every((field) => safeReleaseId(compiled.manifest.versions[field])) ||
+    !Array.isArray(compiled.manifest.resources) ||
+    Object.keys(compiled.manifest.resources).length !== RESOURCE_KINDS.length ||
+    compiled.manifest.resources.length !== RESOURCE_KINDS.length) throw contentError("RELEASE_RESOURCE_MISSING");
+  const parsedResources = new Map();
   for (const [index, kind] of RESOURCE_KINDS.entries()) {
     const resource = compiled.manifest.resources[index];
     const json = compiled.resources.get(kind);
-    if (!resource || resource.kind !== kind || resource.path !== resourcePath(compiled.manifest.releaseId, kind) || typeof json !== "string" || !json.endsWith("\n") ||
+    if (!hasExactKeys(resource, ["kind", "path", "sha256"]) ||
+      resource.kind !== kind || resource.path !== resourcePath(compiled.manifest.releaseId, kind) ||
+      !/^[a-f0-9]{64}$/.test(resource.sha256) || typeof json !== "string" ||
       resource.sha256 !== createHash("sha256").update(json).digest("hex")) throw contentError("RELEASE_RESOURCE_MISSING");
+    let parsed;
+    try {
+      parsed = JSON.parse(json);
+      if (canonicalJson(parsed) !== json) throw new TypeError("NONCANONICAL");
+    } catch {
+      throw contentError("RELEASE_RESOURCE_MISSING");
+    }
+    parsedResources.set(kind, parsed);
+  }
+  try {
+    const diagnosis = parsedResources.get("diagnosis");
+    const questions = parsedResources.get("questions");
+    const titles = parsedResources.get("titles");
+    const textDefinitions = parsedResources.get("result-texts");
+    const evidenceDefinitions = parsedResources.get("evidence");
+    const presentation = parsedResources.get("presentation");
+    const characters = parsedResources.get("characters");
+    if (!hasExactProperties(diagnosis, ["diagnostic", "factors"])) throw new TypeError("INVALID");
+    validateDefinitionStructure({ diagnostic: diagnosis.diagnostic, factors: diagnosis.factors, questions }, {
+      scaleId: diagnosis.diagnostic.scaleId,
+      scaleVersion: compiled.manifest.versions.scaleVersion,
+      questionVersion: compiled.manifest.versions.questionVersion,
+      scoringVersion: compiled.manifest.versions.scoringVersion,
+      resultTextVersion: compiled.manifest.versions.resultTextVersion,
+      titleRuleVersion: compiled.manifest.versions.titleRuleVersion,
+    });
+    if (diagnosis.diagnostic.diagnosisId !== compiled.manifest.diagnosisId) throw new TypeError("INVALID");
+    validateTitleProfileDefinitions(titles);
+    validateResultContentDefinitions({
+      evidenceDefinitions,
+      textDefinitions,
+      titleProfiles: titles,
+      resultTextVersion: compiled.manifest.versions.resultTextVersion,
+    });
+    if (!evidenceDefinitions.every(({ version }) => version === compiled.manifest.versions.resultEvidenceVersion)) throw new TypeError("INVALID");
+    validatePresentationDefinitionSet(presentation, {
+      titleProfiles: titles,
+      expectedVersion: compiled.manifest.versions.presentationDefinitionVersion,
+    });
+    const entryFields = ["characterId", "assetVersion", "imagePath", "width", "height", "alt", "integrity"];
+    if (!hasExactProperties(characters, ["characterManifestVersion", "entries"]) ||
+      characters.characterManifestVersion !== compiled.manifest.versions.characterManifestVersion ||
+      !Array.isArray(characters.entries) || characters.entries.length !== 51 ||
+      Object.keys(characters.entries).length !== characters.entries.length ||
+      !characters.entries.every((entry) => hasExactProperties(entry, entryFields) &&
+        typeof entry.characterId === "string" && entry.characterId !== "" &&
+        safeReleaseId(entry.assetVersion) &&
+        typeof entry.imagePath === "string" && entry.imagePath.endsWith(".webp") &&
+        !entry.imagePath.startsWith("/") && !entry.imagePath.includes("\\") &&
+        !entry.imagePath.includes("?") && !entry.imagePath.includes("#") &&
+        !/^[A-Za-z][A-Za-z0-9+.-]*:/.test(entry.imagePath) &&
+        !entry.imagePath.split("/").some((segment) => segment === "" || segment === "..") &&
+        typeof entry.alt === "string" && entry.alt !== "" && !CHARACTER_ALT_CLAIM_PATTERN.test(entry.alt) &&
+        /^sha256-[A-Za-z0-9+/]{43}=$/.test(entry.integrity) &&
+        entry.width === 1024 && entry.height === 1024) ||
+      new Set(characters.entries.map(({ characterId }) => characterId)).size !== 51 ||
+      new Set(characters.entries.map(({ imagePath }) => imagePath)).size !== 51 ||
+      !characters.entries.every((entry, index) => entry.characterId === titles[index].characterId)) throw new TypeError("INVALID");
+  } catch {
+    throw contentError("RELEASE_RESOURCE_MISSING");
   }
 }
 
@@ -349,8 +548,9 @@ async function verifyTree(directory, compiled) {
   }
 }
 
-export async function writeReleaseAtomically({ outputDir, allowedParentDir, compiled }) {
+export async function writeReleaseAtomically({ outputDir, allowedParentDir, compiled, _fileOps = undefined }) {
   assertCompiled(compiled);
+  const renameOperation = _fileOps?.rename ?? rename;
   const { output, parent } = await assertSafeOutputPath(outputDir, allowedParentDir);
   const backup = `${output}.previous`;
   if (await exists(backup)) throw contentError("CONTENT_BACKUP_ALREADY_EXISTS");
@@ -362,12 +562,17 @@ export async function writeReleaseAtomically({ outputDir, allowedParentDir, comp
     await mkdir(resourceDir);
     await Promise.all(RESOURCE_KINDS.map((kind) => writeFile(path.join(resourceDir, `${kind}.json`), compiled.resources.get(kind), "utf8")));
     await verifyTree(temp, compiled);
-    if (await exists(output)) { await rename(output, backup); movedPrevious = true; }
-    await rename(temp, output);
+    if (await exists(output)) { await renameOperation(output, backup); movedPrevious = true; }
+    await renameOperation(temp, output);
     if (movedPrevious) await rm(backup, { recursive: true, force: false });
   } catch (error) {
-    if (movedPrevious && !await exists(output) && await exists(backup)) await rename(backup, output);
-    if (await exists(temp)) await rm(temp, { recursive: true, force: true });
-    throw error;
+    try {
+      if (movedPrevious && !await exists(output) && await exists(backup)) await renameOperation(backup, output);
+      if (await exists(temp)) await rm(temp, { recursive: true, force: true });
+    } catch {
+      throw contentError("CONTENT_OUTPUT_WRITE_FAILED", "公開用ファイルを書き込めませんでした。");
+    }
+    if (error instanceof ContentError) throw error;
+    throw contentError("CONTENT_OUTPUT_WRITE_FAILED", "公開用ファイルを書き込めませんでした。");
   }
 }
