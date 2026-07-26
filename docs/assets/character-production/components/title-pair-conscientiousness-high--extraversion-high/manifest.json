@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "packageVersion": "q012-components-1.0.0",
+  "titleId": "title-pair-conscientiousness-high--extraversion-high",
+  "characterId": "character-pair-conscientiousness-high--extraversion-high",
+  "createdAt": "2026-07-27",
+  "sourceCandidatePath": "docs/assets/character-production/review-candidates/character-pair-conscientiousness-high--extraversion-high-candidate.png",
+  "components": [
+    {
+      "componentId": "cat-base",
+      "version": "v1",
+      "path": "docs/assets/character-production/components/title-pair-conscientiousness-high--extraversion-high/cat-base-v1.png",
+      "usage": "pose-master",
+      "width": 1057,
+      "height": 1018,
+      "byteLength": 1365952,
+      "sha256": "9330ea1e07fe84ef61e7dc74d48d14f50fb4291d3cc972a30c9f0ddfe9a71242"
+    },
+    {
+      "componentId": "wall-clock",
+      "version": "v1",
+      "path": "docs/assets/character-production/components/title-pair-conscientiousness-high--extraversion-high/wall-clock-v1.png",
+      "usage": "direct-overlay",
+      "width": 876,
+      "height": 1073,
+      "byteLength": 1053972,
+      "sha256": "5b60977c9b9ce562411d30bc1bb67e27804c669faa2829e7caf986bfc4f1f8c0"
+    },
+    {
+      "componentId": "invitation-card",
+      "version": "v1",
+      "path": "docs/assets/character-production/components/title-pair-conscientiousness-high--extraversion-high/invitation-card-v1.png",
+      "usage": "direct-overlay",
+      "width": 880,
+      "height": 1107,
+      "byteLength": 1320819,
+      "sha256": "06fb14c38dc0d975ed4662471e5317b7661adb6d5a0b698545361cfe6193a396"
+    },
+    {
+      "componentId": "collar",
+      "version": "v1",
+      "path": "docs/assets/character-production/components/title-pair-conscientiousness-high--extraversion-high/collar-v1.png",
+      "usage": "style-reference",
+      "width": 1070,
+      "height": 644,
+      "byteLength": 977055,
+      "sha256": "32cbf115338aa951504a629c8d5130f86f8b3733457bb9e534840ed20b7ffda3"
+    }
+  ]
+}
