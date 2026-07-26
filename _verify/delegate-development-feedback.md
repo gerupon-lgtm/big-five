@@ -158,8 +158,9 @@
 
 ## 2026-07-26 CSV foundation実行での修正指示
 
-- Windowsのlinked worktreeかつ日本語を含む絶対パスで、既定の` sdd-workspace` helperがGit Bash内の`C:/...`をPOSIX absolute pathへ変換できず、`mkdir: cannot create directory 'C:/Users/user': Permission denied`で失敗した。明示`/c/Users/...` pathを`task-brief`と`review-package`へ渡す回避は成功した。
+- Windowsのlinked worktreeかつ日本語を含む絶対パスで、既定の`sdd-workspace` helperがGit Bash内の`C:/...`をPOSIX absolute pathへ変換できず、`mkdir: cannot create directory 'C:/Users/user': Permission denied`で失敗した。明示`/c/Users/...` pathを`task-brief`と`review-package`へ渡す回避は成功した。
 - repository不良ではなくCodex adapterとPOSIX helperのpath境界不具合として記録する。candidateではdrive-letter変換、MSYS/MINGW検出、PowerShell fallback、明示output pathを実装し、日本語linked worktreeとLinux/macOSの双方で回帰比較する。
+- Task 5bの`review-package`は明示output pathでdiff本体を正常生成した一方、最小PATHのGit Bashで`wc`と`tr`が見つからず、空のbyte数を表示して終了コード0を返した。candidateではcoreutils統計を任意処理へ分離し、output存在・非0byteを必須確認し、不完全な成功表示を禁止する。
 - 詳細な再現条件、修正指示、合格条件は`_verify/skill-evals/delegate-development/reports/2026-07-26-csv-foundation-correction-instructions.md`を正とする。インストール済みskillは比較・ユーザー採用承認前に直接変更しない。
 - Q-006 Task 7レビューの効果: focused・full・静的検証がすべて成功した文書同期でも、独立横断レビューがQ-006のopen/resolved二重掲載、Markdown表破損、`scaleVersion`と`scaleId`の意味矛盾、composer/snapshot責務誤記、F-002 traceability欠落、contract testの節境界不足を検出した。文書は単語存在テストだけでなく、表行・heading・責務対応を別担当が意味監査する必要がある。
 - Q-006 Task 7修正評価: Fix 1で8指摘中7件を解消したが、実装順T-005行だけF-002が残り、限定再レビューが検出した。Fix 2は2ファイル・1行契約へ縮小し、最終再レビューでCritical・Important・Minor 0へ収束した。大量文書の初回修正後も、元指摘ごとのチェックリストを機械的に閉じる再レビューが有効だった。

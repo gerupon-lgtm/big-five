@@ -73,3 +73,29 @@ repository不良ではなく、Windows pathをPOSIX helperへ渡すadapter境界
 これは実行事実に基づくcandidate修正指示であり、インストール済みskillへの
 直接変更ではない。現行版とcandidateを同じtask・モデル・権限・停止条件で
 比較し、Windows回帰と非Windows回帰の両方が通った後にだけ配布候補とする。
+
+## 追加確認: review-packageの暗黙coreutils依存
+
+Task 5bの再レビューpackageを、Windowsの
+`C:\Program Files\Git\bin\bash.exe`から明示output path付きで生成したところ、
+diffファイル本体は正常に生成されたが、完了表示で次が発生した。
+
+```text
+review-package: line 46: wc: command not found
+review-package: line 46: tr: command not found
+wrote ...: 1 commit(s),  bytes
+```
+
+helperは終了コード0を返したため、呼出側は失敗を検知できず、出力バイト数だけが
+欠落した。この環境ではGitとbashは利用可能でも、直接起動したbashの`PATH`に
+coreutilsが入るとは限らない。
+
+candidateでは次を満たすこと。
+
+1. `wc`と`tr`を必須処理にしない。存在確認後に利用し、なければcommit数と
+   output pathだけを表示して正常終了する。
+2. 必須のpackage生成と任意の統計表示を分離する。package生成に失敗した場合だけ
+   非0、統計取得だけ失敗した場合は明示したwarningまたは統計省略とする。
+3. 成功時もoutput fileの存在と非0byteをhelper内部で確認する。
+4. Windows Git Bashの最小`PATH`、通常Git Bash、Linux/macOSで回帰させる。
+5. `wc`/`tr`がない環境で、` bytes`のような不完全な成功メッセージを出さない。
