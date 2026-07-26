@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "fileName": "release-history.csv",
+  "columns": [
+    { "name": "release_sequence", "type": "integer", "minimum": 1, "required": true },
+    { "name": "release_id", "type": "version", "required": true },
+    { "name": "app_version", "type": "version", "required": true },
+    { "name": "diagnosis_id", "type": "id", "required": true },
+    { "name": "diagnostic_definition_version", "type": "version", "required": true },
+    { "name": "scale_version", "type": "version", "required": true },
+    { "name": "question_version", "type": "version", "required": true },
+    { "name": "scoring_version", "type": "version", "required": true },
+    { "name": "result_evidence_version", "type": "version", "required": true },
+    { "name": "result_text_version", "type": "version", "required": true },
+    { "name": "title_rule_version", "type": "version", "required": true },
+    { "name": "character_manifest_version", "type": "version", "required": true },
+    { "name": "presentation_definition_version", "type": "version", "required": true },
+    { "name": "card_template_version", "type": "version", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

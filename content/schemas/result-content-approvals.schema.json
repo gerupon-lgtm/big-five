@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "fileName": "result-content-approvals.csv",
+  "columns": [
+    { "name": "gate_id", "type": "reference", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true },
+    { "name": "approved_by", "type": "text", "required": false },
+    { "name": "approved_on", "type": "text", "required": false },
+    { "name": "note", "type": "text", "required": false }
+  ]
+}
