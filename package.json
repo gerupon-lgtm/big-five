@@ -9,7 +9,12 @@
     "test:formal": "node --test app/tests/*.test.js",
     "check": "node scripts/check-static.mjs",
     "character:ledger": "node scripts/characters/validate-ledger.mjs",
+    "character:convert": "node scripts/characters/convert-characters.mjs",
+    "character:inspect": "node scripts/characters/inspect-character.mjs",
     "content:validate": "node scripts/content/validate-content.mjs --source content/source",
     "content:build": "node scripts/content/build-content.mjs --source content/source --output app/content --allowed-parent app"
+  },
+  "devDependencies": {
+    "sharp": "0.35.3"
   }
 }

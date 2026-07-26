@@ -107,6 +107,8 @@ rejectionReason, notes
 
 `productionStatus` is one of `brief`, `generated`, `art-approved`, `converted`, `technical-approved`, `released`. Output paths, hashes, dimensions, bytes, encoder data, and approval identity may be `null` until their owning stage; `validateLedgerScope` requires them at the corresponding gate.
 
+At `technical-approved`, `technicalReviewStatus` is exactly `approved` and `accessibilityReviewStatus` remains exactly `null`. The `release-assets` gate requires all 51 rows at that stage. Only after that gate passes may the release accessibility gate set every row to `released`, set `accessibilityReviewStatus` to `approved`, and replace `approvedBy` and `approvedAt` with the release approver and approval time.
+
 ---
 
 ### Task 1: Ledger Contract and 51-Row Seed
@@ -493,7 +495,7 @@ Expected: three valid 1024×1024 transparent WebP reports. Files over 250,000 by
 
 Compare PNG and WebP at 100%, 360px, and on light, mid-tone, and dark checker-backed cards. Approve only if watercolor edges, whiskers, eye detail, coat identity, prop identity, transparency, and full-body margins survive. If quality 82 is rejected, stop this plan and revise the approved T-005 design before choosing a different shared setting.
 
-Record Sharp and libvips versions, the exact settings object, delivery hash, byte length, dimensions, technical approval, accessibility approval, approver, and time in each pilot row. Set pilot rows to `technical-approved`.
+Record Sharp and libvips versions, the exact settings object, delivery hash, byte length, dimensions, technical approval, approver, and time in each pilot row. Set `technicalReviewStatus` to `approved`, keep `accessibilityReviewStatus` exactly `null`, and set the pilot rows to `technical-approved`.
 
 - [ ] **Step 4: Add the pilot fixture and verify the gate**
 
@@ -543,7 +545,7 @@ Run:
 node scripts/characters/validate-ledger.mjs baseline11
 ```
 
-Expected: FAIL with `CHARACTER_LEDGER_INVALID` naming the first unreleased single-factor row.
+Expected: FAIL with `CHARACTER_LEDGER_INVALID` naming the first single-factor row that is not yet `technical-approved`.
 
 - [ ] **Step 2: Generate and art-review rows 4–11**
 
@@ -718,7 +720,7 @@ git commit -m "feat: add third ten pair characters"
 **Interfaces:**
 
 - Consumes: catalog rows 42–51 and frozen settings.
-- Produces: all 51 approved masters and delivery assets.
+- Produces: all 51 approved masters and delivery assets, with all 51 ledger rows released after the pre-release asset and accessibility gates.
 
 - [ ] **Step 1: Run `node scripts/characters/validate-ledger.mjs pair04`**
 
@@ -732,9 +734,11 @@ For interpersonal scenes, represent the second party only through approved props
 
 Expected: ten valid reports and no changed encoder setting.
 
-- [ ] **Step 4: Review the full 51-character sheet and run the release asset gate**
+- [ ] **Step 4: Review the full 51-character sheet and run the pre-release asset gate**
 
 Require zero missing cats, repeated full compositions, anatomy failures, cropped parts, baked backgrounds, text, three-prop rows, or value stereotypes.
+
+Before running this gate, all 51 rows must have `productionStatus` set to `technical-approved`, `technicalReviewStatus` set to `approved`, and `accessibilityReviewStatus` kept exactly `null`.
 
 Run:
 
@@ -751,7 +755,25 @@ inspected 51 character assets
 invalid 0
 ```
 
-- [ ] **Step 5: Commit only batch 4 asset paths and ledger**
+- [ ] **Step 5: Complete the release accessibility gate**
+
+Only after the `release-assets` gate passes, human-review all 51 rows for accurate non-empty alt text, a usable visual alternative when the image is unavailable, and one-character delivery with exactly one approved cat asset per result.
+
+For every approved row, set `productionStatus` to `released`, set `accessibilityReviewStatus` to `approved`, and replace `approvedBy` and `approvedAt` with the release approver and release approval time.
+
+Run:
+
+```powershell
+node scripts/characters/validate-ledger.mjs release
+```
+
+Expected:
+
+```text
+character ledger release: PASS
+```
+
+- [ ] **Step 6: Commit only batch 4 asset paths and ledger**
 
 ```powershell
 git add -- docs/assets/character-production/ledger.json docs/assets/character-production/source-png app/assets/characters
@@ -777,6 +799,8 @@ git commit -m "feat: complete all fifty-one character assets"
 
 - Consumes: 51 released ledger rows, `TitleProfileDefinitions`, and `appMeta.characterManifestVersion`.
 - Produces: `generateCharacterManifest`, `validateCharacterManifest`, and `resolveCharacterEntry`.
+
+Task 10 must not begin until the Task 9 release accessibility gate has updated all 51 rows and `node scripts/characters/validate-ledger.mjs release` has passed.
 
 - [ ] **Step 1: Write the failing release manifest tests**
 
