@@ -38,7 +38,7 @@
 - Q-006の実装・独立レビューは完了済み。
 - Q-006の人手Content Approvalは引き続きpending。
 - handoff作成時はS-003/S-004結果画面、本番完答caller、ResultSnapshot保存、旧`progress-storage` schema統合が未実装だった。再開後にResultSnapshot保存・履歴・削除・比較基盤、S-006/S-007初期画面、保存済みsnapshotの独立S-003/S-004表示、S-002の独立表示層まで実装した。router・state・storageへのS-002接続、完答caller、T-007共有が残っている。
-- Q-012画像、Q-013演出データ、T-005 UIは各計画と人手ゲートを維持する。
+- Q-012は51行制作台帳契約とbrief-stage実台帳まで実装・review済み。3体の透明PNGパイロットは生成・alpha確認済みだが、人手art/anatomy承認前なのでledger更新・commit・manifest登録を行っていない。Q-013演出データ、T-005 UIは各計画と人手ゲートを維持する。
 
 ## forward-testで検出した実装前blocker（再開後に解消）
 
@@ -61,6 +61,6 @@ ResultSnapshot永続化へ進む前に、次を正典・実装・test間で解�
 
 1. 新しい開発チャットで、インストール済み`delegate-development`の`SKILL.md`ハッシュが配布記録と一致することを確認する。
 2. `docs/tasks.md`、`docs/data-model.md`、`docs/processing-design.md`、Q-012/Q-013/T-005計画を読む。
-3. Q-012の3体パイロットを制作・人手承認し、production manifest entryの`assetVersion`を確定する。その後、完答callerとrouter・state・storageへのS-002接続を実装する。Q-012/Q-013の未確定データへ触れる作業は入力品質ゲートで委譲せず、各制作・承認後に開始する。
+3. 生成済みQ-012 3体パイロットを人手art/anatomy承認し、承認結果を制作台帳へ記録する。承認後にWebP変換・manifest entryの`assetVersion`を確定し、完答callerとrouter・state・storageへのS-002接続を実装する。Q-012/Q-013の未確定データへ触れる作業は入力品質ゲートで委譲せず、各制作・承認後に開始する。
 4. 委譲する場合は、共有契約表、レビュー終了条件、約60秒の進捗通知、人手承認分離を使う。
 5. 3〜5タスク後に、差し戻し、監督修正、スコープ外変更、進捗通知を再評価する。

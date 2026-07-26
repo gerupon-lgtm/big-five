@@ -219,6 +219,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 画面: 保存済みS-003/S-004、5軸レーダー、境界・僅差補足、Canvas・猫画像未提供時のテキストフォールバックは実装済み。完答直後の接続、character loader、色香りは後続T-005統合。
 - 永続化: 13フィールドproduction ResultSnapshot validatorと`saveResultSnapshot`は実装済み。回答完答からの本番callerは未実装で、後続T-005/S-002統合で接続する。
 - live結果接続ゲート（2026-07-26）: `ResultSnapshot.characterAssetVersion`は選択されたQ-012 manifest entryの`assetVersion`であり、`VersionTuple.characterManifestVersion`の流用や仮値を禁止する。production manifest entryが未作成の現状ではvalid snapshotを正典どおり生成できないため、S-002表示層だけを先行し、完答callerとlive S-003/S-004接続はQ-012パイロット承認・manifest作成後に開始する。Q-013の初期`selectedPaletteId`は該当TitleProfileの`defaultPaletteId`を使えるが、代替色・香りUIは実データ承認まで保留する。
+- Q-012制作台帳Task 1（2026-07-26）: 31フィールドexact schema、51称号とのtitleId・characterId・順序一致、1〜2小物、stage別production/review state、canonical source/delivery path、SHA-256、UTC approval timeを検証する制作台帳契約を実装した。seedは`docs/title-character-catalog.md`の2つの番号表をTitleProfileへjoinし、既存ledgerを`--replace`なしで上書きしない。初回reviewのImportant 1件をfix round 1で解消し、brief行の将来証跡はnull、到達stageの必須証跡は非空かつshape一致を双方向に保証した。実台帳51行は全件`brief`で、hash・承認者・承認時刻・画像版を仮置きしていない。
 - 永続化契約解消（2026-07-26）: `resultId`はRFC 4122 UUID形状へ統一する。`preview20`保存では追加回答用ProgressRecordを保持し、`detail50`完答では履歴保存の成否にかかわらず生回答を破棄する。保存成功時はsnapshot追加と進捗削除を同一StorageEnvelope書込みで行い、保存失敗時も進捗削除をbest-effortで試みる。
 - 検証: `app/tests/result-evidence-definitions.test.js`、`app/tests/result-content-definitions.test.js`、`app/tests/result-composer.test.js`、`app/tests/result-snapshot.test.js`。リポジトリ同期は`app/tests/project-contract.test.js`で検証する。
 
@@ -259,7 +260,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 未実装: 回答完答からの本番caller、保存済みpreviewから追加30問へ戻るS-002接続、T-007共有、Q-012猫画像loader、Q-013色香り。S-003/S-004と履歴カードからの独立画面遷移、レーダー・失敗時テキスト表示は実装済み。
 - レビュー: `delegate-development`で履歴・削除と比較を非重複委譲し、独立レビューを実施した。個別削除が非対象の破損データまでsanitizeするP1を1回差し戻し、対象1件以外を保持する修正後の再レビューは指摘なし。
 - 画面レビュー: `implement`／`tdd`で公開シームをred→green実装し、`code-review`のStandards/Spec 2軸レビューを実施した。空履歴の全削除不能、比較選択取消不能、ID不足URL、依存方向、表示copy重複を修正した。独立結果画面遷移だけはT-005依存として明示保留する。
-- 検証: 履歴・比較・保存済み結果画面・文書契約の集中36件、現行全359件、`npm.cmd run check`、`git diff --check`成功。
+- 検証: 履歴・比較・保存済み結果画面・文書契約の集中36件、現行全363件、`npm.cmd run check`、`git diff --check`成功。
 
 ### T-007 共有カード・保存・コピー
 

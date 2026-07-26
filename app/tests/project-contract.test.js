@@ -210,7 +210,7 @@ test("T-006 documents implemented history, deletion, and comparison seams", asyn
     "履歴0件",
     "比較選択",
     "P1",
-    "全359件",
+    "全363件",
   ], documentPaths.tasks);
   assert.doesNotMatch(historyScreen, /from\s+["']\.\.\/data\//);
   assert.doesNotMatch(comparisonScreen, /from\s+["']\.\.\/data\//);
