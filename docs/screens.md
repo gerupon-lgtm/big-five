@@ -16,6 +16,12 @@
 - 直接アクセス時は端末保存と現在状態を検証し、安全な画面へ遷移する。
 - ブラウザバックだけに依存せず、画面内に明示的な戻る・中断・破棄導線を用意する。
 
+### 1.1 コンテンツ読込の現在地
+
+Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は実装済みで、人は`content/source/`のCSVだけを編集する。3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testがあるが、画面はまだ既存ES Modulesをruntime compatibility authorityとして使い、`app/content/` JSONをfetchしない。
+
+初期件数は50問、固定20問、51称号、237結果文、6根拠である。E-0のみ`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`で、Q-006/Q-012/Q-013はrelease gateとして残る。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
+
 ## 2. 画面一覧
 
 | 画面ID | ルート | 名称 | 対応機能ID |

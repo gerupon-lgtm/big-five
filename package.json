@@ -7,6 +7,8 @@
     "prototype": "node prototype-big-five/prototype-server.mjs",
     "test": "node --test app/tests/*.test.js prototype-big-five/tests/*.test.js",
     "test:formal": "node --test app/tests/*.test.js",
-    "check": "node scripts/check-static.mjs"
+    "check": "node scripts/check-static.mjs",
+    "content:validate": "node scripts/content/validate-content.mjs --source content/source",
+    "content:build": "node scripts/content/build-content.mjs --source content/source --output app/content --allowed-parent app"
   }
 }

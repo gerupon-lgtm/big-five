@@ -1,0 +1,143 @@
+import assert from "node:assert/strict";
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
+
+import { inspectArtifact } from "../../scripts/check-static.mjs";
+
+const ROOT = fileURLToPath(new URL("../..", import.meta.url));
+const EVIDENCE_URL = "https://ipip.ori.org/JapaneseBig-FiveFactorMarkers.htm";
+
+async function withArtifactFixture(entries, callback) {
+  const rootDir = await mkdtemp(path.join(os.tmpdir(), "big-five-artifact-"));
+  try {
+    for (const [relativePath, contents] of Object.entries(entries)) {
+      const filePath = path.join(rootDir, relativePath);
+      await mkdir(path.dirname(filePath), { recursive: true });
+      await writeFile(filePath, contents, "utf8");
+    }
+    await callback(rootDir);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+}
+
+async function assertArtifactRejected(entries, pattern) {
+  await withArtifactFixture(entries, async (rootDir) => {
+    assert.throws(() => inspectArtifact(rootDir), pattern);
+  });
+}
+
+test("content commands are explicit and generated JSON is ignored", async () => {
+  const packageJson = JSON.parse(await readFile(path.join(ROOT, "package.json"), "utf8"));
+  const gitignore = await readFile(path.join(ROOT, ".gitignore"), "utf8");
+
+  assert.equal(
+    packageJson.scripts["content:validate"],
+    "node scripts/content/validate-content.mjs --source content/source",
+  );
+  assert.equal(
+    packageJson.scripts["content:build"],
+    "node scripts/content/build-content.mjs --source content/source --output app/content --allowed-parent app",
+  );
+  assert.match(gitignore, /^app\/content\/$/m);
+  assert.doesNotMatch(gitignore, /^content\/source\/$/m);
+});
+
+test("artifact inspector accepts generated JSON with an approved evidence locator", async () => {
+  await withArtifactFixture({
+    "diagnosis.json": JSON.stringify({
+      sources: [{ url: EVIDENCE_URL }],
+      evidence: [{ locator: "docs/requirements/2026-07-20-big-five-self-understanding-requirements.md#831" }],
+      previewAllowed: false,
+      copy: "レビュー前の表示ではありません。",
+    }),
+    "nested/runtime.json": JSON.stringify({ status: "approved" }),
+    "readme.txt": "runtime artifact",
+  }, async (rootDir) => {
+    assert.deepEqual(inspectArtifact(rootDir), { checkedFiles: 3, checkedJsonFiles: 2 });
+  });
+});
+
+test("artifact inspector rejects prohibited artifact file types and authoring paths", async () => {
+  await assertArtifactRejected({ "source.csv": "id,status" }, /ARTIFACT_INSPECTION_FAILED.*\.csv/);
+  await assertArtifactRejected({ "notes.md": "draft notes" }, /ARTIFACT_INSPECTION_FAILED.*\.md/);
+  await assertArtifactRejected({ "bundle.js.map": "{}" }, /ARTIFACT_INSPECTION_FAILED.*\.map/);
+  await assertArtifactRejected({ "content/source/definitions.json": "{}" }, /ARTIFACT_INSPECTION_FAILED.*content.source/);
+});
+
+test("artifact inspector rejects each unapproved authoring status structurally", async () => {
+  for (const status of ["draft", "reviewed", "rejected"]) {
+    await assertArtifactRejected(
+      { "runtime.json": JSON.stringify({ status }) },
+      new RegExp(`ARTIFACT_INSPECTION_FAILED.*${status}`),
+    );
+  }
+});
+
+test("artifact inspector rejects approval metadata and notes structurally", async () => {
+  await assertArtifactRejected(
+    { "runtime.json": JSON.stringify({ approval: { approved_by: "user" } }) },
+    /ARTIFACT_INSPECTION_FAILED.*approval/,
+  );
+  await assertArtifactRejected(
+    { "runtime.json": JSON.stringify({ review_note: "human review" }) },
+    /ARTIFACT_INSPECTION_FAILED.*review_note/,
+  );
+});
+
+test("artifact inspector rejects local paths, credentials, and undisclosed external URLs", async () => {
+  for (const value of ["C:\\private\\artifact.json", "/srv/private/artifact.json", "file:///tmp/artifact.json", "api_token=secret-value", "https://example.invalid/data"]) {
+    await assertArtifactRejected(
+      { "runtime.json": JSON.stringify({ value }) },
+      /ARTIFACT_INSPECTION_FAILED/,
+    );
+  }
+});
+
+test("artifact inspector rejects invalid JSON and symlinks without following them", async (t) => {
+  await assertArtifactRejected({ "runtime.json": "{not json" }, /ARTIFACT_INSPECTION_FAILED.*invalid JSON/);
+
+  const rootDir = await mkdtemp(path.join(os.tmpdir(), "big-five-artifact-symlink-"));
+  const target = path.join(rootDir, "target.json");
+  const link = path.join(rootDir, "link.json");
+  await writeFile(target, "{}", "utf8");
+  try {
+    await symlink(target, link, "file");
+  } catch (error) {
+    if (error?.code === "EPERM") {
+      t.skip("symlink creation is not permitted in this environment");
+      return;
+    }
+    throw error;
+  }
+  try {
+    assert.throws(() => inspectArtifact(rootDir), /ARTIFACT_INSPECTION_FAILED.*symlink/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("canonical documents state the CSV authoring foundation without activation claims", async () => {
+  const paths = [
+    "AGENTS.md",
+    "docs/基本設計サマリ.md",
+    "docs/data-model.md",
+    "docs/processing-design.md",
+    "docs/screens.md",
+    "docs/tasks.md",
+    "docs/content-authoring.md",
+  ];
+  const documents = await Promise.all(paths.map((relativePath) => readFile(path.join(ROOT, relativePath), "utf8")));
+  for (const text of documents) {
+    assert.match(text, /content\/source|CSV/);
+  }
+  const joined = documents.join("\n");
+  assert.match(joined, /Content Approval pending/);
+  assert.match(joined, /connect-src 'none'/);
+  assert.match(joined, /2026-07-26-csv-content-activation-pages\.md/);
+  assert.match(joined, /ES Modules/);
+  assert.doesNotMatch(joined, /runtime JSON loading is complete/i);
+});

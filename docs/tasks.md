@@ -37,6 +37,14 @@
 | NF-05 | 正確性・表現品質 | 結果・説明 | authority fixtures, text rules | 全静的定義 | T-002, T-003, T-005, T-012 | Q-006実装レビュー済み。人手Content Approval pending |
 | NF-06 | 運用・可用性 | - | deploy、監視、切戻し、API health・DB backup | release metadata, beta_* | T-010, T-011 | Q-008/Q-010/Q-011一部待ち |
 
+### CSVコンテンツ作成基盤の実装記録（2026-07-26）
+
+- 対応: Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤。`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。
+- 初期状態: 50問、固定20問、51称号、237結果文、6根拠。E-0は`approved`、E-1〜E-5は`draft`、T-0〜T-4/F-1〜F-5/X-1〜X-2は人手approval metadataなしの`reviewed`。Q-012/Q-013は未作成で、release manifest/historyはヘッダーのみである。
+- 運用: 人はコミット対象のCSVだけを編集し、`app/content/`の生成JSONを手編集・コミットしない。`npm.cmd run content:validate`で検証し、`npm.cmd run content:build`はapproved complete releaseがない現在`RELEASE_NOT_SELECTED`となる。
+- 移行状態: ES Modulesがruntime compatibility authorityで、runtime JSON fetchとPages deploymentは未実装。通常モードの外部通信は0件、CSPは`connect-src 'none'`を維持する。activation後のActions validate/build/deployは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
+- 検証: `node --test app/tests/content-artifact-contract.test.js`、`npm.cmd run content:validate`、`npm.cmd test`、`npm.cmd run check`。Task 6のwarning-order minorは非ブロッキングとして記録し、完了済みfoundationを再開しない。
+
 要件F-001〜F-018に未対応行はない。Q待ちの項目は実装漏れではなく、各タスク開始条件として管理する。
 
 ## 2. 実装順

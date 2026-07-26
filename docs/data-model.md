@@ -17,6 +17,14 @@
 - 過去結果は診断当時の文章・ID・版を保存し、現行定義による自動上書きを行わない。
 - 保存不可・容量不足・部分破損でも、画面上の回答中状態または計算済み結果を維持する。
 
+### 1.1 CSVコンテンツ作成基盤（移行中）
+
+人手編集正典は`content/source/`の用途別・版付きCSVである。診断は`diagnoses/ipip-ja-50-definition-v1`、設問は`questions/ipip-ja-50-question-set-v1`、称号は`titles/title-rule-v1`、結果文は`result-texts/result-text-v1`、根拠は`evidence/result-evidence-v1`に置く。release manifest/historyは`releases/`、Q-006の別承認台帳は`approvals/result-content-approvals.csv`である。
+
+Q-006およびT-005/F-002/F-005/F-006/F-016の作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。初期データは50問、固定20問、51称号、237結果文、6根拠である。E-0は`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`であり、Q-012/Q-013は未作成、release CSVはヘッダーのみである。よってapproved releaseもruntime JSON fetchも存在しない。
+
+現在は既存ES Modulesがruntime compatibility authorityで、`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
+
 ## 2. 静的定義
 
 ### 2.1 AppMeta

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -15,6 +15,34 @@ const REQUIRED_FILES = [
   "app/js/infrastructure/router.js",
   "app/js/presentation/start-screen.js",
 ];
+
+const ALLOWED_EVIDENCE_URLS = new Set([
+  "https://ipip.ori.org/JapaneseBig-FiveFactorMarkers.htm",
+  "https://www.ipip.ori.org/New_IPIP-50-item-scale.htm",
+  "https://doi.org/10.1037/1040-3590.18.2.192",
+  "https://ipip.ori.org/newPermission.htm",
+]);
+const PROHIBITED_ARTIFACT_EXTENSIONS = new Set([".csv", ".md", ".map"]);
+const AUTHORING_METADATA_KEYS = new Set([
+  "approval",
+  "approval_note",
+  "approval_notes",
+  "approval_status",
+  "approved_by",
+  "approved_on",
+  "approver",
+  "review_note",
+  "review_notes",
+  "review_status",
+  "reviewed_by",
+  "reviewed_on",
+  "reviewer",
+  "note",
+  "notes",
+]);
+const CREDENTIAL_KEY = /(?:token|secret|password|credential|api[_-]?key|access[_-]?key|private[_-]?key)/i;
+const CREDENTIAL_VALUE = /(?:token|secret|password|credential|api[_-]?key|access[_-]?key|private[_-]?key)\s*[:=]\s*\S+/i;
+const HTTP_URL = /https?:\/\/[^\s"'<>]+/gi;
 
 function collectJavaScriptFiles(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -32,6 +60,106 @@ function assertContract(condition, message) {
   if (!condition) {
     throw new Error(`STATIC_CHECK_FAILED: ${message}`);
   }
+}
+
+function assertArtifact(condition, message) {
+  if (!condition) {
+    throw new Error(`ARTIFACT_INSPECTION_FAILED: ${message}`);
+  }
+}
+
+function decodeUtf8(filePath) {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(readFileSync(filePath));
+  } catch {
+    throw new Error(`ARTIFACT_INSPECTION_FAILED: invalid UTF-8 in ${path.basename(filePath)}`);
+  }
+}
+
+function assertArtifactStringIsSafe(value, relativePath) {
+  const trimmed = value.trim();
+  assertArtifact(!/^[A-Za-z]:[\\/]/.test(trimmed), `Windows local absolute path in ${relativePath}`);
+  assertArtifact(!/^\/(?!\/)/.test(trimmed), `POSIX local absolute path in ${relativePath}`);
+  assertArtifact(!/^file:\/\//i.test(trimmed), `file URL in ${relativePath}`);
+  assertArtifact(!CREDENTIAL_VALUE.test(value), `credential-like value in ${relativePath}`);
+
+  for (const url of value.match(HTTP_URL) ?? []) {
+    assertArtifact(ALLOWED_EVIDENCE_URLS.has(url), `external URL is not an approved evidence locator in ${relativePath}`);
+  }
+}
+
+function inspectJsonValue(value, relativePath) {
+  if (typeof value === "string") {
+    assertArtifactStringIsSafe(value, relativePath);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) inspectJsonValue(item, relativePath);
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    assertArtifact(!AUTHORING_METADATA_KEYS.has(key.toLowerCase()), `authoring metadata key ${key} in ${relativePath}`);
+    assertArtifact(!CREDENTIAL_KEY.test(key), `credential-like key ${key} in ${relativePath}`);
+    if (key === "status") {
+      assertArtifact(
+        !["draft", "reviewed", "rejected"].includes(nestedValue),
+        `authoring status ${nestedValue} in ${relativePath}`,
+      );
+    }
+    inspectJsonValue(nestedValue, relativePath);
+  }
+}
+
+function collectArtifactFiles(rootDir, relativeDirectory = "") {
+  const directoryPath = path.join(rootDir, relativeDirectory);
+  const directoryStatus = lstatSync(directoryPath);
+  assertArtifact(!directoryStatus.isSymbolicLink(), `symlink at ${relativeDirectory || "."}`);
+  const files = [];
+  for (const entry of readdirSync(directoryPath, { withFileTypes: true })) {
+    const relativePath = path.join(relativeDirectory, entry.name);
+    const absolutePath = path.join(rootDir, relativePath);
+    const status = lstatSync(absolutePath);
+    assertArtifact(!status.isSymbolicLink(), `symlink at ${relativePath}`);
+    if (status.isDirectory()) {
+      files.push(...collectArtifactFiles(rootDir, relativePath));
+    } else if (status.isFile()) {
+      files.push({ absolutePath, relativePath });
+    }
+  }
+  return files;
+}
+
+export function inspectArtifact(rootDir) {
+  const files = collectArtifactFiles(rootDir);
+  let checkedJsonFiles = 0;
+
+  for (const { absolutePath, relativePath } of files) {
+    const normalizedSegments = relativePath.split(/[\\/]+/).map((segment) => segment.toLowerCase());
+    const extension = path.extname(relativePath).toLowerCase();
+    assertArtifact(!PROHIBITED_ARTIFACT_EXTENSIONS.has(extension), `prohibited ${extension} file at ${relativePath}`);
+    assertArtifact(
+      !normalizedSegments.some((segment, index) => segment === "content" && normalizedSegments[index + 1] === "source"),
+      `content/source path segment at ${relativePath}`,
+    );
+
+    const text = decodeUtf8(absolutePath);
+    if (extension === ".json") {
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error(`ARTIFACT_INSPECTION_FAILED: invalid JSON in ${relativePath}`);
+      }
+      inspectJsonValue(parsed, relativePath);
+      checkedJsonFiles += 1;
+    } else {
+      assertArtifactStringIsSafe(text, relativePath);
+    }
+  }
+
+  return { checkedFiles: files.length, checkedJsonFiles };
 }
 
 export function inspectCanonicalRuntimeVersion(sources) {
@@ -99,6 +227,15 @@ export function validateProject(projectRoot) {
   assertContract(
     prototypeImports === 0,
     "the formal app must not import from prototype-big-five",
+  );
+
+  const trackedContent = spawnSync("git", ["ls-files", "--", "app/content/"], {
+    cwd: projectRoot,
+    encoding: "utf8",
+  });
+  assertContract(
+    trackedContent.status === 0 && trackedContent.stdout.trim() === "",
+    "generated app/content artifacts must not be tracked",
   );
 
   return {

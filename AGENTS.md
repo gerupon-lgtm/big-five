@@ -69,6 +69,9 @@ docs/
 - 設問・称号・色のマスタ行へカウンター列を追加せず、版付き集計専用テーブルへ原子的に加算する。
 - ベータAPIのアクセスログ・アプリログへIP、User-Agent、Referer、本文、回答値、称号ID、色ID、requestIdを残さない。
 - 通常版とベータ版の機能フラグをテストし、通常版の診断フローで外部送信0件を維持する。
+- コンテンツの人手編集正典はコミット対象の`content/source/`以下のCSVであり、生成JSONの`app/content/`は手編集・コミットしない。詳細な作成手順は`docs/content-authoring.md`を参照する。
+- CSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済み。ただしapproved releaseはなく、通常runtimeは既存ES Modulesを継続し、`connect-src 'none'`を維持する。JSON runtime/Pages activationは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
+- 初期コンテンツの人手gateはE-0のみ`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`である。Q-006、Q-012、Q-013はrelease gateとして未解決であり、承認事実を補完してはならない。
 
 ## バージョン管理
 
@@ -91,6 +94,8 @@ T-001完了後の標準コマンド:
 - 正式版ローカル起動: `npm.cmd run dev`
 - 全テスト: `npm.cmd test`
 - 静的検証: `npm.cmd run check`
+- コンテンツ検証: `npm.cmd run content:validate`
+- 承認済みreleaseの生成: `npm.cmd run content:build`（現在はrelease未選択のため`RELEASE_NOT_SELECTED`）
 - 既存プロトタイプ起動: `npm.cmd run prototype`
 
 ## 実装上の注意
