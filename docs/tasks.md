@@ -180,6 +180,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 状態: 完了（F-003、F-004、F-013、F-015のT-004範囲）。`response-state` に固定順の回答・戻る・置換・20問出口・50問終端を、`progress-storage` に正式キーの保存・再開・対象限定破棄・遷移直後の自動保存coordinatorを実装した。`continueHidden` は進捗だけを返し、20問の結果・称号・キャラクター・共有モデルを生成しない。`showPreview`後の詳細継続は表示済みdecisionを保持する。
 - 保存契約: schema 1、破損JSON、将来schema、壊れた進捗、版不一致、読込不能、容量不足、削除失敗を安定コードへ変換し、既存値を不意に上書きしない。save/discard時は無関係な壊れた進捗・結果だけを除去し、保存失敗時もメモリ上の状態と50問終端回答を維持する。完答結果成立後のResultSnapshot保存とProgressRecord削除は後続永続化統合の責務である。
 - 検証: 公開seam 14件成功（開始・固定順、入力汚染拒否、戻る置換、両20問出口、showPreview後の継続、hidden非露出、50問終端、自動保存、保存再開、破損/将来/版不一致、無関係データsanitize、保存/削除失敗）。詳細は `.superpowers/sdd/task-t004-report.md` を参照。
+- S-002表示層（2026-07-26）: `renderQuestionnaireScreen`に設問、自然言語の5件法、現在位置、選択済み状態、戻る、破棄、20問分岐の二択を実装した。保存失敗は設問画面と20問分岐画面の両方でだけ`role="alert"`通知し、回答は継続できる。`preview-choice`は因子、スコア、称号、猫、色、共有データを入力にもDOMにも含めない。focused 10件、Spec/Standards独立レビュー、全359件、静的検証に成功した。router・state・storageとの接続は次の統合単位である。
 - 次タスク: T-005。Q-012とQ-013の構造ゲートは解決済み。Q-006文面は実装済みだが人手Content Approval pending、3体パイロットと色・香り実データは制作ゲートとして維持する。
 
 ### T-005 結果画面・猫・レーダー・色香り
@@ -217,6 +218,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 完全解決条件: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateについて必要な人手approval recordがすべて揃うこと。
 - 画面: 保存済みS-003/S-004、5軸レーダー、境界・僅差補足、Canvas・猫画像未提供時のテキストフォールバックは実装済み。完答直後の接続、character loader、色香りは後続T-005統合。
 - 永続化: 13フィールドproduction ResultSnapshot validatorと`saveResultSnapshot`は実装済み。回答完答からの本番callerは未実装で、後続T-005/S-002統合で接続する。
+- live結果接続ゲート（2026-07-26）: `ResultSnapshot.characterAssetVersion`は選択されたQ-012 manifest entryの`assetVersion`であり、`VersionTuple.characterManifestVersion`の流用や仮値を禁止する。production manifest entryが未作成の現状ではvalid snapshotを正典どおり生成できないため、S-002表示層だけを先行し、完答callerとlive S-003/S-004接続はQ-012パイロット承認・manifest作成後に開始する。Q-013の初期`selectedPaletteId`は該当TitleProfileの`defaultPaletteId`を使えるが、代替色・香りUIは実データ承認まで保留する。
 - 永続化契約解消（2026-07-26）: `resultId`はRFC 4122 UUID形状へ統一する。`preview20`保存では追加回答用ProgressRecordを保持し、`detail50`完答では履歴保存の成否にかかわらず生回答を破棄する。保存成功時はsnapshot追加と進捗削除を同一StorageEnvelope書込みで行い、保存失敗時も進捗削除をbest-effortで試みる。
 - 検証: `app/tests/result-evidence-definitions.test.js`、`app/tests/result-content-definitions.test.js`、`app/tests/result-composer.test.js`、`app/tests/result-snapshot.test.js`。リポジトリ同期は`app/tests/project-contract.test.js`で検証する。
 
@@ -257,7 +259,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 未実装: 回答完答からの本番caller、保存済みpreviewから追加30問へ戻るS-002接続、T-007共有、Q-012猫画像loader、Q-013色香り。S-003/S-004と履歴カードからの独立画面遷移、レーダー・失敗時テキスト表示は実装済み。
 - レビュー: `delegate-development`で履歴・削除と比較を非重複委譲し、独立レビューを実施した。個別削除が非対象の破損データまでsanitizeするP1を1回差し戻し、対象1件以外を保持する修正後の再レビューは指摘なし。
 - 画面レビュー: `implement`／`tdd`で公開シームをred→green実装し、`code-review`のStandards/Spec 2軸レビューを実施した。空履歴の全削除不能、比較選択取消不能、ID不足URL、依存方向、表示copy重複を修正した。独立結果画面遷移だけはT-005依存として明示保留する。
-- 検証: 履歴・比較・保存済み結果画面・文書契約の集中36件、全349件、`npm.cmd run check`、`git diff --check`成功。
+- 検証: 履歴・比較・保存済み結果画面・文書契約の集中36件、現行全359件、`npm.cmd run check`、`git diff --check`成功。
 
 ### T-007 共有カード・保存・コピー
 
