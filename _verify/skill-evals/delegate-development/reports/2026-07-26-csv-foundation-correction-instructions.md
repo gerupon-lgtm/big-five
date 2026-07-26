@@ -99,3 +99,59 @@ candidateでは次を満たすこと。
 3. 成功時もoutput fileの存在と非0byteをhelper内部で確認する。
 4. Windows Git Bashの最小`PATH`、通常Git Bash、Linux/macOSで回帰させる。
 5. `wc`/`tr`がない環境で、` bytes`のような不完全な成功メッセージを出さない。
+
+## 追加確認: 委譲先から配布済みskill本文を読めない
+
+Task 8の実装担当をspawnした際、実装開始前に必須の
+`delegate-development/SKILL.md`を読み取れないと報告された。監督者側でも
+同じ絶対パスをPowerShellで確認すると、metadataは取得できる一方、本文読込は
+次のエラーで再現した。
+
+```text
+Get-Item C:\Users\user\.codex\skills\delegate-development\SKILL.md
+# success: file metadata is visible
+
+Get-Content -LiteralPath C:\Users\user\.codex\skills\delegate-development\SKILL.md -Encoding UTF8
+GetContentReaderUnauthorizedAccessError
+UnauthorizedAccessException
+```
+
+対象skillはこのタスクでユーザーが明示した配布済みskillであり、選択済みskillの
+`SKILL.md`を各担当が完全に読むという実行規約を満たせない。repositoryやtask
+sourceの権限不足ではなく、workspace外に置かれたskill packageへのread-only
+権限を子agentへ伝播できていないadapter/sandbox境界の問題と分類する。
+
+### 暫定回避
+
+1. 監督者が事前に読了したskill規約を維持する。
+2. worktree内へ作成済みのtask brief、exact contract、review constraintだけを
+   委譲先へ渡し、対象ファイルと停止条件を狭く固定する。
+3. 委譲先からskill本文を推測させず、読込不能の事実と再現情報を報告させる。
+4. インストール済みskillは直接変更しない。
+
+### candidateへの修正指示
+
+1. Codex adapterは、親agentが選択した配布済みskillのpackage rootへ、spawnした
+   子agentにも同等のread-only accessを付与する。
+2. 最低限、`SKILL.md`とそこから直接参照されるinstructions、scripts、templatesを
+   読めるようにし、project sourceへのwrite権限とは分離する。
+3. skill packageへのwrite権限は付与せず、read-onlyのまま維持する。
+4. 読込不能時はsilent fallbackせず、skill名、解決済み絶対パス、agent種別、
+   permission profile、失敗したread operationを含む安定エラーを返す。
+5. 親agentだけ読めて子agentが読めない状態を、skill適用成功として扱わない。
+
+### 回帰ケース
+
+- Windows 11 / PowerShell
+- skill path:
+  `C:\Users\user\.codex\skills\delegate-development\SKILL.md`
+- canonical repositoryは日本語path配下のlinked worktree
+- root agentとspawnしたimplementer/reviewerの双方
+
+合格条件:
+
+1. root、implementer、reviewerが同じ`SKILL.md`を完全にread-onlyで読める。
+2. referenced script/templateも同じ権限境界で読める。
+3. skill packageへの作成・変更・削除は拒否される。
+4. 読込失敗時はrepository不良と誤分類せず、権限境界を明示する。
+5. Linux/macOSとworkspace内skillの既存動作を回帰させない。
