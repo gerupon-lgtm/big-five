@@ -26,6 +26,13 @@ async function table(sourceDir, relative) {
   return loadCsvTable({ filePath: path.join(sourceDir, relative), schema });
 }
 
+function assertEveryStatus(csvTable, expectedStatus, catalog) {
+  assert.ok(
+    csvTable.rows.every(({ status }) => status === expectedStatus),
+    `${catalog} must remain ${expectedStatus}`,
+  );
+}
+
 async function loadAndCompileDiagnosis(sourceDir) {
   const diagnosisVersion = "ipip-ja-50-definition-v1";
   const questionVersion = "ipip-ja-50-question-set-v1";
@@ -127,6 +134,33 @@ test("T-007 migrated CSV deep-equals the current formal definitions through load
 });
 
 test("T-007 production source records exact statuses and remains authorable without a release", async () => {
+  const [diagnosisSets, diagnosisSources, diagnosisLimitations, factors, questions, previewMappings, titles, titleFactors, resultTexts, resultTextEvidence] = await Promise.all([
+    table(SOURCE, "diagnoses/ipip-ja-50-definition-v1/diagnosis-sets.csv"),
+    table(SOURCE, "diagnoses/ipip-ja-50-definition-v1/diagnosis-sources.csv"),
+    table(SOURCE, "diagnoses/ipip-ja-50-definition-v1/diagnosis-limitations.csv"),
+    table(SOURCE, "diagnoses/ipip-ja-50-definition-v1/factor-definitions.csv"),
+    table(SOURCE, "questions/ipip-ja-50-question-set-v1/questions.csv"),
+    table(SOURCE, "questions/ipip-ja-50-question-set-v1/preview-questions.csv"),
+    table(SOURCE, "titles/title-rule-v1/title-profiles.csv"),
+    table(SOURCE, "titles/title-rule-v1/title-profile-factors.csv"),
+    table(SOURCE, "result-texts/result-text-v1/result-texts.csv"),
+    table(SOURCE, "result-texts/result-text-v1/result-text-evidence.csv"),
+  ]);
+  for (const [catalog, csvTable] of [
+    ["diagnosis sets", diagnosisSets],
+    ["diagnosis sources", diagnosisSources],
+    ["diagnosis limitations", diagnosisLimitations],
+    ["factor definitions", factors],
+    ["questions", questions],
+    ["preview mappings", previewMappings],
+  ]) assertEveryStatus(csvTable, "approved", catalog);
+  for (const [catalog, csvTable] of [
+    ["title profiles", titles],
+    ["title profile factors", titleFactors],
+    ["result texts", resultTexts],
+    ["result text evidence", resultTextEvidence],
+  ]) assertEveryStatus(csvTable, "reviewed", catalog);
+
   const approvals = await table(SOURCE, "approvals/result-content-approvals.csv");
   assert.deepEqual(approvals.rows.map(({ gate_id, display_order }) => [gate_id, display_order]), APPROVAL_IDS.map((gateId, index) => [gateId, index + 1]));
   assert.deepEqual(approvals.rows[0], {
