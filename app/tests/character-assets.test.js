@@ -5,13 +5,24 @@ import { appendFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
-import { convertCharacter } from "../../scripts/characters/convert-characters.mjs";
+import {
+  convertCharacter,
+  normalizeEncoderSettings,
+} from "../../scripts/characters/convert-characters.mjs";
 import { inspectCharacterAsset } from "../../scripts/characters/inspect-character.mjs";
 
 const SETTINGS = Object.freeze({
   quality: 82,
   alphaQuality: 100,
   effort: 6,
+});
+const ENCODER_SETTINGS = Object.freeze({
+  encoder: "sharp",
+  quality: 82,
+  alphaQuality: 100,
+  effort: 6,
+  metadata: "none",
+  size: 1024,
 });
 
 async function withTemporaryDirectory(run) {
@@ -145,6 +156,25 @@ test("T-005 F-016 converter rejects a delivery size other than 1024 before writi
       (error) => error?.code === "ENOENT",
     );
   });
+});
+
+test("T-005 F-016 normalizes the fixed encoder settings file for the converter", () => {
+  assert.deepEqual(normalizeEncoderSettings(ENCODER_SETTINGS), {
+    size: 1024,
+    settings: SETTINGS,
+  });
+
+  for (const mutation of [
+    { ...ENCODER_SETTINGS, encoder: "other" },
+    { ...ENCODER_SETTINGS, metadata: "copy" },
+    { ...ENCODER_SETTINGS, size: 512 },
+    { ...ENCODER_SETTINGS, extra: true },
+  ]) {
+    assert.throws(
+      () => normalizeEncoderSettings(mutation),
+      /CHARACTER_ASSET_INVALID/,
+    );
+  }
 });
 
 test("T-005 F-016 inspector rejects invalid format, geometry, alpha, and bounds", async () => {

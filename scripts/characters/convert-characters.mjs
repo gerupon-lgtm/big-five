@@ -21,6 +21,14 @@ const SCOPE_RANGES = Object.freeze({
   release: [0, 51],
 });
 const SETTING_FIELDS = Object.freeze(["quality", "alphaQuality", "effort"]);
+const ENCODER_SETTING_FIELDS = Object.freeze([
+  "encoder",
+  "quality",
+  "alphaQuality",
+  "effort",
+  "metadata",
+  "size",
+]);
 
 function invalid(reason) {
   throw new TypeError(`CHARACTER_ASSET_INVALID: ${reason}`);
@@ -35,6 +43,29 @@ function validateSettings(settings) {
     invalid("settings must contain integer quality, alphaQuality, and effort");
   }
   return settings;
+}
+
+export function normalizeEncoderSettings(settings) {
+  if (!settings
+    || typeof settings !== "object"
+    || Array.isArray(settings)
+    || Object.keys(settings).length !== ENCODER_SETTING_FIELDS.length
+    || ENCODER_SETTING_FIELDS.some(
+      (field, index) => Object.keys(settings)[index] !== field,
+    )
+    || settings.encoder !== "sharp"
+    || settings.metadata !== "none"
+    || settings.size !== DEFAULT_SIZE) {
+    invalid("encoder settings must use sharp, no metadata, and size 1024");
+  }
+  return {
+    size: settings.size,
+    settings: validateSettings({
+      quality: settings.quality,
+      alphaQuality: settings.alphaQuality,
+      effort: settings.effort,
+    }),
+  };
 }
 
 export async function convertCharacter({
@@ -108,8 +139,11 @@ async function runCli(arguments_) {
   if (!scope || !settingsPath) {
     invalid("--scope <scope> and --settings <json-path> are required");
   }
-  const size = sizeText === null ? DEFAULT_SIZE : Number(sizeText);
-  const settings = JSON.parse(await readFile(resolve(settingsPath), "utf8"));
+  const encoderSettings = normalizeEncoderSettings(
+    JSON.parse(await readFile(resolve(settingsPath), "utf8")),
+  );
+  const size = sizeText === null ? encoderSettings.size : Number(sizeText);
+  const settings = encoderSettings.settings;
   const entries = await entriesForScope(scope);
 
   for (const entry of entries) {

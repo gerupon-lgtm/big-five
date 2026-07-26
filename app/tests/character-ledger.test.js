@@ -117,3 +117,14 @@ test("T-005 F-016 reached gates reject empty required evidence", () => {
     );
   }
 });
+
+test("T-005 F-016 technical approval keeps the accessibility release gate pending", () => {
+  const candidate = technicallyApprovedPilotLedger();
+  candidate.entries[0].accessibilityReviewStatus = "approved";
+
+  assert.throws(
+    () => validateScope(candidate, "pilot-converted"),
+    /CHARACTER_LEDGER_INVALID/,
+    "pilot-converted must not record accessibility approval before release",
+  );
+});
