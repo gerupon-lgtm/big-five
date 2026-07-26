@@ -24,7 +24,7 @@ function validImagePath(value) {
     !value.split("/").some((segment) => segment === "" || segment === "..");
 }
 
-function validAlt(value) {
+export function isValidCharacterAlt(value) {
   return typeof value === "string" && value.trim() !== "" && !ALT_CLAIM_PATTERN.test(value);
 }
 
@@ -40,7 +40,7 @@ function validRow(row, expectedVersion, profile) {
     row.character_id === profile.characterId && Number.isInteger(row.display_order) && row.display_order >= 1 &&
     typeof row.asset_version === "string" && row.asset_version !== "" && validImagePath(row.delivery_webp_path) &&
     /^[a-f0-9]{64}$/.test(row.delivery_sha256) && row.width === 1024 && row.height === 1024 &&
-    Number.isInteger(row.byte_length) && row.byte_length > 0 && row.has_alpha === "true" && validAlt(row.alt) &&
+    Number.isInteger(row.byte_length) && row.byte_length > 0 && row.has_alpha === "true" && isValidCharacterAlt(row.alt) &&
     STATUSES.has(row.status) && REVIEW_FIELDS.every((field) => ["pending", "approved", "rejected"].includes(row[field]));
 }
 

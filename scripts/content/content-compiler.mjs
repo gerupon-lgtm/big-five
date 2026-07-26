@@ -7,7 +7,7 @@ import { appMeta } from "../../app/js/config/app-meta.js";
 import { validateDefinitionStructure, validateResultContentDefinitions } from "../../app/js/domain/definition-validator.js";
 import { validatePresentationDefinitionSet } from "../../app/js/domain/presentation-definition-validator.js";
 import { validateTitleProfileDefinitions } from "../../app/js/domain/title-profile.js";
-import { assertCharacterReleaseEligible, compileCharacterContent } from "./compile-characters.mjs";
+import { assertCharacterReleaseEligible, compileCharacterContent, isValidCharacterAlt } from "./compile-characters.mjs";
 import { compileDiagnosisContent } from "./compile-diagnosis.mjs";
 import { compilePresentationContent } from "./compile-presentation.mjs";
 import { assertReleaseEligible, compileResultContent } from "./compile-result-content.mjs";
@@ -60,9 +60,17 @@ const CORE_TABLES = TABLES.filter(([name]) => CORE_TABLE_NAMES.has(name));
 const OPTIONAL_TABLES = TABLES.filter(([name]) => !CORE_TABLE_NAMES.has(name));
 const PRESENTATION_TABLES = OPTIONAL_TABLES.filter(([, topDir]) => topDir === "presentation");
 const CHARACTER_TABLES = OPTIONAL_TABLES.filter(([, topDir]) => topDir === "characters");
+const VERSION_CATALOGS = Object.freeze([
+  CORE_TABLES.filter(([, topDir]) => topDir === "diagnoses"),
+  CORE_TABLES.filter(([, topDir]) => topDir === "questions"),
+  CORE_TABLES.filter(([, topDir]) => topDir === "titles"),
+  CORE_TABLES.filter(([, topDir]) => topDir === "result-texts"),
+  CORE_TABLES.filter(([, topDir]) => topDir === "evidence"),
+  PRESENTATION_TABLES,
+  CHARACTER_TABLES,
+]);
 const MANIFEST_ORDER = ["schemaVersion", "releaseId", "appVersion", "diagnosisId", "versions", "resources"];
 const VERSION_ORDER = ["diagnosticDefinitionVersion", "scaleVersion", "questionVersion", "scoringVersion", "resultEvidenceVersion", "resultTextVersion", "titleRuleVersion", "characterManifestVersion", "presentationDefinitionVersion", "cardTemplateVersion"];
-const CHARACTER_ALT_CLAIM_PATTERN = /\b(?:title|type|personality|ability|talent|intelligence|smart|intelligent|rank|breed|best|worst)\b|称号|タイトル|タイプ|性格|人格|能力|才能|知性|頭が良い|賢い|順位|一位|トップ|最高|優秀|劣る|ランク|猫種|品種/i;
 
 function contentError(code, message = "コンテンツ定義を確認してください。", extra = {}) {
   return new ContentError({ code, message, ...extra });
@@ -111,21 +119,24 @@ async function loadNamedTable(sourceDir, segments, schemaName) {
   }
 }
 
-async function discoverVersion(sourceDir, topDir, { optional = false } = {}) {
+async function discoverVersions(sourceDir, topDir, { optional = false } = {}) {
   let directory;
   try {
     directory = await safeSourcePath(sourceDir, [topDir]);
   } catch (error) {
-    if (optional && error instanceof ContentError && error.code === "RELEASE_RESOURCE_MISSING") return null;
+    if (optional && error instanceof ContentError && error.code === "RELEASE_RESOURCE_MISSING") return [];
     throw error;
   }
   const entries = await readdir(directory, { withFileTypes: true }).catch(() => {
     throw contentError("RELEASE_RESOURCE_MISSING");
   });
-  const versions = entries.filter((entry) => entry.isDirectory() && !entry.isSymbolicLink()).map(({ name }) => name).sort();
-  if (versions.length === 0 && optional) return null;
-  if (versions.length !== 1 || !safeReleaseId(versions[0])) throw contentError("RELEASE_VERSION_REFERENCE_INVALID");
-  return versions[0];
+  entries.sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
+  if (entries.length === 0 && optional) return [];
+  if (entries.length === 0 || entries.some((entry) =>
+    entry.isSymbolicLink() || !entry.isDirectory() || !safeReleaseId(entry.name))) {
+    throw contentError("RELEASE_VERSION_REFERENCE_INVALID");
+  }
+  return entries.map(({ name }) => name);
 }
 
 function validateHistory(rows) {
@@ -158,8 +169,12 @@ function validateApprovals(rows) {
 }
 
 function warningRows(catalogs) {
+  return warningEntries(Object.entries(catalogs));
+}
+
+function warningEntries(entries) {
   const warnings = [];
-  for (const [name, table] of Object.entries(catalogs)) {
+  for (const [name, table] of entries) {
     if (!Array.isArray(table.rows)) continue;
     table.rows.forEach((row, index) => {
       if (Object.hasOwn(row, "status") && row.status !== "approved") {
@@ -185,6 +200,25 @@ async function loadTables(sourceDir, row, definitions) {
     result[name] = await loadNamedTable(sourceDir, [topDir, version], fileName);
   }
   return result;
+}
+
+function assertDirectoryVersion(catalogs, versionField, version) {
+  if (!Object.values(catalogs).every(({ rows }) =>
+    rows.every((row) => !Object.hasOwn(row, versionField) || row[versionField] === version))) {
+    throw contentError("RELEASE_VERSION_REFERENCE_INVALID", "版ディレクトリと行の版参照が一致しません。");
+  }
+}
+
+async function loadAuthoredVersions(sourceDir, definitions, { optional = false } = {}) {
+  const [, topDir, versionField] = definitions[0];
+  const versions = await discoverVersions(sourceDir, topDir, { optional });
+  const catalogsByVersion = new Map();
+  for (const version of versions) {
+    const catalogs = await loadTables(sourceDir, { [versionField]: version }, definitions);
+    assertDirectoryVersion(catalogs, versionField, version);
+    catalogsByVersion.set(version, catalogs);
+  }
+  return { topDir, versionField, versions, catalogsByVersion };
 }
 
 function compileCoreCatalogs(catalogs, row) {
@@ -239,49 +273,52 @@ export async function validateAuthoringTree({ sourceDir }) {
   const base = await loadBaseCatalogs(sourceDir);
   const catalogs = { releaseManifest: base.releaseManifest, releaseHistory: base.releaseHistory, approvals: base.approvals };
   const extraWarnings = [];
-  let release;
-  if (base.releaseManifest.rows.length === 1) {
-    release = { ...base.releaseManifest.rows[0] };
-  } else {
-    release = {
-      diagnostic_definition_version: await discoverVersion(sourceDir, "diagnoses"),
-      question_version: await discoverVersion(sourceDir, "questions"),
-      title_rule_version: await discoverVersion(sourceDir, "titles"),
-      result_text_version: await discoverVersion(sourceDir, "result-texts"),
-      result_evidence_version: await discoverVersion(sourceDir, "evidence"),
-    };
+  const authored = [];
+  for (const definitions of VERSION_CATALOGS) {
+    const topDir = definitions[0][1];
+    authored.push(await loadAuthoredVersions(sourceDir, definitions, {
+      optional: topDir === "presentation" || topDir === "characters",
+    }));
   }
-  Object.assign(catalogs, await loadTables(sourceDir, release, CORE_TABLES));
-  const core = compileCoreCatalogs(catalogs, release);
-  if (base.releaseManifest.rows.length === 1) assertReleaseVersionReferences(catalogs, core, release);
+  const authoredByField = new Map(authored.map((catalog) => [catalog.versionField, catalog]));
+  const authoredEntries = authored.flatMap(({ versions, catalogsByVersion }) =>
+    versions.flatMap((version) => Object.entries(catalogsByVersion.get(version))));
+  const selectedRelease = base.releaseManifest.rows.length === 1;
+  let release = selectedRelease ? { ...base.releaseManifest.rows[0] } : null;
+  let core = null;
+
+  if (selectedRelease) {
+    for (const { versionField, catalogsByVersion } of authored.slice(0, 5)) {
+      const selectedCatalogs = catalogsByVersion.get(release[versionField]);
+      if (!selectedCatalogs) throw contentError("RELEASE_RESOURCE_MISSING");
+      Object.assign(catalogs, selectedCatalogs);
+    }
+    core = compileCoreCatalogs(catalogs, release);
+    assertReleaseVersionReferences(catalogs, core, release);
+  } else if (authored.every(({ versions }) => versions.length <= 1)) {
+    release = Object.fromEntries(authored.slice(0, 5).map(({ versionField, versions }) => [versionField, versions[0]]));
+    for (const { versions, catalogsByVersion } of authored.slice(0, 5)) {
+      Object.assign(catalogs, catalogsByVersion.get(versions[0]));
+    }
+    core = compileCoreCatalogs(catalogs, release);
+  }
+
   if (base.releaseManifest.rows.length === 0) {
     extraWarnings.push({ sourceName: "releases/release-manifest.csv", lineNumber: 1, code: "RELEASE_NOT_SELECTED", message: "公開するリリースが選択されていません。" });
   }
-  const optionalVersions = {
-    presentation_definition_version: release.presentation_definition_version ??
-      await discoverVersion(sourceDir, "presentation", { optional: true }),
-    character_manifest_version: release.character_manifest_version ??
-      await discoverVersion(sourceDir, "characters", { optional: true }),
-  };
-  for (const [field, code, sourceName, definitions, compile] of [
-    ["presentation_definition_version", "PRESENTATION_CATALOG_PENDING", "presentation", PRESENTATION_TABLES, compilePresentationCatalog],
-    ["character_manifest_version", "CHARACTER_CATALOG_PENDING", "characters", CHARACTER_TABLES, compileCharacterCatalog],
+  for (const [field, code, sourceName, compile] of [
+    ["presentation_definition_version", "PRESENTATION_CATALOG_PENDING", "presentation", compilePresentationCatalog],
+    ["character_manifest_version", "CHARACTER_CATALOG_PENDING", "characters", compileCharacterCatalog],
   ]) {
-    if (typeof optionalVersions[field] === "string") {
-      try {
-        await safeSourcePath(sourceDir, [sourceName, optionalVersions[field]]);
-      } catch (error) {
-        if (!(error instanceof ContentError) || error.code !== "RELEASE_RESOURCE_MISSING" ||
-          (base.releaseManifest.rows.length === 1 && release.status === "approved")) throw error;
-        optionalVersions[field] = null;
-      }
-    }
-    if (optionalVersions[field] === null || optionalVersions[field] === undefined) {
-      if (base.releaseManifest.rows.length === 1 && release.status === "approved") throw contentError("RELEASE_RESOURCE_MISSING");
+    const authoredCatalog = authoredByField.get(field);
+    const version = selectedRelease ? release[field] : authoredCatalog.versions[0];
+    const selectedCatalogs = authoredCatalog.catalogsByVersion.get(version);
+    if (!selectedCatalogs) {
+      if (selectedRelease && release.status === "approved") throw contentError("RELEASE_RESOURCE_MISSING");
       extraWarnings.push({ sourceName, code, message: "公開用カタログは準備中です。" });
-    } else {
-      release[field] = optionalVersions[field];
-      Object.assign(catalogs, await loadTables(sourceDir, release, definitions));
+    } else if (core && (selectedRelease || authoredCatalog.versions.length === 1)) {
+      release[field] = version;
+      Object.assign(catalogs, selectedCatalogs);
       try {
         compile(catalogs, release, core.result.titleProfiles);
       } catch (error) {
@@ -291,7 +328,16 @@ export async function validateAuthoringTree({ sourceDir }) {
     }
   }
   const frozen = freezeCatalogs(catalogs);
-  return Object.freeze({ catalogs: frozen, warnings: Object.freeze([...warningRows(frozen), ...extraWarnings.map(Object.freeze)]) });
+  const selectedSources = new Set(Object.values(catalogs).map(({ sourceName }) => sourceName));
+  const unselectedEntries = authoredEntries.filter(([, { sourceName }]) => !selectedSources.has(sourceName));
+  return Object.freeze({
+    catalogs: frozen,
+    warnings: Object.freeze([
+      ...warningRows(frozen),
+      ...warningEntries(unselectedEntries),
+      ...extraWarnings.map(Object.freeze),
+    ]),
+  });
 }
 
 function sameRelease(left, right) {
@@ -511,7 +557,7 @@ function assertCompiled(compiled) {
         !entry.imagePath.includes("?") && !entry.imagePath.includes("#") &&
         !/^[A-Za-z][A-Za-z0-9+.-]*:/.test(entry.imagePath) &&
         !entry.imagePath.split("/").some((segment) => segment === "" || segment === "..") &&
-        typeof entry.alt === "string" && entry.alt !== "" && !CHARACTER_ALT_CLAIM_PATTERN.test(entry.alt) &&
+        isValidCharacterAlt(entry.alt) &&
         /^sha256-[A-Za-z0-9+/]{43}=$/.test(entry.integrity) &&
         entry.width === 1024 && entry.height === 1024) ||
       new Set(characters.entries.map(({ characterId }) => characterId)).size !== 51 ||

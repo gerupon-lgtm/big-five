@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,6 +59,17 @@ async function replaceInFile(filePath, from, to) {
   const text = await readFile(filePath, "utf8");
   assert.match(text, typeof from === "string" ? new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) : from);
   await writeFile(filePath, text.replace(from, to), "utf8");
+}
+
+async function copyQuestionVersion(sourceDir, fromVersion, toVersion) {
+  const source = path.join(sourceDir, "questions", fromVersion);
+  const target = path.join(sourceDir, "questions", toVersion);
+  await cp(source, target, { recursive: true });
+  for (const fileName of ["questions.csv", "preview-questions.csv"]) {
+    const filePath = path.join(target, fileName);
+    const text = await readFile(filePath, "utf8");
+    await writeFile(filePath, text.replaceAll(fromVersion, toVersion), "utf8");
+  }
 }
 
 function cloneCompiled(compiled) {
@@ -162,6 +173,68 @@ test("T-006 header-only manifest validates core catalogs and warns for no releas
   await assert.rejects(() => validateAuthoringTree({ sourceDir }), (error) => error.code === "RELEASE_RESOURCE_MISSING");
 });
 
+test("T-006 header-only manifest validates multiple authored question versions without selecting a tuple", async (t) => {
+  const sourceDir = await createApprovedSourceTree(t);
+  const secondVersion = "ipip-ja-50-question-set-v2";
+  await writeTable(sourceDir, "releases/release-manifest.csv", []);
+  await writeTable(sourceDir, "releases/release-history.csv", []);
+  await copyQuestionVersion(sourceDir, appMeta.diagnosticVersions.questionVersion, secondVersion);
+
+  const result = await validateAuthoringTree({ sourceDir });
+
+  assert.equal(result.catalogs.releaseManifest.rows.length, 0);
+  assert.equal(result.warnings.at(-1).code, "RELEASE_NOT_SELECTED");
+});
+
+test("T-006 authoring validation rejects missing files in an unselected version", async (t) => {
+  const sourceDir = await createApprovedSourceTree(t);
+  const secondVersion = "ipip-ja-50-question-set-v2";
+  await writeTable(sourceDir, "releases/release-manifest.csv", []);
+  await writeTable(sourceDir, "releases/release-history.csv", []);
+  await copyQuestionVersion(sourceDir, appMeta.diagnosticVersions.questionVersion, secondVersion);
+  await rm(path.join(sourceDir, "questions", secondVersion, "preview-questions.csv"));
+
+  await assert.rejects(
+    () => validateAuthoringTree({ sourceDir }),
+    (error) => error.code === "RELEASE_RESOURCE_MISSING",
+  );
+});
+
+test("T-006 draft release validates an unreferenced version and rejects its directory-version mismatch", async (t) => {
+  const sourceDir = await createApprovedSourceTree(t, { manifestStatus: "draft" });
+  const secondVersion = "ipip-ja-50-question-set-v2";
+  await copyQuestionVersion(sourceDir, appMeta.diagnosticVersions.questionVersion, secondVersion);
+  await assert.doesNotReject(() => validateAuthoringTree({ sourceDir }));
+
+  await replaceInFile(
+    path.join(sourceDir, "questions", secondVersion, "questions.csv"),
+    secondVersion,
+    "ipip-ja-50-question-set-v9",
+  );
+  await assert.rejects(
+    () => validateAuthoringTree({ sourceDir }),
+    (error) => error.code === "RELEASE_VERSION_REFERENCE_INVALID",
+  );
+});
+
+test("T-006 authoring validation rejects non-directory and symlinked version entries", async (t) => {
+  const invalidEntrySource = await createApprovedSourceTree(t);
+  await writeFile(path.join(invalidEntrySource, "questions", "question-set-v2"), "not a directory", "utf8");
+  await assert.rejects(
+    () => validateAuthoringTree({ sourceDir: invalidEntrySource }),
+    (error) => error.code === "RELEASE_VERSION_REFERENCE_INVALID",
+  );
+
+  const symlinkSource = await createApprovedSourceTree(t);
+  const original = path.join(symlinkSource, "questions", appMeta.diagnosticVersions.questionVersion);
+  const linked = path.join(symlinkSource, "questions", "question-set-v2");
+  await symlink(original, linked, process.platform === "win32" ? "junction" : "dir");
+  await assert.rejects(
+    () => validateAuthoringTree({ sourceDir: symlinkSource }),
+    (error) => error.code === "RELEASE_VERSION_REFERENCE_INVALID",
+  );
+});
+
 test("T-006 draft manifest treats missing Q-012 and Q-013 catalogs as pending warnings", async (t) => {
   const sourceDir = await createApprovedSourceTree(t, { manifestStatus: "draft" });
   await rm(path.join(sourceDir, "presentation"), { recursive: true });
@@ -239,6 +312,14 @@ test("T-006 writer rejects manifest, record, version, and resource additions bef
   const noncanonical = cloneCompiled(compiled); noncanonical.resources.set("questions", ` ${noncanonical.resources.get("questions")}`); noncanonical.manifest.resources[1].sha256 = createHash("sha256").update(noncanonical.resources.get("questions")).digest("hex"); cases.push(noncanonical);
   const metadata = cloneCompiled(compiled); const titleValue = JSON.parse(metadata.resources.get("titles")); titleValue[0].status = "approved"; metadata.resources.set("titles", canonicalJson(titleValue)); metadata.manifest.resources[2].sha256 = createHash("sha256").update(metadata.resources.get("titles")).digest("hex"); cases.push(metadata);
   const invalidCharacter = cloneCompiled(compiled); const characterValue = JSON.parse(invalidCharacter.resources.get("characters")); characterValue.entries[0].integrity = "not-an-integrity"; invalidCharacter.resources.set("characters", canonicalJson(characterValue)); invalidCharacter.manifest.resources[6].sha256 = createHash("sha256").update(invalidCharacter.resources.get("characters")).digest("hex"); cases.push(invalidCharacter);
+  for (const alt of ["   ", "第1位の猫", "#1 cat"]) {
+    const forgedCharacter = cloneCompiled(compiled);
+    const forgedValue = JSON.parse(forgedCharacter.resources.get("characters"));
+    forgedValue.entries[0].alt = alt;
+    forgedCharacter.resources.set("characters", canonicalJson(forgedValue));
+    forgedCharacter.manifest.resources[6].sha256 = createHash("sha256").update(forgedCharacter.resources.get("characters")).digest("hex");
+    cases.push(forgedCharacter);
+  }
   for (const invalid of cases) {
     await assert.rejects(() => writeReleaseAtomically({ outputDir: output, allowedParentDir: parent, compiled: invalid }), (error) => error.code === "RELEASE_RESOURCE_MISSING");
     assert.equal(await readFile(path.join(output, "marker.txt"), "utf8"), "prior");
