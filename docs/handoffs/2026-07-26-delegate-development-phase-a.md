@@ -6,6 +6,7 @@
 - 配布記録: `_verify/skill-evals/delegate-development/reports/2026-07-26-distribution-record.md`
 - 比較レポート: `_verify/skill-evals/delegate-development/reports/2026-07-26-baseline-candidate-comparison.md`
 - Codex読取権限の修正指示: `_verify/skill-evals/delegate-development/reports/2026-07-26-codex-installed-skill-read-access-correction.md`
+- 再利用画像パーツ保管のスキル横断修正指示: `_verify/skill-evals/cross-skill/reports/2026-07-27-reusable-image-component-retention-correction-instructions.md`
 
 ## Phase A完了状態
 
