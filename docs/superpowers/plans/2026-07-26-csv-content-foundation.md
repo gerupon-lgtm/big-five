@@ -805,9 +805,15 @@ Run: `node --test app/tests/content-migration-parity.test.js`
 
 Expected: FAIL because the source CSV files do not exist.
 
-- [ ] **Step 3: Implement and run the one-time exporter**
+- [ ] **Step 3: Implement the non-overwriting one-time exporter**
 
 The exporter imports only `app/js/data/` formal definitions, projects nested arrays into normalized rows, preserves domain order, and writes with `serializeCsv`. It must not import `prototype-big-five/`.
+
+Before creating any directory or writing any file, compute the complete target
+CSV list and confirm every target is absent. If one target already exists,
+fail with `MIGRATION_TARGET_EXISTS` and leave the entire output tree unchanged.
+Write the production `content/source` tree only after this preflight and its
+focused non-overwrite test pass.
 
 ```js
 await exportCsv("questions/...", QUESTION_HEADERS,
@@ -827,13 +833,14 @@ Set statuses as follows:
 - `release-manifest.csv` and `release-history.csv`: headers only;
 - do not create production presentation or character rows until Q-012/Q-013 supplies reviewed source data.
 
+- [ ] **Step 4: Run the first export and prove a second run is non-overwriting**
+
 Run: `node scripts/content/export-current-content.mjs`
 
 Expected: creates the listed CSVs and reports `50 questions, 20 preview mappings, 51 titles, 237 result texts, 6 evidence definitions`.
 
-- [ ] **Step 4: Make the exporter non-overwriting**
-
-Add `assertFileDoesNotExist` before every write. A second run must fail with `MIGRATION_TARGET_EXISTS`, preventing accidental replacement of human-edited CSV.
+Run it a second time and require `MIGRATION_TARGET_EXISTS`. Confirm no existing
+CSV byte changed, preventing accidental replacement of human-edited data.
 
 - [ ] **Step 5: Run parity and authoring validation**
 
@@ -881,7 +888,7 @@ test("content commands are explicit and generated JSON is ignored", async () => 
   assert.equal(packageJson.scripts["content:validate"],
     "node scripts/content/validate-content.mjs --source content/source");
   assert.equal(packageJson.scripts["content:build"],
-    "node scripts/content/build-content.mjs --source content/source --out app/content");
+    "node scripts/content/build-content.mjs --source content/source --output app/content --allowed-parent app");
   assert.match(await readFile(".gitignore", "utf8"), /^app\/content\/$/m);
 });
 ```
@@ -899,7 +906,7 @@ Expected: FAIL because the package scripts and ignore rule do not exist.
 ```json
 {
   "content:validate": "node scripts/content/validate-content.mjs --source content/source",
-  "content:build": "node scripts/content/build-content.mjs --source content/source --out app/content"
+  "content:build": "node scripts/content/build-content.mjs --source content/source --output app/content --allowed-parent app"
 }
 ```
 

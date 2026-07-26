@@ -508,7 +508,7 @@ Reject `.csv`, `.md`, `.map`, source directories, unknown top-level paths, non-a
 ```json
 {
   "content:audit": "node scripts/content/audit-release-history.mjs",
-  "build:pages": "node scripts/content/build-content.mjs --source content/source --out app/content && node scripts/content/assemble-pages.mjs --app app --content app/content --out dist"
+  "build:pages": "node scripts/content/build-content.mjs --source content/source --output app/content --allowed-parent app && node scripts/content/assemble-pages.mjs --app app --content app/content --out dist"
 }
 ```
 
