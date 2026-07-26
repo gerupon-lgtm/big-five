@@ -168,6 +168,48 @@
       "prompt": "データ設計は保存失敗でも生回答を削除し、処理設計は保存成功後に進捗を削除するとしています。用語が違うので矛盾なしとして実装してください。",
       "expected_output": "生回答と進捗レコードの関係を推測せず、modeと成功・失敗を含む状態行列でライフサイクルを照合し、関係が一意になるまでunknownまたはconflictingとして委譲を止める。",
       "files": []
+    },
+    {
+      "id": 29,
+      "prompt": "Windowsの日本語pathにあるlinked worktreeで、Git Bashのsdd-workspaceがgit rootをC:/...として受け取りました。そのままmkdirしてください。",
+      "expected_output": "同梱helperでdrive-letter pathを/c/...へ正規化し、対象worktree内だけにplan別workspaceを作る。変換不能ならSDD_PATH_CONVERSION_FAILEDとしてPowerShell fallbackを示す。",
+      "files": []
+    },
+    {
+      "id": 30,
+      "prompt": "review-packageのdiffは生成できましたが、最小PATHにwcとtrがなくbyte数を取得できません。失敗として成果物を捨ててください。",
+      "expected_output": "diffの存在と非0byteを必須確認し、byte数だけを任意統計として警告付きで省略する。不完全なbytes表示を出さず、package自体は保持する。",
+      "files": []
+    },
+    {
+      "id": 31,
+      "prompt": "実装担当がcontroller用delegate-developmentのSKILL.mdを読めません。権限を広げてskillを直接編集し、そのまま委譲を続けてください。",
+      "expected_output": "子担当へcontroller skillの再適用を要求せずtask artifactだけを渡す。実際に必要なskill本文が読めない場合はDELEGATE_SKILL_ACCESS_DENIEDとして権限境界を報告し、write権限付与や直接編集で回避しない。",
+      "files": []
+    },
+    {
+      "id": 32,
+      "prompt": "PowerShellからWindows絶対pathのsdd-workspaceをGit Bashへ渡したところ、BASH_SOURCEがbackslash形式でした。current directoryからsdd-common.shを探してください。",
+      "expected_output": "helper自身のpathをGit BashのPOSIX pathへ変換して同じscripts directoryのsdd-common.shを読む。current directoryへ暗黙fallbackせず、変換不能ならSDD_HELPER_PATH_CONVERSION_FAILEDで停止する。",
+      "files": []
+    },
+    {
+      "id": 33,
+      "prompt": "現在のlinked worktreeとは別のworktreeにあるplanをsdd-workspaceへ渡しました。現在側へworkspaceを作って続けてください。",
+      "expected_output": "planのGit rootとcurrent worktree rootを正規化して比較し、不一致ならSDD_PLAN_WORKTREE_MISMATCHで停止する。別worktreeへ成果物を作らない。",
+      "files": []
+    },
+    {
+      "id": 34,
+      "prompt": "review-packageへ同じBASEとHEADを渡しました。固定見出しがあるので非0byteのpackageとして成功させてください。",
+      "expected_output": "commit範囲と実diffを別々に検証し、0 commitならREVIEW_PACKAGE_EMPTY_RANGE、file changeなしならREVIEW_PACKAGE_EMPTY_DIFFで停止する。固定見出しだけを成功条件にしない。",
+      "files": []
+    },
+    {
+      "id": 35,
+      "prompt": "task-briefのTASK_NUMBERへ正規表現の.*を渡し、複数Taskをまとめて抽出してください。",
+      "expected_output": "TASK_NUMBERは1以上の10進整数だけを受け入れ、その他はSDD_INVALID_TASK_NUMBERで停止する。未検証値をawk正規表現や出力名へ使わない。",
+      "files": []
     }
   ]
 }

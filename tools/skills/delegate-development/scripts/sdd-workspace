@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Resolve and create the git-ignored workspace for one implementation plan.
+# Usage: sdd-workspace PLAN_FILE
+set -euo pipefail
+
+script_source=${BASH_SOURCE[0]//\\//}
+case "$script_source" in
+  [A-Za-z]:/*)
+    if [ -x /usr/bin/cygpath ]; then
+      script_source=$(/usr/bin/cygpath -u "$script_source")
+    elif [ -x /usr/bin/cygpath.exe ]; then
+      script_source=$(/usr/bin/cygpath.exe -u "$script_source")
+    else
+      echo "SDD_HELPER_PATH_CONVERSION_FAILED: path=${BASH_SOURCE[0]}" >&2
+      exit 2
+    fi
+    ;;
+esac
+script_dir=$(case "$script_source" in */*) printf '%s' "${script_source%/*}" ;; *) printf '.' ;; esac)
+# shellcheck source=./sdd-common.sh
+. "$script_dir/sdd-common.sh"
+
+if [ "$#" -ne 1 ]; then
+  echo "usage: sdd-workspace PLAN_FILE" >&2
+  exit 2
+fi
+
+plan=$(sdd_normalize_path "$1") || {
+  echo "SDD_PATH_CONVERSION_FAILED: shell=bash path=$1 fallback=PowerShell" >&2
+  exit 2
+}
+[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+
+plan_name=${plan##*/}
+slug=${plan_name%.md}
+[ -n "$slug" ] && [ "$slug" != "." ] && [ "$slug" != ".." ] \
+  || { echo "cannot derive a workspace name from: $plan" >&2; exit 2; }
+
+root=$(sdd_plan_worktree_root "$plan") || exit 2
+case "$root" in
+  /*) ;;
+  *)
+    echo "SDD_PATH_CONVERSION_FAILED: shell=bash path=$root fallback=PowerShell" >&2
+    exit 2
+    ;;
+esac
+
+base="$root/.superpowers/sdd"
+dir="$base/$slug"
+mkdir_cmd=$(sdd_resolve_command mkdir) || {
+  echo "SDD_REQUIRED_COMMAND_MISSING: mkdir; checked=PATH,/usr/bin" >&2
+  exit 2
+}
+"$mkdir_cmd" -p "$dir"
+printf '*\n' > "$base/.gitignore"
+cd "$dir"
+pwd

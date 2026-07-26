@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Extract one task from a Markdown implementation plan.
+# Usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]
+set -euo pipefail
+
+script_source=${BASH_SOURCE[0]//\\//}
+case "$script_source" in
+  [A-Za-z]:/*)
+    if [ -x /usr/bin/cygpath ]; then
+      script_source=$(/usr/bin/cygpath -u "$script_source")
+    elif [ -x /usr/bin/cygpath.exe ]; then
+      script_source=$(/usr/bin/cygpath.exe -u "$script_source")
+    else
+      echo "SDD_HELPER_PATH_CONVERSION_FAILED: path=${BASH_SOURCE[0]}" >&2
+      exit 2
+    fi
+    ;;
+esac
+script_dir=$(case "$script_source" in */*) printf '%s' "${script_source%/*}" ;; *) printf '.' ;; esac)
+# shellcheck source=./sdd-common.sh
+. "$script_dir/sdd-common.sh"
+
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+  echo "usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
+  exit 2
+fi
+
+plan=$(sdd_normalize_path "$1") || {
+  echo "SDD_PATH_CONVERSION_FAILED: shell=bash path=$1 fallback=PowerShell" >&2
+  exit 2
+}
+n=$2
+[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+case "$n" in
+  ''|*[!0-9]*)
+    echo "SDD_INVALID_TASK_NUMBER: value=$n" >&2
+    exit 2
+    ;;
+esac
+[ "$n" -gt 0 ] || {
+  echo "SDD_INVALID_TASK_NUMBER: value=$n" >&2
+  exit 2
+}
+sdd_plan_worktree_root "$plan" >/dev/null || exit 2
+
+if [ "$#" -eq 3 ]; then
+  out=$(sdd_normalize_path "$3") || {
+    echo "SDD_PATH_CONVERSION_FAILED: shell=bash path=$3 fallback=PowerShell" >&2
+    exit 2
+  }
+else
+  dir=$("$script_dir/sdd-workspace" "$plan")
+  out="$dir/task-${n}-brief.md"
+fi
+
+awk_cmd=$(sdd_resolve_command awk) || {
+  echo "SDD_REQUIRED_COMMAND_MISSING: awk; checked=PATH,/usr/bin" >&2
+  exit 2
+}
+
+"$awk_cmd" -v n="$n" '
+  /^```/ { infence = !infence }
+  !infence && /^#+[ \t]+Task[ \t]+[0-9]+/ {
+    intask = ($0 ~ ("^#+[ \t]+Task[ \t]+" n "([^0-9]|$)"))
+  }
+  intask { print }
+' "$plan" > "$out"
+
+if [ ! -s "$out" ]; then
+  echo "task ${n} not found in ${plan} (no heading matching 'Task ${n}')" >&2
+  exit 3
+fi
+
+lines=$("$awk_cmd" 'END { print NR }' "$out")
+echo "wrote ${out}: ${lines} lines"

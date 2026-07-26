@@ -12,7 +12,7 @@ description: Use when delegating a software-development task to subagents or low
 1. 要件定義、基本設計、実装の現状、およびプロジェクト指示を読み、入力品質ゲートを通す。識別子・値制約、schema、状態遷移、失敗時処理、所有・承認を正典・実装・validator・test fixture間で照合する。契約が異なる場合は共有契約表へ根拠別に並べ、矛盾またはunknownへ触れる部分を委譲しない。ゲート不合格なら委譲を止め、不足・影響・次の選択肢を報告する。
 2. タスクを分類し、範囲、書込み所有権、完了条件、検証を固定する。同じファイルを変更する作業は並列化しない。
 3. 各担当へ最小限のコンテキストパック、共有契約表、報告契約を渡す。関数シグネチャ、exact schema、分類対応、対象入力範囲、人手承認状態のうち該当する契約を、別名だけでなく値・フィールド・型・根拠・確定状態まで明記する。高リスク作業、曖昧な原因調査、統合、完了判定は監督役が担う。渡す文脈は該当範囲・ログ抜粋だけに絞り、横断探索はサブエージェントに投げて結論だけ受け取り、報告は差分・結論に限らせる（コンテキスト経済。詳細は委譲方針を参照）。
-4. 実行環境を確認し、利用可能なアダプターを読む。Codex は [Codex アダプター](references/codex-adapter.md)、Claude（Claude Code・Cowork・Claude.ai など）は [Claude アダプター](references/claude-adapter.md) を読む。サブエージェント起動機能を利用できなければメイン単独実行へ切り替える。
+4. 実行環境を確認し、利用可能なアダプターを読む。Codex は [Codex アダプター](references/codex-adapter.md)、Claude（Claude Code・Cowork・Claude.ai など）は [Claude アダプター](references/claude-adapter.md) を読む。plan別workspace・task brief・review packageが必要なら、plugin cacheのコピーではなく本skill同梱の`scripts/`を使う。サブエージェント起動機能を利用できなければメイン単独実行へ切り替える。
 5. 担当の報告だけに依存せず、対象diff、探索上限、severity、追加subreviewの可否、完了報告形式を固定してレビューする。差分、スコープ、要件・設計との整合、重要テスト、文書同期を確認し、指摘を「今回のblocker」「次タスク」「別所有タスク」へ分類する。不合格の範囲内修正は同じ担当へ一度だけ差し戻し、再失敗または判断不足は監督役が引き取る。
 6. 効率と品質を記録し、改善の要否は [改善方針](references/improvement-policy.md) に従って判断する。
 
@@ -30,4 +30,5 @@ description: Use when delegating a software-development task to subagents or low
 - リスク分類、ゲート、コンテキストパック、報告契約、差し戻し: [delegation-policy.md](references/delegation-policy.md)
 - Codex の機能検出とフォールバック: [codex-adapter.md](references/codex-adapter.md)
 - Claude の機能検出とフォールバック: [claude-adapter.md](references/claude-adapter.md)
+- Windows/POSIX対応の委譲補助: `scripts/sdd-workspace`、`scripts/task-brief`、`scripts/review-package`
 - 記録、効率評価、改善候補と採否: [improvement-policy.md](references/improvement-policy.md)

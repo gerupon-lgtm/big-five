@@ -18,12 +18,29 @@
 
 Windows、PowerShell、Git Bash、WSLでは、同じ補助スクリプトでもパス変換、実行権限、既定文字コードが異なる。補助スクリプトの失敗だけで、対象リポジトリや成果物の不良と断定しない。
 
+- plan別workspace、task brief、review packageには、本skillの`scripts/sdd-workspace`、`scripts/task-brief`、`scripts/review-package`を優先する。plugin cache内の別skillのhelperを正典として直接呼ばない。
+- 同梱helperはWindows drive-letter pathをGit BashのPOSIX pathへ正規化する。PowerShellからはplan・出力先を1引数として渡し、日本語・空白をshell文字列分割しない。
+- helperが`SDD_PATH_CONVERSION_FAILED`を返した場合、エラー内のshellと未変換pathを記録し、同じworktree内の`.superpowers/sdd/<plan>/`へPowerShellの`New-Item`で限定作成する。別worktree、repository root、`C:`という相対directoryへ出力しない。
+- `review-package`のbyte数は任意統計である。`wc`がない環境でも、出力ファイルの存在・非0byteとcommit数を確認できればpackage生成を成功とし、不完全な`bytes`表示を成功扱いしない。
 - 失敗したshell、コマンド、解決済み絶対パス、権限エラーを記録する。
 - PowerShellなど、その環境で利用できるネイティブ手段へ切り替える。
 - 出力先が意図したworktreeまたは評価領域内か確認する。
 - 日本語の表示文字化けだけでファイル破損と断定せず、UTF-8を明示した読取りと実バイトまたは別経路で照合する。
 
 環境固有の回避策を共通の製品要件や成果物変更へ混入させない。
+
+## Skill本文の権限を確認する
+
+`delegate-development`は監督役が適用するcontroller skillである。実装担当・レビュー担当のpromptへ`$delegate-development`の再適用や、controller skill packageの再読を要求しない。担当へはtask brief、共有契約表、report path、review packageだけを渡す。
+
+監督役自身または、別skillを実際に適用する担当が選択済みskill本文を読めない場合、適用成功として継続しない。次を`DELEGATE_SKILL_ACCESS_DENIED`として報告し、読めないskillに依存する委譲を止める。
+
+- skill名と解決済み絶対path
+- root／implementer／reviewerの別
+- permission profile
+- 失敗したread operationと例外種別
+
+skill packageのwrite権限を付与して回避しない。これはCodex adapter／sandboxが選択済みskill packageへread-only accessを伝播すべき外部境界であり、本skillは権限自体を変更しない。監督役が既にskillを正規のskill loaderから完全に読了しており、子担当がcontroller skillを必要としない場合だけ、exactなtask artifactを渡して継続できる。
 
 ## 回収して統合する
 
