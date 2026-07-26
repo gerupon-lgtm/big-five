@@ -52,6 +52,7 @@ test("artifact inspector accepts generated JSON with an approved evidence locato
       sources: [{ url: EVIDENCE_URL }],
       evidence: [{ locator: "docs/requirements/2026-07-20-big-five-self-understanding-requirements.md#831" }],
       previewAllowed: false,
+      safeProse: "review、approval、note、status は利用者向けの通常文言です。",
       copy: "レビュー前の表示ではありません。",
     }),
     "nested/runtime.json": JSON.stringify({ status: "approved" }),
@@ -80,8 +81,14 @@ test("artifact inspector rejects each unapproved authoring status structurally",
 test("artifact inspector normalizes authoring metadata and status key naming variants", async () => {
   for (const [key, value] of [
     ["approvalDate", "2026-07-26"],
+    ["approvalMetadata", { approver: "user" }],
+    ["approvalMetadataHash", "sha256:example"],
+    ["approvedAt", "2026-07-26T12:00:00Z"],
+    ["notes", "authoring note"],
     ["review_note", "human review"],
     ["review-note", "human review"],
+    ["reviewMetadata", { reviewer: "user" }],
+    ["reviewedAt", "2026-07-26T12:00:00Z"],
     ["Status", "draft"],
   ]) {
     await assertArtifactRejected(

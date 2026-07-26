@@ -23,24 +23,15 @@ const ALLOWED_EVIDENCE_URLS = new Set([
   "https://ipip.ori.org/newPermission.htm",
 ]);
 const PROHIBITED_ARTIFACT_EXTENSIONS = new Set([".csv", ".md", ".map"]);
-const AUTHORING_METADATA_KEYS = new Set([
+const AUTHORING_METADATA_KEY_PREFIXES = [
   "approval",
-  "approval_date",
-  "approval_note",
-  "approval_notes",
-  "approval_status",
-  "approved_by",
-  "approved_on",
+  "approved",
   "approver",
-  "review_note",
-  "review_notes",
-  "review_status",
-  "reviewed_by",
-  "reviewed_on",
+  "review",
+  "reviewed",
   "reviewer",
-  "note",
-  "notes",
-].map(normalizeArtifactKey));
+];
+const AUTHORING_METADATA_EXACT_KEYS = new Set(["note", "notes"]);
 const CREDENTIAL_KEY = /(?:token|secret|password|credential|api[_-]?key|access[_-]?key|private[_-]?key)/i;
 const CREDENTIAL_VALUE = /(?:token|secret|password|credential|api[_-]?key|access[_-]?key|private[_-]?key)\s*[:=]\s*\S+/i;
 const HTTP_URL = /https?:\/\/[^\s"'<>]+/gi;
@@ -49,6 +40,12 @@ const POSIX_ABSOLUTE_PATH = /(?:^|[\s"'([{:;,=])\/(?![\/\s])/;
 
 function normalizeArtifactKey(key) {
   return key.replace(/[^A-Za-z0-9]/g, "").toLowerCase();
+}
+
+function isAuthoringMetadataKey(key) {
+  const normalizedKey = normalizeArtifactKey(key);
+  return AUTHORING_METADATA_EXACT_KEYS.has(normalizedKey)
+    || AUTHORING_METADATA_KEY_PREFIXES.some((prefix) => normalizedKey.startsWith(prefix));
 }
 
 function collectJavaScriptFiles(directory) {
@@ -107,7 +104,7 @@ function inspectJsonValue(value, relativePath) {
 
   for (const [key, nestedValue] of Object.entries(value)) {
     const normalizedKey = normalizeArtifactKey(key);
-    assertArtifact(!AUTHORING_METADATA_KEYS.has(normalizedKey), `authoring metadata key ${key} in ${relativePath}`);
+    assertArtifact(!isAuthoringMetadataKey(key), `authoring metadata key ${key} in ${relativePath}`);
     assertArtifact(!CREDENTIAL_KEY.test(key), `credential-like key ${key} in ${relativePath}`);
     if (normalizedKey === "status") {
       assertArtifact(
