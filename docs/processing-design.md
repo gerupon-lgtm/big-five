@@ -220,14 +220,31 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 ## 7. 履歴保存
 
-以下は後続永続化統合の処理契約であり、`createResultSnapshot`自体は実装済みだが、結果保存APIと本番callerは未実装である。現行`progress-storage.js`の旧generic result schemaはこの統合で置き換える。
+`createResultSnapshot`、保存済み13フィールドを再検証する`validateResultSnapshot`、結果保存API`saveResultSnapshot({ storage, snapshot, diagnosisId, definition, meta, now })`は実装済みである。回答完答からの本番callerは未実装である。
 
-1. `crypto.randomUUID()`でresultIdを生成。
-2. ResultSnapshotを検証。
-3. 同じresultIdがある場合は追加せず、既存を返す。
-4. 新しい結果を追加し、表示時にcompletedAt降順へ並べる。
-5. 保存成功後、対応ProgressRecordを削除する。
-6. 保存失敗時も画面結果を維持し、生回答はメモリ上の完答処理終了時に破棄する。
+1. `crypto.randomUUID()`でRFC 4122 UUID形状のresultIdを生成する。
+2. ResultSnapshotの13フィールドexact schemaを検証する。`answers`と`diagnosisId`は受け付けない。
+3. 対応ProgressRecordが存在する場合、`definition`と`meta`でexact schema・現在版を検証する。破損・版不一致なら既存StorageEnvelopeを上書き・削除しない。
+4. 同じresultIdがある場合、同一snapshotなら追加せず既存を返す。内容が異なるID衝突は破損として拒否する。
+5. 新しい結果を追加し、表示時にcompletedAt降順、同時刻はresultId辞書順へ並べる。
+6. `preview20`の保存では、追加30問へ進めるよう対応ProgressRecordを保持する。
+7. `detail50`の保存成功時は、ResultSnapshot追加と対応ProgressRecord削除を1回のStorageEnvelope書込みで原子的に行う。
+8. `detail50`のResultSnapshot保存が失敗しても画面結果を維持し、対応ProgressRecordの再読・再検証後に削除を別の最小書込みで試みる。削除も失敗した場合は`STORAGE_DELETE_FAILED`を併記して通知し、完了表示や履歴保存成功とは扱わない。
+9. `detail50`の完答処理終了時は、保存成否にかかわらずcallerが回答地図と完答ProgressRecordへのメモリ参照を破棄する。永続化層の返却値へ生回答を含めない。
+
+状態遷移:
+
+| mode・event | 結果保存 | ProgressRecord | 画面結果 | 返却 |
+|---|---|---|---|---|
+| `preview20` / 初回保存 | 1件追加 | 保持 | 維持 | 保存済みsnapshot |
+| `preview20` / 同一resultId再実行 | 追加しない | 保持 | 維持 | 既存snapshot |
+| `preview20` / 保存失敗 | 追加しない | 保持 | 維持 | `STORAGE_SAVE_FAILED` |
+| `detail50` / 初回保存 | 1件追加 | 同一書込みで削除 | 維持 | 保存済みsnapshot |
+| `detail50` / 同一resultId再実行 | 追加しない | 残っていれば削除 | 維持 | 既存snapshot |
+| `detail50` / 保存失敗・進捗削除成功 | 追加しない | 削除 | 維持 | `STORAGE_SAVE_FAILED`＋cleanup成功 |
+| `detail50` / 保存失敗・進捗削除失敗 | 追加しない | 残存の可能性 | 維持 | `STORAGE_SAVE_FAILED`＋`STORAGE_DELETE_FAILED` |
+| 対象進捗が破損・版不一致 | 追加しない | 上書き・削除しない | 維持 | `STORAGE_CORRUPT`または`PROGRESS_INCOMPATIBLE` |
+| resultId衝突（内容不一致） | 追加しない | modeに従い完答時だけ削除を試行 | 維持 | `STORAGE_CORRUPT` |
 
 パレット変更は該当ResultSnapshotのselectedPaletteIdだけを更新する。スコア、称号、文章、猫、版を変更しない。
 

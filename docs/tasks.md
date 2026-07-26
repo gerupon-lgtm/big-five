@@ -216,7 +216,8 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - gate: 根拠台帳ではE-0のみapproved、E-1〜E-5は`draft`で承認日なし。T-0〜T-4／F-1〜F-5はimplementation auditと独立レビュー済みだが人手approval recordなし。X-1〜X-2も人手approval recordなし。したがって`Content Approval pending`を維持する。
 - 完全解決条件: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateについて必要な人手approval recordがすべて揃うこと。
 - 画面: S-003/S-004、レーダー、character loader、色香り、猫・Canvas失敗時のUIフォールバックは後続T-005統合。
-- 永続化: production ResultSnapshotの本番caller／結果保存APIは未実装。`app/js/infrastructure/progress-storage.js`は旧`diagnosisId`付きgeneric result schemaと旧section集合のため、後続永続化統合で更新する。
+- 永続化: 13フィールドproduction ResultSnapshot validatorと`saveResultSnapshot`は実装済み。回答完答からの本番callerは未実装で、後続T-005画面統合で接続する。
+- 永続化契約解消（2026-07-26）: `resultId`はRFC 4122 UUID形状へ統一する。`preview20`保存では追加回答用ProgressRecordを保持し、`detail50`完答では履歴保存の成否にかかわらず生回答を破棄する。保存成功時はsnapshot追加と進捗削除を同一StorageEnvelope書込みで行い、保存失敗時も進捗削除をbest-effortで試みる。
 - 検証: `app/tests/result-evidence-definitions.test.js`、`app/tests/result-content-definitions.test.js`、`app/tests/result-composer.test.js`、`app/tests/result-snapshot.test.js`。リポジトリ同期は`app/tests/project-contract.test.js`で検証する。
 
 ### T-006 履歴・比較・削除
@@ -236,6 +237,14 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 1件破損しても残りを表示。
   - 個別削除の誤対象防止、全削除の取消／確定。
   - 容量不足でも現在結果を維持。
+
+#### ResultSnapshot永続化基盤の実装記録（2026-07-26）
+
+- 状態: 部分完了。13フィールドexact validator、RFC 4122 UUID検証、結果保存、同一ID冪等、ID衝突拒否、`preview20`進捗保持、`detail50`の結果追加・進捗削除の原子的書込みを実装した。
+- 安全性: 対象ProgressRecordを現行定義・版で検証し、破損・版不一致・将来StorageEnvelopeを上書きしない。詳細結果の保存失敗時は対象進捗を再検証してbest-effort削除し、結果と返却値へ生回答を含めない。
+- 未実装: 本番caller、履歴一覧読込・新しい順表示、個別／全削除、比較互換判定と差分表示。
+- レビュー: `delegate-development`で契約監査、限定実装、独立レビュー、1回の差し戻し、再レビューを実施し、最終指摘なし。
+- 検証: 集中37件、全307件、`npm.cmd run check`、`git diff --check`成功。
 
 ### T-007 共有カード・保存・コピー
 

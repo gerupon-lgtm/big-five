@@ -15,7 +15,23 @@ const INPUT_FIELDS = [
   "selectedPaletteId",
   "cardTemplateVersion",
 ];
+const SNAPSHOT_FIELDS = [
+  "resultId",
+  "completedAt",
+  "questionCount",
+  "mode",
+  "versionTuple",
+  "factors",
+  "titleId",
+  "characterId",
+  "characterAssetVersion",
+  "boundaryFlags",
+  "renderedTexts",
+  "selectedPaletteId",
+  "cardTemplateVersion",
+];
 const VERSION_FIELDS = Object.freeze(Object.keys(createVersionTuple(appMeta)));
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TITLE_SECTIONS = ["titleSubtitle", "titleReason"];
 const PREVIEW_SECTIONS = Object.freeze([
   ...TITLE_SECTIONS,
@@ -125,9 +141,10 @@ function buildSnapshot(input) {
     hasAnswersField(resultModel) ||
     !isValidResultModel(resultModel, questionCount) ||
     !validRenderedTexts(resultModel, mode, versionTuple.resultTextVersion) ||
-    !["resultId", "characterAssetVersion", "selectedPaletteId", "cardTemplateVersion"].every(
+    !["characterAssetVersion", "selectedPaletteId", "cardTemplateVersion"].every(
       (field) => typeof input[field] === "string" && input[field].length > 0,
     ) ||
+    !UUID_PATTERN.test(resultId) ||
     cardTemplateVersion !== versionTuple.cardTemplateVersion
   ) {
     invalidSnapshot();
@@ -160,6 +177,31 @@ function buildSnapshot(input) {
 export function createResultSnapshot(input) {
   try {
     return buildSnapshot(input);
+  } catch {
+    invalidSnapshot();
+  }
+}
+
+export function validateResultSnapshot(snapshot) {
+  try {
+    if (!hasExactDataFields(snapshot, SNAPSHOT_FIELDS)) invalidSnapshot();
+    return buildSnapshot({
+      resultId: snapshot.resultId,
+      completedAt: snapshot.completedAt,
+      questionCount: snapshot.questionCount,
+      mode: snapshot.mode,
+      versionTuple: snapshot.versionTuple,
+      resultModel: {
+        factors: snapshot.factors,
+        titleId: snapshot.titleId,
+        characterId: snapshot.characterId,
+        boundaryFlags: snapshot.boundaryFlags,
+        renderedTexts: snapshot.renderedTexts,
+      },
+      characterAssetVersion: snapshot.characterAssetVersion,
+      selectedPaletteId: snapshot.selectedPaletteId,
+      cardTemplateVersion: snapshot.cardTemplateVersion,
+    });
   } catch {
     invalidSnapshot();
   }

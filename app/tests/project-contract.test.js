@@ -135,8 +135,10 @@ test("Q-006 data model documents the exact evidence, text, rendered, and snapsho
     "診断時",
     "characterAssetVersion",
     "characterManifestVersion",
+    "validateResultSnapshot",
     "progress-storage.js",
-    "後続永続化統合",
+    "saveResultSnapshot",
+    "本番caller",
   ], documentPaths.dataModel);
 
   const renderedSection = sectionBetween(text, "### 3.7 RenderedResultText", "## 4.");

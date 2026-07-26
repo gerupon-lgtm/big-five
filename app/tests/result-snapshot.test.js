@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { TitleProfileDefinitions } from "../js/data/title-profile-definitions.js";
 import { composeResultModel } from "../js/domain/result-model.js";
-import { createResultSnapshot } from "../js/domain/result-snapshot.js";
+import { createResultSnapshot, validateResultSnapshot } from "../js/domain/result-snapshot.js";
 import { classifyTitle } from "../js/domain/title-classifier.js";
 
 const FACTOR_IDS = [
@@ -127,7 +127,7 @@ function makeVersionTuple() {
 
 function makeValidInput() {
   return {
-    resultId: "result-1",
+    resultId: "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c003",
     completedAt: "2026-07-25T12:00:00+09:00",
     questionCount: 50,
     mode: "detail50",
@@ -697,4 +697,32 @@ test("T-006 F-006 normalizes accessor and exotic-record failures to RESULT_SNAPS
   Object.assign(inherited, makeValidInput());
   delete inherited.resultId;
   assertSnapshotInvalid(inherited, "inherited");
+});
+
+test("T-006 F-006 rejects non-UUID result IDs when creating a snapshot", () => {
+  for (const resultId of ["result-1", "7b6f0a80-7b0a-6e9d-9f15-0fe3ad12c003", ""]) {
+    assertSnapshotInvalid({ ...makeValidInput(), resultId }, resultId);
+  }
+});
+
+test("T-006 F-006 validates only the exact persisted ResultSnapshot shape as a frozen canonical copy", () => {
+  const snapshot = createResultSnapshot(makeValidInput());
+  const restored = validateResultSnapshot(structuredClone(snapshot));
+
+  assert.deepEqual(restored, snapshot);
+  assert.notStrictEqual(restored, snapshot);
+  assert.notStrictEqual(restored.factors, snapshot.factors);
+  assertDeeplyFrozen(restored);
+
+  for (const changed of [
+    { ...snapshot, diagnosisId: "forbidden" },
+    { ...snapshot, answers: {} },
+    { ...snapshot, resultModel: {} },
+    (() => { const next = structuredClone(snapshot); delete next.titleId; return next; })(),
+  ]) {
+    assert.throws(() => validateResultSnapshot(changed), {
+      name: "TypeError",
+      message: "RESULT_SNAPSHOT_INVALID",
+    });
+  }
 });

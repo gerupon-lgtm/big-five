@@ -324,11 +324,11 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 | selectedPaletteId | string | ○ | 未選択時も標準ID |
 | cardTemplateVersion | string | ○ | 再生成用 |
 
-`app/js/domain/result-snapshot.js`の`createResultSnapshot`が上記13フィールドのexact schemaを生成する。`answers`、`diagnosisId`、`resultModel` wrapper、結果定義、DOM・Canvas状態は持たない。`renderedTexts`は結果文更新後も診断時の表示文と根拠参照を維持するため深く複製する。snapshot全体はdeep freezeされ、入力の後続変更から隔離される。
+`app/js/domain/result-snapshot.js`の`createResultSnapshot`が上記13フィールドのexact schemaを生成する。`resultId`は`crypto.randomUUID()`で生成するRFC 4122 UUID形状とする。`answers`、`diagnosisId`、`resultModel` wrapper、結果定義、DOM・Canvas状態は持たない。`renderedTexts`は結果文更新後も診断時の表示文と根拠参照を維持するため深く複製する。snapshot全体はdeep freezeされ、入力の後続変更から隔離される。
 
 `VersionTuple.characterManifestVersion`はmanifest全体の版、`characterAssetVersion`は選択された1体の`CharacterManifestEntry.assetVersion`であり、互いに独立して保存する。
 
-現行の`app/js/infrastructure/progress-storage.js`はT-004時点の旧generic result schema（`diagnosisId`を含む）と旧section集合を検証しており、`createResultSnapshot`の本番callerや結果保存APIはまだない。所有タスク外のため本同期ではコードを変更せず、後続永続化統合で更新する。統合時はこの13フィールドschemaを唯一の結果履歴契約とし、旧generic schemaを置き換える。
+`app/js/domain/result-snapshot.js`の`validateResultSnapshot`と`app/js/infrastructure/progress-storage.js`の`saveResultSnapshot`は、この13フィールドschemaを唯一の結果履歴契約として実装済みである。旧`diagnosisId`付きgeneric result schemaと旧section集合は置き換えた。保存APIは`storage`、`snapshot`、`diagnosisId`、`definition`、`meta`、`now`を受け、対象ProgressRecordを現行定義・版で検証してから保存する。破損・版不一致の対象進捗は上書き・削除しない。回答完答からの本番callerとS-003/S-004画面統合は後続T-005で実装する。
 
 ### 3.6 FactorResult
 
