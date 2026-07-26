@@ -13,6 +13,15 @@ export function resolveRoute(hash) {
   }
 
   const [path, query = ""] = typeof hash === "string" ? hash.split("?", 2) : [];
+  if (path === "#/result") {
+    const params = new URLSearchParams(query);
+    return Object.freeze({
+      id: "result",
+      canonicalHash: hash,
+      didFallback: false,
+      resultId: params.get("resultId"),
+    });
+  }
   if (path === "#/compare") {
     const params = new URLSearchParams(query);
     return Object.freeze({

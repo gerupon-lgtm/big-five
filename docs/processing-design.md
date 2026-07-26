@@ -216,11 +216,11 @@ displayScore = round((rawMean - 1) / 4 * 100)
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
-上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合とS-006/S-007初期画面接続も完了した。回答完答からの本番caller、S-003/S-004、履歴から独立結果画面を開く遷移は後続T-005である。
+上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移も完了した。回答完答からの本番caller、追加30問へのS-002接続、T-007共有、Q-012画像、Q-013色・香りは後続である。
 
 ## 7. 履歴保存
 
-`createResultSnapshot`、保存済み13フィールドを再検証する`validateResultSnapshot`、結果保存API`saveResultSnapshot({ storage, snapshot, diagnosisId, definition, meta, now })`、履歴読込API`loadResultHistory({ storage, now })`、個別削除API`deleteResultSnapshot({ storage, resultId, confirmed, now })`、全削除API`deleteAllData({ storage, confirmed, now })`は実装済みである。S-006はこれらの履歴・削除APIへ接続済みで、回答完答からの本番callerは未実装である。
+`createResultSnapshot`、保存済み13フィールドを再検証する`validateResultSnapshot`、結果保存API`saveResultSnapshot({ storage, snapshot, diagnosisId, definition, meta, now })`、履歴読込API`loadResultHistory({ storage, now })`、個別削除API`deleteResultSnapshot({ storage, resultId, confirmed, now })`、全削除API`deleteAllData({ storage, confirmed, now })`は実装済みである。S-006は履歴・削除APIと独立結果画面へ接続済みで、回答完答からの本番callerは未実装である。
 
 1. `crypto.randomUUID()`でRFC 4122 UUID形状のresultIdを生成する。
 2. ResultSnapshotの13フィールドexact schemaを検証する。`answers`と`diagnosisId`は受け付けない。

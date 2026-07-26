@@ -11,10 +11,14 @@ import {
 import { resolveRoute } from "./infrastructure/router.js";
 import { renderComparisonScreen } from "./presentation/comparison-screen.js";
 import { renderHistoryScreen } from "./presentation/history-screen.js";
+import { renderSavedResultScreen } from "./presentation/result-screen.js";
 import { renderStartScreen } from "./presentation/start-screen.js";
 
 const factorLabels = Object.freeze(Object.fromEntries(
   FactorDefinitions.map(({ id, displayName }) => [id, displayName]),
+));
+const factorDescriptions = Object.freeze(Object.fromEntries(
+  FactorDefinitions.map(({ id, description }) => [id, description]),
 ));
 const titleLabels = Object.freeze(Object.fromEntries(
   TitleProfileDefinitions.map(({ titleId, label }) => [titleId, label]),
@@ -92,6 +96,51 @@ export function startApp({
         windowObject.location.hash = `#/compare?before=${encodeURIComponent(comparison.beforeResultId)}&after=${encodeURIComponent(comparison.afterResultId)}`;
         renderCurrentRoute();
       },
+      onOpenResult(resultId) {
+        windowObject.location.hash = `#/result?resultId=${encodeURIComponent(resultId)}`;
+        renderCurrentRoute();
+      },
+    });
+  }
+
+  function returnMissingResultToHistory() {
+    historyNotice = {
+      kind: "error",
+      text: "指定された診断結果を開けませんでした。履歴からもう一度選んでください。",
+    };
+    historyObject.replaceState(null, "", "#/history");
+    windowObject.location.hash = "#/history";
+    renderCurrentRoute();
+  }
+
+  function renderResultRoute(route) {
+    if (!route.resultId) {
+      returnMissingResultToHistory();
+      return;
+    }
+    const historyState = loadResultHistory({
+      storage: getStorage(),
+      now: nowProvider(),
+    });
+    if (historyState.status === "error") {
+      returnMissingResultToHistory();
+      return;
+    }
+    const snapshot = historyState.results.find(({ resultId }) =>
+      resultId === route.resultId);
+    if (!snapshot) {
+      returnMissingResultToHistory();
+      return;
+    }
+    renderSavedResultScreen(screenHost, snapshot, {
+      factorLabels,
+      factorDescriptions,
+      titleLabels,
+    }, {
+      onRetry() {
+        windowObject.location.hash = "#/start";
+        renderCurrentRoute();
+      },
     });
   }
 
@@ -150,6 +199,10 @@ export function startApp({
     }
     if (route.id === "compare") {
       renderComparisonRoute(route);
+      return;
+    }
+    if (route.id === "result") {
+      renderResultRoute(route);
       return;
     }
 

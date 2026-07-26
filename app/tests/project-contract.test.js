@@ -172,12 +172,13 @@ test("VersionTuple scaleVersion preserves scale identity and revision without ad
 });
 
 test("T-006 documents implemented history, deletion, and comparison seams", async () => {
-  const [dataModel, processing, tasks, historyScreen, comparisonScreen] = await Promise.all([
+  const [dataModel, processing, tasks, historyScreen, comparisonScreen, resultScreen] = await Promise.all([
     readProjectDocument(documentPaths.dataModel),
     readProjectDocument(documentPaths.processing),
     readProjectDocument(documentPaths.tasks),
     readProjectDocument("app/js/presentation/history-screen.js"),
     readProjectDocument("app/js/presentation/comparison-screen.js"),
+    readProjectDocument("app/js/presentation/result-screen.js"),
   ]);
   const snapshotSection = sectionBetween(dataModel, "### 3.5 ResultSnapshot", "### 3.6 FactorResult");
   const compatibilitySection = sectionBetween(dataModel, "## 4. 比較互換性", "## 5. 更新・削除・復元");
@@ -209,10 +210,11 @@ test("T-006 documents implemented history, deletion, and comparison seams", asyn
     "履歴0件",
     "比較選択",
     "P1",
-    "全336件",
+    "全349件",
   ], documentPaths.tasks);
   assert.doesNotMatch(historyScreen, /from\s+["']\.\.\/data\//);
   assert.doesNotMatch(comparisonScreen, /from\s+["']\.\.\/data\//);
+  assert.doesNotMatch(resultScreen, /from\s+["']\.\.\/data\//);
 });
 
 test("Q-006 processing assigns selection validation to the composer and production IDs to snapshots", async () => {

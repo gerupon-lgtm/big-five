@@ -54,6 +54,9 @@ function renderResultCard(parent, snapshot, labels, actions, onSelectComparison)
 
   const controls = documentObject.createElement("div");
   controls.className = "history-card-actions";
+  const openButton = appendTextElement(controls, "button", "この結果を開く", "primary-button");
+  openButton.setAttribute("type", "button");
+  openButton.addEventListener("click", () => actions.onOpenResult?.(snapshot.resultId));
   const compareButton = appendTextElement(controls, "button", "比較対象に選ぶ", "secondary-button");
   compareButton.setAttribute("type", "button");
   compareButton.disabled = false;

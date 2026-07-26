@@ -113,6 +113,26 @@ test("T-006 S-006 delegates exact individual and all-data deletion actions", () 
   ]);
 });
 
+test("T-005/T-006 S-006 opens one exact saved result on an independent screen", () => {
+  const { host } = createFakeScreen();
+  const first = snapshot({
+    resultId: "00000000-0000-4000-8000-000000000001",
+    completedAt: "2026-07-26T12:00:00.000Z",
+    questionCount: 50,
+  });
+  const opened = [];
+
+  renderHistoryScreen(host, { status: "ok", results: [first], ...screenLabels }, {
+    onOpenResult: (resultId) => opened.push(resultId),
+  });
+
+  const openButton = collectElements(host).find(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "この結果を開く");
+  assert.ok(openButton);
+  openButton.dispatch("click");
+  assert.deepEqual(opened, [first.resultId]);
+});
+
 test("T-006 S-006 keeps all-data deletion reachable when result history is empty", () => {
   const { host } = createFakeScreen();
   let deleteAllCalls = 0;

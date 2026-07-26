@@ -48,3 +48,21 @@ test("T-006 S-007 resolves comparison result IDs and keeps missing IDs on the co
     afterResultId: null,
   });
 });
+
+test("T-005/T-006 S-003/S-004 resolves an independent saved result route", () => {
+  assert.deepEqual(
+    resolveRoute("#/result?resultId=00000000-0000-4000-8000-000000000001"),
+    {
+      id: "result",
+      canonicalHash: "#/result?resultId=00000000-0000-4000-8000-000000000001",
+      didFallback: false,
+      resultId: "00000000-0000-4000-8000-000000000001",
+    },
+  );
+  assert.deepEqual(resolveRoute("#/result"), {
+    id: "result",
+    canonicalHash: "#/result",
+    didFallback: false,
+    resultId: null,
+  });
+});

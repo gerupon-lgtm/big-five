@@ -265,3 +265,75 @@ test("T-006 S-007 returns a direct comparison URL without two IDs to history", (
   assert.match(collectText(host), /診断結果の履歴/);
   assert.match(collectText(host), /まだ結果がありません/);
 });
+
+test("T-005/T-006 S-004 opens one saved detail result by resultId", () => {
+  const documentObject = {
+    createElement(tagName) {
+      return new FakeElement(tagName, documentObject);
+    },
+    getElementById(id) {
+      return id === "app" ? host : null;
+    },
+  };
+  const host = new FakeElement("div", documentObject);
+  const target = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000001",
+  });
+  const raw = JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: "2026-07-26T12:00:00.000Z",
+    progressByDiagnosis: {},
+    results: [target],
+  });
+
+  startApp({
+    documentObject,
+    historyObject: { replaceState() {} },
+    windowObject: {
+      location: { hash: `#/result?resultId=${target.resultId}` },
+      addEventListener() {},
+    },
+    storage: { getItem: () => raw },
+    nowProvider: () => "2026-07-26T12:05:00.000Z",
+  });
+
+  const text = collectText(host);
+  assert.match(text, /50問詳細結果/);
+  assert.match(text, /五つの風を見渡す観測者/);
+  assert.match(text, /心理学上の正式なタイプではありません/);
+  assert.match(text, /画像を利用できない場合も診断結果は有効です/);
+  assert.match(text, /根拠を確認/);
+  assert.doesNotMatch(text, /answers/);
+});
+
+test("T-005/T-006 S-003/S-004 returns a missing saved result URL to history", () => {
+  const documentObject = {
+    createElement(tagName) {
+      return new FakeElement(tagName, documentObject);
+    },
+    getElementById(id) {
+      return id === "app" ? host : null;
+    },
+  };
+  const host = new FakeElement("div", documentObject);
+  let replacedHash = null;
+
+  startApp({
+    documentObject,
+    historyObject: {
+      replaceState(_state, _title, hash) {
+        replacedHash = hash;
+      },
+    },
+    windowObject: {
+      location: { hash: "#/result?resultId=00000000-0000-4000-8000-000000000099" },
+      addEventListener() {},
+    },
+    storage: { getItem: () => null },
+    nowProvider: () => "2026-07-26T12:05:00.000Z",
+  });
+
+  assert.equal(replacedHash, "#/history");
+  assert.match(collectText(host), /指定された診断結果を開けませんでした/);
+  assert.match(collectText(host), /診断結果の履歴/);
+});

@@ -1,6 +1,6 @@
 # T-005 結果・キャラクター・色香り設計
 
-- 状態: 設計承認済み。Q-006ドメイン実装・独立レビュー済み、人手Content Approval／画面・永続化統合待ち
+- 状態: 設計承認済み。Q-006ドメイン、永続化、保存済みS-003/S-004閲覧を実装・独立レビュー済み。人手Content Approval／完答controller／Q-012・Q-013統合待ち
 - 対象版: `mvp-0.1.0`
 - 対象機能: F-002、F-005、F-006、F-007、F-008、F-016、F-018
 - 決定対象: Q-006継続確認、Q-012、Q-013
@@ -263,9 +263,9 @@ FragranceSceneSelector<S> = exact {
 ## 7. 残作業
 
 1. Q-006: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordを根拠台帳へ記録する。承認までは`result-text-v1 initial reviewed copy`かつ`Content Approval pending`として扱う。
-2. Q-006/T-005: `composeResultTexts`／`createResultSnapshot`／`saveResultSnapshot`を完答controllerとS-003/S-004へ統合する。
-3. T-006/T-005: S-006/S-007初期画面と変動注意文は統合済み。履歴カードから独立したS-003/S-004を開く遷移を、結果画面実装時に接続する。
+2. Q-006/T-005: `composeResultTexts`／`createResultSnapshot`／`saveResultSnapshot`を完答controllerへ統合する。保存済みsnapshotのS-003/S-004表示は接続済み。
+3. T-006/T-005: S-006/S-007初期画面、変動注意文、履歴カードから独立したS-003/S-004を開く遷移は統合済み。追加30問へのS-002接続とT-007共有は各後続画面実装時に接続する。
 4. Q-012: 3体パイロット制作・承認、encoderと余白値の固定、残り48体の量産。
 5. Q-013: 全パレット・香調・用途色展開データ。
 6. Q-007: 共有画像寸法・文字量。
-7. T-005: 結果画面、レーダー、character loader、色香り表示、猫・Canvas失敗時のUIフォールバックを実装・検証する。
+7. T-005: 保存済み結果画面、レーダー、Canvas失敗時のUIフォールバックは実装済み。完答直後の画面接続、character loader、色香り表示を実装・検証する。

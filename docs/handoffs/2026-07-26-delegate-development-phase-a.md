@@ -5,6 +5,7 @@
 - 採用スキルcommit: `bdc9af2`
 - 配布記録: `_verify/skill-evals/delegate-development/reports/2026-07-26-distribution-record.md`
 - 比較レポート: `_verify/skill-evals/delegate-development/reports/2026-07-26-baseline-candidate-comparison.md`
+- Codex読取権限の修正指示: `_verify/skill-evals/delegate-development/reports/2026-07-26-codex-installed-skill-read-access-correction.md`
 
 ## Phase A完了状態
 
@@ -36,7 +37,7 @@
 
 - Q-006の実装・独立レビューは完了済み。
 - Q-006の人手Content Approvalは引き続きpending。
-- handoff作成時はS-003/S-004結果画面、本番完答caller、ResultSnapshot保存、旧`progress-storage` schema統合が未実装だった。再開後にResultSnapshot保存・履歴・削除・比較基盤とS-006/S-007初期画面まで実装し、S-003/S-004とcaller接続が残っている。
+- handoff作成時はS-003/S-004結果画面、本番完答caller、ResultSnapshot保存、旧`progress-storage` schema統合が未実装だった。再開後にResultSnapshot保存・履歴・削除・比較基盤、S-006/S-007初期画面、保存済みsnapshotの独立S-003/S-004表示まで実装した。完答caller、追加30問へのS-002接続、T-007共有が残っている。
 - Q-012画像、Q-013演出データ、T-005 UIは各計画と人手ゲートを維持する。
 
 ## forward-testで検出した実装前blocker（再開後に解消）
@@ -54,12 +55,12 @@ ResultSnapshot永続化へ進む前に、次を正典・実装・test間で解�
 
 上記を推測で解決せず、共有契約表へ`confirmed / conflicting / unknown`で整理してから実装タスクを委譲する。
 
-再開後、4件すべてを`docs/data-model.md`と`docs/processing-design.md`で契約化し、ResultSnapshotのexact validator、RFC 4122 UUID、結果保存、完答時の原子的削除・best-effort cleanup、履歴読込、個別・全削除、比較純粋関数、S-006/S-007初期画面を実装した。残作業は本番callerとS-003/S-004、履歴から独立結果画面を開く遷移である。
+再開後、4件すべてを`docs/data-model.md`と`docs/processing-design.md`で契約化し、ResultSnapshotのexact validator、RFC 4122 UUID、結果保存、完答時の原子的削除・best-effort cleanup、履歴読込、個別・全削除、比較純粋関数、S-006/S-007初期画面、保存済みS-003/S-004と独立結果画面遷移を実装した。残作業は本番caller、追加30問へのS-002接続、T-007共有、Q-012/Q-013実データ統合である。
 
 ## 再開手順
 
 1. 新しい開発チャットで、インストール済み`delegate-development`の`SKILL.md`ハッシュが配布記録と一致することを確認する。
 2. `docs/tasks.md`、`docs/data-model.md`、`docs/processing-design.md`、Q-012/Q-013/T-005計画を読む。
-3. 上記永続化blockerを設計判断として解消するか、人手承認不要の別タスクを選ぶ。
+3. 完答callerとS-002接続を実装する。Q-012/Q-013の未確定データへ触れる作業は入力品質ゲートで委譲せず、各制作・承認後に開始する。
 4. 委譲する場合は、共有契約表、レビュー終了条件、約60秒の進捗通知、人手承認分離を使う。
 5. 3〜5タスク後に、差し戻し、監督修正、スコープ外変更、進捗通知を再評価する。
