@@ -4,10 +4,37 @@ const START_ROUTE = Object.freeze({
 });
 
 export function resolveRoute(hash) {
-  const didFallback = hash !== START_ROUTE.canonicalHash;
+  if (hash === "#/history") {
+    return Object.freeze({
+      id: "history",
+      canonicalHash: hash,
+      didFallback: false,
+    });
+  }
+
+  const [path, query = ""] = typeof hash === "string" ? hash.split("?", 2) : [];
+  if (path === "#/result") {
+    const params = new URLSearchParams(query);
+    return Object.freeze({
+      id: "result",
+      canonicalHash: hash,
+      didFallback: false,
+      resultId: params.get("resultId"),
+    });
+  }
+  if (path === "#/compare") {
+    const params = new URLSearchParams(query);
+    return Object.freeze({
+      id: "compare",
+      canonicalHash: hash,
+      didFallback: false,
+      beforeResultId: params.get("before"),
+      afterResultId: params.get("after"),
+    });
+  }
 
   return Object.freeze({
     ...START_ROUTE,
-    didFallback,
+    didFallback: hash !== START_ROUTE.canonicalHash,
   });
 }

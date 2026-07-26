@@ -155,3 +155,73 @@ sourceの権限不足ではなく、workspace外に置かれたskill packageへ�
 3. skill packageへの作成・変更・削除は拒否される。
 4. 読込失敗時はrepository不良と誤分類せず、権限境界を明示する。
 5. Linux/macOSとworkspace内skillの既存動作を回帰させない。
+
+## 2026-07-26 candidate実装・検証結果
+
+リポジトリ内candidateへ次を実装した。
+
+- `scripts/sdd-common.sh`でWindows drive-letter pathを`cygpath`優先、
+  pure Bash fallbackでPOSIX absolute pathへ正規化する。
+- `scripts/sdd-workspace`、`scripts/task-brief`、`scripts/review-package`を
+  skillへ同梱し、plugin cacheの別skillへ依存しない。
+- Git BashのPATHへcoreutilsが入らない場合も、`mkdir`と`awk`は
+  `/usr/bin`を限定fallbackとして解決する。
+- `review-package`は成果物の存在・非0byteを必須条件とし、`wc`がない場合は
+  `REVIEW_PACKAGE_BYTE_COUNT_UNAVAILABLE`を返してbyte統計だけを省略する。
+- Codex/Claude adapterは`delegate-development`をcontroller skillとして扱い、
+  子担当へ再適用・再読込を要求せず、task brief、共有契約表、report path、
+  review packageを渡す。
+- 実際に必要なskill本文が読めない場合は
+  `DELEGATE_SKILL_ACCESS_DENIED`として停止し、write権限追加で回避しない。
+
+candidateの自動回帰では、日本語名を含む一時Git repositoryとlinked worktreeを
+作り、Windows drive-letter入力、workspace作成、task brief抽出、通常のreview
+package生成、`wc`/`tr`なしの最小PATH、POSIX path非回帰を確認した。
+`skill-creator`の`quick_validate.py`もUTF-8モードで合格した。
+
+### skill読込境界の残課題
+
+親・子agentへworkspace外のインストール済みskill packageのread-only accessを
+付与することは、skill本文やadapter文書から実装できないCodex sandbox側の責務で
+ある。このためcandidateでは、controller skillを子担当へ不要に再読込させない
+運用と、必要skillが読めない場合の安定した停止契約までを実装対象とした。
+
+配布後もroot／implementer／reviewerが同じインストール済み`SKILL.md`を直接
+読めるかは、配布ハッシュ確認とは分けて実環境で再確認する。読込不能が残る場合、
+issue 1・2は修正済み、issue 3はskill側mitigation済み／platform側未解消として
+記録し、解消済みとは扱わない。
+
+## 2026-07-26 独立レビュー追補
+
+初回candidateの配布前レビューでCritical 0、Important 4とforward test blocker 1を
+検出したため、配布を止めて次を追加修正した。
+
+1. PowerShellからhelper自身をWindows absolute pathでGit Bashへ渡した場合も、
+   `BASH_SOURCE`をPOSIX化して同梱`sdd-common.sh`を解決する。
+2. planのGit rootとcurrent linked worktree rootを比較し、異なる場合は
+   `SDD_PLAN_WORKTREE_MISMATCH`で停止する。
+3. WSLは`/mnt/<drive>/...`、MSYS/MINGW/Cygwinは`/<drive>/...`へ分け、
+   未対応shellのdrive-letter pathを推測変換しない。
+4. `TASK_NUMBER`を1以上の10進整数へ限定し、正規表現値やpath値を拒否する。
+5. review packageの固定見出しではなく、commit範囲と実file diffを検証し、
+   空rangeは`REVIEW_PACKAGE_EMPTY_RANGE`、空diffは
+   `REVIEW_PACKAGE_EMPTY_DIFF`で停止する。
+
+回帰fixtureはWindows absolute helper path、別worktree plan、不正Task番号、
+空review range、WSL path mappingを追加した。修正後の同一回帰は成功した。
+
+## 2026-07-26 配布結果
+
+candidate commit `bdc9af2`を正規配布元
+`C:\Users\user\Documents\skills-work\delegate-development`へ展開し、
+そこからCodex／Claudeへ同期した。正規配布元と2配布先の対象13ファイルは
+`skill_sync.py check`で全件`MATCH`となった。
+
+正規配布元、Codex配布先、Claude配布先のそれぞれから
+`evals/helper-regression.ps1`を実行し、全て成功した。SHA-256 manifestは
+`C:\Users\user\Documents\skills-work\_verify\delegate-development-manifest-2026-07-26.json`
+へ保存した。
+
+通常sandboxからインストール済みCodex／Claudeの`SKILL.md`を直接読む操作は
+引き続き`UnauthorizedAccessException`となる。配布自体とskill側mitigationは
+完了したが、read-only権限伝播はplatform側未解消として残す。

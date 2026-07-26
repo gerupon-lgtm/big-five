@@ -132,7 +132,7 @@ flowchart TD
 
 ## 7. S-003 基本結果
 
-Q-006の版付き結果文、合成、snapshotはドメイン実装・独立レビュー済みである。以下はS-003への画面統合契約であり、controller・DOM統合は後続T-005で行う。文面は`result-text-v1 initial reviewed copy`で、E-1〜E-5は`Content Approval pending`とする。
+Q-006の版付き結果文、合成、snapshotはドメイン実装・独立レビュー済みである。保存済みsnapshotは`#/result?resultId=...`から独立したS-003としてDOM表示でき、履歴から同画面を開ける。回答完了直後のcontroller接続、Q-012画像、Q-013色・香り、T-007共有は後続である。文面は`result-text-v1 initial reviewed copy`で、E-1〜E-5は`Content Approval pending`とする。
 
 ### ファーストビュー
 
@@ -166,7 +166,7 @@ Q-006の版付き結果文、合成、snapshotはドメイン実装・独立レ�
 
 ## 8. S-004 詳細結果
 
-以下はS-004への画面統合契約であり、ドメインが返す`RenderedResultText` 42件を順序どおり表示する。42件は中立副題、称号になった理由、続いてsection-first・`FACTOR_ORDER`順の5因子それぞれの観察文、強み、裏返り、仕事、人間関係、ストレス、問いかけ、行動ヒントで構成する。
+保存済みsnapshotは`#/result?resultId=...`から独立したS-004として開き、ドメインが保存した`RenderedResultText` 42件を順序どおり表示する。42件は中立副題、称号になった理由、続いてsection-first・`FACTOR_ORDER`順の5因子それぞれの観察文、強み、裏返り、仕事、人間関係、ストレス、問いかけ、行動ヒントで構成する。回答完了直後のcontroller接続は後続T-005である。
 
 ### 表示
 

@@ -1,13 +1,4 @@
-function appendTextElement(parent, tagName, text, className) {
-  const documentObject = parent.ownerDocument ?? document;
-  const element = documentObject.createElement(tagName);
-  element.textContent = text;
-  if (className) {
-    element.className = className;
-  }
-  parent.append(element);
-  return element;
-}
+import { appendTextElement } from "./screen-helpers.js";
 
 export function renderStartScreen(host, versionModel) {
   const documentObject = host.ownerDocument ?? document;
@@ -46,8 +37,10 @@ export function renderStartScreen(host, versionModel) {
   appendTextElement(
     status,
     "p",
-    "現在は開始画面と版管理の基盤を構築しています。診断機能は今後のタスクで追加します。",
+    "現在は診断本体を構築中です。保存済み結果の履歴と比較画面は利用できます。",
   );
+  const historyLink = appendTextElement(status, "a", "診断結果の履歴を見る", "text-link");
+  historyLink.setAttribute("href", "#/history");
 
   const appVersion = appendTextElement(main, "p", versionModel.versionLabel, "version");
   const diagnosticVersion = documentObject.createElement("section");

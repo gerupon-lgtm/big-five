@@ -216,18 +216,40 @@ displayScore = round((rawMean - 1) / 4 * 100)
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
-上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。また、回答完答からの本番caller、S-003/S-004への画面統合、`progress-storage.js`への結果保存統合は後続タスクである。
+上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移も完了した。回答完答からの本番caller、追加30問へのS-002接続、T-007共有、Q-012画像、Q-013色・香りは後続である。
 
 ## 7. 履歴保存
 
-以下は後続永続化統合の処理契約であり、`createResultSnapshot`自体は実装済みだが、結果保存APIと本番callerは未実装である。現行`progress-storage.js`の旧generic result schemaはこの統合で置き換える。
+`createResultSnapshot`、保存済み13フィールドを再検証する`validateResultSnapshot`、結果保存API`saveResultSnapshot({ storage, snapshot, diagnosisId, definition, meta, now })`、履歴読込API`loadResultHistory({ storage, now })`、個別削除API`deleteResultSnapshot({ storage, resultId, confirmed, now })`、全削除API`deleteAllData({ storage, confirmed, now })`は実装済みである。S-006は履歴・削除APIと独立結果画面へ接続済みで、回答完答からの本番callerは未実装である。
 
-1. `crypto.randomUUID()`でresultIdを生成。
-2. ResultSnapshotを検証。
-3. 同じresultIdがある場合は追加せず、既存を返す。
-4. 新しい結果を追加し、表示時にcompletedAt降順へ並べる。
-5. 保存成功後、対応ProgressRecordを削除する。
-6. 保存失敗時も画面結果を維持し、生回答はメモリ上の完答処理終了時に破棄する。
+1. `crypto.randomUUID()`でRFC 4122 UUID形状のresultIdを生成する。
+2. ResultSnapshotの13フィールドexact schemaを検証する。`answers`と`diagnosisId`は受け付けない。
+3. 対応ProgressRecordが存在する場合、`definition`と`meta`でexact schema・現在版を検証する。破損・版不一致なら既存StorageEnvelopeを上書き・削除しない。
+4. 同じresultIdがある場合、同一snapshotなら追加せず既存を返す。内容が異なるID衝突は破損として拒否する。
+5. 新しい結果を追加し、表示時にcompletedAt降順、同時刻はresultId辞書順へ並べる。
+6. `preview20`の保存では、追加30問へ進めるよう対応ProgressRecordを保持する。
+7. `detail50`の保存成功時は、ResultSnapshot追加と対応ProgressRecord削除を1回のStorageEnvelope書込みで原子的に行う。
+8. `detail50`のResultSnapshot保存が失敗しても画面結果を維持し、対応ProgressRecordの再読・再検証後に削除を別の最小書込みで試みる。削除も失敗した場合は`STORAGE_DELETE_FAILED`を併記して通知し、完了表示や履歴保存成功とは扱わない。
+9. `detail50`の完答処理終了時は、保存成否にかかわらずcallerが回答地図と完答ProgressRecordへのメモリ参照を破棄する。永続化層の返却値へ生回答を含めない。
+10. 履歴読込は有効なResultSnapshotだけを返し、破損1件を除外しても残りを表示できる。読込だけではStorageEnvelopeを書き換えない。
+11. 履歴順は`completedAt`の実時刻降順、同時刻は`resultId`辞書順とする。返却配列と各snapshotはdeep freezeする。
+12. 個別削除は確認後、指定`resultId`と一致する最初の有効ResultSnapshotだけを削除する。途中回答、非対象結果、破損結果の構造と順序を保持し、対象なしでは書き込まない。
+13. 全削除は確認後、現行StorageEnvelopeの`progressByDiagnosis`と`results`だけを空にする。確認取消、壊れたJSON、将来schema、保存失敗では既存値を変更しない。
+14. S-006は履歴0件でも全削除導線を表示する。比較1件目は取消・再選択でき、互換結果だけを2件目候補として有効化する。
+
+状態遷移:
+
+| mode・event | 結果保存 | ProgressRecord | 画面結果 | 返却 |
+|---|---|---|---|---|
+| `preview20` / 初回保存 | 1件追加 | 保持 | 維持 | 保存済みsnapshot |
+| `preview20` / 同一resultId再実行 | 追加しない | 保持 | 維持 | 既存snapshot |
+| `preview20` / 保存失敗 | 追加しない | 保持 | 維持 | `STORAGE_SAVE_FAILED` |
+| `detail50` / 初回保存 | 1件追加 | 同一書込みで削除 | 維持 | 保存済みsnapshot |
+| `detail50` / 同一resultId再実行 | 追加しない | 残っていれば削除 | 維持 | 既存snapshot |
+| `detail50` / 保存失敗・進捗削除成功 | 追加しない | 削除 | 維持 | `STORAGE_SAVE_FAILED`＋cleanup成功 |
+| `detail50` / 保存失敗・進捗削除失敗 | 追加しない | 残存の可能性 | 維持 | `STORAGE_SAVE_FAILED`＋`STORAGE_DELETE_FAILED` |
+| 対象進捗が破損・版不一致 | 追加しない | 上書き・削除しない | 維持 | `STORAGE_CORRUPT`または`PROGRESS_INCOMPATIBLE` |
+| resultId衝突（内容不一致） | 追加しない | modeに従い完答時だけ削除を試行 | 維持 | `STORAGE_CORRUPT` |
 
 パレット変更は該当ResultSnapshotのselectedPaletteIdだけを更新する。スコア、称号、文章、猫、版を変更しない。
 
@@ -235,12 +257,21 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 ### 8.1 互換判定
 
-`docs/data-model.md`の比較互換性を満たす2件だけを比較する。
+`app/js/domain/result-comparison.js`の`compareResultSnapshots(first, second)`は、`docs/data-model.md`の比較互換性を満たす異なる2件だけを比較する純粋関数である。入力ResultSnapshotを再検証し、入力を変更しない。
 
 返却:
 
 ```js
-{ compatible: true }
+{
+  compatible: true,
+  beforeResultId,
+  afterResultId,
+  beforeCompletedAt,
+  afterCompletedAt,
+  factorDeltas: [
+    { factorId, beforeRawMean, afterRawMean, deltaRawMean }
+  ]
+}
 ```
 
 または安定コード:
@@ -256,7 +287,10 @@ displayScore = round((rawMean - 1) / 4 * 100)
 - completedAtが古い方をbefore、新しい方をafterとする。
 - 同時刻ならresultIdの辞書順で安定化する。
 - 差はrawMean同士で計算し、表示時だけ0〜100相当へ変換・丸める。
+- 互換結果と因子差分配列はdeep freezeし、生回答、表示整数、ResultSnapshot全体を返さない。
 - 「上がった／下がった」だけでなく、「回答時の状況でも変動する」と表示する。
+- S-007は保存履歴から両IDを再検証し、欠落・削除済み・破損・非互換では差を計算しない。ID不足の直接URLはS-006へ戻す。
+- 結果文・称号・猫manifest・個別猫アセット・演出・カード・アプリ版が異なってもスコア互換なら比較し、表示表現の版差を補足する。
 
 ## 9. レーダーチャート
 
@@ -336,8 +370,8 @@ displayScore = round((rawMean - 1) / 4 * 100)
 ## 13. 削除
 
 - 途中回答破棄: 対象diagnosisIdのProgressRecordだけを削除。
-- 履歴個別削除: resultId一致1件だけを削除し、確認を要求。
-- 全削除: progressByDiagnosisとresultsを空にし、確認を要求。
+- 履歴個別削除: `deleteResultSnapshot`でresultId一致の有効な1件だけを削除し、確認を要求。途中回答、非対象結果、破損結果を保持する。
+- 全削除: `deleteAllData`でprogressByDiagnosisとresultsを空にし、確認を要求。
 - 削除後の復元機能は提供しない。
 - 保存API失敗時は削除完了と表示せず、再試行または安全な戻り先を示す。
 

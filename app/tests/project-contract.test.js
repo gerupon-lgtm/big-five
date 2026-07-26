@@ -135,8 +135,10 @@ test("Q-006 data model documents the exact evidence, text, rendered, and snapsho
     "診断時",
     "characterAssetVersion",
     "characterManifestVersion",
+    "validateResultSnapshot",
     "progress-storage.js",
-    "後続永続化統合",
+    "saveResultSnapshot",
+    "本番caller",
   ], documentPaths.dataModel);
 
   const renderedSection = sectionBetween(text, "### 3.7 RenderedResultText", "## 4.");
@@ -167,6 +169,52 @@ test("VersionTuple scaleVersion preserves scale identity and revision without ad
     assert.match(section, /別(?:の)?`?scaleId`?(?:フィールド)?を要求しない/);
   }
   assert.doesNotMatch(versionTupleSection, /^\|\s*scaleId\s*\|/m);
+});
+
+test("T-006 documents implemented history, deletion, and comparison seams", async () => {
+  const [dataModel, processing, tasks, historyScreen, comparisonScreen, resultScreen] = await Promise.all([
+    readProjectDocument(documentPaths.dataModel),
+    readProjectDocument(documentPaths.processing),
+    readProjectDocument(documentPaths.tasks),
+    readProjectDocument("app/js/presentation/history-screen.js"),
+    readProjectDocument("app/js/presentation/comparison-screen.js"),
+    readProjectDocument("app/js/presentation/result-screen.js"),
+  ]);
+  const snapshotSection = sectionBetween(dataModel, "### 3.5 ResultSnapshot", "### 3.6 FactorResult");
+  const compatibilitySection = sectionBetween(dataModel, "## 4. 比較互換性", "## 5. 更新・削除・復元");
+  const historySection = sectionBetween(processing, "## 7. 履歴保存", "## 8. 比較");
+  const comparisonSection = sectionBetween(processing, "## 8. 比較", "## 9. レーダーチャート");
+  const taskSection = sectionBetween(tasks, "### T-006 履歴・比較・削除", "### T-007 共有カード・保存・コピー");
+
+  for (const section of [snapshotSection, historySection, taskSection]) {
+    assertIncludesAll(section, [
+      "loadResultHistory",
+      "deleteResultSnapshot",
+      "deleteAllData",
+    ], documentPaths.processing);
+  }
+  for (const section of [compatibilitySection, comparisonSection, taskSection]) {
+    assertIncludesAll(section, [
+      "compareResultSnapshots",
+      "beforeRawMean",
+      "afterRawMean",
+      "deltaRawMean",
+    ], documentPaths.processing);
+  }
+  assertIncludesAll(taskSection, [
+    "本番caller",
+    "S-006",
+    "S-007",
+    "#/history",
+    "#/compare",
+    "履歴0件",
+    "比較選択",
+    "P1",
+    "全349件",
+  ], documentPaths.tasks);
+  assert.doesNotMatch(historyScreen, /from\s+["']\.\.\/data\//);
+  assert.doesNotMatch(comparisonScreen, /from\s+["']\.\.\/data\//);
+  assert.doesNotMatch(resultScreen, /from\s+["']\.\.\/data\//);
 });
 
 test("Q-006 processing assigns selection validation to the composer and production IDs to snapshots", async () => {

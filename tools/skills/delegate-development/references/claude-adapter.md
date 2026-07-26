@@ -10,6 +10,8 @@ Claude の実行環境は複数あり、サブエージェントの有無が異�
 
 監督役として、コンテキストパック、書込み所有権、完了条件、検証、報告契約を渡す。分離作業領域を使う場合は、担当が変更したファイル、差分の取り込み方法、競合時の停止条件を明記する。共有領域を使う場合は、同一ファイルの編集を一人に限定する。
 
+plan別workspace、task brief、review packageが必要なら、本skill同梱の`scripts/sdd-workspace`、`scripts/task-brief`、`scripts/review-package`を使う。plugin cache内の別skillのhelperを編集・配布元として扱わない。`delegate-development`はcontroller skillなので、子担当へ再適用やskill packageの再読を要求せず、生成済みtask artifactだけを渡す。
+
 利用環境が途中通知を許す場合、長時間の実装・レビュー・待機中は約60秒ごとに、activeな担当、完了済み範囲、残作業、ブロッカーをユーザーへ通知する。activeな担当がいない場合も明示する。
 
 Claude Code または Cowork の Agent（Task）ツールが公開されている場合は、そのスキーマが公開する範囲だけを使う。作業担当の種別は、環境が提示する `subagent_type`（`general-purpose`、`Explore`、`Plan` など）から選ぶ。呼出し単位の `model` 上書きや、対応する場合の `effort` を利用できるか確認する。モデルは、環境変数 `CLAUDE_CODE_SUBAGENT_MODEL`、呼出し単位の指定、エージェント定義の `model`、親会話のモデルという実環境の優先順を尊重する。`haiku`、`sonnet`、`opus` などの別名や完全なモデル ID は、現在の環境で利用可能と確認できた場合だけ指定する。`effort` も、そのモデルが対応すると確認できた値だけを指定する。ツールのスキーマにない種別・モデル名・設定を推測しない。

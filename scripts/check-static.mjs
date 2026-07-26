@@ -34,6 +34,7 @@ const AUTHORING_METADATA_KEY_PREFIXES = [
 const AUTHORING_METADATA_EXACT_KEYS = new Set(["note", "notes"]);
 const CREDENTIAL_KEY = /(?:token|secret|password|credential|api[_-]?key|access[_-]?key|private[_-]?key)/i;
 const CREDENTIAL_VALUE = /(?:token|secret|password|credential|api[_-]?key|access[_-]?key|private[_-]?key)\s*[:=]\s*\S+/i;
+const STANDALONE_CREDENTIAL_VALUE = /(?:^|[^A-Za-z0-9_-])(?:ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{82}|sk-proj-[A-Za-z0-9_-]{32,}|sk-[A-Za-z0-9]{32,})(?![A-Za-z0-9_-])/;
 const HTTP_URL = /https?:\/\/[^\s"'<>]+/gi;
 const WINDOWS_ABSOLUTE_PATH = /(?:^|[^A-Za-z0-9_])[A-Za-z]:[\\/]/;
 const POSIX_ABSOLUTE_PATH = /(?:^|[\s"'([{:;,=])\/(?![\/\s])/;
@@ -85,6 +86,7 @@ function assertArtifactStringIsSafe(value, relativePath) {
   assertArtifact(!POSIX_ABSOLUTE_PATH.test(value), `POSIX local absolute path in ${relativePath}`);
   assertArtifact(!/file:\/\//i.test(value), `file URL in ${relativePath}`);
   assertArtifact(!CREDENTIAL_VALUE.test(value), `credential-like value in ${relativePath}`);
+  assertArtifact(!STANDALONE_CREDENTIAL_VALUE.test(value), `credential-like value in ${relativePath}`);
 
   for (const url of value.match(HTTP_URL) ?? []) {
     assertArtifact(ALLOWED_EVIDENCE_URLS.has(url), `external URL is not an approved evidence locator in ${relativePath}`);
