@@ -638,12 +638,13 @@ git commit -m "feat: compile presentation and character CSVs"
 - Create: `app/tests/content-compiler.test.js`
 - Create: `content/schemas/release-manifest.schema.json`
 - Create: `content/schemas/release-history.schema.json`
+- Create: `content/schemas/result-content-approvals.schema.json`
 
 **Interfaces:**
 - Consumes: all four domain compilers.
 - Produces: `validateAuthoringTree({ sourceDir }) -> { catalogs, warnings }`
 - Produces: `compileRelease({ sourceDir, releaseId }) -> { manifest, resources: Map<string, string> }`
-- Produces: `writeReleaseAtomically({ outputDir, compiled }) -> void`
+- Produces: `writeReleaseAtomically({ outputDir, allowedParentDir, compiled }) -> void`
 
 - [ ] **Step 1: Write failing deterministic build tests**
 
@@ -693,7 +694,7 @@ The manifest must contain `schemaVersion: 1`, `releaseId`, `appVersion`, `diagno
 
 - [ ] **Step 4: Implement authoring and release modes**
 
-`validateAuthoringTree` validates every existing catalog and reports draft/reviewed rows without requiring a selected release. `compileRelease` requires exactly one matching manifest row, `status=approved`, all referenced rows approved, all external approval gates satisfied, and every required resource present.
+`validateAuthoringTree` validates every existing catalog and reports draft/reviewed rows without requiring a selected release. It loads the fixed 18-row Q-006 approval CSV (`E-0`〜`E-5`, `T-0`〜`T-4`, `F-1`〜`F-5`, `X-1`〜`X-2`) but does not promote statuses. `compileRelease` requires exactly one matching manifest row, `status=approved`, all referenced rows approved, all external approval gates satisfied, and every required resource present. An approved gate requires nonblank `approved_by` and an actual `YYYY-MM-DD` `approved_on`; non-approved rows must not carry approval identity/date. Approval identity, date, and notes never enter runtime JSON.
 
 `validate-content.mjs --report <path>` must write a Markdown report on both success and failure. The report contains summary counts and sanitized file/row/column/code/message entries, never the complete CSV. After writing the report, the CLI sets a nonzero exit code when errors exist.
 
@@ -709,12 +710,13 @@ Add tests for:
 
 - [ ] **Step 5: Implement atomic output**
 
-Write the complete output tree, including `content-manifest.json`, below a sibling temporary directory and verify it before switching directories. Resolve and reject filesystem roots, home directories, and paths outside the caller-provided parent. If an old output exists, rename it to a sibling backup, rename the verified temporary tree to the output path, then remove the backup; if the switch fails, restore the backup. Never merge files into an existing release tree.
+Write the complete output tree, including `content-manifest.json`, below a sibling temporary directory and verify it before switching directories. Resolve `allowedParentDir` and `outputDir`; reject a missing/non-directory allowed parent, filesystem roots, home directories, output equal to the allowed parent, and output paths outside it. Resolve the existing output parent to prevent symlink escape. If an old output exists, rename it to a sibling backup, rename the verified temporary tree to the output path, then remove the backup; if the switch fails, restore the backup. Never merge files into an existing release tree.
 
 ```js
-export async function writeReleaseAtomically({ outputDir, compiled }) {
+export async function writeReleaseAtomically({ outputDir, allowedParentDir, compiled }) {
   const resolvedOutput = path.resolve(outputDir);
-  assertSafeOutputPath(resolvedOutput);
+  const resolvedAllowedParent = path.resolve(allowedParentDir);
+  await assertSafeOutputPath({ resolvedOutput, resolvedAllowedParent });
   const parentDir = path.dirname(resolvedOutput);
   const tempDir = await mkdtemp(path.join(parentDir, ".content-build-"));
   const backupDir = `${resolvedOutput}.previous`;
@@ -750,7 +752,7 @@ Expected: PASS for deterministic build, approval rejection, reference rejection,
 - [ ] **Step 7: Commit**
 
 ```powershell
-git add scripts/content/content-compiler.mjs scripts/content/validate-content.mjs scripts/content/build-content.mjs app/tests/content-compiler.test.js content/schemas/release-manifest.schema.json content/schemas/release-history.schema.json
+git add scripts/content/content-compiler.mjs scripts/content/validate-content.mjs scripts/content/build-content.mjs app/tests/content-compiler.test.js content/schemas/release-manifest.schema.json content/schemas/release-history.schema.json content/schemas/result-content-approvals.schema.json
 git commit -m "feat: build deterministic content releases"
 ```
 
@@ -762,6 +764,7 @@ git commit -m "feat: build deterministic content releases"
 - Create: `scripts/content/export-current-content.mjs`
 - Create: `content/source/releases/release-manifest.csv`
 - Create: `content/source/releases/release-history.csv`
+- Create: `content/source/approvals/result-content-approvals.csv`
 - Create: `content/source/diagnoses/ipip-ja-50-definition-v1/diagnosis-sets.csv`
 - Create: `content/source/diagnoses/ipip-ja-50-definition-v1/diagnosis-sources.csv`
 - Create: `content/source/diagnoses/ipip-ja-50-definition-v1/diagnosis-limitations.csv`

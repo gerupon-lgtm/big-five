@@ -301,6 +301,21 @@ title_id,character_manifest_version,display_order,character_id,asset_version,del
 
 ## 7. 公開release
 
+Q-006の人手承認状態もコードやMarkdown表へ埋め込まず、
+`content/source/approvals/result-content-approvals.csv`で管理する。
+
+```text
+gate_id,display_order,status,approved_by,approved_on,note
+```
+
+- 行は`E-0`〜`E-5`、`T-0`〜`T-4`、`F-1`〜`F-5`、`X-1`〜`X-2`の
+  固定18件とし、`display_order`で正規順を固定する。
+- `approved`行だけ`approved_by`と`approved_on`を必須とする。
+  `approved_on`は`YYYY-MM-DD`、`approved_by`は個人名に限定せず承認主体の
+  役割名も許可する。
+- 未承認行の承認者・承認日は空欄にし、実在しない承認情報を補完しない。
+- 承認者、承認日、noteは生成JSONへ含めない。
+
 `release-manifest.csv`は公開候補1行だけを保持する。
 
 ```text

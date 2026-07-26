@@ -29,6 +29,7 @@
 - `content/source/characters/character-manifest-v1/characters.csv` — 承認済みQ-012 manifest。
 - `content/source/releases/release-manifest.csv` — approved release 1行。
 - `content/source/releases/release-history.csv` — 追記専用release。
+- `content/source/approvals/result-content-approvals.csv` — Q-006固定18 gateの人手承認記録。
 - `app/js/domain/content-manifest.js` — manifest exact schemaとversion projection。
 - `app/js/domain/content-bundle.js` — 全resourceのcross-reference validationとdeep freeze。
 - `app/js/infrastructure/content-loader.js` — same-origin fetch、hash、all-or-nothing loading。
@@ -58,6 +59,7 @@
 - Create: `content/source/presentation/presentation-v1/selector-fragrances.csv`
 - Create: `content/source/characters/character-manifest-v1/characters.csv`
 - Modify: `content/source/result-texts/result-text-v1/result-texts.csv`
+- Modify: `content/source/approvals/result-content-approvals.csv`
 - Modify: `content/source/releases/release-manifest.csv`
 - Modify: `content/source/releases/release-history.csv`
 - Create: `app/tests/approved-release-source.test.js`
@@ -90,7 +92,7 @@ Expected before approvals: FAIL with `RELEASE_NOT_SELECTED`, `CONTENT_APPROVAL_P
 
 - [ ] **Step 3: Import only approved source rows**
 
-Copy the approved Q-013 catalog and Q-012 manifest into the normalized CSVs without changing IDs, labels, colors, fragrance text, image paths, hashes, or review dates. Change Q-006 rows to`approved` only when all gate records exist in the evidence ledger.
+Copy the approved Q-013 catalog and Q-012 manifest into the normalized CSVs without changing IDs, labels, colors, fragrance text, image paths, hashes, or review dates. Change Q-006 content rows and `result-content-approvals.csv` gate rows to `approved` only when each human approval actually exists. Record the real approving role/name and date; do not invent missing approval metadata.
 
 - [ ] **Step 4: Select and record the release**
 
