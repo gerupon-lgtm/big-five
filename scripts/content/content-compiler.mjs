@@ -221,6 +221,146 @@ async function loadAuthoredVersions(sourceDir, definitions, { optional = false }
   return { topDir, versionField, versions, catalogsByVersion };
 }
 
+function normalizedSemanticError(error) {
+  if (error instanceof ContentError) return error;
+  return contentError("RELEASE_VERSION_REFERENCE_INVALID", "コンテンツの版参照が不正です。");
+}
+
+function compileDiagnosisCatalogPair(diagnosisCatalogs, questionCatalogs, questionVersion = undefined) {
+  const diagnosisRows = questionVersion === undefined
+    ? diagnosisCatalogs.diagnosisRows.rows
+    : diagnosisCatalogs.diagnosisRows.rows.map((row) => ({ ...row, question_version: questionVersion }));
+  return compileDiagnosisContent({
+    diagnosisRows,
+    sourceRows: diagnosisCatalogs.sourceRows.rows,
+    limitationRows: diagnosisCatalogs.limitationRows.rows,
+    factorRows: diagnosisCatalogs.factorRows.rows,
+    questionRows: questionCatalogs.questionRows.rows,
+    previewRows: questionCatalogs.previewRows.rows,
+  });
+}
+
+function validateDiagnosisAndQuestionVersions(diagnosisCatalog, questionCatalog) {
+  for (const diagnosisVersion of diagnosisCatalog.versions) {
+    const catalogs = diagnosisCatalog.catalogsByVersion.get(diagnosisVersion);
+    const referencedQuestionVersion = catalogs.diagnosisRows.rows[0]?.question_version;
+    const questionCatalogs = questionCatalog.catalogsByVersion.get(referencedQuestionVersion);
+    if (!questionCatalogs) throw contentError("RELEASE_VERSION_REFERENCE_INVALID", "診断定義が参照する設問版が存在しません。");
+    try {
+      compileDiagnosisCatalogPair(catalogs, questionCatalogs);
+    } catch (error) {
+      throw normalizedSemanticError(error);
+    }
+  }
+
+  for (const questionVersion of questionCatalog.versions) {
+    const questionCatalogs = questionCatalog.catalogsByVersion.get(questionVersion);
+    let firstFailure;
+    let validated = false;
+    for (const diagnosisVersion of diagnosisCatalog.versions) {
+      const diagnosisCatalogs = diagnosisCatalog.catalogsByVersion.get(diagnosisVersion);
+      try {
+        compileDiagnosisCatalogPair(diagnosisCatalogs, questionCatalogs, questionVersion);
+        validated = true;
+        break;
+      } catch (error) {
+        firstFailure ??= error;
+      }
+    }
+    if (!validated) throw normalizedSemanticError(firstFailure);
+  }
+}
+
+function combinations(groups, visit, index = 0, current = []) {
+  if (index === groups.length) {
+    visit(current);
+    return;
+  }
+  for (const version of groups[index].versions) {
+    current.push(version);
+    combinations(groups, visit, index + 1, current);
+    current.pop();
+  }
+}
+
+function validateResultVersions(titleCatalog, textCatalog, evidenceCatalog) {
+  const groups = [titleCatalog, textCatalog, evidenceCatalog];
+  const validated = groups.map(() => new Set());
+  const firstFailures = groups.map(() => new Map());
+  const titleProfileContexts = [];
+
+  combinations(groups, (versions) => {
+    if (versions.every((version, index) => validated[index].has(version))) return;
+    const [titleVersion, textVersion, evidenceVersion] = versions;
+    const titleCatalogs = titleCatalog.catalogsByVersion.get(titleVersion);
+    const textCatalogs = textCatalog.catalogsByVersion.get(textVersion);
+    const evidenceCatalogs = evidenceCatalog.catalogsByVersion.get(evidenceVersion);
+    try {
+      const compiled = compileResultContent({
+        profileRows: titleCatalogs.profileRows.rows,
+        profileFactorRows: titleCatalogs.profileFactorRows.rows,
+        textRows: textCatalogs.textRows.rows,
+        textEvidenceRows: textCatalogs.textEvidenceRows.rows,
+        evidenceRows: evidenceCatalogs.evidenceRows.rows,
+        evidenceClaimRows: evidenceCatalogs.evidenceClaimRows.rows,
+        titleRuleVersion: titleVersion,
+        resultTextVersion: textVersion,
+      });
+      versions.forEach((version, index) => validated[index].add(version));
+      titleProfileContexts.push(compiled.titleProfiles);
+    } catch (error) {
+      versions.forEach((version, index) => {
+        if (!firstFailures[index].has(version)) firstFailures[index].set(version, error);
+      });
+    }
+  });
+
+  for (const [index, group] of groups.entries()) {
+    for (const version of group.versions) {
+      if (!validated[index].has(version)) throw normalizedSemanticError(firstFailures[index].get(version));
+    }
+  }
+  return titleProfileContexts;
+}
+
+function validateOptionalVersions(catalog, titleProfileContexts, compile) {
+  for (const version of catalog.versions) {
+    const catalogs = catalog.catalogsByVersion.get(version);
+    let firstFailure;
+    let validated = false;
+    for (const titleProfiles of titleProfileContexts) {
+      try {
+        compile(catalogs, { [catalog.versionField]: version }, titleProfiles);
+        validated = true;
+        break;
+      } catch (error) {
+        firstFailure ??= error;
+      }
+    }
+    if (!validated) throw normalizedSemanticError(firstFailure);
+  }
+}
+
+function validateAllAuthoredSemantics(authoredByField) {
+  const diagnosisCatalog = authoredByField.get("diagnostic_definition_version");
+  const questionCatalog = authoredByField.get("question_version");
+  const titleCatalog = authoredByField.get("title_rule_version");
+  const textCatalog = authoredByField.get("result_text_version");
+  const evidenceCatalog = authoredByField.get("result_evidence_version");
+  validateDiagnosisAndQuestionVersions(diagnosisCatalog, questionCatalog);
+  const titleProfileContexts = validateResultVersions(titleCatalog, textCatalog, evidenceCatalog);
+  validateOptionalVersions(
+    authoredByField.get("presentation_definition_version"),
+    titleProfileContexts,
+    compilePresentationCatalog,
+  );
+  validateOptionalVersions(
+    authoredByField.get("character_manifest_version"),
+    titleProfileContexts,
+    compileCharacterCatalog,
+  );
+}
+
 function compileCoreCatalogs(catalogs, row) {
   try {
     const get = (name) => catalogs[name].rows;
@@ -281,6 +421,7 @@ export async function validateAuthoringTree({ sourceDir }) {
     }));
   }
   const authoredByField = new Map(authored.map((catalog) => [catalog.versionField, catalog]));
+  validateAllAuthoredSemantics(authoredByField);
   const authoredEntries = authored.flatMap(({ versions, catalogsByVersion }) =>
     versions.flatMap((version) => Object.entries(catalogsByVersion.get(version))));
   const selectedRelease = base.releaseManifest.rows.length === 1;

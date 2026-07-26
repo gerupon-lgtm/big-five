@@ -72,6 +72,15 @@ async function copyQuestionVersion(sourceDir, fromVersion, toVersion) {
   }
 }
 
+async function copyCharacterVersion(sourceDir, fromVersion, toVersion) {
+  const source = path.join(sourceDir, "characters", fromVersion);
+  const target = path.join(sourceDir, "characters", toVersion);
+  await cp(source, target, { recursive: true });
+  const filePath = path.join(target, "characters.csv");
+  const text = await readFile(filePath, "utf8");
+  await writeFile(filePath, text.replaceAll(fromVersion, toVersion), "utf8");
+}
+
 function cloneCompiled(compiled) {
   return { manifest: structuredClone(compiled.manifest), resources: new Map(compiled.resources) };
 }
@@ -184,6 +193,56 @@ test("T-006 header-only manifest validates multiple authored question versions w
 
   assert.equal(result.catalogs.releaseManifest.rows.length, 0);
   assert.equal(result.warnings.at(-1).code, "RELEASE_NOT_SELECTED");
+});
+
+test("T-006 header-only authoring rejects duplicate question order in the second version", async (t) => {
+  const sourceDir = await createApprovedSourceTree(t);
+  const secondVersion = "ipip-ja-50-question-set-v2";
+  await writeTable(sourceDir, "releases/release-manifest.csv", []);
+  await writeTable(sourceDir, "releases/release-history.csv", []);
+  await copyQuestionVersion(sourceDir, appMeta.diagnosticVersions.questionVersion, secondVersion);
+  await replaceInFile(
+    path.join(sourceDir, "questions", secondVersion, "questions.csv"),
+    `"${secondVersion}","2"`,
+    `"${secondVersion}","1"`,
+  );
+
+  await assert.rejects(
+    () => validateAuthoringTree({ sourceDir }),
+    (error) => error.code === "RELEASE_VERSION_REFERENCE_INVALID",
+  );
+});
+
+test("T-006 draft release rejects duplicate question order in its unreferenced version", async (t) => {
+  const sourceDir = await createApprovedSourceTree(t, { manifestStatus: "draft" });
+  const secondVersion = "ipip-ja-50-question-set-v2";
+  await copyQuestionVersion(sourceDir, appMeta.diagnosticVersions.questionVersion, secondVersion);
+  await replaceInFile(
+    path.join(sourceDir, "questions", secondVersion, "questions.csv"),
+    `"${secondVersion}","2"`,
+    `"${secondVersion}","1"`,
+  );
+
+  await assert.rejects(
+    () => validateAuthoringTree({ sourceDir }),
+    (error) => error.code === "RELEASE_VERSION_REFERENCE_INVALID",
+  );
+});
+
+test("T-006 draft release rejects duplicate character mapping in an unreferenced character version", async (t) => {
+  const sourceDir = await createApprovedSourceTree(t, { manifestStatus: "draft" });
+  const secondVersion = "character-manifest-v2";
+  await copyCharacterVersion(sourceDir, appMeta.characterManifestVersion, secondVersion);
+  await replaceInFile(
+    path.join(sourceDir, "characters", secondVersion, "characters.csv"),
+    csv(TitleProfileDefinitions[1].characterId),
+    csv(TitleProfileDefinitions[0].characterId),
+  );
+
+  await assert.rejects(
+    () => validateAuthoringTree({ sourceDir }),
+    (error) => error.code === "CHARACTER_CONTENT_INVALID",
+  );
 });
 
 test("T-006 authoring validation rejects missing files in an unselected version", async (t) => {
