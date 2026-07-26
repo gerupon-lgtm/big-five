@@ -1,0 +1,2 @@
+diagnosis_id,diagnostic_definition_version,scale_id,scale_name,scale_version,question_version,scoring_version,result_text_version,title_rule_version,status
+big-five-ipip-ja,ipip-ja-50-definition-v1,ipip-ja-50,IPIP日本語50項目版,ipip-ja-50-v1,ipip-ja-50-question-set-v1,ipip-ja-50-scoring-v1,result-text-v1,title-rule-v1,approved

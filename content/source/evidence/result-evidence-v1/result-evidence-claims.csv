@@ -1,0 +1,13 @@
+evidence_id,display_order,supported_claim,status
+evidence-ipip-japanese-markers,1,factor-item-meaning,reviewed
+evidence-ipip-japanese-markers,2,factor-pole-observation,reviewed
+evidence-ipip-50-item-scale,1,factor-item-meaning,reviewed
+evidence-ipip-50-item-scale,2,detail50-observation,reviewed
+evidence-mini-ipip-selection,1,preview20-item-selection,reviewed
+evidence-ipip-permission,1,public-domain-use,reviewed
+evidence-title-rule-v1,1,title-selection,approved
+evidence-title-rule-v1,2,band-boundaries,approved
+evidence-title-rule-v1,3,preview-limit,approved
+evidence-result-presentation-contract,1,reflection-prompt,approved
+evidence-result-presentation-contract,2,action-hint,approved
+evidence-result-presentation-contract,3,non-diagnostic-copy,approved

@@ -1,0 +1,7 @@
+evidence_id,result_evidence_version,display_order,source_type,source_label,locator,status
+evidence-ipip-japanese-markers,result-evidence-v1,1,primary,IPIP Japanese Translation of the Lexical Big-Five Factor Markers,https://ipip.ori.org/JapaneseBig-FiveFactorMarkers.htm,reviewed
+evidence-ipip-50-item-scale,result-evidence-v1,2,primary,IPIP Japanese 50-item scale,https://www.ipip.ori.org/New_IPIP-50-item-scale.htm,reviewed
+evidence-mini-ipip-selection,result-evidence-v1,3,primary,"Donnellan et al. (2006), Mini-IPIP Appendix A",https://doi.org/10.1037/1040-3590.18.2.192,reviewed
+evidence-ipip-permission,result-evidence-v1,4,primary,IPIP permission statement,https://ipip.ori.org/newPermission.htm,reviewed
+evidence-title-rule-v1,result-evidence-v1,5,internal-contract,Big Five自己理解支援ツール要件 8.3.1,docs/requirements/2026-07-20-big-five-self-understanding-requirements.md#831-称号キャラクター判定ルール,approved
+evidence-result-presentation-contract,result-evidence-v1,6,internal-contract,T-005結果・キャラクター・演出設計 2.2,docs/superpowers/specs/2026-07-25-t005-result-character-presentation-design.md#22-文面,approved
