@@ -79,6 +79,7 @@
 - 20問完答の `showPreview` は `preview-ready` を返すだけで採点・画面生成を行わない。`continueHidden` は `detail-continued` と進捗だけを返す。50問目の `detail-complete` は保存可能な完答進捗と50件の回答地図を返し、結果画面・履歴・共有はT-005以降の責務とする。
 - `progress-storage` は注入されたストレージを使う。`STORAGE_CORRUPT`、`STORAGE_INCOMPATIBLE`、`STORAGE_UNAVAILABLE`、`STORAGE_SAVE_FAILED`、`STORAGE_DELETE_FAILED` と `PROGRESS_INCOMPATIBLE` を安定した内部コードとして返し、例外を呼出側へ漏らさない。
 - `persistTransition`、`answerAndSave`、`transitionAndSave` は遷移eventのProgressRecordを直ちに保存する。保存失敗でもeventとメモリ上の進捗を返す。50問完答後にResultSnapshotを保存してProgressRecordを削除する処理はT-005の呼出側責務とする。
+- S-002表示層は設問phaseと20問分岐phaseだけを受ける。設問phaseは5件法と現在位置、戻る、破棄を、分岐phaseは`showPreview`と`continueHidden`の二択だけを描画する。保存失敗は両phaseで通知するが操作を無効化しない。分岐phaseへスコア、因子、称号、キャラクター、パレット、共有モデルを渡さない。
 
 ### 3.4 CSVコンテンツ作成からruntimeへの移行境界
 
@@ -216,7 +217,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
-上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移も完了した。回答完答からの本番caller、追加30問へのS-002接続、T-007共有、Q-012画像、Q-013色・香りは後続である。
+上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002の独立表示層も完了した。router・state・storageへのS-002接続、回答完答からの本番caller、T-007共有、Q-012画像、Q-013色・香りは後続である。live結果callerは選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ保存しなければならず、manifest全体版の流用や仮値を禁止する。production entry作成までは入力品質ゲートとして停止する。
 
 ## 7. 履歴保存
 

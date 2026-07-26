@@ -100,6 +100,8 @@ flowchart TD
 
 ## 6. S-002 回答
 
+表示層の`renderQuestionnaireScreen`は実装・独立レビュー済みである。設問phaseと20問分岐phaseをexact view modelで分離し、保存失敗時だけ通知する。router、途中回答controller、完答callerとの接続は後続であり、Q-012 production manifest entryがない状態で`characterAssetVersion`を仮置きしてlive結果へ進めない。
+
 ### 表示
 
 - 設問本文
