@@ -112,7 +112,7 @@ test("T-005 S-003 renders the complete saved preview with factor help and the 30
   }
 
   const buttons = collectElements(host).filter(({ tagName }) => tagName === "button");
-  buttons.find(({ textContent }) => textContent === "あと30問に回答する").dispatch("click");
+  buttons.find(({ textContent }) => textContent === "あと30問続ける").dispatch("click");
   buttons.find(({ textContent }) => textContent === "結果を共有する").dispatch("click");
   assert.deepEqual(calls, [
     ["continue", snapshot],
@@ -291,6 +291,32 @@ test("T-005 F-016 keeps the approved alt visible without decoding before viewpor
     collectElements(host).filter(({ tagName }) => tagName === "img").length,
     0,
   );
+});
+
+test("T-005 F-016 does not substitute a current character asset for an older snapshot version", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000060",
+    characterAssetVersion: "character-balanced-v0",
+  });
+  let observed = 0;
+
+  renderSavedResultScreen(host, snapshot, labels, {}, {
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+    characterEntry,
+    decodeImage: async () => host.ownerDocument.createElement("img"),
+    loadCharacterImage,
+    observeViewport() {
+      observed += 1;
+    },
+  });
+
+  assert.equal(observed, 0);
+  assert.equal(
+    collectElements(host).filter(({ tagName }) => tagName === "img").length,
+    0,
+  );
+  assert.match(collectText(host), /画像を利用できない場合も診断結果は有効です/);
 });
 
 test("T-005 F-016 decodes the selected path once and renders one contained image after entry", async () => {

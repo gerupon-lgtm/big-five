@@ -21,6 +21,7 @@ function questionActions(overrides = {}) {
   return {
     onAnswer() {},
     onBack() {},
+    onPause() {},
     onDiscard() {},
     ...overrides,
   };
@@ -30,6 +31,7 @@ function previewActions(overrides = {}) {
   return {
     onPreviewDecision() {},
     onBack() {},
+    onPause() {},
     onDiscard() {},
     ...overrides,
   };
@@ -80,13 +82,14 @@ test("T-004 S-002 renders one question with natural five-point labels and curren
   assert.doesNotMatch(text, /ipip-001|questionId|selectedValue|storageStatus/);
 });
 
-test("T-004 F-003 delegates one exact answer and navigation action per activation", () => {
+test("T-008A F-004 delegates answer, back, pause, and discard as separate actions", () => {
   const { host } = createFakeScreen();
   const calls = [];
 
   renderQuestionnaireScreen(host, questionViewModel({ currentIndex: 1 }), questionActions({
     onAnswer: (answer) => calls.push(["answer", answer]),
     onBack: () => calls.push(["back"]),
+    onPause: () => calls.push(["pause"]),
     onDiscard: () => calls.push(["discard"]),
   }));
 
@@ -94,11 +97,15 @@ test("T-004 F-003 delegates one exact answer and navigation action per activatio
     .find(({ textContent }) => textContent === "5 とても当てはまる")
     .dispatch("click");
   buttons(host).find(({ textContent }) => textContent === "前へ").dispatch("click");
+  buttons(host)
+    .find(({ textContent }) => textContent === "中断してトップへ")
+    .dispatch("click");
   buttons(host).find(({ textContent }) => textContent === "回答を破棄").dispatch("click");
 
   assert.deepEqual(calls, [
     ["answer", { questionId: "ipip-001", value: 5 }],
     ["back"],
+    ["pause"],
     ["discard"],
   ]);
 });
@@ -190,19 +197,23 @@ test("T-004 S-002 delegates both preview decisions without adding hidden result 
   }
 });
 
-test("T-004 S-002 delegates back and discard from the preview decision", () => {
+test("T-008A F-004 delegates back, pause, and discard from the preview decision", () => {
   const { host } = createFakeScreen();
   const calls = [];
 
   renderQuestionnaireScreen(host, previewViewModel(), previewActions({
     onBack: () => calls.push("back"),
+    onPause: () => calls.push("pause"),
     onDiscard: () => calls.push("discard"),
   }));
 
   buttons(host).find(({ textContent }) => textContent === "回答へ戻る").dispatch("click");
+  buttons(host)
+    .find(({ textContent }) => textContent === "中断してトップへ")
+    .dispatch("click");
   buttons(host).find(({ textContent }) => textContent === "回答を破棄").dispatch("click");
 
-  assert.deepEqual(calls, ["back", "discard"]);
+  assert.deepEqual(calls, ["back", "pause", "discard"]);
 });
 
 test("T-004 S-002 renders every control as a non-submit button", () => {
@@ -217,6 +228,31 @@ test("T-004 S-002 renders every control as a non-submit button", () => {
       buttons(host).every(({ attributes }) => attributes.get("type") === "button"),
       true,
     );
+  }
+});
+
+test("T-008A S-002 uses the shared sticky header and keeps discard in secondary management", () => {
+  for (const [viewModel, actions, expectedLabel] of [
+    [questionViewModel(), questionActions(), "回答中"],
+    [previewViewModel(), previewActions(), "20問完了"],
+  ]) {
+    const { host } = createFakeScreen();
+    renderQuestionnaireScreen(host, viewModel, actions);
+
+    const header = collectElements(host)
+      .find(({ className }) => className === "app-header is-sticky");
+    assert.ok(header);
+    assert.equal(
+      collectElements(header)
+        .find(({ className }) => className === "app-screen-label")
+        .textContent,
+      expectedLabel,
+    );
+    const management = collectElements(host)
+      .find(({ className }) => className === "questionnaire-management");
+    assert.ok(management);
+    assert.equal(management.tagName, "details");
+    assert.match(collectText(management), /その他の操作 回答を破棄/);
   }
 });
 
@@ -252,6 +288,24 @@ test("T-004 S-002 rejects malformed exact view models and action dependencies", 
       host,
       previewViewModel(),
       { ...previewActions(), onPreviewDecision: undefined },
+    ),
+    () => {
+      const { onPause: _onPause, ...missingPause } = questionActions();
+      return renderQuestionnaireScreen(host, questionViewModel(), missingPause);
+    },
+    () => renderQuestionnaireScreen(
+      host,
+      questionViewModel(),
+      { ...questionActions(), onUnexpectedAction() {} },
+    ),
+    () => {
+      const { onPause: _onPause, ...missingPause } = previewActions();
+      return renderQuestionnaireScreen(host, previewViewModel(), missingPause);
+    },
+    () => renderQuestionnaireScreen(
+      host,
+      previewViewModel(),
+      { ...previewActions(), onUnexpectedAction() {} },
     ),
   ];
 

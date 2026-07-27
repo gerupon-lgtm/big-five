@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.4 |
+| 設計版 | 0.5 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-26 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.9 |
+| 更新日 | 2026-07-27 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.10 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -14,6 +14,7 @@
 - 尺度・採点・文章・称号・猫・演出は、版付きの読み取り専用定義として配布する。
 - ブラウザへ永続化するのは途中回答と結果スナップショットだけとする。
 - 生回答は途中回答にだけ保持し、完答時に削除する。結果履歴・共有物へ移さない。
+- ProgressRecordは診断種別ごとに直近1件だけを保持する。20問簡易プレビュー表示後も追加30問へ進める間は保持し、`簡易プレビューで終了する`または50問完答で削除する。
 - 過去結果は診断当時の文章・ID・版を保存し、現行定義による自動上書きを行わない。
 - 保存不可・容量不足・部分破損でも、画面上の回答中状態または計算済み結果を維持する。
 
@@ -334,7 +335,7 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 
 `app/js/domain/result-snapshot.js`の`validateResultSnapshot`と`app/js/infrastructure/progress-storage.js`の`saveResultSnapshot`は、この13フィールドschemaを唯一の結果履歴契約として実装済みである。旧`diagnosisId`付きgeneric result schemaと旧section集合は置き換えた。保存APIは`storage`、`snapshot`、`diagnosisId`、`definition`、`meta`、`now`を受け、対象ProgressRecordを現行定義・版で検証してから保存する。破損・版不一致の対象進捗は上書き・削除しない。
 
-同ファイルの`loadResultHistory`は各ResultSnapshotを再検証し、破損レコードだけを除外して`completedAt`実時刻の降順、同時刻は`resultId`辞書順で返す。`deleteResultSnapshot`は確認後に指定IDと一致する最初の有効ResultSnapshotだけを削除し、途中回答と他の有効・破損結果を保持する。`deleteAllData`は確認後に途中回答と結果履歴を空にする。S-003/S-004、S-006/S-007画面統合とQ-012画像表示は実装済みで、回答完答からの本番callerとlive S-002接続を後続T-005で実装する。
+同ファイルの`loadResultHistory`は各ResultSnapshotを再検証し、破損レコードだけを除外して`completedAt`実時刻の降順、同時刻は`resultId`辞書順で返す。`deleteResultSnapshot`は確認後に指定IDと一致する最初の有効ResultSnapshotだけを削除し、途中回答と他の有効・破損結果を保持する。`deleteAllData`は確認後に途中回答と結果履歴を空にする。S-003/S-004、S-006/S-007画面統合、Q-012画像表示、回答完答からの本番caller、live S-002接続は実装済みである。Q-014の中断再開・結果段階表示・簡潔な履歴UIをT-008Aで追加する。
 
 ### 3.6 FactorResult
 

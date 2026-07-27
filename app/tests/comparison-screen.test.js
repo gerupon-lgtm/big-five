@@ -104,7 +104,7 @@ test("T-006 S-007 treats a different selected character asset as a presentation-
 
   const text = collectText(host);
   assert.match(text, /characterAssetVersion/);
-  assert.match(text, /character-balanced-asset-v1/);
+  assert.match(text, /character-balanced-v1/);
   assert.match(text, /character-balanced-asset-v2/);
 });
 

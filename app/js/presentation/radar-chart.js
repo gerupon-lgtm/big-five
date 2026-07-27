@@ -19,7 +19,11 @@ function tracePolygon(context, centerX, centerY, radiusForIndex) {
   context.closePath();
 }
 
-export function drawResultRadar(canvas, factors) {
+export function drawResultRadar(
+  canvas,
+  factors,
+  { factorLabels = {} } = {},
+) {
   let context;
   try {
     context = typeof canvas?.getContext === "function" ? canvas.getContext("2d") : null;
@@ -35,7 +39,7 @@ export function drawResultRadar(canvas, factors) {
     const height = canvas.height || 300;
     const centerX = width / 2;
     const centerY = height / 2;
-    const maximumRadius = Math.max(0, (Math.min(width, height) / 2) - 24);
+    const maximumRadius = Math.max(0, (Math.min(width, height) / 2) - 52);
 
     context.save();
     context.clearRect(0, 0, width, height);
@@ -58,6 +62,20 @@ export function drawResultRadar(canvas, factors) {
       context.moveTo(centerX, centerY);
       context.lineTo(end.x, end.y);
       context.stroke();
+    }
+
+    context.font = "600 11px system-ui, sans-serif";
+    context.fillStyle = "#365b52";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    for (let index = 0; index < AXIS_COUNT; index += 1) {
+      const labelPoint = point(centerX, centerY, maximumRadius + 28, index);
+      const factorId = factors[index].factorId;
+      context.fillText(
+        factorLabels[factorId] ?? factorId,
+        labelPoint.x,
+        labelPoint.y,
+      );
     }
 
     context.strokeStyle = "#2f6f73";

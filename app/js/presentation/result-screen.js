@@ -1,5 +1,6 @@
 import { validateResultSnapshot } from "../domain/result-snapshot.js";
 import { drawResultRadar } from "./radar-chart.js";
+import { appendAppHeader } from "./app-header.js";
 import { appendTextElement, formatCompletedAt } from "./screen-helpers.js";
 
 const SECTION_LABELS = Object.freeze({
@@ -76,6 +77,7 @@ function renderCharacterMetadata(parent, snapshot, dependencies) {
   if (
     !characterEntry ||
     characterEntry.characterId !== snapshot.characterId ||
+    characterEntry.assetVersion !== snapshot.characterAssetVersion ||
     typeof decodeImage !== "function" ||
     typeof loadCharacterImage !== "function" ||
     typeof observeViewport !== "function"
@@ -152,7 +154,9 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
 
   let radarResult;
   try {
-    radarResult = drawRadar(canvas, snapshot.factors);
+    radarResult = drawRadar(canvas, snapshot.factors, {
+      factorLabels: labels.factorLabels,
+    });
   } catch {
     radarResult = { drawn: false, errorCode: "RADAR_DRAW_FAILED" };
   }
@@ -266,7 +270,7 @@ function renderActions(parent, snapshot, actions) {
     const continueButton = appendTextElement(
       controls,
       "button",
-      "あと30問に回答する",
+      "あと30問続ける",
       "primary-button",
     );
     continueButton.setAttribute("type", "button");
@@ -274,7 +278,34 @@ function renderActions(parent, snapshot, actions) {
       "click",
       () => actions.onContinueDetail?.(snapshot),
     );
-  } else if (
+  }
+  if (
+    snapshot.mode === "preview20" &&
+    typeof actions.onPausePreview === "function"
+  ) {
+    const pauseButton = appendTextElement(
+      controls,
+      "button",
+      "中断してトップへ",
+      "secondary-button",
+    );
+    pauseButton.setAttribute("type", "button");
+    pauseButton.addEventListener("click", () => actions.onPausePreview?.());
+  }
+  if (
+    snapshot.mode === "preview20" &&
+    typeof actions.onFinishPreview === "function"
+  ) {
+    const finishButton = appendTextElement(
+      controls,
+      "button",
+      "簡易プレビューで終了する",
+      "text-button",
+    );
+    finishButton.setAttribute("type", "button");
+    finishButton.addEventListener("click", () => actions.onFinishPreview?.());
+  }
+  if (
     snapshot.mode === "detail50" &&
     typeof actions.onRetry === "function"
   ) {
@@ -326,6 +357,9 @@ export function renderSavedResultScreen(
   const documentObject = host.ownerDocument ?? document;
   const main = documentObject.createElement("main");
   main.className = `app-shell result-screen ${savedSnapshot.mode}`;
+  appendAppHeader(main, {
+    screenLabel: savedSnapshot.mode === "preview20" ? "簡易結果" : "詳細結果",
+  });
   appendTextElement(
     main,
     "h1",

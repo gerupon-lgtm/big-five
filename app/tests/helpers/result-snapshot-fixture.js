@@ -73,6 +73,7 @@ export function createTestResultSnapshot({
   questionCount = 50,
   versionTuple = TEST_VERSION_TUPLE,
   rawMeans = [3, 3, 3, 3, 3],
+  characterAssetVersion = "character-balanced-v1",
 } = {}) {
   const mode = questionCount === 20 ? "preview20" : "detail50";
   const factors = FACTOR_ORDER.map((factorId, index) =>
@@ -90,7 +91,7 @@ export function createTestResultSnapshot({
       boundaryFlags: [],
       renderedTexts: renderedTexts(factors, mode, versionTuple.resultTextVersion),
     },
-    characterAssetVersion: "character-balanced-asset-v1",
+    characterAssetVersion,
     selectedPaletteId: "palette-default",
     cardTemplateVersion: versionTuple.cardTemplateVersion,
   });

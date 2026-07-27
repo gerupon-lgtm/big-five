@@ -32,7 +32,7 @@ test("startApp renders the start heading and canonical version from a hash route
   startApp({ documentObject, historyObject, windowObject });
 
   const renderedText = collectText(host);
-  assert.match(renderedText, /Big Five自己理解支援ツール/);
+  assert.match(renderedText, /Big Five｜\s*自己理解支援ツール/);
   assert.match(renderedText, /バージョン mvp-0\.1\.0/);
   assert.match(renderedText, /ipip-ja-50-v1/);
   assert.match(renderedText, /ipip-ja-50-question-set-v1/);
@@ -128,7 +128,11 @@ test("T-006 S-006 confirms and deletes one exact history result through startApp
   });
 
   collectElements(host)
-    .find(({ tagName, textContent }) => tagName === "button" && textContent === "この結果を削除")
+    .find(({ className }) => className === "history-management-toggle")
+    .dispatch("click");
+  collectElements(host)
+    .find(({ tagName, textContent }) =>
+      tagName === "button" && textContent.endsWith("この結果を削除"))
     .dispatch("click");
 
   assert.equal(confirmations.length, 1);
@@ -175,6 +179,9 @@ test("T-006 S-006 confirms and clears progress and history through startApp", ()
     confirmProvider: () => true,
   });
 
+  collectElements(host)
+    .find(({ className }) => className === "history-management-toggle")
+    .dispatch("click");
   collectElements(host)
     .find(({ tagName, textContent }) =>
       tagName === "button" && textContent === "端末内データをすべて削除")
@@ -224,10 +231,20 @@ test("T-006 S-006/S-007 selects two compatible results and opens their compariso
     nowProvider: () => "2026-07-26T12:05:00.000Z",
   });
 
-  const compareButtons = collectElements(host)
-    .filter(({ tagName, textContent }) => tagName === "button" && textContent === "比較対象に選ぶ");
+  collectElements(host)
+    .find(({ tagName, textContent }) =>
+      tagName === "button" && textContent === "結果を比較する")
+    .dispatch("click");
+  let compareButtons = collectElements(host)
+    .filter(({ className }) => className === "history-card-select-toggle");
   compareButtons[0].dispatch("click");
+  compareButtons = collectElements(host)
+    .filter(({ className }) => className === "history-card-select-toggle");
   compareButtons[1].dispatch("click");
+  collectElements(host)
+    .find(({ tagName, textContent }) =>
+      tagName === "button" && textContent === "選択した2件を比較")
+    .dispatch("click");
 
   assert.equal(
     windowObject.location.hash,
@@ -603,6 +620,11 @@ test("T-005 S-002 renders an answer-free live preview with the exact notice when
   assert.match(text, /仮称号/);
   assert.match(text, /結果は表示できましたが、この端末の履歴には保存できませんでした。/);
   assert.doesNotMatch(text, /answers/);
+  assert.equal(
+    collectElements(host).filter(({ tagName, textContent }) =>
+      tagName === "button" && textContent === "簡易プレビューで終了する").length,
+    0,
+  );
 });
 
 test("T-005 S-002 discarding is cancelled without writes, succeeds to start, and preserves the flow on deletion failure", () => {
@@ -691,9 +713,157 @@ test("T-005 S-003 continues a shown preview at question 21 with showPreview pres
   clickButton(host, "診断を始める");
   for (let index = 0; index < 20; index += 1) answerCurrent(host);
   clickButton(host, "20問の簡易プレビューを見る");
-  clickButton(host, "あと30問に回答する");
+  clickButton(host, "あと30問続ける");
   assert.match(collectText(host), /21 \/ 50問/);
   assert.equal(JSON.parse(raw).progressByDiagnosis[DiagnosticDefinition.diagnosisId].previewDecision, "showPreview");
+});
+
+test("T-008A F-004 pauses at any question and resumes the same in-memory progress", () => {
+  let raw = null;
+  const { host, windowObject } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  answerCurrent(host);
+  clickButton(host, "中断してトップへ");
+
+  assert.equal(windowObject.location.hash, "#/start");
+  assert.match(collectText(host), /途中から再開する/);
+  clickButton(host, "途中から再開する");
+  assert.match(collectText(host), /2 \/ 20問/);
+});
+
+test("T-008A F-015 keeps the storage warning when unsaved memory progress resumes", () => {
+  let confirmations = 0;
+  const { host } = createAppHarness({
+    storage: {
+      getItem: () => null,
+      setItem() { throw new Error("storage unavailable"); },
+    },
+    confirmProvider: () => {
+      confirmations += 1;
+      return true;
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  assert.match(collectText(host), /この環境では回答を保存できません/);
+  clickButton(host, "中断してトップへ");
+  assert.equal(confirmations, 1);
+  clickButton(host, "途中から再開する");
+  assert.match(collectText(host), /この環境では回答を保存できません/);
+  clickButton(host, "中断してトップへ");
+  assert.equal(confirmations, 2);
+});
+
+test("T-008A F-004 confirms before replacing the most recent progress", () => {
+  let raw = null;
+  let confirmed = false;
+  const { host } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+    confirmProvider: () => confirmed,
+  });
+
+  clickButton(host, "診断を始める");
+  answerCurrent(host);
+  clickButton(host, "中断してトップへ");
+  const before = raw;
+
+  clickButton(host, "診断を始める");
+  assert.equal(raw, before);
+  assert.match(collectText(host), /途中から再開する/);
+
+  confirmed = true;
+  clickButton(host, "診断を始める");
+  assert.match(collectText(host), /1 \/ 20問/);
+  assert.notEqual(raw, before);
+});
+
+test("T-008A F-004 finishes a saved preview without deleting its result", () => {
+  let raw = null;
+  const { host, windowObject } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+  const resultId = JSON.parse(raw).results[0].resultId;
+  clickButton(host, "簡易プレビューで終了する");
+
+  const envelope = JSON.parse(raw);
+  assert.equal(windowObject.location.hash, "#/start");
+  assert.deepEqual(envelope.progressByDiagnosis, {});
+  assert.equal(envelope.results[0].resultId, resultId);
+});
+
+test("T-008A F-015 keeps preview progress and result when finish deletion fails", () => {
+  let raw = null;
+  let failWrites = false;
+  const { host, windowObject } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) {
+        if (failWrites) throw new Error("delete failed");
+        raw = value;
+      },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+  failWrites = true;
+  clickButton(host, "簡易プレビューで終了する");
+
+  const envelope = JSON.parse(raw);
+  assert.match(windowObject.location.hash, /^#\/result/);
+  assert.ok(envelope.progressByDiagnosis[DiagnosticDefinition.diagnosisId]);
+  assert.equal(envelope.results.length, 1);
+  assert.match(collectText(host), /簡易プレビューを終了できませんでした/);
+});
+
+test("T-008A F-013 never deletes a replacement progress from a stale preview", () => {
+  let raw = null;
+  let writes = 0;
+  const { host } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) {
+        writes += 1;
+        raw = value;
+      },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+  const envelope = JSON.parse(raw);
+  envelope.progressByDiagnosis = {};
+  raw = JSON.stringify(envelope);
+  const writesBeforeFinish = writes;
+
+  clickButton(host, "簡易プレビューで終了する");
+
+  assert.equal(writes, writesBeforeFinish);
+  assert.equal(JSON.parse(raw).results.length, 1);
+  assert.match(collectText(host), /対応する途中回答を確認できないため/);
+  assert.equal(
+    collectElements(host).filter(({ tagName, textContent }) =>
+      tagName === "button" && textContent === "簡易プレビューで終了する").length,
+    0,
+  );
 });
 
 test("T-005 S-004 renders detail after fifty answers and atomically clears progress on successful snapshot save", () => {
@@ -749,7 +919,7 @@ test("T-005 S-003 reloads a saved preview into question 21 only with its compati
     storage: { getItem: () => raw, setItem(_key, value) { raw = value; } },
   });
 
-  clickButton(host, "あと30問に回答する");
+  clickButton(host, "あと30問続ける");
   assert.equal(windowObject.location.hash, "#/answer");
   assert.match(collectText(host), /21 \/ 50問/);
   assert.equal(JSON.parse(raw).progressByDiagnosis[DiagnosticDefinition.diagnosisId].previewDecision, "showPreview");
@@ -772,7 +942,7 @@ test("T-005 S-003 hides saved preview continuation without a matching compatible
     }) },
   });
   assert.equal(collectElements(host).filter(({ tagName, textContent }) =>
-    tagName === "button" && textContent === "あと30問に回答する").length, 0);
+    tagName === "button" && textContent === "あと30問続ける").length, 0);
 });
 
 test("T-005 F-016 does not duplicate result observers when a hashchange follows an internal route update", () => {
@@ -860,6 +1030,7 @@ test("T-005 F-016 opens a saved history result without duplicating its observer 
     addEventListener(type, callback) { if (type === "hashchange") hashchange = callback; },
   };
   let observed = 0;
+  let disconnected = 0;
   startApp({
     documentObject,
     historyObject: { replaceState() {} },
@@ -871,11 +1042,16 @@ test("T-005 F-016 opens a saved history result without duplicating its observer 
       results: [snapshot],
     }) },
     nowProvider: () => "2026-07-27T12:00:00.000Z",
-    observeViewport() { observed += 1; },
+    observeViewport() {
+      observed += 1;
+      return () => { disconnected += 1; };
+    },
   });
 
-  clickButton(host, "この結果を開く");
-  assert.equal(observed, 1);
+  clickButton(host, "結果を見る");
+  assert.equal(observed, 2);
+  assert.equal(disconnected, 1);
   hashchange();
-  assert.equal(observed, 1);
+  assert.equal(observed, 2);
+  assert.equal(disconnected, 1);
 });

@@ -32,12 +32,20 @@ export class FakeElement {
     this.attributes.set(name, value);
   }
 
+  removeAttribute(name) {
+    this.attributes.delete(name);
+  }
+
   addEventListener(type, listener) {
     this.listeners.set(type, listener);
   }
 
   dispatch(type) {
     this.listeners.get(type)?.({ currentTarget: this });
+  }
+
+  focus() {
+    this.ownerDocument.activeElement = this;
   }
 
   get lastElementChild() {
