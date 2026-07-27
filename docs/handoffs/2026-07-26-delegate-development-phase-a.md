@@ -6,6 +6,7 @@
 - 配布記録: `_verify/skill-evals/delegate-development/reports/2026-07-26-distribution-record.md`
 - 比較レポート: `_verify/skill-evals/delegate-development/reports/2026-07-26-baseline-candidate-comparison.md`
 - Codex読取権限の修正指示: `_verify/skill-evals/delegate-development/reports/2026-07-26-codex-installed-skill-read-access-correction.md`
+- Windows linked worktree helperの修正指示: `_verify/skill-evals/delegate-development/reports/2026-07-27-windows-wsl-worktree-helper-correction-instructions.md`
 - 再利用画像パーツ保管のスキル横断修正指示: `_verify/skill-evals/cross-skill/reports/2026-07-27-reusable-image-component-retention-correction-instructions.md`
 
 ## Phase A完了状態
@@ -38,13 +39,20 @@
   失効し、修正・再発防止は
   `_verify/skill-evals/delegate-development/reports/2026-07-26-codex-installed-skill-read-access-correction.md`
   へ記録した。Claude配布先の通常sandbox読取りは別環境で未検証のままである。
+- Windows版Codexの標準`bash.exe`はWSLを起動するため、Windows Gitで作成したlinked
+  worktreeの`.git`参照をWSL Gitが解決できず、`sdd-workspace`、`task-brief`、
+  `review-package`が`SDD_PLAN_NOT_IN_GIT_WORKTREE`で停止することを実運用で確認した。
+  本体作業は同等のPowerShell手順で継続し、PowerShell helper同梱、失敗理由の分離、
+  Windows linked worktree回帰を
+  `_verify/skill-evals/delegate-development/reports/2026-07-27-windows-wsl-worktree-helper-correction-instructions.md`
+  へ修正指示として記録した。配布済みスキル本体は上書きしていない。
 
 ## アプリ状態
 
 - Q-006の実装・独立レビューは完了済み。
 - Q-006の人手Content Approvalは引き続きpending。
 - handoff作成時はS-003/S-004結果画面、本番完答caller、ResultSnapshot保存、旧`progress-storage` schema統合が未実装だった。再開後にResultSnapshot保存・履歴・削除・比較基盤、S-006/S-007初期画面、保存済みsnapshotの独立S-003/S-004表示、S-002の独立表示層まで実装した。router・state・storageへのS-002接続、完答caller、T-007共有が残っている。
-- Q-012は51行制作台帳契約とbrief-stage実台帳まで実装・review済み。3体の透明PNGパイロットは生成・alpha確認済みだが、人手art/anatomy承認前なのでledger更新・commit・manifest登録を行っていない。Q-013演出データ、T-005 UIは各計画と人手ゲートを維持する。
+- Q-012は全51体についてproject-ownerの原画・WebP承認、正典source PNG、固定条件の1024px WebP、SHA-256・寸法・容量を含む制作台帳を完成し、全行を`technical-approved`へ更新した。制作来歴候補と高度に生成した再利用可能コンポーネントも保管済みである。release accessibility gate、character manifest、loaderは未完了で、Q-013演出データ、T-005 UIは各計画と人手ゲートを維持する。
 
 ## forward-testで検出した実装前blocker（再開後に解消）
 
@@ -61,12 +69,12 @@ ResultSnapshot永続化へ進む前に、次を正典・実装・test間で解�
 
 上記を推測で解決せず、共有契約表へ`confirmed / conflicting / unknown`で整理してから実装タスクを委譲する。
 
-再開後、4件すべてを`docs/data-model.md`と`docs/processing-design.md`で契約化し、ResultSnapshotのexact validator、RFC 4122 UUID、結果保存、完答時の原子的削除・best-effort cleanup、履歴読込、個別・全削除、比較純粋関数、S-006/S-007初期画面、保存済みS-003/S-004と独立結果画面遷移、S-002表示層を実装した。追加調査でlive resultには選択されたQ-012 manifest entryの`assetVersion`が必須であり、`characterManifestVersion`の流用や仮値では正典準拠のsnapshotを作れないと確定した。残作業はQ-012パイロット・manifest作成後の本番caller、router・state・storageへのS-002接続、T-007共有、Q-013実データ統合である。
+再開後、4件すべてを`docs/data-model.md`と`docs/processing-design.md`で契約化し、ResultSnapshotのexact validator、RFC 4122 UUID、結果保存、完答時の原子的削除・best-effort cleanup、履歴読込、個別・全削除、比較純粋関数、S-006/S-007初期画面、保存済みS-003/S-004と独立結果画面遷移、S-002表示層を実装した。追加調査でlive resultには選択されたQ-012 manifest entryの`assetVersion`が必須であり、`characterManifestVersion`の流用や仮値では正典準拠のsnapshotを作れないと確定した。Q-012の51体は技術承認済みであり、残作業はrelease accessibility gate、manifest、loader、その後の本番caller、router・state・storageへのS-002接続、T-007共有、Q-013実データ統合である。
 
 ## 再開手順
 
 1. 新しい開発チャットで、インストール済み`delegate-development`の`SKILL.md`ハッシュが配布記録と一致することを確認する。
 2. `docs/tasks.md`、`docs/data-model.md`、`docs/processing-design.md`、Q-012/Q-013/T-005計画を読む。
-3. 生成済みQ-012 3体パイロットを人手art/anatomy承認し、承認結果を制作台帳へ記録する。承認後にWebP変換・manifest entryの`assetVersion`を確定し、完答callerとrouter・state・storageへのS-002接続を実装する。Q-012/Q-013の未確定データへ触れる作業は入力品質ゲートで委譲せず、各制作・承認後に開始する。
+3. Q-012の51体`technical-approved`を入力としてrelease accessibility gateを実施し、承認後にcharacter manifestとloaderを実装する。manifest entryの`assetVersion`を使って完答callerとrouter・state・storageへのS-002接続を実装する。Q-013の未確定データへ触れる作業は入力品質ゲートで委譲せず、制作・承認後に開始する。
 4. 委譲する場合は、共有契約表、レビュー終了条件、約60秒の進捗通知、人手承認分離を使う。
 5. 3〜5タスク後に、差し戻し、監督修正、スコープ外変更、進捗通知を再評価する。
