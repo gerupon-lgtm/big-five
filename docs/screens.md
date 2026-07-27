@@ -4,7 +4,7 @@
 |---|---|
 | 設計版 | 0.4 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-26 |
+| 更新日 | 2026-07-27 |
 | 入力要件 | 要件定義書v1.9 |
 | 対象 | スマートフォン優先、PC対応 |
 
@@ -20,7 +20,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は実装済みで、人は`content/source/`のCSVだけを編集する。3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testがあるが、画面はまだ既存ES Modulesをruntime compatibility authorityとして使い、`app/content/` JSONをfetchしない。
 
-初期件数は50問、固定20問、51称号、237結果文、6根拠である。E-0のみ`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`で、Q-006/Q-012/Q-013はrelease gateとして残る。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
+初期件数は50問、固定20問、51称号、237結果文、6根拠である。E-0のみ`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`で、Q-006とQ-013 production dataはrelease gateとして残る。Q-012画像・manifest・loaderは別の版付き制作台帳で公開承認・実装済みである。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
 
 ## 2. 画面一覧
 
@@ -28,8 +28,8 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は�
 |---|---|---|---|
 | S-001 | `#/start` | 開始 | F-001, F-004, F-007, F-009, F-014 |
 | S-002 | `#/answer` | 回答 | F-002, F-003, F-004, F-013, F-015 |
-| S-003 | `#/result/preview` | 基本結果 | F-005, F-007, F-008, F-014, F-016, F-018 |
-| S-004 | `#/result/detail` | 詳細結果 | F-006, F-007, F-008, F-014, F-016, F-018 |
+| S-003 | `#/result?resultId=<UUID>`（`mode=preview20`） | 基本結果 | F-005, F-007, F-008, F-014, F-016, F-018 |
+| S-004 | `#/result?resultId=<UUID>`（`mode=detail50`） | 詳細結果 | F-006, F-007, F-008, F-014, F-016, F-018 |
 | S-005 | `#/share` | 共有プレビュー | F-011, F-012, F-014, F-015, F-016, F-018 |
 | S-006 | `#/history` | 履歴 | F-009, F-010, F-013, F-014, F-015 |
 | S-007 | `#/compare` | 比較 | F-010, F-015 |
@@ -88,9 +88,9 @@ flowchart TD
 
 ### 操作
 
-- 「20問から始める」
-- 「続きから」
-- 「履歴を見る」
+- 「診断を始める」
+- 互換途中回答がある場合だけ「途中から再開する」
+- 「診断結果の履歴を見る」
 - 「尺度・結果の読み方」
 
 ### 状態・エラー
@@ -100,7 +100,7 @@ flowchart TD
 
 ## 6. S-002 回答
 
-表示層の`renderQuestionnaireScreen`は実装・独立レビュー済みである。設問phaseと20問分岐phaseをexact view modelで分離し、保存失敗時だけ通知する。router、途中回答controller、完答callerとの接続は後続であり、Q-012 production manifest entryがない状態で`characterAssetVersion`を仮置きしてlive結果へ進めない。
+`renderQuestionnaireScreen`とlive controllerは実装・独立レビュー済みである。`#/answer`で設問phaseと20問分岐phaseをexact view modelとして分離し、回答、戻る、破棄、互換途中回答の再開を既存state/storage APIへ接続する。保存失敗時もメモリ上の回答を維持して通知する。20問の`continueHidden`は結果を作らず21問目へ進み、`showPreview`と50問完答だけがanswer-freeのResultSnapshotを生成する。
 
 ### 表示
 
@@ -134,7 +134,7 @@ flowchart TD
 
 ## 7. S-003 基本結果
 
-Q-006の版付き結果文、合成、snapshotはドメイン実装・独立レビュー済みである。保存済みsnapshotは`#/result?resultId=...`から独立したS-003としてDOM表示でき、履歴から同画面を開ける。回答完了直後のcontroller接続、Q-012画像、Q-013色・香り、T-007共有は後続である。文面は`result-text-v1 initial reviewed copy`で、E-1〜E-5は`Content Approval pending`とする。
+Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。Q-013の代替色・香りとT-007共有は後続である。文面は`result-text-v1 initial reviewed copy`で、E-1〜E-5は`Content Approval pending`とする。
 
 ### ファーストビュー
 
@@ -168,7 +168,7 @@ Q-006の版付き結果文、合成、snapshotはドメイン実装・独立レ�
 
 ## 8. S-004 詳細結果
 
-保存済みsnapshotは`#/result?resultId=...`から独立したS-004として開き、ドメインが保存した`RenderedResultText` 42件を順序どおり表示する。42件は中立副題、称号になった理由、続いてsection-first・`FACTOR_ORDER`順の5因子それぞれの観察文、強み、裏返り、仕事、人間関係、ストレス、問いかけ、行動ヒントで構成する。回答完了直後のcontroller接続は後続T-005である。
+50問完答callerはanswer-freeのsnapshotを生成・保存し、`#/result?resultId=...`でS-004を開く。保存成功時は結果追加とProgressRecord削除を原子的に行い、保存失敗時もlive結果と全42件の文面を維持して通知し、callerは回答地図と完答ProgressRecordへの参照を破棄する。42件は中立副題、称号になった理由、続いてsection-first・`FACTOR_ORDER`順の5因子それぞれの観察文、強み、裏返り、仕事、人間関係、ストレス、問いかけ、行動ヒントで構成する。
 
 ### 表示
 

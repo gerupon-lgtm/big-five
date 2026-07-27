@@ -1,6 +1,6 @@
 import { appendTextElement } from "./screen-helpers.js";
 
-export function renderStartScreen(host, versionModel) {
+export function renderStartScreen(host, versionModel, actions = {}) {
   const documentObject = host.ownerDocument ?? document;
   const main = documentObject.createElement("main");
   main.className = "app-shell";
@@ -37,8 +37,18 @@ export function renderStartScreen(host, versionModel) {
   appendTextElement(
     status,
     "p",
-    "現在は診断本体を構築中です。保存済み結果の履歴と比較画面は利用できます。",
+    "20問の簡易プレビューから始め、希望に応じて50問の詳しい結果まで進められます。",
   );
+  if (typeof actions.onStartNew === "function") {
+    const startButton = appendTextElement(status, "button", "診断を始める", "primary-button");
+    startButton.setAttribute("type", "button");
+    startButton.addEventListener("click", actions.onStartNew);
+  }
+  if (typeof actions.onResume === "function") {
+    const resumeButton = appendTextElement(status, "button", "途中から再開する", "secondary-button");
+    resumeButton.setAttribute("type", "button");
+    resumeButton.addEventListener("click", actions.onResume);
+  }
   const historyLink = appendTextElement(status, "a", "診断結果の履歴を見る", "text-link");
   historyLink.setAttribute("href", "#/history");
 

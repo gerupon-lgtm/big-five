@@ -1,6 +1,7 @@
 import { appMeta } from "./config/app-meta.js";
 import { CharacterManifest } from "./data/character-manifest.js";
-import { FactorDefinitions } from "./data/diagnostic-definition.js";
+import { DiagnosticDefinition, FactorDefinitions, QuestionDefinitions } from "./data/diagnostic-definition.js";
+import { ResultTextDefinitions } from "./data/result-text-definitions.js";
 import { TitleProfileDefinitions } from "./data/title-profile-definitions.js";
 import {
   resolveCharacterEntry,
@@ -9,9 +10,22 @@ import {
 import { compareResultSnapshots } from "./domain/result-comparison.js";
 import { createStartVersionViewModel } from "./domain/version-model.js";
 import {
+  choosePreviewExit,
+  continueAfterPreview,
+  createProgressRecord,
+  goBack,
+} from "./domain/response-state.js";
+import { createDiagnosticResultSnapshot } from "./domain/diagnostic-result.js";
+import {
+  answerAndSave,
+  discardProgress,
   deleteAllData,
   deleteResultSnapshot,
+  loadProgress,
   loadResultHistory,
+  saveProgress,
+  saveResultSnapshot,
+  transitionAndSave,
 } from "./infrastructure/progress-storage.js";
 import { loadCharacterImage } from "./infrastructure/character-loader.js";
 import { resolveRoute } from "./infrastructure/router.js";
@@ -19,6 +33,7 @@ import { renderComparisonScreen } from "./presentation/comparison-screen.js";
 import { renderHistoryScreen } from "./presentation/history-screen.js";
 import { renderSavedResultScreen } from "./presentation/result-screen.js";
 import { renderStartScreen } from "./presentation/start-screen.js";
+import { renderQuestionnaireScreen } from "./presentation/questionnaire-screen.js";
 
 const factorLabels = Object.freeze(Object.fromEntries(
   FactorDefinitions.map(({ id, displayName }) => [id, displayName]),
@@ -81,12 +96,17 @@ export function startApp({
   windowObject = window,
   storage,
   nowProvider = () => new Date().toISOString(),
+  uuidProvider = () => globalThis.crypto.randomUUID(),
   confirmProvider,
   decodeImage,
   observeViewport,
 } = {}) {
   const screenHost = documentObject.getElementById("app");
   let historyNotice = null;
+  let currentProgress = null;
+  let questionnaireStorageStatus = "ok";
+  let liveResult = null;
+  let pendingInternalHashChange = null;
   const effectiveDecodeImage = decodeImage ??
     createBrowserImageDecoder(windowObject);
   const effectiveObserveViewport = observeViewport ??
@@ -109,6 +129,70 @@ export function startApp({
     return confirmProvider
       ? confirmProvider(message) === true
       : windowObject.confirm?.(message) === true;
+  }
+
+  function setRoute(hash) {
+    pendingInternalHashChange = hash;
+    historyObject.pushState?.(null, "", hash);
+    windowObject.location.hash = hash;
+    renderCurrentRoute();
+  }
+
+  function replaceRoute(hash) {
+    pendingInternalHashChange = hash;
+    historyObject.replaceState(null, "", hash);
+    windowObject.location.hash = hash;
+    renderCurrentRoute();
+  }
+
+  function isShownPreviewProgressForSnapshot(progress, snapshot) {
+    return progress && snapshot.mode === "preview20" &&
+      progress.mode === "preview20" &&
+      progress.previewDecision === "showPreview" &&
+      Object.keys(progress.answers).length === 20 &&
+      Object.keys(snapshot.versionTuple).length === Object.keys(progress.versionTuple).length &&
+      Object.keys(snapshot.versionTuple).every((key) => snapshot.versionTuple[key] === progress.versionTuple[key]);
+  }
+
+  function loadPreviewContinuation(snapshot) {
+    if (snapshot.mode !== "preview20") return null;
+    const loaded = loadProgress({
+      storage: getStorage(), definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
+    });
+    return loaded.status === "ok" && isShownPreviewProgressForSnapshot(loaded.progress, snapshot)
+      ? loaded.progress
+      : null;
+  }
+
+  function persistProgress(progress) {
+    const outcome = saveProgress({
+      storage: getStorage(),
+      progress,
+      definition: DiagnosticDefinition,
+      meta: appMeta,
+      now: nowProvider(),
+    });
+    currentProgress = outcome.progress ?? progress;
+    questionnaireStorageStatus = outcome.status === "ok" ? "ok" : "error";
+    return outcome;
+  }
+
+  function createSnapshot({ answers, questionCount, mode }) {
+    if (!currentProgress) throw new Error("APP_PROGRESS_MISSING");
+    return createDiagnosticResultSnapshot({
+      answers,
+      questionCount,
+      mode,
+      resultId: uuidProvider(),
+      completedAt: nowProvider(),
+      versionTuple: currentProgress.versionTuple,
+      questionDefinitions: QuestionDefinitions,
+      titleProfiles: TitleProfileDefinitions,
+      resultTextDefinitions: ResultTextDefinitions,
+      resultTextVersion: appMeta.diagnosticVersions.resultTextVersion,
+      characterManifest: CharacterManifest,
+      cardTemplateVersion: appMeta.cardTemplateVersion,
+    });
   }
 
   function renderHistoryRoute() {
@@ -150,12 +234,10 @@ export function startApp({
         renderCurrentRoute();
       },
       onCompare(comparison) {
-        windowObject.location.hash = `#/compare?before=${encodeURIComponent(comparison.beforeResultId)}&after=${encodeURIComponent(comparison.afterResultId)}`;
-        renderCurrentRoute();
+        setRoute(`#/compare?before=${encodeURIComponent(comparison.beforeResultId)}&after=${encodeURIComponent(comparison.afterResultId)}`);
       },
       onOpenResult(resultId) {
-        windowObject.location.hash = `#/result?resultId=${encodeURIComponent(resultId)}`;
-        renderCurrentRoute();
+        setRoute(`#/result?resultId=${encodeURIComponent(resultId)}`);
       },
     });
   }
@@ -165,14 +247,146 @@ export function startApp({
       kind: "error",
       text: "指定された診断結果を開けませんでした。履歴からもう一度選んでください。",
     };
-    historyObject.replaceState(null, "", "#/history");
-    windowObject.location.hash = "#/history";
-    renderCurrentRoute();
+    replaceRoute("#/history");
+  }
+
+  function renderQuestionnaireRoute() {
+    if (!currentProgress) {
+      setRoute("#/start");
+      return;
+    }
+    const isPreviewChoice = currentProgress.mode === "preview20" &&
+      currentProgress.previewDecision === "undecided" &&
+      Object.keys(currentProgress.answers).length === 20;
+    if (isPreviewChoice) {
+      renderQuestionnaireScreen(screenHost, {
+        phase: "preview-choice",
+        storageStatus: questionnaireStorageStatus,
+      }, {
+        onPreviewDecision(decision) {
+          const transition = choosePreviewExit(currentProgress, decision, {
+            definition: DiagnosticDefinition,
+            meta: appMeta,
+            now: nowProvider(),
+          });
+          const saved = transitionAndSave({
+            storage: getStorage(),
+            transition,
+            definition: DiagnosticDefinition,
+            meta: appMeta,
+            now: nowProvider(),
+          });
+          currentProgress = saved.progress;
+          questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
+          if (decision === "continueHidden") {
+            setRoute("#/answer");
+            return;
+          }
+          const snapshot = createSnapshot({
+            answers: currentProgress.answers,
+            questionCount: 20,
+            mode: "preview20",
+          });
+          const persisted = saveResultSnapshot({
+            storage: getStorage(),
+            snapshot,
+            diagnosisId: DiagnosticDefinition.diagnosisId,
+            definition: DiagnosticDefinition,
+            meta: appMeta,
+            now: nowProvider(),
+          });
+          liveResult = { snapshot, persistenceFailed: persisted.status !== "ok" };
+          setRoute(`#/result?resultId=${encodeURIComponent(snapshot.resultId)}`);
+        },
+        onBack() {
+          const transition = goBack(currentProgress, {
+            definition: DiagnosticDefinition,
+            meta: appMeta,
+            now: nowProvider(),
+          });
+          const saved = transitionAndSave({ storage: getStorage(), transition, definition: DiagnosticDefinition, meta: appMeta, now: nowProvider() });
+          currentProgress = saved.progress;
+          questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
+          renderQuestionnaireRoute();
+        },
+        onDiscard() { discardCurrentProgress(); },
+      });
+      return;
+    }
+    const ids = currentProgress.mode === "preview20"
+      ? DiagnosticDefinition.previewQuestionIds
+      : DiagnosticDefinition.detailQuestionIds;
+    const questionId = ids[currentProgress.currentIndex];
+    const question = QuestionDefinitions.find(({ id }) => id === questionId);
+    renderQuestionnaireScreen(screenHost, {
+      phase: "question",
+      questionId,
+      questionText: question.textJa,
+      currentIndex: currentProgress.currentIndex,
+      totalCount: currentProgress.mode === "preview20" ? 20 : 50,
+      selectedValue: currentProgress.answers[questionId] ?? null,
+      storageStatus: questionnaireStorageStatus,
+    }, {
+      onAnswer(answer) { answerCurrentQuestion(answer); },
+      onBack() {
+        const transition = goBack(currentProgress, { definition: DiagnosticDefinition, meta: appMeta, now: nowProvider() });
+        const saved = transitionAndSave({ storage: getStorage(), transition, definition: DiagnosticDefinition, meta: appMeta, now: nowProvider() });
+        currentProgress = saved.progress;
+        questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
+        renderQuestionnaireRoute();
+      },
+      onDiscard() { discardCurrentProgress(); },
+    });
+  }
+
+  function discardCurrentProgress() {
+    if (!requestConfirmation("途中回答を破棄します。破棄後は復元できません。")) return;
+    const outcome = discardProgress({
+      storage: getStorage(), diagnosisId: DiagnosticDefinition.diagnosisId, confirmed: true, now: nowProvider(),
+    });
+    if (outcome.status === "ok") {
+      currentProgress = null;
+      questionnaireStorageStatus = "ok";
+      setRoute("#/start");
+      return;
+    }
+    questionnaireStorageStatus = "error";
+    renderQuestionnaireRoute();
+  }
+
+  function answerCurrentQuestion(answer) {
+    const transition = answerAndSave({
+      storage: getStorage(), progress: currentProgress, answer,
+      definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
+    });
+    currentProgress = transition.progress;
+    questionnaireStorageStatus = transition.persistence.status === "ok" ? "ok" : "error";
+    if (transition.kind !== "detail-complete") {
+      renderQuestionnaireRoute();
+      return;
+    }
+    const snapshot = createSnapshot({ answers: transition.answers, questionCount: 50, mode: "detail50" });
+    const persisted = saveResultSnapshot({
+      storage: getStorage(), snapshot, diagnosisId: DiagnosticDefinition.diagnosisId,
+      definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
+    });
+    currentProgress = null;
+    questionnaireStorageStatus = "ok";
+    liveResult = { snapshot, persistenceFailed: persisted.status !== "ok" };
+    setRoute(`#/result?resultId=${encodeURIComponent(snapshot.resultId)}`);
   }
 
   function renderResultRoute(route) {
     if (!route.resultId) {
       returnMissingResultToHistory();
+      return;
+    }
+    if (liveResult?.snapshot?.resultId === route.resultId) {
+      renderResult(
+        liveResult.snapshot,
+        liveResult.persistenceFailed,
+        isShownPreviewProgressForSnapshot(currentProgress, liveResult.snapshot) ? currentProgress : null,
+      );
       return;
     }
     const historyState = loadResultHistory({
@@ -189,6 +403,10 @@ export function startApp({
       returnMissingResultToHistory();
       return;
     }
+    renderResult(snapshot, false, loadPreviewContinuation(snapshot));
+  }
+
+  function renderResult(snapshot, persistenceFailed, previewProgress = null) {
     let characterEntry = null;
     try {
       characterEntry = resolveCharacterEntry(
@@ -204,11 +422,31 @@ export function startApp({
       factorDescriptions,
       titleLabels,
     }, {
+      ...(previewProgress ? { onContinueDetail() {
+        currentProgress = previewProgress;
+        const transition = continueAfterPreview(currentProgress, {
+          definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
+        });
+        const saved = transitionAndSave({
+          storage: getStorage(), transition, definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
+        });
+        currentProgress = saved.progress;
+        questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
+        liveResult = null;
+        setRoute("#/answer");
+      } } : {}),
       onRetry() {
-        windowObject.location.hash = "#/start";
-        renderCurrentRoute();
+        liveResult = null;
+        const progress = createProgressRecord({
+          definition: DiagnosticDefinition, meta: appMeta, progressId: uuidProvider(), now: nowProvider(),
+        });
+        persistProgress(progress);
+        setRoute("#/answer");
       },
     }, {
+      notice: persistenceFailed
+        ? "結果は表示できましたが、この端末の履歴には保存できませんでした。"
+        : null,
       characterEntry,
       decodeImage: effectiveDecodeImage,
       loadCharacterImage,
@@ -218,9 +456,7 @@ export function startApp({
 
   function renderComparisonRoute(route) {
     if (!route.beforeResultId || !route.afterResultId) {
-      historyObject.replaceState(null, "", "#/history");
-      windowObject.location.hash = "#/history";
-      renderCurrentRoute();
+      replaceRoute("#/history");
       return;
     }
     const historyState = loadResultHistory({
@@ -277,11 +513,51 @@ export function startApp({
       renderResultRoute(route);
       return;
     }
+    if (route.id === "answer") {
+      renderQuestionnaireRoute();
+      return;
+    }
 
-    renderStartScreen(screenHost, createStartVersionViewModel(appMeta));
+    const loaded = loadProgress({
+      storage: getStorage(), definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
+    });
+    const resumeProgress = loaded.status === "ok" ? loaded.progress : null;
+    renderStartScreen(screenHost, createStartVersionViewModel(appMeta), {
+      onStartNew() {
+        const progress = createProgressRecord({
+          definition: DiagnosticDefinition, meta: appMeta, progressId: uuidProvider(), now: nowProvider(),
+        });
+        persistProgress(progress);
+        setRoute("#/answer");
+      },
+      ...(resumeProgress ? {
+        onResume() {
+          currentProgress = resumeProgress;
+          questionnaireStorageStatus = "ok";
+          if (currentProgress.mode === "preview20" && currentProgress.previewDecision === "showPreview") {
+            const transition = continueAfterPreview(currentProgress, {
+              definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
+            });
+            const saved = transitionAndSave({
+              storage: getStorage(), transition, definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
+            });
+            currentProgress = saved.progress;
+            questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
+          }
+          setRoute("#/answer");
+        },
+      } : {}),
+    });
   }
 
-  windowObject.addEventListener("hashchange", renderCurrentRoute);
+  windowObject.addEventListener("hashchange", () => {
+    if (pendingInternalHashChange === windowObject.location.hash) {
+      pendingInternalHashChange = null;
+      return;
+    }
+    pendingInternalHashChange = null;
+    renderCurrentRoute();
+  });
   renderCurrentRoute();
 }
 

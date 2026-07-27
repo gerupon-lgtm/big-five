@@ -4,6 +4,13 @@ const START_ROUTE = Object.freeze({
 });
 
 export function resolveRoute(hash) {
+  if (hash === "#/answer") {
+    return Object.freeze({
+      id: "answer",
+      canonicalHash: hash,
+      didFallback: false,
+    });
+  }
   if (hash === "#/history") {
     return Object.freeze({
       id: "history",
