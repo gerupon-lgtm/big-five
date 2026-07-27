@@ -16,8 +16,8 @@
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approval pending |
 | F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004 | 確定 |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004 | 確定 |
-| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006 preview定義・合成・snapshotと保存済み画面を実装。完答caller／Content Approval pending |
-| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006 detail定義・合成・snapshotと保存済み画面を実装。完答caller／Content Approval pending |
+| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006 preview定義・合成・snapshot、完答caller、live／保存済み画面を実装。Content Approval pending |
+| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006 detail定義・合成・snapshot、完答caller、live／保存済み画面を実装。Content Approval pending |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005 | 確定 |
 | F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006 | 確定 |
@@ -27,7 +27,7 @@
 | F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006 | 確定 |
 | F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | 確定 |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008 | 確定 |
-| F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・保存済み結果画面接続を実装。完答caller・共有接続待ち |
+| F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面接続を実装。共有接続待ち |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
 | F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013設計済み。実データ待ち |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
@@ -152,7 +152,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 #### 完了記録（2026-07-23）
 
 - 状態: 完了（F-005、F-006の版付き固定結果文構造・条件selector、F-008の`FactorResult`、F-016）。`scoreDiagnostic`、`title-rule-v1`、51件の不変`TitleProfileDefinition`、厳格な結果モデル合成を純粋関数として実装した。表示整数は採点有理数からhalf-upで算出し、判定は丸め前`rawMean`だけを使い、3番目以降の因子も結果モデルに残す。
-- 現在差分: T-003完了時に未実装だったQ-006の本番結果文・根拠対応表は、後続T-005/Q-006 workstreamで`result-text-v1 initial reviewed copy`として実装・独立レビュー済みとなった。保存済み結果画面・レーダー・Q-012キャラクター遅延読込も実装済みである。人手Content Approval、完答caller、live S-002、共有、Q-013は引き続きT-005以降で扱う。
+- 現在差分: T-003完了時に未実装だったQ-006の本番結果文・根拠対応表は、後続T-005/Q-006 workstreamで`result-text-v1 initial reviewed copy`として実装・独立レビュー済みとなった。保存済み結果画面・レーダー・Q-012キャラクター遅延読込、完答caller、live S-002も実装・独立レビュー・実ブラウザ検証済みである。人手Content Approval、共有、Q-013は引き続きT-005以降で扱う。
 - 検証: 公開seam契約20件成功（half-up境界、全1〜5正逆採点、入力汚染・到達不能平均・分散・顕著度・統計組拒否、40＋10＋1、0/1/2/3+分類、整数顕著度・分散同点、20/50整数境界と閾値整合、固定結果文選択・矛盾条件拒否、結果モデル汚染拒否）、全86件成功、静的検証成功、`git diff --check`成功。詳細は`.superpowers/sdd/task-t003-report.md`を参照。
 
 ### T-004 回答状態機械・途中保存・削除
@@ -178,10 +178,10 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 #### 完了記録（2026-07-25）
 
 - 状態: 完了（F-003、F-004、F-013、F-015のT-004範囲）。`response-state` に固定順の回答・戻る・置換・20問出口・50問終端を、`progress-storage` に正式キーの保存・再開・対象限定破棄・遷移直後の自動保存coordinatorを実装した。`continueHidden` は進捗だけを返し、20問の結果・称号・キャラクター・共有モデルを生成しない。`showPreview`後の詳細継続は表示済みdecisionを保持する。
-- 保存契約: schema 1、破損JSON、将来schema、壊れた進捗、版不一致、読込不能、容量不足、削除失敗を安定コードへ変換し、既存値を不意に上書きしない。save/discard時は無関係な壊れた進捗・結果だけを除去し、保存失敗時もメモリ上の状態と50問終端回答を維持する。完答結果成立後のResultSnapshot保存とProgressRecord削除は後続永続化統合の責務である。
+- 保存契約: schema 1、破損JSON、将来schema、壊れた進捗、版不一致、読込不能、容量不足、削除失敗を安定コードへ変換し、既存値を不意に上書きしない。save/discard時は無関係な壊れた進捗・結果だけを除去し、保存失敗時もメモリ上の状態と50問終端回答を維持する。完答結果成立後のResultSnapshot保存とProgressRecord削除はT-005 live controllerへ接続済みである。
 - 検証: 公開seam 14件成功（開始・固定順、入力汚染拒否、戻る置換、両20問出口、showPreview後の継続、hidden非露出、50問終端、自動保存、保存再開、破損/将来/版不一致、無関係データsanitize、保存/削除失敗）。詳細は `.superpowers/sdd/task-t004-report.md` を参照。
-- S-002表示層（2026-07-26）: `renderQuestionnaireScreen`に設問、自然言語の5件法、現在位置、選択済み状態、戻る、破棄、20問分岐の二択を実装した。保存失敗は設問画面と20問分岐画面の両方でだけ`role="alert"`通知し、回答は継続できる。`preview-choice`は因子、スコア、称号、猫、色、共有データを入力にもDOMにも含めない。focused 10件、Spec/Standards独立レビュー、全359件、静的検証に成功した。router・state・storageとの接続は次の統合単位である。
-- 次タスク: T-005。Q-012とQ-013の構造ゲートは解決済み。Q-006文面は実装済みだが人手Content Approval pendingである。Q-012の51体release、manifest、loader、保存済み結果画面接続は完了した。次はmanifest entryの`assetVersion`を使う完答callerとS-002統合を進め、Q-013の色・香り実データは制作ゲートとして維持する。
+- S-002表示層（2026-07-26）: `renderQuestionnaireScreen`に設問、自然言語の5件法、現在位置、選択済み状態、戻る、破棄、20問分岐の二択を実装した。保存失敗は設問画面と20問分岐画面の両方でだけ`role="alert"`通知し、回答は継続できる。`preview-choice`は因子、スコア、称号、猫、色、共有データを入力にもDOMにも含めない。focused 10件、Spec/Standards独立レビュー、全359件、静的検証に成功した。router・state・storageとのlive接続は2026-07-27に完了した。
+- 次タスク: T-005の残ゲート。Q-006文面の人手Content ApprovalとQ-013の色・香り実データを維持し、承認後に代替色・香りUIを接続する。共有はT-007、説明・注意事項はT-008で進める。
 
 ### T-005 結果画面・猫・レーダー・色香り
 
@@ -216,9 +216,11 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - snapshot: `createResultSnapshot`が各位置のexact production record IDを検証し、9フィールド`VersionTuple`と診断時文章を含む13フィールド`ResultSnapshot`を生成する。生回答、`diagnosisId`、結果定義、DOM・Canvas状態を含めず、`characterAssetVersion`と`characterManifestVersion`を分離する。
 - gate: 根拠台帳ではE-0のみapproved、E-1〜E-5は`draft`で承認日なし。T-0〜T-4／F-1〜F-5はimplementation auditと独立レビュー済みだが人手approval recordなし。X-1〜X-2も人手approval recordなし。したがって`Content Approval pending`を維持する。
 - 完全解決条件: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateについて必要な人手approval recordがすべて揃うこと。
-- 画面: 保存済みS-003/S-004、5軸レーダー、境界・僅差補足、Canvas代替、Q-012の該当猫1体のviewport遅延読込と画像失敗時altを実装済み。完答直後の接続、共有、色香りは後続T-005/T-007統合。
-- 永続化: 13フィールドproduction ResultSnapshot validatorと`saveResultSnapshot`は実装済み。回答完答からの本番callerは未実装で、後続T-005/S-002統合で接続する。
-- live結果接続ゲート（2026-07-27更新）: `ResultSnapshot.characterAssetVersion`は選択されたQ-012 manifest entryの`assetVersion`であり、`VersionTuple.characterManifestVersion`の流用や仮値を禁止する。Q-012 production manifest entryは51件すべて作成・検証済みとなり、完答callerとlive S-003/S-004接続を開始できる。Q-013の初期`selectedPaletteId`は該当TitleProfileの`defaultPaletteId`を使えるが、代替色・香りUIは実データ承認まで保留する。
+- 画面: live／保存済みS-003/S-004、5軸レーダー、境界・僅差補足、Canvas代替、Q-012の該当猫1体のviewport遅延読込と画像失敗時altを実装済み。共有と代替色・香りは後続T-007/Q-013統合。
+- 永続化: 13フィールドproduction ResultSnapshot validatorと`saveResultSnapshot`に加え、回答完答からの本番callerをS-001/S-002へ接続済み。previewは進捗を保持し、detailは保存成否にかかわらずcaller-held回答参照を破棄する。
+- live結果接続（2026-07-27完了）: `ResultSnapshot.characterAssetVersion`へ選択されたQ-012 manifest entryの`assetVersion`を、初期`selectedPaletteId`へ該当TitleProfileの`defaultPaletteId`を保存する。`VersionTuple.characterManifestVersion`の流用や仮値を禁止する。Q-013の代替色・香りUIは実データ承認まで保留する。
+- T-005 live flow（2026-07-27）: `createDiagnosticResultSnapshot`が既存の採点・分類・文面合成・manifest解決・snapshot生成を純粋に合成する。`#/answer`のcontrollerは新規開始、互換再開、回答、戻る、破棄、20問分岐、preview継続、50問完答を既存state/storage APIへ接続した。`continueHidden`はresultIdを割り当てず21問目へ進む。保存済みpreviewはProgressRecordとVersionTupleが一致する場合だけ追加30問導線を表示する。結果保存失敗でもlive結果を維持し、詳細完答後は回答参照を破棄する。独立レビューは保存済みpreview無反応とhashchange二重描画を差し戻し、2回の修正後APPROVED。集中41件、全413件、静的検証に成功した。
+- T-005 browser flow（2026-07-27）: 360pxで新規開始から20問preview、選択猫1体の遅延読込、追加30問、50問detailまで通過し、320pxの200%相当狭幅でも横overflowなし・42文面維持を確認した。強制storage失敗でも回答と7文面のpreviewを維持して指定通知を表示した。通常previewのasset inventoryは同一originだけで外部資産0件だった。
 - Q-012制作台帳Task 1（2026-07-26）: 31フィールドexact schema、51称号とのtitleId・characterId・順序一致、1〜2小物、stage別production/review state、canonical source/delivery path、SHA-256、UTC approval timeを検証する制作台帳契約を実装した。seedは`docs/title-character-catalog.md`の2つの番号表をTitleProfileへjoinし、既存ledgerを`--replace`なしで上書きしない。初回reviewのImportant 1件をfix round 1で解消し、brief行の将来証跡はnull、到達stageの必須証跡は非空かつshape一致を双方向に保証した。Task 1完了時点の実台帳51行は全件`brief`で、hash・承認者・承認時刻・画像版を仮置きしていない。
 - Q-012制作台帳Task 2〜4（2026-07-26）: `balanced`、`single-intellectImagination-high`、`single-intellectImagination-low`のPNG原画とWebP変換をproject-ownerが承認した。Sharp 0.35.3／libvips 8.18.3、quality 82、alphaQuality 100、effort 6、metadata none、1024pxを共通設定として固定し、3件を`technical-approved`へ更新した。delivery SHA-256・byteLength・寸法・実pathを記録し、alpha・透明画素・余白・250,000 bytes警告を自動検査する。アクセシビリティ承認は51体完成後のrelease gateまで`null`を維持する。
 - Q-012制作台帳Task 5（2026-07-26）: 残り8体の単因子キャラクターをproject-ownerが原画・WebPともに承認し、11体ベースラインを`technical-approved`で完成した。全11体は同一encoder設定、1024×1024、alphaあり、透明画素あり、端接触なし、250,000 bytes以下である。高低を善悪・能力・序列へ結び付けず、各行のsource/delivery SHA-256、byteLength、承認時刻を記録した。残り40体とrelease accessibility gateは未完了である。
@@ -268,9 +270,9 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - S-006: `#/history`で新しい順の結果カード、端末ローカル日時、20問／50問、称号、猫ID、5因子、診断時文面・版を表示する。1件目の選択・取消後、互換結果だけを2件目候補として有効化する。履歴0件でも全削除へ到達でき、個別／全削除は確認後に公開storage APIへ委譲する。
 - S-007: `#/compare?before=...&after=...`でIDを保存履歴から再検証し、古い→新しいrawMean差を0〜100相当へ表示時だけ丸め、増加・減少・変化なしを文言でも示す。変動注意文、表現版・個別猫アセット版差、非互換理由を表示し、ID不足は履歴へ戻す。
 - 安全性: 対象ProgressRecordを現行定義・版で検証し、破損・版不一致・将来StorageEnvelopeを上書きしない。詳細結果の保存失敗時は対象進捗を再検証してbest-effort削除し、結果・履歴・比較の返却値へ生回答を含めない。履歴読込は保存値を書き換えない。
-- 未実装: 回答完答からの本番caller、保存済みpreviewから追加30問へ戻るS-002接続、T-007共有、Q-013色香り。S-003/S-004と履歴カードからの独立画面遷移、レーダー、Q-012猫画像loader・失敗時alt表示は実装済み。
+- 残作業: T-007共有、Q-013の代替色・香り。本番caller、保存済みpreviewから追加30問へ戻るS-002接続、S-003/S-004と履歴カードからの独立画面遷移、レーダー、Q-012猫画像loader・失敗時alt表示は実装済み。
 - レビュー: `delegate-development`で履歴・削除と比較を非重複委譲し、独立レビューを実施した。個別削除が非対象の破損データまでsanitizeするP1を1回差し戻し、対象1件以外を保持する修正後の再レビューは指摘なし。
-- 画面レビュー: `implement`／`tdd`で公開シームをred→green実装し、`code-review`のStandards/Spec 2軸レビューを実施した。空履歴の全削除不能、比較選択取消不能、ID不足URL、依存方向、表示copy重複を修正した。独立結果画面遷移は実装済みで、完答caller、S-002接続、T-007共有、Q-013色香りを後続として保留する。
+- 画面レビュー: `implement`／`tdd`で公開シームをred→green実装し、`code-review`のStandards/Spec 2軸レビューを実施した。空履歴の全削除不能、比較選択取消不能、ID不足URL、依存方向、表示copy重複を修正した。独立結果画面遷移、完答caller、S-002接続は実装済みで、T-007共有、Q-013色香りを後続として保留する。
 - 検証: 履歴・比較・保存済み結果画面・文書契約の集中36件、現行全363件、`npm.cmd run check`、`git diff --check`成功。
 
 ### T-007 共有カード・保存・コピー
@@ -395,10 +397,10 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
 | Q-006人手Content Approval | `result-text-v1 initial reviewed copy` 237件と根拠・合成・snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordがすべて揃うまで`Content Approval pending` | Q-006 |
-| 結果・履歴画面統合 | Q-006ドメイン、ResultSnapshot保存、S-003/S-004保存済み画面、S-006履歴、S-007比較、独立結果画面遷移、Q-012猫画像遅延表示は実装済み。完答caller、追加30問S-002接続、共有、色香りが未実装 | T-005/T-006/T-007/T-008 |
+| 結果・履歴画面統合 | Q-006ドメイン、ResultSnapshot保存、S-001/S-002 live controller、完答caller、追加30問、S-003/S-004 live／保存済み画面、S-006履歴、S-007比較、Q-012猫画像遅延表示は実装済み。共有と代替色・香りが未実装 | T-005/T-007/T-008 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
-| 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを公開承認済み。release manifest、整合検査、単一画像遅延loader、保存済み結果画面接続まで完了 | Q-012完了。完答caller・共有はT-005/T-007で接続 |
+| 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを公開承認済み。release manifest、整合検査、単一画像遅延loader、live／保存済み結果画面接続まで完了 | Q-012完了。共有はT-007で接続 |
 | 色・香り実データ | 候補数・分類・選択規則は確定。全パレット・香調・用途色が未制作 | Q-013設計を基にT-005で制作 |
 
 これは要件漏れではなく、要件書19章に期限付きで残る後続決定である。
