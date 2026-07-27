@@ -189,7 +189,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 対応機能: F-002, F-005, F-006, F-007, F-008, F-016, F-018
 - 開始ゲート:
   - Q-006: `result-text-v1 initial reviewed copy`、根拠、合成、snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordが揃うまで`Content Approval pending`
-  - Q-012: 仕様は確定。11体ベースラインと複合因子第1〜3便30体、累計41体を技術承認し、共通encoder設定と1024px正方形・透明余白検査を固定済み。残り10体、release manifest、loaderは未完了
+  - Q-012: 仕様は確定。51体すべてをproject-ownerが原画・WebPともに承認し、共通encoder設定、1024px正方形、透明余白、ハッシュ整合を固定済み。release accessibility gate、release manifest、loaderは未完了
   - Q-013: 構造と選択規則は確定。全パレット・香調・用途色展開データ
 - 作業:
   - S-003/S-004の結果モデルと画面を実装。
@@ -225,6 +225,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - Q-012制作台帳Task 6（2026-07-26）: 複合因子キャラクター第1便10体をproject-ownerが原画・WebPともに承認し、累計21体を`technical-approved`へ更新した。風見の方角文字を除去して画像内文字なしの契約へ適合させ、全10体は指定ポーズ・1〜2小物・猫1体・無背景を維持している。共通encoder設定で1024×1024へ変換し、alphaあり、透明画素あり、端接触なし、250,000 bytes以下、source/delivery SHA-256一致を確認した。残り30体とrelease accessibility gateは未完了である。
 - Q-012制作台帳Task 7（2026-07-27）: project-owner承認済みの複合因子キャラクター第2便10体（catalog rows 22〜31）を`review-candidates/`に保持したまま正典source PNGへ昇格し、固定encoder設定でWebPへ変換した。全10体は1024×1024、alphaあり、透明画素あり、端接触なし、250,000 bytes以下で、source/delivery SHA-256とbyteLengthを台帳へ記録した。project-ownerのWebP比較承認後に`technical-approved`へ更新した。
 - Q-012制作台帳Task 8（2026-07-27）: project-owner承認済みの複合因子キャラクター第3便10体（catalog rows 32〜41）も同じ非破壊手順で正典source PNGとWebPへ昇格した。全10体は固定encoder設定、1024×1024、alphaあり、透明画素あり、端接触なし、250,000 bytes以下で、source/delivery SHA-256とbyteLengthを台帳へ記録した。project-ownerのWebP比較承認後に`technical-approved`へ更新し、累計41体で`pair03`ゲートを通過した。残りはcatalog rows 42〜51の10体とrelease accessibility gateである。
+- Q-012制作台帳Task 9（2026-07-27）: 複合因子キャラクター最終便10体（catalog rows 42〜51）をproject-ownerが原画・WebPともに承認した。承認済み候補PNGを制作来歴として保持し、byte-identicalな正典source PNGと固定encoder設定の1024×1024 WebPを保存した。全10体はalpha・透明画素あり、端接触なし、250,000 bytes以下で、source/delivery SHA-256・byteLength・承認時刻を台帳へ記録した。独立レビューのSpec/Quality verdictはいずれもPASS、Critical/Important/Minorは0件で、全51体を`technical-approved`へ更新し`release-assets`前提を満たした。release accessibility gate、manifest、loaderは未完了である。
 - Q-012 catalog row 41再承認（2026-07-27）: `自分の色を掲げる表明者`は、猫が片方の前足だけで色札を垂直に持ち上げる表現を避けるため、project-ownerが代替A案を承認した。構図・猫・色札・円形の紐を大きく変えず、色札の下端を床で支持し、猫は上端へ前足を添える表現へ更新した。キャラクター資産版を`character-pair-extraversion-high--agreeableness-low-v2`へ上げ、正典source PNG、WebP、台帳の動作説明・alt・SHA-256・byteLength・承認時刻を同期した。
 - Q-012再利用コンポーネント（2026-07-27）: `title-pair-conscientiousness-high--extraversion-high`の歩行猫、壁掛け時計、無地カード、正典首輪を版付き透過PNGとして`docs/assets/character-production/components/`へ分離した。猫は`pose-master`、時計・カードは`direct-overlay`、首輪は姿勢適合が必要な`style-reference`として区別し、寸法・byteLength・SHA-256をmanifestへ固定した。全4点は透明四隅、alphaあり、クロマキー残りなしを確認済み。最終画像の正典は引き続き`source-png/`とし、再構成画像はQ-012のart/anatomy/technical reviewを省略しない。
 - 永続化契約解消（2026-07-26）: `resultId`はRFC 4122 UUID形状へ統一する。`preview20`保存では追加回答用ProgressRecordを保持し、`detail50`完答では履歴保存の成否にかかわらず生回答を破棄する。保存成功時はsnapshot追加と進捗削除を同一StorageEnvelope書込みで行い、保存失敗時も進捗削除をbest-effortで試みる。
@@ -394,7 +395,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 | 結果・履歴画面統合 | Q-006ドメイン、ResultSnapshot保存、S-003/S-004保存済み画面、S-006履歴、S-007比較、独立結果画面遷移は実装済み。完答caller、追加30問S-002接続、共有、猫画像・色香りが未実装 | T-005/T-006/T-007/T-008 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
-| 51猫アセット | 量産仕様と共通WebP設定は確定。11体ベースラインと複合因子第1〜3便30体、累計41体は技術承認済み。残り10体が未制作 | Q-012設計を基にT-005で制作 |
+| 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・台帳証跡を技術承認済み。release accessibility gate、manifest、loaderが未完了 | Q-012設計を基にT-005で制作 |
 | 色・香り実データ | 候補数・分類・選択規則は確定。全パレット・香調・用途色が未制作 | Q-013設計を基にT-005で制作 |
 
 これは要件漏れではなく、要件書19章に期限付きで残る後続決定である。
