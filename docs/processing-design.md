@@ -85,7 +85,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤として、`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。人はCSVだけを編集し、生成`app/content/` JSONを編集・コミットしない。
 
-ただし、現在はapproved releaseがなく、release CSVはヘッダーのみである。E-0は`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`で、Q-006/Q-012/Q-013はrelease gateとして残る。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
+ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。E-0は`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`で、Q-006/Q-013はCSV release gateとして残る。Q-012画像は別の版付き制作台帳とruntime manifestで公開承認済みである。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 
 ## 4. 採点
 
@@ -217,7 +217,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
-上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002の独立表示層も完了した。router・state・storageへのS-002接続、回答完答からの本番caller、T-007共有、Q-012画像、Q-013色・香りは後続である。live結果callerは選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ保存しなければならず、manifest全体版の流用や仮値を禁止する。production entry作成までは入力品質ゲートとして停止する。
+上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002の独立表示層も完了した。Q-012は51件のrelease manifest、単一画像遅延loader、保存済み結果画面への表示接続まで完了した。router・state・storageへのS-002接続、回答完答からの本番caller、T-007共有、Q-013色・香りは後続である。live結果callerは選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ保存しなければならず、manifest全体版の流用や仮値を禁止する。
 
 ## 7. 履歴保存
 
@@ -306,12 +306,14 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 1. titleIdからcharacterIdを取得。
 2. TitleProfileDefinitions固定順と51件manifestの完全対応、版、integrityを検証する。
-3. manifestの該当1件だけを読み込む。
-4. `loading=lazy`相当で必要時にロード。
-5. 読込成功時は透明WebPを比率維持・全体表示する。
-6. 失敗時はalt、称号、結果文、根拠参照、共有テキストへの経路を維持し、共有カードは猫なしレイアウトへ切り替える。
+3. `resolveCharacterEntry`でmanifestの該当1件だけを解決する。未知IDは画像なしの代替表示へ変換し、結果画面全体を失敗させない。
+4. 結果画面は承認済みaltをneutral frameへ先に表示し、IntersectionObserver相当でframeがviewportへ入るまでdecodeを開始しない。
+5. `loadCharacterImage`は注入されたdecoderへ選択済みpathを1回だけ渡す。読込成功時は透明WebP 1件を比率維持・`contain`で全体表示し、元のaltと1024×1024寸法を付与する。
+6. 404・decode失敗時は`unavailable`へ変換し、承認済みalt、称号、5因子、結果文、根拠参照、palette metadata、既存actionを維持する。共有カード固有の猫なしレイアウトはT-007/T-008で接続する。
 
 51画像を開始時にプリロードしない。
+
+neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再配色せず背景色との視認性を補助する。360pxおよび200%相当の狭幅確認では横スクロールを発生させず、画像全体を維持する。palette別カード合成はQ-013/T-007/T-008の後続ゲートであり、Q-012完了条件には含めない。
 
 ## 11. 色・香り
 

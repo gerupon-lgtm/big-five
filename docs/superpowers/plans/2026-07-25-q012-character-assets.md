@@ -722,19 +722,19 @@ git commit -m "feat: add third ten pair characters"
 - Consumes: catalog rows 42–51 and frozen settings.
 - Produces: all 51 approved masters and delivery assets, with all 51 ledger rows released after the pre-release asset and accessibility gates.
 
-- [ ] **Step 1: Run `node scripts/characters/validate-ledger.mjs pair04`**
+- [x] **Step 1: Run `node scripts/characters/validate-ledger.mjs pair04`**
 
 Expected: FAIL naming catalog row 42.
 
-- [ ] **Step 2: Generate and human-review rows 42–51**
+- [x] **Step 2: Generate and human-review rows 42–51**
 
 For interpersonal scenes, represent the second party only through approved props, footprints, or off-canvas gaze; never add a second cat. Convert scenery terms into catalog props and pose without adding a baked scene.
 
-- [ ] **Step 3: Convert with `npm.cmd run character:convert -- --scope pair04 --settings scripts/characters/encoder-settings.json`**
+- [x] **Step 3: Convert with `npm.cmd run character:convert -- --scope pair04 --settings scripts/characters/encoder-settings.json`**
 
 Expected: ten valid reports and no changed encoder setting.
 
-- [ ] **Step 4: Review the full 51-character sheet and run the pre-release asset gate**
+- [x] **Step 4: Review the full 51-character sheet and run the pre-release asset gate**
 
 Require zero missing cats, repeated full compositions, anatomy failures, cropped parts, baked backgrounds, text, three-prop rows, or value stereotypes.
 
@@ -755,7 +755,7 @@ inspected 51 character assets
 invalid 0
 ```
 
-- [ ] **Step 5: Complete the release accessibility gate**
+- [x] **Step 5: Complete the release accessibility gate**
 
 Only after the `release-assets` gate passes, human-review all 51 rows for accurate non-empty alt text, a usable visual alternative when the image is unavailable, and one-character delivery with exactly one approved cat asset per result.
 
@@ -773,7 +773,7 @@ Expected:
 character ledger release: PASS
 ```
 
-- [ ] **Step 6: Commit only batch 4 asset paths and ledger**
+- [x] **Step 6: Commit only batch 4 asset paths and ledger**
 
 ```powershell
 git add -- docs/assets/character-production/ledger.json docs/assets/character-production/source-png app/assets/characters
@@ -802,7 +802,7 @@ git commit -m "feat: complete all fifty-one character assets"
 
 Task 10 must not begin until the Task 9 release accessibility gate has updated all 51 rows and `node scripts/characters/validate-ledger.mjs release` has passed.
 
-- [ ] **Step 1: Write the failing release manifest tests**
+- [x] **Step 1: Write the failing release manifest tests**
 
 ```js
 // app/tests/character-manifest.test.js
@@ -859,7 +859,7 @@ test("T-005 F-016 rejects unknown fields and duplicate paths", () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and verify failure**
+- [x] **Step 2: Run the focused test and verify failure**
 
 Run:
 
@@ -869,7 +869,7 @@ node --test app/tests/character-manifest.test.js
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `character-manifest.js`.
 
-- [ ] **Step 3: Implement generation and runtime validation**
+- [x] **Step 3: Implement generation and runtime validation**
 
 `generateCharacterManifest` must include only `released` rows, preserve title profile order, copy ledger asset version/path/dimensions/alt/integrity, and refuse any count other than 51. Generated entries are deeply frozen.
 
@@ -893,7 +893,7 @@ Add:
 
 The existing `definition-validator.js` must call `validateCharacterManifest` with `TitleProfileDefinitions` and stop with `DEFINITION_INVALID` if it fails.
 
-- [ ] **Step 4: Generate the manifest and run checks**
+- [x] **Step 4: Generate the manifest and run checks**
 
 Run:
 
@@ -915,7 +915,7 @@ fail 0
 
 Byte-target warnings may be present only when the corresponding ledger rows contain explicit human approval.
 
-- [ ] **Step 5: Commit only manifest code, tests, configuration, and script**
+- [x] **Step 5: Commit only manifest code, tests, configuration, and script**
 
 ```powershell
 git add -- package.json app/js/config/app-meta.js app/js/domain/definition-validator.js app/js/data/character-manifest.js app/js/domain/character-manifest.js app/tests/character-manifest.test.js scripts/characters/generate-manifest.mjs scripts/characters/check-character-assets.mjs
@@ -930,13 +930,19 @@ git commit -m "feat: add validated character release manifest"
 
 - Create: `app/js/infrastructure/character-loader.js`
 - Create: `app/tests/character-loader.test.js`
+- Modify: `app/js/main.js`
+- Modify: `app/js/presentation/result-screen.js`
+- Modify: `app/css/styles.css`
+- Modify: `app/tests/result-screen.test.js`
+- Modify: `app/tests/app-shell.test.js`
+- Modify: `app/tests/project-contract.test.js`
 
 **Interfaces:**
 
 - Consumes: one validated `CharacterManifestEntry` and injected `decodeImage(path)`.
 - Produces: `loadCharacterImage(entry, { decodeImage })`.
 
-- [ ] **Step 1: Write failing loader tests**
+- [x] **Step 1: Write failing loader tests**
 
 ```js
 // app/tests/character-loader.test.js
@@ -981,7 +987,7 @@ test("T-005 F-015 preserves alt instead of throwing on decode failure", async ()
 });
 ```
 
-- [ ] **Step 2: Run the focused test and verify failure**
+- [x] **Step 2: Run the focused test and verify failure**
 
 Run:
 
@@ -991,7 +997,7 @@ node --test app/tests/character-loader.test.js
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `character-loader.js`.
 
-- [ ] **Step 3: Implement the injected-decoder loader**
+- [x] **Step 3: Implement the injected-decoder loader**
 
 ```js
 // app/js/infrastructure/character-loader.js
@@ -1013,7 +1019,13 @@ export async function loadCharacterImage(entry, { decodeImage }) {
 
 The presentation caller must resolve exactly one entry after title classification and invoke the loader only when the result character enters the viewport. It must retain its already-composed title, scores, result text, palette choices, and share text when status is `unavailable`.
 
-- [ ] **Step 4: Run loader and full tests**
+- [x] **Step 3A: Connect the loader to the result screen**
+
+Resolve the selected `characterId` from the validated release manifest, place the approved alt in a visible neutral fallback frame before loading, and begin decoding only after the frame enters the viewport. On success, render exactly one complete `img` with the approved alt and contain-style sizing. On failure, keep the approved alt visible and leave the existing title, scores, result text, palette metadata, and actions untouched.
+
+The production caller must inject the browser decoder and viewport observer. Focused presentation and app-shell tests must prove that no decode occurs before the observer fires, only the selected path is decoded once, and forced failure preserves the result content.
+
+- [x] **Step 4: Run loader and full tests**
 
 Run:
 
@@ -1024,10 +1036,10 @@ npm.cmd test
 
 Expected: loader tests pass and the full suite reports `fail 0`.
 
-- [ ] **Step 5: Commit only loader and test**
+- [x] **Step 5: Commit only loader and test**
 
 ```powershell
-git add -- app/js/infrastructure/character-loader.js app/tests/character-loader.test.js
+git add -- app/js/infrastructure/character-loader.js app/tests/character-loader.test.js app/js/main.js app/js/presentation/result-screen.js app/css/styles.css app/tests/result-screen.test.js app/tests/app-shell.test.js app/tests/project-contract.test.js
 git commit -m "feat: add resilient single-character loader"
 ```
 
@@ -1040,13 +1052,14 @@ git commit -m "feat: add resilient single-character loader"
 - Modify: `docs/data-model.md`
 - Modify: `docs/processing-design.md`
 - Modify: `docs/tasks.md`
+- Modify: `docs/handoffs/2026-07-26-delegate-development-phase-a.md`
 
 **Interfaces:**
 
 - Consumes: verified ledger, assets, manifest, loader, and test outputs.
 - Produces: durable Q-012 completion evidence without changing the approved design.
 
-- [ ] **Step 1: Update documents with confirmed implementation facts**
+- [x] **Step 1: Update documents with confirmed implementation facts**
 
 Record:
 
@@ -1057,7 +1070,7 @@ Record:
 - loader success/fallback behavior;
 - T-005 remains incomplete if Q-006 text or Q-013 content gates remain open.
 
-- [ ] **Step 2: Run all automated verification**
+- [x] **Step 2: Run all automated verification**
 
 Run:
 
@@ -1082,7 +1095,7 @@ fail 0
 
 `git diff --check` exits 0 with no output.
 
-- [ ] **Step 3: Run the browser verification**
+- [x] **Step 3: Run the browser verification**
 
 Run:
 
@@ -1095,13 +1108,13 @@ Verify:
 1. Balanced, single-high/low, and pair fixtures each request only their selected WebP.
 2. No character request occurs before the result character reaches its lazy-load point.
 3. Every displayed image uses contain-style sizing and remains complete at 360px and 200% text.
-4. A forced 404 and decode failure preserve title, scores, result text, palette choices, and share text.
-5. Light, mid-tone, and dark same-color cards retain the selected palette and separate the cat with outline, shadow, or neutral plate.
+4. A forced 404 and decode failure preserve approved alt, title, scores, result text, palette metadata, and any already-composed actions.
+5. The neutral character frame, outline, and shadow keep the approved cat distinguishable without recoloring it. Palette-specific card composition remains the Q-013/T-007/T-008 browser gate and does not block this Q-012 asset pipeline.
 6. No runtime PNG master, anchor image, second cat, baked background, or text appears.
 
-Expected: all six checks pass; any failure keeps Q-012 open.
+Expected: the Q-012 portions of all six checks pass. Palette-specific card composition and final share-text preservation remain explicitly pending until Q-013/T-007/T-008 supply those presentation inputs; they must not be reported as implemented by this task.
 
-- [ ] **Step 4: Confirm only intended paths remain**
+- [x] **Step 4: Confirm only intended paths remain**
 
 Run:
 
@@ -1109,12 +1122,12 @@ Run:
 git status --short
 ```
 
-Expected: only the three design documents and this plan are uncommitted after prior task commits.
+Expected: only the three design documents, the phase A handoff, and this plan are uncommitted after prior task commits.
 
-- [ ] **Step 5: Commit only synchronized documentation**
+- [x] **Step 5: Commit only synchronized documentation**
 
 ```powershell
-git add -- docs/data-model.md docs/processing-design.md docs/tasks.md docs/superpowers/plans/2026-07-25-q012-character-assets.md
+git add -- docs/data-model.md docs/processing-design.md docs/tasks.md docs/handoffs/2026-07-26-delegate-development-phase-a.md docs/superpowers/plans/2026-07-25-q012-character-assets.md
 git commit -m "docs: record verified Q-012 character assets"
 ```
 
@@ -1122,15 +1135,15 @@ git commit -m "docs: record verified Q-012 character assets"
 
 ## Self-Review Checklist
 
-- [ ] The plan preserves the catalog's exact 51 title/character order.
-- [ ] The three-character pilot precedes encoder locking.
-- [ ] The remaining eight single-factor characters complete the 11-character baseline.
-- [ ] Pair rows are split into four explicit ten-character gates.
-- [ ] A production manifest is impossible before all 51 rows are released.
-- [ ] PNG masters stay outside the runtime asset directory.
-- [ ] The Monaka anchor is reference-only and never copied into runtime assets.
-- [ ] Byte target warnings require recorded human approval and never silently fail or pass.
-- [ ] Every automated module begins with a failing focused test.
-- [ ] Every task names its expected failure, pass result, and path-limited commit.
-- [ ] Loader failure returns alt and never destroys the existing result model.
-- [ ] Final documentation records only verified implementation facts.
+- [x] The plan preserves the catalog's exact 51 title/character order.
+- [x] The three-character pilot precedes encoder locking.
+- [x] The remaining eight single-factor characters complete the 11-character baseline.
+- [x] Pair rows are split into four explicit ten-character gates.
+- [x] A production manifest is impossible before all 51 rows are released.
+- [x] PNG masters stay outside the runtime asset directory.
+- [x] The Monaka anchor is reference-only and never copied into runtime assets.
+- [x] Byte target warnings require recorded human approval and never silently fail or pass.
+- [x] Every automated module begins with a failing focused test.
+- [x] Every task names its expected failure, pass result, and path-limited commit.
+- [x] Loader failure returns alt and never destroys the existing result model.
+- [x] Final documentation records only verified implementation facts.

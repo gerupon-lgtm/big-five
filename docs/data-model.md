@@ -21,7 +21,7 @@
 
 人手編集正典は`content/source/`の用途別・版付きCSVである。診断は`diagnoses/ipip-ja-50-definition-v1`、設問は`questions/ipip-ja-50-question-set-v1`、称号は`titles/title-rule-v1`、結果文は`result-texts/result-text-v1`、根拠は`evidence/result-evidence-v1`に置く。release manifest/historyは`releases/`、Q-006の別承認台帳は`approvals/result-content-approvals.csv`である。
 
-Q-006およびT-005/F-002/F-005/F-006/F-016の作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。初期データは50問、固定20問、51称号、237結果文、6根拠である。E-0は`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`であり、Q-012/Q-013は未作成、release CSVはヘッダーのみである。よってapproved releaseもruntime JSON fetchも存在しない。
+Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。初期データは50問、固定20問、51称号、237結果文、6根拠である。E-0は`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`であり、Q-013は未作成、release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
 
 現在は既存ES Modulesがruntime compatibility authorityで、`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
 
@@ -184,6 +184,10 @@ manifestへ`titleId`を重複保持せず、`TitleProfileDefinition.titleId -> c
 
 entriesは51件固定とし、欠落、余剰、重複、孤児ファイルを拒否する。WebP magic、alpha、透明画素、integrityを実ファイルから検証し、非透明bounding boxの四辺接触をトリミング疑いとして拒否する。画面と共有カードは`contain`相当で全体表示する。
 
+runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`である。`docs/assets/character-production/ledger.json`のうち`released`かつアクセシビリティ承認済みの51行だけを、`npm.cmd run character:manifest`でTitleProfileDefinitions固定順へ決定的に生成する。`app/js/domain/character-manifest.js`はexact schema、版、順序、IDとpathの一意性、`%`・query・fragment・`..`を含まない同一オリジン相対WebP path、1024×1024、alt、integrityを検証する。`npm.cmd run character:check`はmanifestとruntimeディレクトリの全項目を照合し、孤児・非WebP項目・欠落・integrity不一致を拒否する。
+
+51件の正典source PNGは`docs/assets/character-production/source-png/`、delivery WebPは`app/assets/characters/`へ分離して保管する。全件はproject-ownerによる原画・WebP・alt承認済みで、Sharp 0.35.3／libvips 8.18.3、`quality=82`、`alphaQuality=100`、`effort=6`、`metadata=none`、`size=1024`を共通条件とする。最大176,652 bytesで、250,000 bytes目標超過は0件である。
+
 ### 2.9 PaletteDefinition
 
 | 項目 | 型 | 必須 | 説明 |
@@ -330,7 +334,7 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 
 `app/js/domain/result-snapshot.js`の`validateResultSnapshot`と`app/js/infrastructure/progress-storage.js`の`saveResultSnapshot`は、この13フィールドschemaを唯一の結果履歴契約として実装済みである。旧`diagnosisId`付きgeneric result schemaと旧section集合は置き換えた。保存APIは`storage`、`snapshot`、`diagnosisId`、`definition`、`meta`、`now`を受け、対象ProgressRecordを現行定義・版で検証してから保存する。破損・版不一致の対象進捗は上書き・削除しない。
 
-同ファイルの`loadResultHistory`は各ResultSnapshotを再検証し、破損レコードだけを除外して`completedAt`実時刻の降順、同時刻は`resultId`辞書順で返す。`deleteResultSnapshot`は確認後に指定IDと一致する最初の有効ResultSnapshotだけを削除し、途中回答と他の有効・破損結果を保持する。`deleteAllData`は確認後に途中回答と結果履歴を空にする。回答完答からの本番callerとS-003/S-004、S-006/S-007画面統合は後続T-005/T-006で実装する。
+同ファイルの`loadResultHistory`は各ResultSnapshotを再検証し、破損レコードだけを除外して`completedAt`実時刻の降順、同時刻は`resultId`辞書順で返す。`deleteResultSnapshot`は確認後に指定IDと一致する最初の有効ResultSnapshotだけを削除し、途中回答と他の有効・破損結果を保持する。`deleteAllData`は確認後に途中回答と結果履歴を空にする。S-003/S-004、S-006/S-007画面統合とQ-012画像表示は実装済みで、回答完答からの本番callerとlive S-002接続を後続T-005で実装する。
 
 ### 3.6 FactorResult
 
