@@ -40,7 +40,7 @@
 ### CSVコンテンツ作成基盤の実装記録（2026-07-26）
 
 - 対応: Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤。`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。
-- 初期状態: 50問、固定20問、51称号、237結果文、6根拠。E-0は`approved`、E-1〜E-5は`draft`、T-0〜T-4/F-1〜F-5/X-1〜X-2は人手approval metadataなしの`reviewed`。CSV上のQ-012/Q-013とrelease manifest/historyはヘッダーのみで開始した。その後Q-012画像は別の版付き制作台帳・runtime manifestで完成し、Q-013とCSV approved releaseは未作成のままである。
+- 初期状態: 50問、固定20問、51称号、237結果文、6根拠。E-0は`approved`、E-1〜E-5は`draft`、T-0〜T-4/F-1〜F-5/X-1〜X-2は人手approval metadataなしの`reviewed`。CSV上のQ-012/Q-013とrelease manifest/historyはヘッダーのみで開始した。その後Q-012画像は別の版付き制作台帳・runtime manifestで制作・技術実装済みとなったが、正式なapproved release選択は未完了である。Q-013とCSV approved releaseも未作成のままである。
 - 運用: 人はコミット対象のCSVだけを編集し、`app/content/`の生成JSONを手編集・コミットしない。`npm.cmd run content:validate`で検証し、`npm.cmd run content:build`はapproved complete releaseがない現在`RELEASE_NOT_SELECTED`となる。
 - 移行状態: ES Modulesがruntime compatibility authorityで、runtime JSON fetchとPages deploymentは未実装。通常モードの外部通信は0件、CSPは`connect-src 'none'`を維持する。activation後のActions validate/build/deployは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 - 検証: `node --test app/tests/content-artifact-contract.test.js`、`npm.cmd run content:validate`、`npm.cmd test`、`npm.cmd run check`。Task 6のwarning-order minorは非ブロッキングとして記録し、完了済みfoundationを再開しない。
@@ -190,7 +190,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 対応機能: F-002, F-005, F-006, F-007, F-008, F-016, F-018
 - 開始ゲート:
   - Q-006: `result-text-v1 initial reviewed copy`、根拠、合成、snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordが揃うまで`Content Approval pending`
-  - Q-012: 完了。51体すべてをproject-ownerが原画・WebP・altともに承認し、共通encoder設定、1024px正方形、透明余白、ハッシュ整合、release manifest、単一画像遅延loaderを固定済み
+  - Q-012: 制作・技術実装済み。51体すべてについてproject-ownerの制作確認を経て、共通encoder設定、1024px正方形、透明余白、ハッシュ整合、runtime manifest、単一画像遅延loaderを固定済み。ただし正式なapproved release選択は未完了
   - Q-013: 構造と選択規則は確定。全パレット・香調・用途色展開データ
 - 作業:
   - S-003/S-004の結果モデルと画面を実装。
@@ -307,7 +307,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 回答中断・再開計画: `docs/superpowers/plans/2026-07-27-questionnaire-resume-interruption.md`
 - 結果段階表示計画: `docs/superpowers/plans/2026-07-27-result-progressive-disclosure.md`
 - 履歴・比較計画: `docs/superpowers/plans/2026-07-27-history-compact-comparison.md`
-- 状態: 設計承認済み、実装待ち
+- 状態: 実装中。回答中断・状態別再開・preview終了、共通ヘッダー、簡潔な履歴・固定比較導線、結果用純粋モデル、名前付きレーダー描画、ボトムシート基盤まで完了
 - 作業:
   - 全画面の控えめなアプリ名、設問のbalanced wrapping、回答画面の中断導線を実装する。
   - 20問選択前、簡易プレビュー表示後、21〜49問の状態別再開と、新規開始時の置換確認を実装する。
@@ -331,6 +331,12 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - storage異常: 保存不可、preview snapshot未保存、progress削除失敗。
   - Q-006 snapshot 7件／42件、Q-012該当画像1件、通常外部送信0件の回帰。
   - `npm.cmd test`、`npm.cmd run check`、`git diff --check`、実ブラウザsmoke。
+- 実装記録（2026-07-27、第1バッチ）:
+  - `app-header`を開始・回答へ接続し、設問中／20問分岐の`中断してトップへ`と破棄を分離した。開始画面は直近進捗の状態に応じて`途中から再開する`／`残り30問を再開する`を切り替え、新規開始は取消時無変更・確定時だけ進捗を置換する。
+  - 保存済み20問previewでは追加30問、中断、簡易preview終了を分離した。preview終了はResultSnapshotを保持してProgressRecordだけを削除し、snapshot未保存時は操作を省略、削除失敗時は結果と進捗を保持して再試行通知を表示する。
+  - S-006を猫サムネイル・称号・日時・20/50問・`結果を見る`へ簡潔化し、最大2件・互換結果のみ・明示実行の比較モード、管理メニューの個別削除・全削除・版情報へ接続した。
+  - `createQuestionComposition`と`createResultDisclosureModel`を追加し、設問本文・回答を出さない正逆方向件数と、section-first snapshotからfactor-first表示モデルへの不変投影を実装した。レーダーの5因子名描画とアクセシブルなボトムシート基盤も追加した。
+  - 全444テスト、静的検証44 JavaScript、`git diff --check`に成功した。残作業は結果hero、因子一覧・二段階展開、設問構成／方法情報の画面接続、最終responsive・keyboard browser smokeである。
 
 ### T-008 全画面統合・レスポンシブ・アクセシビリティ
 
@@ -431,11 +437,11 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
 | Q-006人手Content Approval | `result-text-v1 initial reviewed copy` 237件と根拠・合成・snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordがすべて揃うまで`Content Approval pending` | Q-006 |
-| Q-014結果・履歴・中断再開UI | 設計承認済み。称号・猫優先、因子の段階展開、簡潔な履歴、固定比較導線、回答中断、preview終了、直近1件再開、新規開始確認が未実装 | T-008A |
+| Q-014結果・履歴・中断再開UI | 回答中断、preview終了、直近1件再開、新規開始確認、簡潔な履歴、固定比較導線は実装済み。称号・猫hero、因子一覧・二段階展開、設問構成／方法情報の画面接続とbrowser smokeが未完了 | T-008A |
 | 結果・履歴画面統合 | Q-006ドメイン、ResultSnapshot保存、S-001/S-002 live controller、完答caller、追加30問、S-003/S-004 live／保存済み画面、S-006履歴、S-007比較、Q-012猫画像遅延表示は実装済み。Q-014 UI、共有、代替色・香りが未実装 | T-005/T-007/T-008A/T-008 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
-| 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを公開承認済み。release manifest、整合検査、単一画像遅延loader、live／保存済み結果画面接続まで完了 | Q-012完了。共有はT-007で接続 |
+| 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを制作・技術確認済み。runtime manifest、整合検査、単一画像遅延loader、live／保存済み結果画面接続まで実装済み | Q-012の正式なapproved release選択は未完了。共有はT-007で接続 |
 | 色・香り実データ | 候補数・分類・選択規則は確定。全パレット・香調・用途色が未制作 | Q-013設計を基にT-005で制作 |
 
 これは要件漏れではなく、要件書19章に期限付きで残る後続決定である。

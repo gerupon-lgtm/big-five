@@ -42,3 +42,48 @@ test("T-005 S-001 offers resume only when the caller provides a compatible progr
   resume.dispatch("click");
   assert.equal(resumes, 1);
 });
+
+test("T-008A S-001 renders the shared official app header and concise start heading", () => {
+  const { host } = createFakeScreen();
+
+  renderStartScreen(host, versionModel, {});
+
+  assert.equal(host.children[0].children[0].className, "app-header");
+  assert.deepEqual(
+    collectElements(host)
+      .filter(({ className }) => className === "app-brand-part")
+      .map(({ textContent }) => textContent),
+    ["Big Five｜", "自己理解支援ツール"],
+  );
+  assert.equal(
+    collectElements(host)
+      .filter(({ tagName, textContent }) =>
+        tagName === "h1" && textContent === "5つの傾向").length,
+    1,
+  );
+});
+
+test("T-008A F-004 renders the state-aware resume label once", () => {
+  const { host } = createFakeScreen();
+  let resumes = 0;
+
+  renderStartScreen(
+    host,
+    versionModel,
+    {
+      onResume() {
+        resumes += 1;
+      },
+    },
+    {
+      resumeLabel: "残り30問を再開する",
+    },
+  );
+
+  const resumeButtons = collectElements(host)
+    .filter(({ tagName, textContent }) =>
+      tagName === "button" && textContent === "残り30問を再開する");
+  assert.equal(resumeButtons.length, 1);
+  resumeButtons[0].dispatch("click");
+  assert.equal(resumes, 1);
+});

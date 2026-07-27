@@ -1,9 +1,11 @@
+import { appendAppHeader } from "./app-header.js";
 import { appendTextElement } from "./screen-helpers.js";
 
-export function renderStartScreen(host, versionModel, actions = {}) {
+export function renderStartScreen(host, versionModel, actions = {}, options = {}) {
   const documentObject = host.ownerDocument ?? document;
   const main = documentObject.createElement("main");
   main.className = "app-shell";
+  appendAppHeader(main, { screenLabel: "はじめる" });
 
   const headingGroup = documentObject.createElement("header");
   headingGroup.className = "hero";
@@ -16,7 +18,7 @@ export function renderStartScreen(host, versionModel, actions = {}) {
   appendTextElement(
     headingGroup,
     "h1",
-    "Big Five自己理解支援ツール",
+    "5つの傾向",
   );
   appendTextElement(
     headingGroup,
@@ -45,7 +47,15 @@ export function renderStartScreen(host, versionModel, actions = {}) {
     startButton.addEventListener("click", actions.onStartNew);
   }
   if (typeof actions.onResume === "function") {
-    const resumeButton = appendTextElement(status, "button", "途中から再開する", "secondary-button");
+    const resumeLabel = options.resumeLabel === "残り30問を再開する"
+      ? options.resumeLabel
+      : "途中から再開する";
+    const resumeButton = appendTextElement(
+      status,
+      "button",
+      resumeLabel,
+      "secondary-button",
+    );
     resumeButton.setAttribute("type", "button");
     resumeButton.addEventListener("click", actions.onResume);
   }
@@ -68,7 +78,7 @@ export function renderStartScreen(host, versionModel, actions = {}) {
   }
   diagnosticVersion.append(diagnosticVersionList);
   main.append(diagnosticVersion);
-  main.prepend(headingGroup);
+  main.insertBefore(headingGroup, appVersion);
   main.insertBefore(status, appVersion);
   host.replaceChildren(main);
 }

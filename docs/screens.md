@@ -20,7 +20,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は実装済みで、人は`content/source/`のCSVだけを編集する。3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testがあるが、画面はまだ既存ES Modulesをruntime compatibility authorityとして使い、`app/content/` JSONをfetchしない。
 
-初期件数は50問、固定20問、51称号、237結果文、6根拠である。E-0のみ`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`で、Q-006とQ-013 production dataはrelease gateとして残る。Q-012画像・manifest・loaderは別の版付き制作台帳で公開承認・実装済みである。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
+初期件数は50問、固定20問、51称号、237結果文、6根拠である。E-0のみ`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`で、Q-006とQ-013 production dataはrelease gateとして残る。Q-012画像・manifest・loaderは別の版付き制作台帳で制作・技術実装済みだが、正式なapproved release選択は未完了でありrelease gateとして残る。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
 
 ## 2. 画面一覧
 
@@ -105,7 +105,7 @@ flowchart TD
 
 ## 6. S-002 回答
 
-`renderQuestionnaireScreen`とlive controllerの回答・保存・分岐は実装・独立レビュー済みである。`#/answer`で設問phaseと20問分岐phaseをexact view modelとして分離し、回答、戻る、破棄、互換途中回答の再開を既存state/storage APIへ接続する。保存失敗時もメモリ上の回答を維持して通知する。20問の`continueHidden`は結果を作らず21問目へ進み、`showPreview`と50問完答だけがanswer-freeのResultSnapshotを生成する。2026-07-27承認の明示的な中断、状態別再開、簡易プレビュー終了、新規開始時の置換確認は次のUI統合単位とする。
+`renderQuestionnaireScreen`とlive controllerの回答・保存・分岐、2026-07-27承認の共通ヘッダー、明示的な中断、状態別再開、簡易プレビュー終了、新規開始時の置換確認は実装・テスト済みである。`#/answer`で設問phaseと20問分岐phaseをexact view modelとして分離し、回答、戻る、中断、破棄、互換途中回答の再開を既存state/storage APIへ接続する。保存失敗時もメモリ上の回答を維持して通知する。20問の`continueHidden`は結果を作らず21問目へ進み、`showPreview`と50問完答だけがanswer-freeのResultSnapshotを生成する。
 
 ### 表示
 
@@ -255,6 +255,8 @@ Q-007確定前の【想定】:
 - 日本語テキストはCanvasへ描画前にフォント読込完了を待つ
 
 ## 11. S-006 履歴
+
+簡潔な通常カード、Q-012猫サムネイルの個別遅延読込、固定比較操作、管理メニューは2026-07-27に実装・テスト済みである。
 
 ### 表示
 

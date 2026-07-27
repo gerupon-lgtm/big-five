@@ -1,3 +1,4 @@
+import { appendAppHeader } from "./app-header.js";
 import { appendTextElement } from "./screen-helpers.js";
 
 const ANSWER_OPTIONS = Object.freeze([
@@ -18,10 +19,16 @@ const QUESTION_KEYS = Object.freeze([
   "storageStatus",
 ]);
 const PREVIEW_KEYS = Object.freeze(["phase", "storageStatus"]);
-const QUESTION_ACTION_KEYS = Object.freeze(["onAnswer", "onBack", "onDiscard"]);
+const QUESTION_ACTION_KEYS = Object.freeze([
+  "onAnswer",
+  "onBack",
+  "onPause",
+  "onDiscard",
+]);
 const PREVIEW_ACTION_KEYS = Object.freeze([
   "onPreviewDecision",
   "onBack",
+  "onPause",
   "onDiscard",
 ]);
 
@@ -87,6 +94,14 @@ function renderStorageError(parent) {
 }
 
 function renderQuestion(main, viewModel, actions) {
+  appendAppHeader(main, {
+    screenLabel: "回答中",
+    sticky: true,
+    action: {
+      label: "中断してトップへ",
+      onClick: actions.onPause,
+    },
+  });
   appendTextElement(
     main,
     "p",
@@ -129,16 +144,24 @@ function renderQuestion(main, viewModel, actions) {
     actions.onBack,
   );
   backButton.disabled = viewModel.currentIndex === 0;
-  addButton(
-    navigation,
-    "回答を破棄",
-    "danger-button",
-    actions.onDiscard,
-  );
   main.append(navigation);
+
+  const management = main.ownerDocument.createElement("details");
+  management.className = "questionnaire-management";
+  appendTextElement(management, "summary", "その他の操作");
+  addButton(management, "回答を破棄", "danger-button", actions.onDiscard);
+  main.append(management);
 }
 
 function renderPreviewChoice(main, viewModel, actions) {
+  appendAppHeader(main, {
+    screenLabel: "20問完了",
+    sticky: true,
+    action: {
+      label: "中断してトップへ",
+      onClick: actions.onPause,
+    },
+  });
   appendTextElement(main, "h1", "20問の回答が完了しました");
   appendTextElement(
     main,
@@ -170,8 +193,13 @@ function renderPreviewChoice(main, viewModel, actions) {
   const navigation = main.ownerDocument.createElement("div");
   navigation.className = "questionnaire-navigation";
   addButton(navigation, "回答へ戻る", "secondary-button", actions.onBack);
-  addButton(navigation, "回答を破棄", "danger-button", actions.onDiscard);
   main.append(navigation);
+
+  const management = main.ownerDocument.createElement("details");
+  management.className = "questionnaire-management";
+  appendTextElement(management, "summary", "その他の操作");
+  addButton(management, "回答を破棄", "danger-button", actions.onDiscard);
+  main.append(management);
 }
 
 export function renderQuestionnaireScreen(host, viewModel, actions) {

@@ -18,7 +18,9 @@ function recordingCanvas() {
     clearRect: (...args) => calls.push(["clearRect", ...args]),
     closePath: () => calls.push(["closePath"]),
     fill: () => calls.push(["fill"]),
+    fillText: (...args) => calls.push(["fillText", ...args]),
     lineTo: (...args) => calls.push(["lineTo", ...args]),
+    measureText: (text) => ({ width: text.length * 6 }),
     moveTo: (...args) => calls.push(["moveTo", ...args]),
     restore: () => calls.push(["restore"]),
     save: () => calls.push(["save"]),
@@ -44,6 +46,24 @@ test("T-005 F-006 draws five axes, three guide rings, and the saved score polygo
   assert.equal(calls.filter(([name]) => name === "stroke").length, 9);
   assert.equal(calls.filter(([name]) => name === "fill").length, 1);
   assert.equal(calls.filter(([name]) => name === "clearRect").length, 1);
+});
+
+test("T-008A F-008 draws the five factor labels in canonical order", () => {
+  const { canvas, calls } = recordingCanvas();
+  const factorLabels = Object.fromEntries(
+    FACTOR_ORDER.map((factorId) => [factorId, `label:${factorId}`]),
+  );
+
+  assert.deepEqual(drawResultRadar(canvas, factors(), { factorLabels }), {
+    drawn: true,
+    errorCode: null,
+  });
+  assert.deepEqual(
+    calls
+      .filter(([name]) => name === "fillText")
+      .map(([, label]) => label),
+    FACTOR_ORDER.map((factorId) => `label:${factorId}`),
+  );
 });
 
 test("T-005 F-006 reports an unavailable canvas context without throwing", () => {
