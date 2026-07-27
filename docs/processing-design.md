@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.4 |
+| 設計版 | 0.5 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-26 |
-| 入力要件 | 要件定義書v1.9 |
+| 更新日 | 2026-07-27 |
+| 入力要件 | 要件定義書v1.10 |
 | 実行方式 | 通常版はブラウザ内完結。ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -72,6 +72,14 @@
 
 `continueHidden`でも20回答は途中回答として保持し、50問完答時に50問全体を再採点する。
 
+中断・再開は次のように処理する。
+
+1. 回答画面の`中断してトップへ`は新しいドメイン状態を作らず、直近の保存結果を確認して開始画面へ遷移する。保存失敗が既知の場合は、離脱で回答を失うことを確認してから遷移する。
+2. 1〜19問と21〜49問は最初の未回答設問、20問完答・`undecided`は20問分岐へ再開する。
+3. `preview20`・`showPreview`・20回答の互換ProgressRecordは、開始画面で`残り30問を再開する`と表示し、`continueAfterPreview`を1回適用して21問目へ進める。
+4. 簡易プレビューの`簡易プレビューで終了する`は、保存済みResultSnapshotを維持し、対応する互換ProgressRecordだけを削除する。削除失敗時は結果画面に留まり、終了済みと誤表示せず、再試行できる通知を出す。ResultSnapshotが履歴へ保存できていないlive結果ではこの操作を有効化せず、結果を失わない`中断してトップへ`または`あと30問続ける`を案内する。
+5. 互換ProgressRecordがある新規開始は、利用者の確認後だけ同じ診断種別の進捗を新規ProgressRecordへ置き換える。取消では書込みを行わず、ResultSnapshotには触れない。
+
 ### 3.3 T-004の公開シーム
 
 - `response-state` はDOM・ブラウザAPIに依存しない。新規ProgressRecord、現在設問への回答、戻る、置換、20問出口、50問終端を純粋値として返す。
@@ -79,7 +87,7 @@
 - 20問完答の `showPreview` は `preview-ready` を返すだけで採点・画面生成を行わない。`continueHidden` は `detail-continued` と進捗だけを返す。50問目の `detail-complete` は保存可能な完答進捗と50件の回答地図を返し、結果画面・履歴・共有はT-005以降の責務とする。
 - `progress-storage` は注入されたストレージを使う。`STORAGE_CORRUPT`、`STORAGE_INCOMPATIBLE`、`STORAGE_UNAVAILABLE`、`STORAGE_SAVE_FAILED`、`STORAGE_DELETE_FAILED` と `PROGRESS_INCOMPATIBLE` を安定した内部コードとして返し、例外を呼出側へ漏らさない。
 - `persistTransition`、`answerAndSave`、`transitionAndSave` は遷移eventのProgressRecordを直ちに保存する。保存失敗でもeventとメモリ上の進捗を返す。50問完答後にResultSnapshotを保存してProgressRecordを削除する処理はT-005の呼出側責務とする。
-- S-002表示層は設問phaseと20問分岐phaseだけを受ける。設問phaseは5件法と現在位置、戻る、破棄を、分岐phaseは`showPreview`と`continueHidden`の二択だけを描画する。保存失敗は両phaseで通知するが操作を無効化しない。分岐phaseへスコア、因子、称号、キャラクター、パレット、共有モデルを渡さない。
+- S-002表示層は設問phaseと20問分岐phaseだけを受ける。設問phaseは5件法と現在位置、戻る、中断、破棄を、分岐phaseは`showPreview`と`continueHidden`、中断、破棄を描画する。中断はProgressRecordを保持し、破棄は確認後に削除する別callbackとする。保存失敗は両phaseで通知するが回答操作を無効化しない。分岐phaseへスコア、因子、称号、キャラクター、パレット、共有モデルを渡さない。
 
 ### 3.4 CSVコンテンツ作成からruntimeへの移行境界
 
@@ -236,7 +244,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 11. 履歴順は`completedAt`の実時刻降順、同時刻は`resultId`辞書順とする。返却配列と各snapshotはdeep freezeする。
 12. 個別削除は確認後、指定`resultId`と一致する最初の有効ResultSnapshotだけを削除する。途中回答、非対象結果、破損結果の構造と順序を保持し、対象なしでは書き込まない。
 13. 全削除は確認後、現行StorageEnvelopeの`progressByDiagnosis`と`results`だけを空にする。確認取消、壊れたJSON、将来schema、保存失敗では既存値を変更しない。
-14. S-006は履歴0件でも全削除導線を表示する。比較1件目は取消・再選択でき、互換結果だけを2件目候補として有効化する。
+14. S-006は履歴0件でも管理メニューから全削除へ到達できる。通常カードは猫サムネイル、称号、実施日時、20問／50問、結果表示導線だけを投影する。比較モードは選択ResultSnapshot IDを最大2件の一時状態として持ち、1件目は取消・再選択でき、互換結果だけを2件目候補として有効化する。2件選択だけでは遷移せず、固定アクションバーの明示実行でS-007へ進む。
 
 状態遷移:
 
@@ -253,6 +261,19 @@ displayScore = round((rawMean - 1) / 4 * 100)
 | resultId衝突（内容不一致） | 追加しない | modeに従い完答時だけ削除を試行 | 維持 | `STORAGE_CORRUPT` |
 
 live controllerは`#/answer`を正規routeとし、ResultSnapshotをメモリ上にも1件だけ保持できる。結果保存失敗時はlive snapshotを履歴より先に解決して結果画面を成立させ、`結果は表示できましたが、この端末の履歴には保存できませんでした。`を表示する。再読込後はlive snapshotを復元せず、保存履歴にないresultIdは既存の欠落結果フォールバックへ送る。保存済みpreviewは、互換ProgressRecordが`preview20`・`showPreview`・20回答で、snapshotとVersionTupleが完全一致する場合だけ追加30問へ進める。対応進捗がない場合は無反応の継続ボタンを描画しない。
+
+結果画面の表示状態は永続化しない。開いている因子IDと詳細sectionはpresentation層の一時状態とし、次の規則で更新する。
+
+- `openFactorId`は`null`または既知のFactorId 1件。
+- `openSection`は`null`または`{ factorId, section }` 1件で、factorIdは`openFactorId`と一致する。
+- 別因子を開くと以前の因子と詳細sectionを閉じる。
+- 別sectionを開くと同じ因子内の以前のsectionを閉じる。
+- 20問ではResultSnapshotに存在しないdetail sectionを生成・補完しない。
+- 開閉後は対象見出しへフォーカスを奪わず、見出しがviewport内に残る最小限のスクロール調整だけを行う。
+
+ResultSnapshotの42件はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。カテゴリ行の短いサマリは内容を代替する固定UI説明であり、スコア別結果文を生成・要約しない。`詳しく見る`で元の`RenderedResultText`と根拠を表示する。
+
+`因子ごとの設問構成を見る`はDiagnosticDefinitionとQuestionDefinitionから、現在modeの固定questionId集合を因子・`keyedDirection`別に件数集計する純粋モデルを使う。設問本文、回答、スコア、称号を出力へ含めない。測定の土台等の固定説明は診断定義版とmodeだけを入力とし、ResultSnapshotの称号・数値で分岐しない。
 
 2026-07-27の実ブラウザ検証では、360pxで新規開始、20問分岐、preview、選択猫1体のviewport遅延読込、追加30問、detailまで通過し、320pxの200%相当狭幅でも横overflowなし・42文面維持を確認した。強制storage失敗でも20回答とpreview結果をメモリ上で維持し、指定通知を表示した。preview結果の資産inventoryは同一originのscript 35件、stylesheet 1件、選択猫画像1件だけで、外部資産0件だった。
 

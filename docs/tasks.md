@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.4 |
+| 設計版 | 0.5 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-26 |
-| 要件正典 | 要件定義書v1.9 |
+| 更新日 | 2026-07-27 |
+| 要件正典 | 要件定義書v1.10 |
 | 初期リリース | `mvp-0.1.0` |
 
 ## 1. トレーサビリティ表（正典）
@@ -14,19 +14,19 @@
 |---|---|---|---|---|---|---|
 | F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008 | 確定 |
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approval pending |
-| F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004 | 確定 |
-| F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004 | 確定 |
-| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006 preview定義・合成・snapshot、完答caller、live／保存済み画面を実装。Content Approval pending |
-| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005 | Q-006 detail定義・合成・snapshot、完答caller、live／保存済み画面を実装。Content Approval pending |
+| F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 基盤実装済み。Q-014の共通ヘッダー・設問折返し・中断UI待ち |
+| F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A | 基盤実装済み。Q-014の状態別再開・preview終了・新規置換確認待ち |
+| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005, T-008A | Q-006 preview定義・合成・snapshot、完答caller、live／保存済み画面を実装。Q-014 UIとContent Approval pending |
+| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005, T-008A | Q-006 detail定義・合成・snapshot、完答caller、live／保存済み画面を実装。Q-014 UIとContent Approval pending |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
-| F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005 | 確定 |
-| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006 | 確定 |
-| F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006 | 確定 |
+| F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A | レーダー基盤実装済み。Q-014の因子名・棒・段階展開待ち |
+| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A | 保存・表示基盤実装済み。Q-014の簡潔カード待ち |
+| F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A | 比較基盤実装済み。Q-014の固定比較導線待ち |
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareViewModel | T-007 | Q-007待ち |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007 | Q-007待ち |
-| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006 | 確定 |
+| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A | 削除基盤実装済み。Q-014のpreview終了・管理メニュー待ち |
 | F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | 確定 |
-| F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008 | 確定 |
+| F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A | 基盤確定。Q-014の保存失敗時中断・終了処理待ち |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面接続を実装。共有接続待ち |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
 | F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013設計済み。実データ待ち |
@@ -58,6 +58,7 @@
 | T-005 | 結果画面・猫・レーダー・色香り | F-002, F-005, F-006, F-007, F-008, F-016, F-018 | 基本・詳細結果を代替表示込みで閲覧可能 |
 | T-006 | 履歴・比較・削除 | F-009, F-010, F-013, F-015 | 当時結果を保存し、互換2件だけ比較 |
 | T-007 | 共有カード・保存・コピー | F-011, F-012, F-014, F-015, F-018 | 選択配色カードを保存・共有し段階代替 |
+| T-008A | 結果・履歴・中断再開UI再整理 | F-003〜F-006, F-008〜F-010, F-013, F-015, F-018 | Q-014承認UIを360px・キーボード・保存失敗込みで完結 |
 | T-008 | 全画面統合・レスポンシブ・a11y | F-001〜F-016, F-018 | 主要フローを360px・PC・キーボードで完結 |
 | T-009 | 説明・プライバシー・CSP | F-001, F-002, F-007, F-014, F-015 | 限界、非送信、削除、版、CSPを確認可能 |
 | T-010 | ベータ匿名集計API・DB・事前説明 | F-017 | OCIへ匿名集計し、二重送信・通信失敗でも診断結果を維持 |
@@ -72,7 +73,7 @@ T-001 → T-002 → T-003
 
 ### フェーズB: ローカル完結の診断
 
-T-004 → T-005 → T-006
+T-004 → T-005 → T-006 → T-008A
 
 ### フェーズC: 共有・品質・公開
 
@@ -298,6 +299,39 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - PNG内のモード、称号、数値、注意、版、選択色を目視・自動確認。
   - 共有モデルの禁止フィールド検査。
 
+### T-008A 結果・履歴・中断再開UI再整理
+
+- 依存: T-004、T-005、T-006
+- 対応機能: F-003、F-004、F-005、F-006、F-008、F-009、F-010、F-013、F-015、F-018
+- 正典: `docs/superpowers/specs/2026-07-27-result-history-resume-ui-design.md`
+- 回答中断・再開計画: `docs/superpowers/plans/2026-07-27-questionnaire-resume-interruption.md`
+- 結果段階表示計画: `docs/superpowers/plans/2026-07-27-result-progressive-disclosure.md`
+- 履歴・比較計画: `docs/superpowers/plans/2026-07-27-history-compact-comparison.md`
+- 状態: 設計承認済み、実装待ち
+- 作業:
+  - 全画面の控えめなアプリ名、設問のbalanced wrapping、回答画面の中断導線を実装する。
+  - 20問選択前、簡易プレビュー表示後、21〜49問の状態別再開と、新規開始時の置換確認を実装する。
+  - 簡易プレビューに追加30問、中断、20問で終了の3操作を実装し、結果保存失敗・進捗削除失敗を非破壊で扱う。
+  - 結果を称号・猫・理由、名前付きレーダー、5因子一覧、同時1因子／1詳細の段階展開へ再構成する。
+  - 因子ごとの正方向・逆方向項目数と、4つの固定説明を同一画面上のアクセシブルな展開UIで表示する。
+  - 履歴カードを猫・称号・日時・20/50問・結果表示へ絞り、固定下部アクションバーの比較トグルと、個別削除・全削除・版情報を持つ管理メニューを実装する。
+- 変更禁止:
+  - Q-006の237結果文、表示順を含むResultSnapshot、採点、称号判定、Q-012画像・altを変更しない。
+  - Q-013の未承認パレット・香調を仮置きしない。
+  - 中断と破棄を同一操作にしない。
+- 完了条件:
+  - 回答中断は進捗を保持し、破棄だけが確認後に進捗を削除する。
+  - 20問の3操作、直近1件再開、新規開始確認が保存成功・保存失敗・取消で仕様どおり動く。
+  - 称号・猫・理由が結果の先頭にあり、5因子と全保存済み結果文が段階展開から到達可能である。
+  - 履歴から通常結果を開け、互換2件だけをトグル選択し、明示実行で比較できる。
+  - 360px、320pxの200%相当、キーボードで固定要素の被りと横スクロールがない。
+- 検証方法:
+  - presentation単体: questionnaire、start、result、history。
+  - app-shell結合: 1〜19問、20問選択前、preview表示後、21〜49問、50問完答、新規開始取消／確定。
+  - storage異常: 保存不可、preview snapshot未保存、progress削除失敗。
+  - Q-006 snapshot 7件／42件、Q-012該当画像1件、通常外部送信0件の回帰。
+  - `npm.cmd test`、`npm.cmd run check`、`git diff --check`、実ブラウザsmoke。
+
 ### T-008 全画面統合・レスポンシブ・アクセシビリティ
 
 - 依存: T-004〜T-007
@@ -397,7 +431,8 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
 | Q-006人手Content Approval | `result-text-v1 initial reviewed copy` 237件と根拠・合成・snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordがすべて揃うまで`Content Approval pending` | Q-006 |
-| 結果・履歴画面統合 | Q-006ドメイン、ResultSnapshot保存、S-001/S-002 live controller、完答caller、追加30問、S-003/S-004 live／保存済み画面、S-006履歴、S-007比較、Q-012猫画像遅延表示は実装済み。共有と代替色・香りが未実装 | T-005/T-007/T-008 |
+| Q-014結果・履歴・中断再開UI | 設計承認済み。称号・猫優先、因子の段階展開、簡潔な履歴、固定比較導線、回答中断、preview終了、直近1件再開、新規開始確認が未実装 | T-008A |
+| 結果・履歴画面統合 | Q-006ドメイン、ResultSnapshot保存、S-001/S-002 live controller、完答caller、追加30問、S-003/S-004 live／保存済み画面、S-006履歴、S-007比較、Q-012猫画像遅延表示は実装済み。Q-014 UI、共有、代替色・香りが未実装 | T-005/T-007/T-008A/T-008 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
 | 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを公開承認済み。release manifest、整合検査、単一画像遅延loader、live／保存済み結果画面接続まで完了 | Q-012完了。共有はT-007で接続 |
