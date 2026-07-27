@@ -215,6 +215,20 @@ test("T-006 documents implemented history, deletion, and comparison seams", asyn
   assert.doesNotMatch(historyScreen, /from\s+["']\.\.\/data\//);
   assert.doesNotMatch(comparisonScreen, /from\s+["']\.\.\/data\//);
   assert.doesNotMatch(resultScreen, /from\s+["']\.\.\/data\//);
+  assert.doesNotMatch(resultScreen, /from\s+["']\.\.\/infrastructure\//);
+});
+
+test("T-005 F-016 character result stays contain-fit at 360px and 200% text", async () => {
+  const styles = await readProjectDocument("app/css/styles.css");
+  const bodyRule = styles.match(/body\s*\{[\s\S]*?\}/)?.[0] ?? "";
+  const frameRule = styles.match(/\.result-character-frame\s*\{[\s\S]*?\}/)?.[0] ?? "";
+  const imageRule = styles.match(/\.result-character-image\s*\{[\s\S]*?\}/)?.[0] ?? "";
+
+  assert.doesNotMatch(bodyRule, /min-width:\s*320px/);
+  assert.match(frameRule, /width:\s*min\(100%,\s*520px\)/);
+  assert.match(frameRule, /overflow:\s*hidden/);
+  assert.match(imageRule, /width:\s*100%/);
+  assert.match(imageRule, /object-fit:\s*contain/);
 });
 
 test("Q-006 processing assigns selection validation to the composer and production IDs to snapshots", async () => {

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { loadCharacterImage } from "../js/infrastructure/character-loader.js";
 import { renderSavedResultScreen } from "../js/presentation/result-screen.js";
 import { collectElements, collectText, createFakeScreen } from "./helpers/fake-dom.js";
 import { createTestResultSnapshot } from "./helpers/result-snapshot-fixture.js";
@@ -23,6 +24,16 @@ const labels = Object.freeze({
   titleLabels: Object.freeze({
     "title-balanced": "五つの風を見渡す観測者",
   }),
+});
+
+const characterEntry = Object.freeze({
+  characterId: "character-balanced",
+  assetVersion: "character-balanced-v1",
+  imagePath: "assets/characters/character-balanced.webp",
+  width: 1024,
+  height: 1024,
+  alt: "五枚の葉のモビールを見上げて座る猫。",
+  integrity: "sha256-gVfqsXoZbwa5AVZhAGwvT2via6MzHVbuVfrr3tK8seo=",
 });
 
 function resultTextRecords(host) {
@@ -250,4 +261,113 @@ test("T-005 S-003/S-004 explains both boundary flag types with factor names", ()
       /factor-near-band-boundary|second-third-salience-near-tie|intellectImagination/,
     );
   }
+});
+
+test("T-005 F-016 keeps the approved alt visible without decoding before viewport entry", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000057",
+  });
+  let decodeCalls = 0;
+  let enterViewport;
+
+  renderSavedResultScreen(host, snapshot, labels, {}, {
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+    characterEntry,
+    decodeImage: async () => {
+      decodeCalls += 1;
+      return host.ownerDocument.createElement("img");
+    },
+    loadCharacterImage,
+    observeViewport(_target, onEnter) {
+      enterViewport = onEnter;
+    },
+  });
+
+  assert.equal(decodeCalls, 0);
+  assert.equal(typeof enterViewport, "function");
+  assert.match(collectText(host), new RegExp(characterEntry.alt));
+  assert.equal(
+    collectElements(host).filter(({ tagName }) => tagName === "img").length,
+    0,
+  );
+});
+
+test("T-005 F-016 decodes the selected path once and renders one contained image after entry", async () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000058",
+  });
+  const requested = [];
+  let enterViewport;
+
+  renderSavedResultScreen(host, snapshot, labels, {}, {
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+    characterEntry,
+    decodeImage: async (path) => {
+      requested.push(path);
+      return host.ownerDocument.createElement("img");
+    },
+    loadCharacterImage,
+    observeViewport(_target, onEnter) {
+      enterViewport = onEnter;
+    },
+  });
+
+  assert.equal(typeof enterViewport, "function");
+  await enterViewport();
+  await enterViewport();
+
+  assert.deepEqual(requested, [characterEntry.imagePath]);
+  const images = collectElements(host)
+    .filter(({ tagName }) => tagName === "img");
+  assert.equal(images.length, 1);
+  assert.equal(images[0].attributes.get("alt"), characterEntry.alt);
+  assert.equal(images[0].className, "result-character-image");
+});
+
+test("T-005 F-016 keeps approved alt and the complete result when decode fails", async () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000059",
+  });
+  let enterViewport;
+  let retryCalls = 0;
+
+  renderSavedResultScreen(host, snapshot, labels, {
+    onRetry: () => { retryCalls += 1; },
+  }, {
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+    characterEntry,
+    decodeImage: async () => {
+      throw new Error("forced decode failure");
+    },
+    loadCharacterImage,
+    observeViewport(_target, onEnter) {
+      enterViewport = onEnter;
+    },
+  });
+
+  assert.equal(typeof enterViewport, "function");
+  await enterViewport();
+
+  const text = collectText(host);
+  assert.match(text, /称号.*五つの風を見渡す観測者/);
+  assert.match(text, new RegExp(characterEntry.alt));
+  assert.match(text, /診断時の選択色ID：palette-default/);
+  assert.equal(
+    collectElements(host).filter(({ tagName }) => tagName === "img").length,
+    0,
+  );
+  assert.equal(
+    collectElements(host).filter(({ className }) => className === "factor-result").length,
+    5,
+  );
+  assert.equal(resultTextRecords(host).length, 42);
+
+  collectElements(host).find(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "もう一度診断する").dispatch("click");
+  assert.equal(retryCalls, 1);
+  assert.ok(collectElements(host).some(({ tagName, attributes }) =>
+    tagName === "a" && attributes.get("href") === "#/history"));
 });
