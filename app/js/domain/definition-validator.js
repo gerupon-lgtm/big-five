@@ -1,4 +1,6 @@
 import { FACTOR_ORDER } from "../data/factor-order.js";
+import { TitleProfileDefinitions } from "../data/title-profile-definitions.js";
+import { validateCharacterManifest } from "./character-manifest.js";
 import { validateResultEvidenceDefinitions } from "./result-evidence.js";
 import { validateResultTextDefinitions } from "./result-text.js";
 
@@ -115,4 +117,19 @@ export function validateResultContentDefinitions(input) {
     (!appliesTo.titleId || titleIds.has(appliesTo.titleId))
   )) failResultContent();
   return true;
+}
+
+export function validateCharacterManifestDefinition(
+  manifest,
+  characterManifestVersion,
+) {
+  try {
+    return validateCharacterManifest(
+      manifest,
+      TitleProfileDefinitions,
+      characterManifestVersion,
+    );
+  } catch {
+    failStructure();
+  }
 }
