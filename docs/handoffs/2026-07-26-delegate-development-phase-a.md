@@ -69,7 +69,7 @@ ResultSnapshot永続化へ進む前に、次を正典・実装・test間で解�
 
 上記を推測で解決せず、共有契約表へ`confirmed / conflicting / unknown`で整理してから実装タスクを委譲する。
 
-再開後、4件すべてを`docs/data-model.md`と`docs/processing-design.md`で契約化し、ResultSnapshotのexact validator、RFC 4122 UUID、結果保存、完答時の原子的削除・best-effort cleanup、履歴読込、個別・全削除、比較純粋関数、S-006/S-007初期画面、保存済みS-003/S-004と独立結果画面遷移、S-002表示層を実装した。追加調査でlive resultには選択されたQ-012 manifest entryの`assetVersion`が必須であり、`characterManifestVersion`の流用や仮値では正典準拠のsnapshotを作れないと確定した。残作業はQ-012パイロット・manifest作成後の本番caller、router・state・storageへのS-002接続、T-007共有、Q-013実データ統合である。
+再開後、4件すべてを`docs/data-model.md`と`docs/processing-design.md`で契約化し、ResultSnapshotのexact validator、RFC 4122 UUID、結果保存、完答時の原子的削除・best-effort cleanup、履歴読込、個別・全削除、比較純粋関数、S-006/S-007初期画面、保存済みS-003/S-004と独立結果画面遷移、S-002表示層を実装した。追加調査でlive resultには選択されたQ-012 manifest entryの`assetVersion`が必須であり、`characterManifestVersion`の流用や仮値では正典準拠のsnapshotを作れないと確定した。Q-012の51体は技術承認済みであり、残作業はrelease accessibility gate、manifest、loader、その後の本番caller、router・state・storageへのS-002接続、T-007共有、Q-013実データ統合である。
 
 ## 再開手順
 
