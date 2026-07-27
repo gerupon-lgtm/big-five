@@ -1,6 +1,11 @@
 import { appMeta } from "./config/app-meta.js";
+import { CharacterManifest } from "./data/character-manifest.js";
 import { FactorDefinitions } from "./data/diagnostic-definition.js";
 import { TitleProfileDefinitions } from "./data/title-profile-definitions.js";
+import {
+  resolveCharacterEntry,
+  validateCharacterManifest,
+} from "./domain/character-manifest.js";
 import { compareResultSnapshots } from "./domain/result-comparison.js";
 import { createStartVersionViewModel } from "./domain/version-model.js";
 import {
@@ -8,6 +13,7 @@ import {
   deleteResultSnapshot,
   loadResultHistory,
 } from "./infrastructure/progress-storage.js";
+import { loadCharacterImage } from "./infrastructure/character-loader.js";
 import { resolveRoute } from "./infrastructure/router.js";
 import { renderComparisonScreen } from "./presentation/comparison-screen.js";
 import { renderHistoryScreen } from "./presentation/history-screen.js";
@@ -23,6 +29,51 @@ const factorDescriptions = Object.freeze(Object.fromEntries(
 const titleLabels = Object.freeze(Object.fromEntries(
   TitleProfileDefinitions.map(({ titleId, label }) => [titleId, label]),
 ));
+const validatedCharacterManifest = validateCharacterManifest(
+  CharacterManifest,
+  TitleProfileDefinitions,
+  appMeta.characterManifestVersion,
+);
+
+function createBrowserImageDecoder(windowObject) {
+  return (path) => new Promise((resolve, reject) => {
+    if (typeof windowObject.Image !== "function") {
+      reject(new Error("CHARACTER_IMAGE_UNAVAILABLE"));
+      return;
+    }
+    const image = new windowObject.Image();
+    image.addEventListener("load", () => resolve(image), { once: true });
+    image.addEventListener(
+      "error",
+      () => reject(new Error("CHARACTER_IMAGE_UNAVAILABLE")),
+      { once: true },
+    );
+    image.src = path;
+  });
+}
+
+function createViewportObserver(windowObject) {
+  return (target, onEnter) => {
+    if (typeof windowObject.IntersectionObserver !== "function") {
+      void onEnter();
+      return;
+    }
+    let entered = false;
+    const observer = new windowObject.IntersectionObserver((entries) => {
+      if (
+        entered ||
+        !entries.some((entry) =>
+          entry.target === target && entry.isIntersecting)
+      ) {
+        return;
+      }
+      entered = true;
+      observer.disconnect();
+      void onEnter();
+    });
+    observer.observe(target);
+  };
+}
 
 export function startApp({
   documentObject = document,
@@ -31,9 +82,15 @@ export function startApp({
   storage,
   nowProvider = () => new Date().toISOString(),
   confirmProvider,
+  decodeImage,
+  observeViewport,
 } = {}) {
   const screenHost = documentObject.getElementById("app");
   let historyNotice = null;
+  const effectiveDecodeImage = decodeImage ??
+    createBrowserImageDecoder(windowObject);
+  const effectiveObserveViewport = observeViewport ??
+    createViewportObserver(windowObject);
 
   if (!screenHost) {
     throw new Error("APP_SCREEN_HOST_MISSING");
@@ -132,6 +189,16 @@ export function startApp({
       returnMissingResultToHistory();
       return;
     }
+    let characterEntry = null;
+    try {
+      characterEntry = resolveCharacterEntry(
+        validatedCharacterManifest,
+        snapshot.characterId,
+      );
+    } catch {
+      // Historical snapshots may reference an asset absent from this manifest.
+      // The result screen converts null to its image-only safe fallback.
+    }
     renderSavedResultScreen(screenHost, snapshot, {
       factorLabels,
       factorDescriptions,
@@ -141,6 +208,11 @@ export function startApp({
         windowObject.location.hash = "#/start";
         renderCurrentRoute();
       },
+    }, {
+      characterEntry,
+      decodeImage: effectiveDecodeImage,
+      loadCharacterImage,
+      observeViewport: effectiveObserveViewport,
     });
   }
 

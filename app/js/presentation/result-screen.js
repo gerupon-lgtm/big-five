@@ -61,16 +61,78 @@ function renderTitle(parent, snapshot, labels) {
   parent.append(section);
 }
 
-function renderCharacterMetadata(parent, snapshot) {
+function renderCharacterMetadata(parent, snapshot, dependencies) {
   const section = parent.ownerDocument.createElement("section");
   section.className = "result-character";
   appendTextElement(section, "h2", "結果キャラクター");
   appendTextElement(section, "p", `キャラクターID：${snapshot.characterId}`);
+
+  const {
+    characterEntry,
+    decodeImage,
+    loadCharacterImage,
+    observeViewport,
+  } = dependencies;
+  if (
+    !characterEntry ||
+    characterEntry.characterId !== snapshot.characterId ||
+    typeof decodeImage !== "function" ||
+    typeof loadCharacterImage !== "function" ||
+    typeof observeViewport !== "function"
+  ) {
+    appendTextElement(
+      section,
+      "p",
+      "画像を利用できない場合も診断結果は有効です。",
+      "character-fallback",
+    );
+    parent.append(section);
+    return;
+  }
+
+  const frame = section.ownerDocument.createElement("div");
+  frame.className = "result-character-frame";
+  frame.setAttribute("data-character-state", "pending");
+  const fallback = appendTextElement(
+    frame,
+    "p",
+    characterEntry.alt,
+    "character-fallback",
+  );
+  fallback.setAttribute("role", "status");
+  section.append(frame);
+
+  let loadStarted = false;
+  async function loadOnEntry() {
+    if (loadStarted) return;
+    loadStarted = true;
+    try {
+      const result = await loadCharacterImage(characterEntry, { decodeImage });
+      if (result.status === "loaded") {
+        result.image.className = "result-character-image";
+        result.image.setAttribute("alt", result.alt);
+        result.image.setAttribute("width", String(characterEntry.width));
+        result.image.setAttribute("height", String(characterEntry.height));
+        frame.setAttribute("data-character-state", "loaded");
+        frame.replaceChildren(result.image);
+        return;
+      }
+    } catch {
+      // The approved alt remains the visible fallback.
+    }
+    frame.setAttribute("data-character-state", "unavailable");
+  }
+
+  try {
+    observeViewport(frame, loadOnEntry);
+  } catch {
+    frame.setAttribute("data-character-state", "unavailable");
+  }
   appendTextElement(
     section,
     "p",
     "画像を利用できない場合も診断結果は有効です。",
-    "character-fallback",
+    "character-availability-note",
   );
   parent.append(section);
 }
@@ -292,7 +354,7 @@ export function renderSavedResultScreen(
   }
 
   renderTitle(main, savedSnapshot, labels);
-  renderCharacterMetadata(main, savedSnapshot);
+  renderCharacterMetadata(main, savedSnapshot, dependencies);
   appendTextElement(
     main,
     "p",

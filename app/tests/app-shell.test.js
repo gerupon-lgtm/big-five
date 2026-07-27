@@ -337,3 +337,142 @@ test("T-005/T-006 S-003/S-004 returns a missing saved result URL to history", ()
   assert.match(collectText(host), /指定された診断結果を開けませんでした/);
   assert.match(collectText(host), /診断結果の履歴/);
 });
+
+test("T-005 F-016 startApp observes once before decoding the selected manifest image", async () => {
+  const documentObject = {
+    createElement(tagName) {
+      return new FakeElement(tagName, documentObject);
+    },
+    getElementById(id) {
+      return id === "app" ? host : null;
+    },
+  };
+  const host = new FakeElement("div", documentObject);
+  const observers = [];
+  class FakeIntersectionObserver {
+    constructor(callback) {
+      this.callback = callback;
+      this.disconnectCalls = 0;
+      this.target = null;
+      observers.push(this);
+    }
+
+    observe(target) {
+      this.target = target;
+    }
+
+    disconnect() {
+      this.disconnectCalls += 1;
+    }
+
+    fire(isIntersecting) {
+      this.callback([{ target: this.target, isIntersecting }]);
+    }
+  }
+  const windowObject = {
+    location: { hash: "#/result?resultId=00000000-0000-4000-8000-000000000060" },
+    addEventListener() {},
+    IntersectionObserver: FakeIntersectionObserver,
+  };
+  const target = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000060",
+  });
+  const raw = JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: "2026-07-26T12:00:00.000Z",
+    progressByDiagnosis: {},
+    results: [target],
+  });
+  const requested = [];
+
+  startApp({
+    documentObject,
+    historyObject: { replaceState() {} },
+    windowObject,
+    storage: { getItem: () => raw },
+    nowProvider: () => "2026-07-26T12:05:00.000Z",
+    decodeImage: async (path) => {
+      requested.push(path);
+      return documentObject.createElement("img");
+    },
+  });
+
+  assert.deepEqual(requested, []);
+  assert.equal(observers.length, 1);
+  observers[0].fire(false);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(requested, []);
+  assert.equal(observers[0].disconnectCalls, 0);
+
+  observers[0].fire(true);
+  await new Promise((resolve) => setImmediate(resolve));
+  observers[0].fire(true);
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.deepEqual(requested, [
+    "assets/characters/character-balanced.webp",
+  ]);
+  assert.equal(observers[0].disconnectCalls, 1);
+  const images = collectElements(host)
+    .filter(({ tagName }) => tagName === "img");
+  assert.equal(images.length, 1);
+  assert.equal(
+    images[0].attributes.get("alt"),
+    "五枚の葉のモビールを見上げて座る猫。",
+  );
+  assert.equal(images[0].className, "result-character-image");
+});
+
+test("T-005 F-016 preserves a saved result when its character ID is absent from the manifest", () => {
+  const documentObject = {
+    createElement(tagName) {
+      return new FakeElement(tagName, documentObject);
+    },
+    getElementById(id) {
+      return id === "app" ? host : null;
+    },
+  };
+  const host = new FakeElement("div", documentObject);
+  const target = JSON.parse(JSON.stringify(createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000061",
+  })));
+  target.characterId = "character-legacy-unknown";
+  const raw = JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: "2026-07-26T12:00:00.000Z",
+    progressByDiagnosis: {},
+    results: [target],
+  });
+  const requested = [];
+
+  startApp({
+    documentObject,
+    historyObject: { replaceState() {} },
+    windowObject: {
+      location: { hash: `#/result?resultId=${target.resultId}` },
+      addEventListener() {},
+    },
+    storage: { getItem: () => raw },
+    nowProvider: () => "2026-07-26T12:05:00.000Z",
+    decodeImage: async (path) => {
+      requested.push(path);
+      return documentObject.createElement("img");
+    },
+  });
+
+  const text = collectText(host);
+  assert.match(text, /50問詳細結果/);
+  assert.match(text, /称号：五つの風を見渡す観測者/);
+  assert.match(text, /診断時の選択色ID：palette-default/);
+  assert.match(text, /画像を利用できない場合も診断結果は有効です/);
+  assert.equal(
+    collectElements(host).filter(({ className }) => className === "factor-result").length,
+    5,
+  );
+  assert.equal(
+    collectElements(host).filter(({ className }) =>
+      className.includes("result-text-record")).length,
+    42,
+  );
+  assert.deepEqual(requested, []);
+});
