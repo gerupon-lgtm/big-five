@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { FORMAL_STORAGE_KEY } from "../js/infrastructure/progress-storage.js";
+import { answerCurrent as answerProgress, choosePreviewExit, createProgressRecord } from "../js/domain/response-state.js";
+import { appMeta } from "../js/config/app-meta.js";
+import { DiagnosticDefinition } from "../js/data/diagnostic-definition.js";
 import { startApp } from "../js/main.js";
 import { FakeElement, collectElements, collectText } from "./helpers/fake-dom.js";
 import { createTestResultSnapshot } from "./helpers/result-snapshot-fixture.js";
@@ -475,4 +478,404 @@ test("T-005 F-016 preserves a saved result when its character ID is absent from 
     42,
   );
   assert.deepEqual(requested, []);
+});
+
+function createAppHarness({ hash = "#/start", storage, confirmProvider = () => true } = {}) {
+  const documentObject = {
+    createElement(tagName) {
+      return new FakeElement(tagName, documentObject);
+    },
+    getElementById(id) {
+      return id === "app" ? host : null;
+    },
+  };
+  const host = new FakeElement("div", documentObject);
+  const windowObject = {
+    location: { hash },
+    addEventListener() {},
+  };
+  let uuid = 1;
+  startApp({
+    documentObject,
+    historyObject: { replaceState() {} },
+    windowObject,
+    storage,
+    nowProvider: () => "2026-07-27T12:00:00.000Z",
+    uuidProvider: () => `00000000-0000-4000-8000-${String(uuid++).padStart(12, "0")}`,
+    confirmProvider,
+  });
+  return { host, windowObject };
+}
+
+test("T-005 S-001 starts a new in-memory questionnaire after saving compatible progress", () => {
+  let raw = null;
+  const { host, windowObject } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+  });
+
+  collectElements(host).find(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "診断を始める").dispatch("click");
+
+  assert.equal(windowObject.location.hash, "#/answer");
+  assert.match(collectText(host), /1 \/ 20問/);
+  const envelope = JSON.parse(raw);
+  assert.equal(Object.keys(envelope.progressByDiagnosis).length, 1);
+  assert.equal(envelope.progressByDiagnosis["big-five-ipip-ja"].currentIndex, 0);
+});
+
+test("T-005 S-001 keeps a new questionnaire in memory when progress saving fails", () => {
+  const { host, windowObject } = createAppHarness({
+    storage: {
+      getItem: () => null,
+      setItem() { throw new Error("storage unavailable"); },
+    },
+  });
+
+  collectElements(host).find(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "診断を始める").dispatch("click");
+
+  assert.equal(windowObject.location.hash, "#/answer");
+  assert.match(collectText(host), /1 \/ 20問/);
+  assert.match(collectText(host), /この環境では回答を保存できません/);
+});
+
+function clickButton(host, text) {
+  const button = collectElements(host).find(({ tagName, textContent }) =>
+    tagName === "button" && textContent === text);
+  assert.ok(button, `missing button: ${text}`);
+  button.dispatch("click");
+}
+
+function answerCurrent(host, value = 3) {
+  clickButton(host, `${value} どちらともいえない`);
+}
+
+test("T-005 S-002 sends twenty answers only to the choice and continueHidden enters question 21 without a result ID", () => {
+  let raw = null;
+  let uuidCalls = 0;
+  const documentObject = {
+    createElement(tagName) { return new FakeElement(tagName, documentObject); },
+    getElementById(id) { return id === "app" ? host : null; },
+  };
+  const host = new FakeElement("div", documentObject);
+  const windowObject = { location: { hash: "#/start" }, addEventListener() {} };
+  startApp({
+    documentObject,
+    historyObject: { replaceState() {} },
+    windowObject,
+    storage: { getItem: () => raw, setItem(_key, value) { raw = value; } },
+    nowProvider: () => "2026-07-27T12:00:00.000Z",
+    uuidProvider: () => `00000000-0000-4000-8000-${String(++uuidCalls).padStart(12, "0")}`,
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+
+  assert.match(collectText(host), /20問の回答が完了しました/);
+  assert.equal(uuidCalls, 1);
+  assert.doesNotMatch(collectText(host), /仮称号|5因子のスコア/);
+  clickButton(host, "結果を見ずに、あと30問続ける");
+  assert.match(collectText(host), /21 \/ 50問/);
+  assert.equal(uuidCalls, 1);
+  assert.equal(JSON.parse(raw).progressByDiagnosis["big-five-ipip-ja"].previewDecision, "continueHidden");
+});
+
+test("T-005 S-002 renders an answer-free live preview with the exact notice when snapshot saving fails", () => {
+  let writes = 0;
+  const { host } = createAppHarness({
+    storage: {
+      getItem: () => null,
+      setItem() {
+        writes += 1;
+        if (writes > 21) throw new Error("result save failed");
+      },
+    },
+  });
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+
+  const text = collectText(host);
+  assert.match(text, /20問簡易プレビュー/);
+  assert.match(text, /仮称号/);
+  assert.match(text, /結果は表示できましたが、この端末の履歴には保存できませんでした。/);
+  assert.doesNotMatch(text, /answers/);
+});
+
+test("T-005 S-002 discarding is cancelled without writes, succeeds to start, and preserves the flow on deletion failure", () => {
+  let raw = null;
+  let writes = 0;
+  let confirmation = false;
+  const { host, windowObject } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { writes += 1; raw = value; },
+    },
+    confirmProvider: () => confirmation,
+  });
+  clickButton(host, "診断を始める");
+  const afterStartWrites = writes;
+  clickButton(host, "回答を破棄");
+  assert.equal(writes, afterStartWrites);
+  assert.match(collectText(host), /1 \/ 20問/);
+
+  confirmation = true;
+  clickButton(host, "回答を破棄");
+  assert.equal(windowObject.location.hash, "#/start");
+  assert.match(collectText(host), /診断を始める/);
+
+  const failing = createAppHarness({
+    storage: { getItem: () => null, setItem() { throw new Error("delete failed"); } },
+    confirmProvider: () => true,
+  });
+  clickButton(failing.host, "診断を始める");
+  clickButton(failing.host, "回答を破棄");
+  assert.match(collectText(failing.host), /1 \/ 20問/);
+  assert.match(collectText(failing.host), /この環境では回答を保存できません/);
+});
+
+test("T-005 S-001 offers compatible resume and never offers it for incompatible stored progress", () => {
+  const progress = createProgressRecord({
+    definition: DiagnosticDefinition,
+    meta: appMeta,
+    progressId: "00000000-0000-4000-8000-000000000081",
+    now: "2026-07-27T12:00:00.000Z",
+  });
+  const compatibleRaw = JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: "2026-07-27T12:00:00.000Z",
+    progressByDiagnosis: { [DiagnosticDefinition.diagnosisId]: progress },
+    results: [],
+  });
+  const resumed = createAppHarness({ storage: { getItem: () => compatibleRaw } });
+  assert.match(collectText(resumed.host), /途中から再開する/);
+  clickButton(resumed.host, "途中から再開する");
+  assert.match(collectText(resumed.host), /1 \/ 20問/);
+
+  let writes = 0;
+  const incompatible = createAppHarness({
+    storage: {
+      getItem: () => JSON.stringify({ schemaVersion: 1, updatedAt: "2026-07-27T12:00:00.000Z", progressByDiagnosis: { [DiagnosticDefinition.diagnosisId]: { invalid: true } }, results: [] }),
+      setItem() { writes += 1; },
+    },
+  });
+  assert.doesNotMatch(collectText(incompatible.host), /途中から再開する/);
+  assert.equal(writes, 0);
+});
+
+test("T-005 S-002 retains the returned progress and visible error after answer and back persistence failures", () => {
+  let raw = null;
+  let fail = false;
+  const { host } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { if (fail) throw new Error("write failed"); raw = value; },
+    },
+  });
+  clickButton(host, "診断を始める");
+  fail = true;
+  answerCurrent(host);
+  assert.match(collectText(host), /2 \/ 20問/);
+  assert.match(collectText(host), /この環境では回答を保存できません/);
+  clickButton(host, "前へ");
+  assert.match(collectText(host), /1 \/ 20問/);
+  assert.match(collectText(host), /この環境では回答を保存できません/);
+});
+
+test("T-005 S-003 continues a shown preview at question 21 with showPreview preserved", () => {
+  let raw = null;
+  const { host } = createAppHarness({ storage: { getItem: () => raw, setItem(_key, value) { raw = value; } } });
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+  clickButton(host, "あと30問に回答する");
+  assert.match(collectText(host), /21 \/ 50問/);
+  assert.equal(JSON.parse(raw).progressByDiagnosis[DiagnosticDefinition.diagnosisId].previewDecision, "showPreview");
+});
+
+test("T-005 S-004 renders detail after fifty answers and atomically clears progress on successful snapshot save", () => {
+  let raw = null;
+  const { host } = createAppHarness({ storage: { getItem: () => raw, setItem(_key, value) { raw = value; } } });
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "結果を見ずに、あと30問続ける");
+  for (let index = 0; index < 30; index += 1) answerCurrent(host);
+  assert.match(collectText(host), /50問詳細結果/);
+  const envelope = JSON.parse(raw);
+  assert.deepEqual(envelope.progressByDiagnosis, {});
+  assert.equal(envelope.results.length, 1);
+  assert.doesNotMatch(JSON.stringify(envelope.results[0]), /answers/);
+});
+
+function createShownPreviewProgress() {
+  let progress = createProgressRecord({
+    definition: DiagnosticDefinition,
+    meta: appMeta,
+    progressId: "00000000-0000-4000-8000-000000000091",
+    now: "2026-07-27T12:00:00.000Z",
+  });
+  for (const questionId of DiagnosticDefinition.previewQuestionIds) {
+    progress = answerProgress(progress, { questionId, value: 3 }, {
+      definition: DiagnosticDefinition,
+      meta: appMeta,
+      now: "2026-07-27T12:00:00.000Z",
+    }).progress;
+  }
+  return choosePreviewExit(progress, "showPreview", {
+    definition: DiagnosticDefinition,
+    meta: appMeta,
+    now: "2026-07-27T12:00:00.000Z",
+  }).progress;
+}
+
+test("T-005 S-003 reloads a saved preview into question 21 only with its compatible shown-preview progress", () => {
+  const progress = createShownPreviewProgress();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000092",
+    questionCount: 20,
+    versionTuple: progress.versionTuple,
+  });
+  let raw = JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: "2026-07-27T12:00:00.000Z",
+    progressByDiagnosis: { [DiagnosticDefinition.diagnosisId]: progress },
+    results: [snapshot],
+  });
+  const { host, windowObject } = createAppHarness({
+    hash: `#/result?resultId=${snapshot.resultId}`,
+    storage: { getItem: () => raw, setItem(_key, value) { raw = value; } },
+  });
+
+  clickButton(host, "あと30問に回答する");
+  assert.equal(windowObject.location.hash, "#/answer");
+  assert.match(collectText(host), /21 \/ 50問/);
+  assert.equal(JSON.parse(raw).progressByDiagnosis[DiagnosticDefinition.diagnosisId].previewDecision, "showPreview");
+});
+
+test("T-005 S-003 hides saved preview continuation without a matching compatible progress record", () => {
+  const unrelatedProgress = createShownPreviewProgress();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000093",
+    questionCount: 20,
+    versionTuple: { ...unrelatedProgress.versionTuple, appVersion: "mvp-0.1.1" },
+  });
+  const { host } = createAppHarness({
+    hash: `#/result?resultId=${snapshot.resultId}`,
+    storage: { getItem: () => JSON.stringify({
+      schemaVersion: 1,
+      updatedAt: "2026-07-27T12:00:00.000Z",
+      progressByDiagnosis: { [DiagnosticDefinition.diagnosisId]: unrelatedProgress },
+      results: [snapshot],
+    }) },
+  });
+  assert.equal(collectElements(host).filter(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "あと30問に回答する").length, 0);
+});
+
+test("T-005 F-016 does not duplicate result observers when a hashchange follows an internal route update", () => {
+  let hashchange;
+  let raw = null;
+  const documentObject = {
+    createElement(tagName) { return new FakeElement(tagName, documentObject); },
+    getElementById(id) { return id === "app" ? host : null; },
+  };
+  const host = new FakeElement("div", documentObject);
+  const windowObject = {
+    location: { hash: "#/start" },
+    addEventListener(type, callback) { if (type === "hashchange") hashchange = callback; },
+  };
+  let observed = 0;
+  startApp({
+    documentObject,
+    historyObject: { replaceState() {} },
+    windowObject,
+    storage: { getItem: () => raw, setItem(_key, value) { raw = value; } },
+    nowProvider: () => "2026-07-27T12:00:00.000Z",
+    uuidProvider: () => "00000000-0000-4000-8000-000000000094",
+    observeViewport() { observed += 1; },
+  });
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+  assert.equal(observed, 1);
+  hashchange();
+  assert.equal(observed, 1);
+});
+
+test("T-005 S-004 keeps an unsaved detail live result and starts a fresh empty progress record on retry", () => {
+  let raw = null;
+  let writes = 0;
+  const ids = [];
+  const documentObject = {
+    createElement(tagName) { return new FakeElement(tagName, documentObject); },
+    getElementById(id) { return id === "app" ? host : null; },
+  };
+  const host = new FakeElement("div", documentObject);
+  const windowObject = { location: { hash: "#/start" }, addEventListener() {} };
+  startApp({
+    documentObject,
+    historyObject: { replaceState() {} },
+    windowObject,
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) {
+        writes += 1;
+        if (writes === 53) throw new Error("detail snapshot save failed");
+        raw = value;
+      },
+    },
+    nowProvider: () => "2026-07-27T12:00:00.000Z",
+    uuidProvider: () => {
+      const id = `00000000-0000-4000-8000-${String(ids.length + 1).padStart(12, "0")}`;
+      ids.push(id);
+      return id;
+    },
+  });
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "結果を見ずに、あと30問続ける");
+  for (let index = 0; index < 30; index += 1) answerCurrent(host);
+  assert.match(collectText(host), /50問詳細結果/);
+  assert.match(collectText(host), /結果は表示できましたが、この端末の履歴には保存できませんでした。/);
+  clickButton(host, "もう一度診断する");
+  const progress = JSON.parse(raw).progressByDiagnosis[DiagnosticDefinition.diagnosisId];
+  assert.match(collectText(host), /1 \/ 20問/);
+  assert.equal(progress.progressId, ids[2]);
+  assert.deepEqual(progress.answers, {});
+});
+
+test("T-005 F-016 opens a saved history result without duplicating its observer on the following hashchange", () => {
+  const snapshot = createTestResultSnapshot({ resultId: "00000000-0000-4000-8000-000000000095" });
+  let hashchange;
+  const documentObject = {
+    createElement(tagName) { return new FakeElement(tagName, documentObject); },
+    getElementById(id) { return id === "app" ? host : null; },
+  };
+  const host = new FakeElement("div", documentObject);
+  const windowObject = {
+    location: { hash: "#/history" },
+    addEventListener(type, callback) { if (type === "hashchange") hashchange = callback; },
+  };
+  let observed = 0;
+  startApp({
+    documentObject,
+    historyObject: { replaceState() {} },
+    windowObject,
+    storage: { getItem: () => JSON.stringify({
+      schemaVersion: 1,
+      updatedAt: "2026-07-27T12:00:00.000Z",
+      progressByDiagnosis: {},
+      results: [snapshot],
+    }) },
+    nowProvider: () => "2026-07-27T12:00:00.000Z",
+    observeViewport() { observed += 1; },
+  });
+
+  clickButton(host, "この結果を開く");
+  assert.equal(observed, 1);
+  hashchange();
+  assert.equal(observed, 1);
 });

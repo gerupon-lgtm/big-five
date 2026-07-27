@@ -66,3 +66,11 @@ test("T-005/T-006 S-003/S-004 resolves an independent saved result route", () =>
     resultId: null,
   });
 });
+
+test("T-005 S-002 resolves the canonical answer hash without a server-side route", () => {
+  assert.deepEqual(resolveRoute("#/answer"), {
+    id: "answer",
+    canonicalHash: "#/answer",
+    didFallback: false,
+  });
+});

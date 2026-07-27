@@ -331,6 +331,10 @@ export function renderSavedResultScreen(
     "h1",
     savedSnapshot.mode === "preview20" ? "20問簡易プレビュー" : "50問詳細結果",
   );
+  if (typeof dependencies.notice === "string" && dependencies.notice.length > 0) {
+    const notice = appendTextElement(main, "p", dependencies.notice, "notice error-notice result-storage-error");
+    notice.setAttribute("role", "alert");
+  }
   const completed = appendTextElement(
     main,
     "time",
