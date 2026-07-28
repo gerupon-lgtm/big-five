@@ -349,6 +349,7 @@ git commit -m "style: add shared app chrome"
 - Modify: `app/js/presentation/questionnaire-screen.js`
 - Modify: `app/tests/start-screen.test.js`
 - Modify: `app/tests/questionnaire-screen.test.js`
+- Modify: `app/tests/app-shell.test.js`
 - Modify: `app/css/styles.css`
 
 **Interfaces:**
@@ -537,7 +538,7 @@ appendScreenHeading(main, {
 ```powershell
 node --test app/tests/start-screen.test.js app/tests/questionnaire-screen.test.js app/tests/app-shell.test.js app/tests/questionnaire-typography.test.js
 git diff --check
-git diff -- app/js/presentation/start-screen.js app/js/presentation/questionnaire-screen.js app/css/styles.css app/tests/start-screen.test.js app/tests/questionnaire-screen.test.js
+git diff -- app/js/presentation/start-screen.js app/js/presentation/questionnaire-screen.js app/css/styles.css app/tests/start-screen.test.js app/tests/questionnaire-screen.test.js app/tests/app-shell.test.js
 ```
 
 Expected: 対象テスト全件PASS。状態・保存・回答データを扱うdomain/infrastructureに差分なし。
@@ -545,7 +546,7 @@ Expected: 対象テスト全件PASS。状態・保存・回答データを扱う
 - [ ] **Step 8: Task 2をコミットする**
 
 ```powershell
-git add -- app/js/presentation/start-screen.js app/js/presentation/questionnaire-screen.js app/css/styles.css app/tests/start-screen.test.js app/tests/questionnaire-screen.test.js
+git add -- app/js/presentation/start-screen.js app/js/presentation/questionnaire-screen.js app/css/styles.css app/tests/start-screen.test.js app/tests/questionnaire-screen.test.js app/tests/app-shell.test.js
 git commit -m "style: refine start and answer hierarchy"
 ```
 
