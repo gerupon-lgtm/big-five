@@ -350,6 +350,38 @@ test("Q-006 F-3 uses the reviewed high-band reflection prompts for extraversion"
   );
 });
 
+test("Q-006 F-3 uses the reviewed middle-band reflection prompts for extraversion", () => {
+  const middleDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "extraversion"
+    && appliesTo.band === "middle"
+  );
+  assert.deepEqual(
+    Object.fromEntries(middleDetail
+      .filter(({ section }) => section !== "observation")
+      .map(({ section, text: resultText }) => [
+        section,
+        resultText,
+      ])),
+    {
+      strength:
+        "最近、「自分から話してみよう」と思った場面と、「まずは様子を見よう」と思った場面がありましたか。",
+      tradeoff:
+        "人が集まる場で、「会話に加わりたい」気持ちと「少し離れて見ていたい」気持ちの間で迷ったことはありましたか。",
+      work:
+        "仕事や学びのなかで、「自分から相談するか」「もう少し一人で考えてから話すか」で迷った場面はありましたか。",
+      relationship:
+        "親しい相手とは自然に話せても、初めて会う相手には少し様子を見たくなった場面はありましたか。",
+      stress:
+        "会話や集まりが続いたとき、「もう少し参加したい」気持ちと「少し一人で休みたい」気持ちの間で迷ったことはありませんか。",
+      question:
+        "最近、「今日は人と話したい」と感じた日と、「今日は静かに過ごしたい」と感じた日はありましたか。",
+      action:
+        "もしよければ、次に誰かと話すとき、自分から伝えたいこと、または、相手に聞きたいことを一つだけ決めてみませんか。",
+    },
+  );
+});
+
 test("Q-006 F-2 uses the reviewed high-band reflection prompts for conscientiousness", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"
