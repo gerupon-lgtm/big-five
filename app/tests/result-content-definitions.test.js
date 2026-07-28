@@ -348,6 +348,38 @@ test("Q-006 E-4/F-4 uses the reviewed consideration wording for agreeableness ob
   );
 });
 
+test("Q-006 F-4 uses the reviewed high-band reflection prompts for agreeableness", () => {
+  const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "agreeableness"
+    && appliesTo.band === "high"
+  );
+  assert.deepEqual(
+    Object.fromEntries(highDetail
+      .filter(({ section }) => section !== "observation")
+      .map(({ section, text: resultText }) => [
+        section,
+        resultText,
+      ])),
+    {
+      strength:
+        "最近、相手の表情や様子の変化に気づき、「大丈夫？」と自分から声をかけた場面はありましたか。",
+      tradeoff:
+        "相手を気づかうあまり、自分の本来の作業を後回しにしてしまった場面はありましたか。",
+      work:
+        "仕事や学びのなかで、困っていそうな人に声をかけたことで、物事がスムーズに運んだ場面はありましたか。",
+      relationship:
+        "人との会話で、相手の気持ちを確かめながら言葉を選んだことで、落ち着いて話し合えた場面はありましたか。",
+      stress:
+        "意見が合わないとき、相手を傷つけない言い方を考えすぎて、伝えたいことを言えずに疲れたことはありませんか。",
+      question:
+        "最近、誰かのために時間を使ったことで、「力になれてよかった」と感じた場面はありましたか。",
+      action:
+        "もしよければ、最近気になっている相手へ、「最近どう？」と短く声をかけてみませんか。",
+    },
+  );
+});
+
 test("Q-006 F-3 uses the reviewed high-band reflection prompts for extraversion", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"
