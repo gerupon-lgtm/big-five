@@ -578,7 +578,7 @@ Create exactly one `observation` for each factor×band in preview mode:
   },
   section: "observation",
   claimKind: "scaleObservation",
-  text: "今回の20問では、考えや新しい発想への関心を示す回答が全体として高めでした。",
+  text: "今回の20問では、新しい考え方や発想への関心は、尺度内で高めの傾向が見られました。",
   evidenceRefs: [
     "evidence-ipip-japanese-markers",
     "evidence-mini-ipip-selection",
@@ -605,7 +605,7 @@ For each factor×band, create the eight sections in `DETAIL_SECTIONS` order. Use
   },
   section: "observation",
   claimKind: "scaleObservation",
-  text: "今回の50問では、考えや新しい発想への関心を示す回答が全体として高めでした。",
+  text: "今回の50問では、新しい考え方や発想への関心は、尺度内で高めの傾向が見られました。",
   evidenceRefs: [
     "evidence-ipip-japanese-markers",
     "evidence-ipip-50-item-scale",
@@ -623,7 +623,22 @@ For each factor×band, create the eight sections in `DETAIL_SECTIONS` order. Use
   },
   section: "work",
   claimKind: "reflectionPrompt",
-  text: "仕事や学びで、新しい考え方へ興味が向いた場面はありましたか。",
+  text: "仕事や学びのなかで、新しいやり方や考え方に「いいな」と惹かれた瞬間はありましたか。",
+  evidenceRefs: ["evidence-result-presentation-contract"],
+  previewAllowed: false,
+},
+{
+  id: "detail50-intellectImagination-middle-work",
+  version: "result-text-v1",
+  appliesTo: {
+    mode: "detail50",
+    questionCount: 50,
+    factorId: "intellectImagination",
+    band: "middle",
+  },
+  section: "work",
+  claimKind: "reflectionPrompt",
+  text: "仕事や学びのなかで、「慣れたやり方で確実に進めるか」「少し時間がかかっても新しい方法を試すか」、どちらで進めるか考えた場面はありましたか。",
   evidenceRefs: ["evidence-result-presentation-contract"],
   previewAllowed: false,
 }
