@@ -580,9 +580,8 @@ dd {
   width: min(100% - 32px, 880px);
 }
 
-.result-screen > h1 {
-  max-width: none;
-  font-size: clamp(2rem, 8vw, 3.8rem);
+.result-screen-title {
+  font-size: clamp(1.375rem, 1.25rem + 0.6vw, 1.5rem);
 }
 
 .result-completed-at,

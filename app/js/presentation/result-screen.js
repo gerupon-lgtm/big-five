@@ -3,6 +3,7 @@ import { createResultDisclosureModel } from "../domain/result-disclosure-model.j
 import { drawResultRadar } from "./radar-chart.js";
 import { appendAppHeader } from "./app-header.js";
 import { appendBottomSheetLauncher } from "./bottom-sheet.js";
+import { appendScreenHeading } from "./screen-heading.js";
 import { appendTextElement, formatCompletedAt } from "./screen-helpers.js";
 
 function appendEvidence(parent, record) {
@@ -376,8 +377,12 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
   const documentObject = host.ownerDocument ?? document;
   const main = documentObject.createElement("main");
   main.className = `app-shell result-screen ${savedSnapshot.mode}`;
-  appendAppHeader(main, { screenLabel: savedSnapshot.mode === "preview20" ? "簡易結果" : "詳細結果" });
-  appendTextElement(main, "h1", savedSnapshot.mode === "preview20" ? "20問簡易プレビュー" : "50問詳細結果");
+  appendAppHeader(main);
+  appendScreenHeading(main, {
+    kicker: savedSnapshot.mode === "preview20" ? "PREVIEW RESULT" : "DETAIL RESULT",
+    title: savedSnapshot.mode === "preview20" ? "20問簡易プレビュー" : "50問詳細結果",
+    titleClassName: "result-screen-title",
+  });
   if (typeof dependencies.notice === "string" && dependencies.notice.length > 0) {
     const notice = appendTextElement(main, "p", dependencies.notice, "notice error-notice result-storage-error");
     notice.setAttribute("role", "alert");

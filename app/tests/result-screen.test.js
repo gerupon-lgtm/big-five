@@ -41,6 +41,33 @@ function resultTextRecords(host) {
     .filter(({ className }) => className.includes("result-text-record"));
 }
 
+test("T-008A S-003/S-004 renders mode-specific result headings without header actions", () => {
+  for (const [questionCount, kicker, title] of [
+    [20, "PREVIEW RESULT", "20問簡易プレビュー"],
+    [50, "DETAIL RESULT", "50問詳細結果"],
+  ]) {
+    const { host } = createFakeScreen();
+
+    renderSavedResultScreen(
+      host,
+      createTestResultSnapshot({
+        resultId: `00000000-0000-4000-8000-0000000000${questionCount}`,
+        questionCount,
+      }),
+      labels,
+    );
+
+    const heading = collectElements(host)
+      .find(({ className }) => className === "screen-heading");
+    assert.match(collectText(heading), new RegExp(kicker));
+    assert.match(collectText(heading), new RegExp(title));
+    assert.equal(
+      collectElements(host).filter(({ className }) => className === "app-header-action").length,
+      0,
+    );
+  }
+});
+
 test("T-005 S-003 renders the complete saved preview with factor help and the 30-question path", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({
