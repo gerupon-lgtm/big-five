@@ -318,6 +318,36 @@ test("Q-006 E-3/F-3 uses the reviewed interaction wording for extraversion obser
   );
 });
 
+test("Q-006 E-4/F-4 uses the reviewed consideration wording for agreeableness observations", () => {
+  const byId = new Map(FactorResultTextDefinitions.map((definition) => [
+    definition.id,
+    definition.text,
+  ]));
+  assert.deepEqual(
+    Object.fromEntries([
+      ...["preview20", "detail50"].flatMap((mode) => [
+        [`${mode}-agreeableness-high-observation`, byId.get(`${mode}-agreeableness-high-observation`)],
+        [`${mode}-agreeableness-middle-observation`, byId.get(`${mode}-agreeableness-middle-observation`)],
+        [`${mode}-agreeableness-low-observation`, byId.get(`${mode}-agreeableness-low-observation`)],
+      ]),
+    ]),
+    {
+      "preview20-agreeableness-high-observation":
+        "今回の20問では、人への関心や相手の気持ちに配慮する傾向が、尺度内で高めに見られました。",
+      "preview20-agreeableness-middle-observation":
+        "今回の20問では、人への関心や相手の気持ちに配慮する傾向が、尺度内の中間域にありました。",
+      "preview20-agreeableness-low-observation":
+        "今回の20問では、人への関心や相手の気持ちに配慮する傾向が、尺度内で低めに見られました。",
+      "detail50-agreeableness-high-observation":
+        "今回の50問では、相手の気持ちに配慮したり人のために行動したりする傾向が、尺度内で高めに見られました。",
+      "detail50-agreeableness-middle-observation":
+        "今回の50問では、相手の気持ちに配慮したり人のために行動したりする傾向が、尺度内の中間域にありました。",
+      "detail50-agreeableness-low-observation":
+        "今回の50問では、相手の気持ちに配慮したり人のために行動したりする傾向が、尺度内で低めに見られました。",
+    },
+  );
+});
+
 test("Q-006 F-3 uses the reviewed high-band reflection prompts for extraversion", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"

@@ -182,10 +182,10 @@ detail50-extraversion-low-relationship,result-text-v1,180,relationship,reflectio
 detail50-extraversion-low-stress,result-text-v1,181,stress,reflectionPrompt,detail50,extraversion,low,,false,急に人から注目されたとき、何を話せばよいか分からず、その場から少し離れたくなったことはありませんか。,reviewed
 detail50-extraversion-low-question,result-text-v1,182,question,reflectionPrompt,detail50,extraversion,low,,false,最近、すぐに会話へ加わらず、まず周りの様子を見たことで、話しやすいタイミングを見つけられた場面はありましたか。,reviewed
 detail50-extraversion-low-action,result-text-v1,183,action,actionHint,detail50,extraversion,low,,false,もしよければ、伝えたい相手を一人だけ思い浮かべ、話したいことを一文だけメモしてみませんか。,reviewed
-preview20-agreeableness-high-observation,result-text-v1,184,observation,scaleObservation,preview20,agreeableness,high,,true,今回の20問では、他者への関心や気持ちへの配慮を示す回答が全体として高めでした。,reviewed
-preview20-agreeableness-middle-observation,result-text-v1,185,observation,scaleObservation,preview20,agreeableness,middle,,true,今回の20問では、他者への関心や気持ちへの配慮を示す回答が尺度内の中間域でした。,reviewed
-preview20-agreeableness-low-observation,result-text-v1,186,observation,scaleObservation,preview20,agreeableness,low,,true,今回の20問では、他者への関心や気持ちへの配慮を示す回答が全体として低めでした。,reviewed
-detail50-agreeableness-high-observation,result-text-v1,187,observation,scaleObservation,detail50,agreeableness,high,,false,今回の50問では、他者への関心や気持ちへの配慮を示す回答が全体として高めでした。,reviewed
+preview20-agreeableness-high-observation,result-text-v1,184,observation,scaleObservation,preview20,agreeableness,high,,true,今回の20問では、人への関心や相手の気持ちに配慮する傾向が、尺度内で高めに見られました。,reviewed
+preview20-agreeableness-middle-observation,result-text-v1,185,observation,scaleObservation,preview20,agreeableness,middle,,true,今回の20問では、人への関心や相手の気持ちに配慮する傾向が、尺度内の中間域にありました。,reviewed
+preview20-agreeableness-low-observation,result-text-v1,186,observation,scaleObservation,preview20,agreeableness,low,,true,今回の20問では、人への関心や相手の気持ちに配慮する傾向が、尺度内で低めに見られました。,reviewed
+detail50-agreeableness-high-observation,result-text-v1,187,observation,scaleObservation,detail50,agreeableness,high,,false,今回の50問では、相手の気持ちに配慮したり人のために行動したりする傾向が、尺度内で高めに見られました。,reviewed
 detail50-agreeableness-high-strength,result-text-v1,188,strength,reflectionPrompt,detail50,agreeableness,high,,false,最近、相手の気持ちや困りごとをたずねた場面はありましたか。,reviewed
 detail50-agreeableness-high-tradeoff,result-text-v1,189,tradeoff,reflectionPrompt,detail50,agreeableness,high,,false,相手を気づかいたいとき、自分の希望をいつ伝えるか迷った場面はありましたか。,reviewed
 detail50-agreeableness-high-work,result-text-v1,190,work,reflectionPrompt,detail50,agreeableness,high,,false,仕事や学びで、周りの人が困っていないか声をかけた場面はありましたか。,reviewed
@@ -193,7 +193,7 @@ detail50-agreeableness-high-relationship,result-text-v1,191,relationship,reflect
 detail50-agreeableness-high-stress,result-text-v1,192,stress,reflectionPrompt,detail50,agreeableness,high,,false,意見が合わないとき、相手を気づかって言葉を選んだ場面はありましたか。,reviewed
 detail50-agreeableness-high-question,result-text-v1,193,question,reflectionPrompt,detail50,agreeableness,high,,false,最近、誰かのために時間を使った場面はありましたか。,reviewed
 detail50-agreeableness-high-action,result-text-v1,194,action,actionHint,detail50,agreeableness,high,,false,よければ、気になる相手へ短く様子をたずねてみませんか。,reviewed
-detail50-agreeableness-middle-observation,result-text-v1,195,observation,scaleObservation,detail50,agreeableness,middle,,false,今回の50問では、他者への関心や気持ちへの配慮を示す回答が尺度内の中間域でした。,reviewed
+detail50-agreeableness-middle-observation,result-text-v1,195,observation,scaleObservation,detail50,agreeableness,middle,,false,今回の50問では、相手の気持ちに配慮したり人のために行動したりする傾向が、尺度内の中間域にありました。,reviewed
 detail50-agreeableness-middle-strength,result-text-v1,196,strength,reflectionPrompt,detail50,agreeableness,middle,,false,最近、相手に合わせた場面と、自分の意見を伝えた場面に違いはありましたか。,reviewed
 detail50-agreeableness-middle-tradeoff,result-text-v1,197,tradeoff,reflectionPrompt,detail50,agreeableness,middle,,false,意見が合わないとき、相手への配慮と自分の考えをどの順番で伝えるか迷った場面はありましたか。,reviewed
 detail50-agreeableness-middle-work,result-text-v1,198,work,reflectionPrompt,detail50,agreeableness,middle,,false,仕事や学びで、協力を頼むか自分で進めるかを選んだ場面はありましたか。,reviewed
@@ -201,7 +201,7 @@ detail50-agreeableness-middle-relationship,result-text-v1,199,relationship,refle
 detail50-agreeableness-middle-stress,result-text-v1,200,stress,reflectionPrompt,detail50,agreeableness,middle,,false,意見が合わないとき、どこまで譲るか考えた場面はありましたか。,reviewed
 detail50-agreeableness-middle-question,result-text-v1,201,question,reflectionPrompt,detail50,agreeableness,middle,,false,最近、相手を気づかった場面と、自分の希望を伝えた場面はありましたか。,reviewed
 detail50-agreeableness-middle-action,result-text-v1,202,action,actionHint,detail50,agreeableness,middle,,false,よければ、次の会話で相手に聞きたいことを一つ決めてみませんか。,reviewed
-detail50-agreeableness-low-observation,result-text-v1,203,observation,scaleObservation,detail50,agreeableness,low,,false,今回の50問では、他者への関心や気持ちへの配慮を示す回答が全体として低めでした。,reviewed
+detail50-agreeableness-low-observation,result-text-v1,203,observation,scaleObservation,detail50,agreeableness,low,,false,今回の50問では、相手の気持ちに配慮したり人のために行動したりする傾向が、尺度内で低めに見られました。,reviewed
 detail50-agreeableness-low-strength,result-text-v1,204,strength,reflectionPrompt,detail50,agreeableness,low,,false,最近、自分の考えを伝える前後に、相手の反応を確かめた場面はありましたか。,reviewed
 detail50-agreeableness-low-tradeoff,result-text-v1,205,tradeoff,reflectionPrompt,detail50,agreeableness,low,,false,意見が合わないとき、相手への気づかいをどう言葉にするか迷った場面はありましたか。,reviewed
 detail50-agreeableness-low-work,result-text-v1,206,work,reflectionPrompt,detail50,agreeableness,low,,false,仕事や学びで、周りに合わせるより自分の意見を先に伝えた場面はありましたか。,reviewed
