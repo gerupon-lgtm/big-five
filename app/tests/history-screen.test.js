@@ -317,6 +317,98 @@ test("T-008A F-013 handles native dialog cancel as Escape", () => {
   assert.equal(host.ownerDocument.activeElement, launcher);
 });
 
+test("T-008A F-013 fallback without showModal isolates background and wraps focus", () => {
+  const { host } = createFakeScreen();
+
+  renderHistoryScreen(
+    host,
+    { status: "ok", results: [], ...screenLabels },
+    {},
+  );
+
+  const launcher = collectElements(host).find(
+    ({ className }) => className === "history-management-toggle",
+  );
+  const modal = collectElements(host).find(
+    ({ className }) => className === "history-management-modal",
+  );
+  const appHeader = collectElements(host).find(
+    ({ className }) => className === "app-header",
+  );
+  const backLink = collectElements(host).find(
+    ({ className }) => className === "text-link",
+  );
+  modal.showModal = undefined;
+  launcher.dispatch("click");
+
+  const close = collectElements(modal).find(
+    ({ className }) => className === "history-management-close",
+  );
+  const deleteAll = collectElements(modal).find(
+    ({ className, tagName }) =>
+      className === "danger-button" && tagName === "button",
+  );
+  assert.equal(appHeader.inert, true);
+  assert.equal(appHeader.getAttribute("aria-hidden"), "true");
+  assert.equal(backLink.inert, true);
+  assert.equal(launcher.inert, true);
+
+  deleteAll.focus();
+  const forward = modal.dispatch("keydown", { key: "Tab" });
+  assert.equal(forward.defaultPrevented, true);
+  assert.equal(host.ownerDocument.activeElement, close);
+  close.focus();
+  const backward = modal.dispatch("keydown", { key: "Tab", shiftKey: true });
+  assert.equal(backward.defaultPrevented, true);
+  assert.equal(host.ownerDocument.activeElement, deleteAll);
+
+  modal.dispatch("click");
+  assert.equal(appHeader.inert, false);
+  assert.equal(appHeader.getAttribute("aria-hidden"), null);
+  assert.equal(backLink.inert, false);
+  assert.equal(launcher.inert, false);
+  assert.equal(host.ownerDocument.activeElement, launcher);
+});
+
+test("T-008A F-013 throwing showModal fallback restores background on explicit close and Escape", () => {
+  const { host } = createFakeScreen();
+
+  renderHistoryScreen(
+    host,
+    { status: "ok", results: [], ...screenLabels },
+    {},
+  );
+
+  const launcher = collectElements(host).find(
+    ({ className }) => className === "history-management-toggle",
+  );
+  const modal = collectElements(host).find(
+    ({ className }) => className === "history-management-modal",
+  );
+  const appHeader = collectElements(host).find(
+    ({ className }) => className === "app-header",
+  );
+  modal.showModal = () => {
+    throw new Error("showModal unavailable");
+  };
+  launcher.dispatch("click");
+  collectElements(modal).find(
+    ({ className }) => className === "history-management-close",
+  ).dispatch("click");
+
+  assert.equal(appHeader.inert, false);
+  assert.equal(appHeader.getAttribute("aria-hidden"), null);
+  assert.equal(host.ownerDocument.activeElement, launcher);
+
+  launcher.dispatch("click");
+  const event = modal.dispatch("keydown", { key: "Escape" });
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(appHeader.inert, false);
+  assert.equal(appHeader.getAttribute("aria-hidden"), null);
+  assert.equal(launcher.inert, false);
+  assert.equal(host.ownerDocument.activeElement, launcher);
+});
+
 test("T-008A F-013 keeps all-data deletion reachable for empty history", () => {
   const { host } = createFakeScreen();
   let deleteAllCalls = 0;

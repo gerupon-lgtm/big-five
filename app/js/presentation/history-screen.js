@@ -293,10 +293,65 @@ function renderHistoryHeader(parent, historyState, actions) {
   }
 
   let modalOpen = false;
+  let fallbackMode = false;
+  let fallbackBackgroundStates = [];
+
+  function subtreeContainsDialog(element) {
+    if (element === dialog) return true;
+    return Array.from(element.children ?? []).some(subtreeContainsDialog);
+  }
+
+  function fallbackBackgroundBranches(container) {
+    return Array.from(container.children ?? []).flatMap((child) => {
+      if (child === dialog) return [];
+      if (!subtreeContainsDialog(child)) return [child];
+      return fallbackBackgroundBranches(child);
+    });
+  }
+
+  function activateFallbackModality() {
+    fallbackBackgroundStates = fallbackBackgroundBranches(parent).map((element) => ({
+      element,
+      inert: Boolean(element.inert),
+      ariaHidden: element.getAttribute("aria-hidden"),
+    }));
+    for (const { element } of fallbackBackgroundStates) {
+      element.inert = true;
+      element.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  function restoreFallbackModality() {
+    for (const { element, inert, ariaHidden } of fallbackBackgroundStates) {
+      element.inert = inert;
+      if (ariaHidden === null) {
+        element.removeAttribute("aria-hidden");
+      } else {
+        element.setAttribute("aria-hidden", ariaHidden);
+      }
+    }
+    fallbackBackgroundStates = [];
+  }
+
+  function fallbackFocusableElements() {
+    const focusableTags = new Set(["a", "button", "input", "select", "summary", "textarea"]);
+    return collectDescendants(dialog).filter((element) =>
+      focusableTags.has(String(element.tagName).toLowerCase()) && !element.disabled
+    );
+  }
+
+  function collectDescendants(element) {
+    return Array.from(element.children ?? []).flatMap((child) => [
+      child,
+      ...collectDescendants(child),
+    ]);
+  }
 
   function closeManagement() {
     if (!modalOpen) return;
+    const wasFallback = fallbackMode;
     modalOpen = false;
+    fallbackMode = false;
     toggle.setAttribute("aria-expanded", "false");
     if (dialog.open) {
       if (typeof dialog.close === "function") {
@@ -306,6 +361,7 @@ function renderHistoryHeader(parent, historyState, actions) {
         dialog.removeAttribute("open");
       }
     }
+    if (wasFallback) restoreFallbackModality();
     toggle.focus?.();
   }
 
@@ -317,12 +373,16 @@ function renderHistoryHeader(parent, historyState, actions) {
       try {
         dialog.showModal();
       } catch {
+        fallbackMode = true;
         dialog.open = true;
         dialog.setAttribute("open", "");
+        activateFallbackModality();
       }
     } else {
+      fallbackMode = true;
       dialog.open = true;
       dialog.setAttribute("open", "");
+      activateFallbackModality();
     }
     closeButton.focus?.();
   }
@@ -336,13 +396,27 @@ function renderHistoryHeader(parent, historyState, actions) {
     closeManagement();
   });
   dialog.addEventListener("close", closeManagement);
-  if (typeof dialog.showModal !== "function") {
-    dialog.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape") return;
+  dialog.addEventListener("keydown", (event) => {
+    if (!fallbackMode) return;
+    if (event.key === "Escape") {
       event.preventDefault();
       closeManagement();
-    });
-  }
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = fallbackFocusableElements();
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    const active = dialog.ownerDocument.activeElement;
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus?.();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus?.();
+    }
+  });
   toggle.addEventListener("click", openManagement);
   header.append(dialog);
   parent.append(header);

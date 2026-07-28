@@ -10,6 +10,7 @@ export class FakeElement {
     this.disabled = false;
     this.hidden = false;
     this.open = false;
+    this.inert = false;
   }
 
   append(child) {
@@ -31,6 +32,10 @@ export class FakeElement {
 
   setAttribute(name, value) {
     this.attributes.set(name, value);
+  }
+
+  getAttribute(name) {
+    return this.attributes.get(name) ?? null;
   }
 
   removeAttribute(name) {
