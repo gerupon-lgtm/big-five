@@ -426,6 +426,10 @@ test("T-008A F-005 keeps all detail records in one-factor and one-category discl
     .filter(({ className }) => className === "factor-disclosure-trigger");
   const categoryTriggers = collectElements(host)
     .filter(({ className }) => className === "category-disclosure-trigger");
+  const categoryLabels = collectElements(host)
+    .filter(({ className }) => className === "factor-category-label");
+  const categorySummaries = collectElements(host)
+    .filter(({ className }) => className === "factor-category-summary");
   const scoreRows = collectElements(host)
     .filter(({ className }) => className === "factor-score-row");
   const bars = collectElements(host)
@@ -435,6 +439,33 @@ test("T-008A F-005 keeps all detail records in one-factor and one-category discl
   assert.equal(bars.length, 5);
   assert.equal(factorTriggers.length, 5);
   assert.equal(categoryTriggers.length, 35);
+  assert.deepEqual(
+    factorTriggers.map(({ textContent }) => textContent),
+    Array(5).fill("説明を見る"),
+  );
+  assert.deepEqual(
+    categoryTriggers.map(({ textContent }) => textContent),
+    Array(35).fill("詳しく見る"),
+  );
+  assert.deepEqual(
+    categoryLabels.slice(0, 7).map(({ textContent }) => textContent),
+    [
+      "今の傾向",
+      "活かしやすい強み",
+      "強みの裏返り",
+      "仕事での現れ方",
+      "人間関係での現れ方",
+      "ストレス時の傾向",
+      "振り返りと行動ヒント",
+    ],
+  );
+  assert.equal(categoryLabels.length, 35);
+  assert.equal(categorySummaries.length, 35);
+  assert.equal(
+    collectElements(host).filter(({ textContent }) =>
+      textContent === "※因子名の「説明を見る」から、それぞれの意味を確認できます。").length,
+    1,
+  );
   assert.equal(
     collectElements(host).filter(({ textContent }) => textContent === "0–100").length,
     1,
@@ -478,8 +509,19 @@ test("T-008A F-005 limits preview disclosure to current observations while retai
 
   const categoryTriggers = collectElements(host)
     .filter(({ className }) => className === "category-disclosure-trigger");
+  const categoryLabels = collectElements(host)
+    .filter(({ className }) => className === "factor-category-label");
+  const factorTriggers = collectElements(host)
+    .filter(({ className }) => className === "factor-disclosure-trigger");
   assert.equal(categoryTriggers.length, 5);
-  assert.deepEqual(categoryTriggers.map(({ textContent }) => textContent), Array(5).fill("今の傾向"));
+  assert.deepEqual(categoryTriggers.map(({ textContent }) => textContent), Array(5).fill("詳しく見る"));
+  assert.deepEqual(categoryLabels.map(({ textContent }) => textContent), Array(5).fill("今の傾向"));
+  assert.deepEqual(factorTriggers.map(({ textContent }) => textContent), Array(5).fill("説明を見る"));
+  assert.equal(
+    collectElements(host).filter(({ textContent }) =>
+      textContent === "※因子名の「説明を見る」から、それぞれの意味を確認できます。").length,
+    0,
+  );
   assert.deepEqual(
     resultTextRecords(host).map(({ attributes }) => attributes.get("data-result-text-id")),
     snapshot.renderedTexts.map(({ id }) => id),

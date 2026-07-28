@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { appendBottomSheetLauncher } from "../js/presentation/bottom-sheet.js";
@@ -116,4 +117,62 @@ test("T-008A F-008 closes once on keydown Escape even when close dispatches sync
   dialog.dispatch("cancel");
   assert.equal(closeCalls, 1);
   assert.equal(focusCalls, 1);
+});
+
+test("T-008A F-008 uses an inline same-DOM fallback and restores launcher focus", () => {
+  for (const [mode, closeWithEscape] of [
+    ["unavailable", false],
+    ["throws", true],
+  ]) {
+    const { host } = createFakeScreen();
+    const launcher = appendBottomSheetLauncher(host, {
+      id: `method-fallback-${mode}`,
+      label: "測定の土台",
+      title: "測定の土台",
+      body: "診断時の測定方法です。",
+    });
+    const dialog = collectElements(host).find(
+      ({ tagName }) => tagName === "dialog",
+    );
+    const close = collectElements(dialog).find(
+      ({ tagName, textContent }) =>
+        tagName === "button" && textContent === "閉じる",
+    );
+    dialog.showModal = mode === "unavailable"
+      ? undefined
+      : () => { throw new Error("showModal unavailable"); };
+
+    launcher.dispatch("click");
+
+    assert.equal(dialog.open, true);
+    assert.equal(dialog.className, "bottom-sheet bottom-sheet--inline");
+    assert.equal(dialog.getAttribute("data-presentation"), "inline");
+    assert.equal(host.ownerDocument.activeElement, close);
+    assert.equal(launcher.getAttribute("aria-expanded"), "true");
+
+    if (closeWithEscape) {
+      const event = dialog.dispatch("keydown", { key: "Escape" });
+      assert.equal(event.defaultPrevented, true);
+    } else {
+      close.dispatch("click");
+    }
+
+    assert.equal(dialog.open, false);
+    assert.equal(dialog.className, "bottom-sheet");
+    assert.equal(dialog.getAttribute("data-presentation"), null);
+    assert.equal(launcher.getAttribute("aria-expanded"), "false");
+    assert.equal(host.ownerDocument.activeElement, launcher);
+  }
+});
+
+test("T-008A F-008 inline bottom-sheet fallback is explicitly non-fixed", async () => {
+  const css = await readFile(
+    new URL("../css/styles.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    css,
+    /\.bottom-sheet\.bottom-sheet--inline\s*\{[^}]*position:\s*static;/s,
+  );
 });

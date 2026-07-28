@@ -289,7 +289,7 @@ ResultSnapshotの42件はsection-firstのhistorical copyを維持し、表示時
 
 2026-07-27の実ブラウザ検証では、360pxで新規開始、20問分岐、preview、選択猫1体のviewport遅延読込、追加30問、detailまで通過し、320pxの200%相当狭幅でも横overflowなし・42文面維持を確認した。強制storage失敗でも20回答とpreview結果をメモリ上で維持し、指定通知を表示した。preview結果の資産inventoryは同一originのscript 35件、stylesheet 1件、選択猫画像1件だけで、外部資産0件だった。
 
-2026-07-28の最終実ブラウザ検証では、320px、360px、960pxの結果・履歴で横overflowなし、360×800で履歴管理dialog全体がviewport内に収まることを確認した。因子・詳細の単一開閉、設問構成sheet、4方法sheet、50問結果のトップ直接遷移、履歴から保存済み結果への直接遷移、dialogの明示close・正確なbackdrop click・Escape・focus入場／復帰を通過し、console error／warningは0件だった。HEADの自動検証は全460件、`npm.cmd run check`、`git diff --check`に成功した。
+2026-07-28の最終実ブラウザ検証では、320px、360px、960pxの結果・履歴で横overflowなし、360×800で履歴管理dialog全体がviewport内に収まることを確認した。因子・詳細の単一開閉、設問構成sheet、4方法sheet、50問結果のトップ直接遷移、履歴から保存済み結果への直接遷移、dialogの明示close・正確なbackdrop click・Escape・focus入場／復帰を通過し、console error／warningは0件だった。追加の自動回帰検証では、未登録の履歴診断版で現行方法情報を流用しないこと、ボトムシートのインラインfallback、保存結果を含む履歴fallbackの到達可能なfocus循環と全viewport surface、承認済み結果開示ラベルを含む全465件、`npm.cmd run check`、`git diff --check`に成功した。
 
 パレット変更は該当ResultSnapshotのselectedPaletteIdだけを更新する。スコア、称号、文章、猫、版を変更しない。
 

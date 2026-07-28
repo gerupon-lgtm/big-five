@@ -49,20 +49,34 @@ export function appendBottomSheetLauncher(
   closeButton.setAttribute("type", "button");
   let sheetOpen = false;
 
+  function openInlineFallback() {
+    sheet.className = "bottom-sheet bottom-sheet--inline";
+    sheet.setAttribute("data-presentation", "inline");
+    sheet.open = true;
+    sheet.setAttribute("open", "");
+  }
+
   function openSheet() {
     if (sheetOpen) return;
     if (typeof sheet.showModal === "function") {
-      sheet.showModal();
+      try {
+        sheet.showModal();
+      } catch {
+        openInlineFallback();
+      }
     } else {
-      sheet.setAttribute("open", "");
+      openInlineFallback();
     }
     sheetOpen = true;
     button.setAttribute("aria-expanded", "true");
+    closeButton.focus?.();
   }
 
   function finishClose() {
     if (!sheetOpen) return;
     sheetOpen = false;
+    sheet.className = "bottom-sheet";
+    sheet.removeAttribute("data-presentation");
     button.setAttribute("aria-expanded", "false");
     button.focus?.();
   }

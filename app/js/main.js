@@ -9,6 +9,7 @@ import {
 } from "./domain/character-manifest.js";
 import { compareResultSnapshots } from "./domain/result-comparison.js";
 import { createQuestionComposition } from "./domain/question-composition.js";
+import { resolveRegisteredDiagnosticDefinition } from "./domain/diagnostic-definition-registry.js";
 import { createStartVersionViewModel } from "./domain/version-model.js";
 import {
   choosePreviewExit,
@@ -57,13 +58,22 @@ const questionCompositionByMode = Object.freeze({
     questionDefinitions: QuestionDefinitions,
   }),
 });
+const diagnosticDefinitionRegistry = Object.freeze([
+  Object.freeze({
+    scaleVersion: DiagnosticDefinition.scaleVersion,
+    questionVersion: DiagnosticDefinition.questionVersion,
+    scoringVersion: DiagnosticDefinition.scoringVersion,
+    definition: DiagnosticDefinition,
+    questionCompositionByMode,
+  }),
+]);
 
-function createMethodInfo(mode) {
+function createMethodInfo(definition, mode) {
   return Object.freeze([
     Object.freeze({
       id: "basis",
       title: "測定の土台",
-      body: `${DiagnosticDefinition.scaleName}を用いて、Big Fiveの5因子を確認します。`,
+      body: `${definition.scaleName}を用いて、Big Fiveの5因子を確認します。`,
     }),
     Object.freeze({
       id: "scoring",
@@ -74,14 +84,14 @@ function createMethodInfo(mode) {
       id: "limitations",
       title: "この結果の限界",
       body: (mode === "preview20"
-        ? DiagnosticDefinition.limitations
-        : [DiagnosticDefinition.limitations[0], DiagnosticDefinition.limitations[2]]
+        ? definition.limitations
+        : [definition.limitations[0], definition.limitations[2]]
       ).join(" "),
     }),
     Object.freeze({
       id: "sources",
       title: "出典・利用条件",
-      body: DiagnosticDefinition.source.map(({ label }) => label).join(" / "),
+      body: definition.source.map(({ label }) => label).join(" / "),
     }),
   ]);
 }
@@ -492,6 +502,10 @@ export function startApp({
   }
 
   function renderResult(snapshot, persistenceFailed, previewProgress = null) {
+    const definitionRegistration = resolveRegisteredDiagnosticDefinition(
+      snapshot.versionTuple,
+      diagnosticDefinitionRegistry,
+    );
     let characterEntry = null;
     try {
       characterEntry = resolveCharacterEntry(
@@ -590,8 +604,18 @@ export function startApp({
       decodeImage: effectiveDecodeImage,
       loadCharacterImage,
       observeViewport: effectiveObserveViewport,
-      questionComposition: questionCompositionByMode[snapshot.mode],
-      methodInfo: createMethodInfo(snapshot.mode),
+      definitionSupported: definitionRegistration !== null,
+      ...(definitionRegistration ? {
+        questionComposition:
+          definitionRegistration.questionCompositionByMode[snapshot.mode],
+        methodInfo: createMethodInfo(
+          definitionRegistration.definition,
+          snapshot.mode,
+        ),
+      } : {
+        methodInformationUnavailable:
+          "診断時の尺度・設問・採点版に対応する説明は、このアプリでは確認できません。保存された称号・スコア・結果文は、そのまま確認できます。",
+      }),
     });
   }
 

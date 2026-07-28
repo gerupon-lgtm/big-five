@@ -246,6 +246,33 @@ h1 {
   background: rgb(25 51 47 / 38%);
 }
 
+.history-management-modal.history-management-modal--fallback[open] {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 12px;
+  border: 0;
+  border-radius: 0;
+  background: rgb(25 51 47 / 38%);
+  box-shadow: none;
+}
+
+.history-management-modal--fallback .history-management-content {
+  width: min(100%, 480px);
+  max-height: min(82vh, 640px);
+  border: 1px solid #bed4cc;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgb(42 81 69 / 24%);
+}
+
 .history-management-content {
   max-height: min(82vh, 640px);
   padding: clamp(16px, 5vw, 28px);
@@ -643,7 +670,13 @@ dd {
   background: #fff;
 }
 
+.factor-category-label {
+  margin: 0;
+  font-size: 1rem;
+}
+
 .category-disclosure-trigger {
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
@@ -723,6 +756,16 @@ dd {
 
 .bottom-sheet::backdrop {
   background: rgb(25 51 47 / 38%);
+}
+
+.bottom-sheet.bottom-sheet--inline {
+  position: static;
+  inset: auto;
+  width: 100%;
+  max-height: none;
+  margin: 16px 0 0;
+  border-radius: 16px;
+  box-shadow: none;
 }
 
 .bottom-sheet h2 {

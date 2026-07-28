@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { renderHistoryScreen } from "../js/presentation/history-screen.js";
@@ -392,6 +393,72 @@ test("T-008A F-013 fallback without showModal isolates background and wraps focu
   assert.equal(backLink.inert, false);
   assert.equal(launcher.inert, false);
   assert.equal(host.ownerDocument.activeElement, launcher);
+});
+
+test("T-008A F-013 populated fallback traps focus only among reachable controls", () => {
+  const { host } = createFakeScreen();
+  const target = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000105",
+  });
+
+  renderHistoryScreen(
+    host,
+    { status: "ok", results: [target], ...screenLabels },
+    {},
+  );
+
+  const launcher = collectElements(host).find(
+    ({ className }) => className === "history-management-toggle",
+  );
+  const modal = collectElements(host).find(
+    ({ className }) => className === "history-management-modal",
+  );
+  modal.showModal = undefined;
+  launcher.dispatch("click");
+
+  const close = collectElements(modal).find(
+    ({ className }) => className === "history-management-close",
+  );
+  const summary = collectElements(modal).find(
+    ({ tagName }) => tagName === "summary",
+  );
+  const hiddenDelete = collectElements(modal).find(
+    ({ tagName, textContent }) =>
+      tagName === "button" && textContent.endsWith("この結果を削除"),
+  );
+  assert.equal(modal.className, "history-management-modal history-management-modal--fallback");
+  assert.equal(modal.getAttribute("data-presentation"), "fallback-modal");
+
+  close.focus();
+  const backward = modal.dispatch("keydown", { key: "Tab", shiftKey: true });
+  assert.equal(backward.defaultPrevented, true);
+  assert.equal(host.ownerDocument.activeElement, summary);
+  assert.notEqual(host.ownerDocument.activeElement, hiddenDelete);
+
+  summary.focus();
+  const forward = modal.dispatch("keydown", { key: "Tab" });
+  assert.equal(forward.defaultPrevented, true);
+  assert.equal(host.ownerDocument.activeElement, close);
+
+  modal.dispatch("click");
+  assert.equal(modal.open, false);
+  assert.equal(host.ownerDocument.activeElement, launcher);
+});
+
+test("T-008A F-013 history fallback supplies a full-viewport surface and bounded panel", async () => {
+  const css = await readFile(
+    new URL("../css/styles.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    css,
+    /\.history-management-modal\.history-management-modal--fallback\[open\]\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;/s,
+  );
+  assert.match(
+    css,
+    /\.history-management-modal--fallback \.history-management-content\s*\{/,
+  );
 });
 
 test("T-008A F-013 throwing showModal fallback restores background on explicit close and Escape", () => {

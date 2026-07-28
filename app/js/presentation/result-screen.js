@@ -171,7 +171,7 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
     bar.append(fill);
     row.append(bar);
     appendTextElement(row, "p", `${factor.displayScore}`, "factor-score-value");
-    const trigger = appendTextElement(row, "button", "詳しく見る", "factor-disclosure-trigger");
+    const trigger = appendTextElement(row, "button", "説明を見る", "factor-disclosure-trigger");
     trigger.setAttribute("type", "button");
     trigger.setAttribute("aria-expanded", "false");
     const panel = row.ownerDocument.createElement("div");
@@ -184,7 +184,24 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
     for (const category of factor.categories) {
       const categorySection = panel.ownerDocument.createElement("section");
       categorySection.className = "factor-category";
-      const categoryTrigger = appendTextElement(categorySection, "button", category.label, "category-disclosure-trigger");
+      appendTextElement(
+        categorySection,
+        "h4",
+        category.label,
+        "factor-category-label",
+      );
+      appendTextElement(
+        categorySection,
+        "p",
+        category.summary,
+        "factor-category-summary",
+      );
+      const categoryTrigger = appendTextElement(
+        categorySection,
+        "button",
+        "詳しく見る",
+        "category-disclosure-trigger",
+      );
       categoryTrigger.setAttribute("type", "button");
       categoryTrigger.setAttribute("aria-expanded", "false");
       const categoryPanel = panel.ownerDocument.createElement("div");
@@ -192,7 +209,6 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
       categoryPanel.id = `category-disclosure-${factor.factorId}-${category.categoryId}`;
       categoryPanel.hidden = true;
       categoryTrigger.setAttribute("aria-controls", categoryPanel.id);
-      appendTextElement(categorySection, "p", category.summary, "factor-category-summary");
       for (const record of category.records) appendRenderedText(categoryPanel, record);
       categorySection.append(categoryPanel);
       categoryTrigger.addEventListener("click", () => {
@@ -222,6 +238,14 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
     factorList.append(row);
   }
   section.append(factorList);
+  if (snapshot.mode === "detail50") {
+    appendTextElement(
+      section,
+      "p",
+      "※因子名の「説明を見る」から、それぞれの意味を確認できます。",
+      "factor-help-note",
+    );
+  }
   parent.append(section);
 }
 
@@ -247,7 +271,26 @@ function renderBoundaryNotices(parent, boundaryFlags, labels) {
 }
 
 function renderMethodInformation(parent, labels, dependencies) {
-  const { questionComposition, methodInfo } = dependencies;
+  const {
+    questionComposition,
+    methodInfo,
+    methodInformationUnavailable,
+  } = dependencies;
+  if (
+    typeof methodInformationUnavailable === "string"
+    && methodInformationUnavailable.length > 0
+  ) {
+    const section = parent.ownerDocument.createElement("section");
+    section.className = "result-method-information unavailable";
+    appendTextElement(
+      section,
+      "p",
+      methodInformationUnavailable,
+      "notice method-information-unavailable",
+    ).setAttribute("role", "note");
+    parent.append(section);
+    return;
+  }
   if (!Array.isArray(questionComposition) || !Array.isArray(methodInfo)) return;
   const section = parent.ownerDocument.createElement("section");
   section.className = "result-method-information";
@@ -344,7 +387,10 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
   renderRadarAndFactors(main, savedSnapshot, labels, dependencies.drawRadar ?? drawResultRadar);
   const completed = appendTextElement(main, "time", formatCompletedAt(savedSnapshot.completedAt), "result-completed-at");
   completed.setAttribute("datetime", savedSnapshot.completedAt);
-  if (savedSnapshot.mode === "preview20") {
+  if (
+    savedSnapshot.mode === "preview20"
+    && dependencies.definitionSupported !== false
+  ) {
     appendTextElement(main, "p", "20問だけでは捉えきれない面があります。あと30問に回答すると、より詳しい結果を確認できます。", "notice preview-limit");
     appendTextElement(main, "p", "20項目版は、独立した日本語版としての妥当性検証を受けていません。50問では、スコア・仮称号・仮キャラクターが変わり得ます。", "notice preview-validation-notice").setAttribute("role", "note");
   }

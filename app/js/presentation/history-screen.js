@@ -310,6 +310,9 @@ function renderHistoryHeader(parent, historyState, actions) {
   }
 
   function activateFallbackModality() {
+    dialog.className =
+      "history-management-modal history-management-modal--fallback";
+    dialog.setAttribute("data-presentation", "fallback-modal");
     fallbackBackgroundStates = fallbackBackgroundBranches(parent).map((element) => ({
       element,
       inert: Boolean(element.inert),
@@ -331,20 +334,37 @@ function renderHistoryHeader(parent, historyState, actions) {
       }
     }
     fallbackBackgroundStates = [];
+    dialog.className = "history-management-modal";
+    dialog.removeAttribute("data-presentation");
   }
 
   function fallbackFocusableElements() {
     const focusableTags = new Set(["a", "button", "input", "select", "summary", "textarea"]);
-    return collectDescendants(dialog).filter((element) =>
+    return collectReachableDescendants(dialog).filter((element) =>
       focusableTags.has(String(element.tagName).toLowerCase()) && !element.disabled
     );
   }
 
-  function collectDescendants(element) {
-    return Array.from(element.children ?? []).flatMap((child) => [
-      child,
-      ...collectDescendants(child),
-    ]);
+  function collectReachableDescendants(element) {
+    return Array.from(element.children ?? []).flatMap((child) => {
+      if (
+        child.hidden
+        || child.inert
+        || child.getAttribute("aria-hidden") === "true"
+      ) {
+        return [];
+      }
+      if (String(child.tagName).toLowerCase() === "details" && !child.open) {
+        const summary = Array.from(child.children ?? []).find(
+          (candidate) =>
+            String(candidate.tagName).toLowerCase() === "summary",
+        );
+        return summary
+          ? [child, summary, ...collectReachableDescendants(summary)]
+          : [child];
+      }
+      return [child, ...collectReachableDescendants(child)];
+    });
   }
 
   function closeManagement() {

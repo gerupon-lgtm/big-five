@@ -326,6 +326,61 @@ test("T-005/T-006 S-004 opens one saved detail result by resultId", () => {
   assert.doesNotMatch(text, /answers/);
 });
 
+test("T-008A F-008 does not fabricate current method facts for an unregistered historical definition", () => {
+  for (const [index, field] of [
+    [1, "scaleVersion"],
+    [2, "questionVersion"],
+    [3, "scoringVersion"],
+  ]) {
+    const documentObject = {
+      createElement(tagName) {
+        return new FakeElement(tagName, documentObject);
+      },
+      getElementById(id) {
+        return id === "app" ? host : null;
+      },
+    };
+    const host = new FakeElement("div", documentObject);
+    const current = createTestResultSnapshot({
+      resultId: `00000000-0000-4000-8000-00000000010${index}`,
+    });
+    const historical = createTestResultSnapshot({
+      resultId: `00000000-0000-4000-8000-00000000020${index}`,
+      versionTuple: {
+        ...current.versionTuple,
+        [field]: `${current.versionTuple[field]}-historical`,
+      },
+    });
+    const raw = JSON.stringify({
+      schemaVersion: 1,
+      updatedAt: "2026-07-28T12:00:00.000Z",
+      progressByDiagnosis: {},
+      results: [historical],
+    });
+
+    startApp({
+      documentObject,
+      historyObject: { replaceState() {} },
+      windowObject: {
+        location: { hash: `#/result?resultId=${historical.resultId}` },
+        addEventListener() {},
+      },
+      storage: { getItem: () => raw },
+      nowProvider: () => "2026-07-28T12:05:00.000Z",
+    });
+
+    const text = collectText(host);
+    assert.match(text, /診断時の尺度・設問・採点版に対応する説明は、このアプリでは確認できません/);
+    assert.doesNotMatch(text, /因子ごとの設問構成を見る/);
+    assert.doesNotMatch(text, /IPIP Japanese Translation|public domain|臨床診断、能力、雇用適性/);
+    assert.equal(
+      collectElements(host).filter(({ className }) =>
+        className.includes("result-text-record")).length,
+      42,
+    );
+  }
+});
+
 test("T-005/T-006 S-003/S-004 returns a missing saved result URL to history", () => {
   const documentObject = {
     createElement(tagName) {

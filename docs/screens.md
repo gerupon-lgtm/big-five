@@ -154,7 +154,7 @@ flowchart TD
 
 ## 7. S-003 基本結果
 
-Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。結果画面は称号・猫heroと称号理由を別sectionにし、名前付きレーダー、固定順5因子のコンパクトな行・棒・数値、同時1因子／同一因子内1詳細だけの二段階開閉、設問構成sheet、4つの固定方法sheetまで接続済みである。Q-013の代替色・香りとT-007共有は後続である。`result-text-v1`の237件は既存E-0の状態を除きContent Approval pending、`result-text-v2`の51称号分`titleReflection`は作成・Content Approval pendingとする。
+Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。結果画面は称号・猫heroと称号理由を別sectionにし、名前付きレーダー、固定順5因子のコンパクトな行・棒・数値、同時1因子／同一因子内1詳細だけの二段階開閉、設問構成sheet、4つの固定方法sheetまで接続済みである。保存済みsnapshotの`scaleVersion`、`questionVersion`、`scoringVersion`が登録済み診断定義と完全一致する場合だけ、その定義の設問構成・方法説明を表示する。未登録の履歴版では現行版の件数・限界・出典を流用せず、説明を利用できない旨と、保存済みの称号・スコア・結果文は確認できる旨を表示する。Q-013の代替色・香りとT-007共有は後続である。`result-text-v1`の237件は既存E-0の状態を除きContent Approval pending、`result-text-v2`の51称号分`titleReflection`は作成・Content Approval pendingとする。
 
 ### ファーストビュー
 
@@ -272,7 +272,7 @@ Q-007確定前の【想定】:
 
 ## 11. S-006 履歴
 
-簡潔な通常カード、Q-012猫サムネイルの個別遅延読込、保存済み結果への直接遷移、固定比較操作、履歴管理modal/dialogは実装・テスト済みである。管理dialogは明示的なclose、dialog自体だけのbackdrop click、native `cancel`とfallback keydownのEscape、内部へのfocus入場と起動元への復帰を持つ。`showModal`なし／例外時は背景を`inert`＋`aria-hidden`で隔離し、Tab／Shift+Tabをdialog内へ包含する。
+簡潔な通常カード、Q-012猫サムネイルの個別遅延読込、保存済み結果への直接遷移、固定比較操作、履歴管理modal/dialogは実装・テスト済みである。管理dialogは明示的なclose、dialog自体だけのbackdrop click、native `cancel`とfallback keydownのEscape、内部へのfocus入場と起動元への復帰を持つ。`showModal`なし／例外時は明示的な全viewport fallback surfaceと中央panelを表示し、背景を`inert`＋`aria-hidden`で隔離する。Tab／Shift+Tabは閉じた`details`配下を除外し、`summary`を含む実際に到達可能な操作だけで循環する。
 
 ### 表示
 
