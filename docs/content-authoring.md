@@ -31,6 +31,8 @@ Excelでは「CSV UTF-8」で保存することを推奨します。日本語版
 - Q-012のキャラクターカタログとQ-013の演出データは未作成です。
 - release CSVはヘッダーだけで、approved releaseはありません。
 
+現在はQ-006のE-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の全18 gateがapprovedとなり、2026-07-28にContent Approvalを完了しています。ただし、行statusと別gateは引き続き別契約であり、approved releaseは未選択です。Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`も未完了のままです。
+
 releaseを選択するには、参照される全行と別gateが`approved`であり、Q-006、Q-012、Q-013の承認条件をすべて満たす必要があります。履歴は追記専用です。差し替えも切り戻しも新しい不変version/release行で行い、過去のapproved history/sourceを書き換えません。
 
 ## 4. ローカル検証と修正

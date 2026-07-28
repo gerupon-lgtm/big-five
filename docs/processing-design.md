@@ -93,7 +93,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤として、`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。人はCSVだけを編集し、生成`app/content/` JSONを編集・コミットしない。
 
-ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。E-0は`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`で、Q-006/Q-013はCSV release gateとして残る。Q-012画像は別の版付き制作台帳とruntime manifestで制作・技術確認済みだが、正式なapproved release選択は未完了でQ-012 release gateは未解決である。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
+ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 
 ## 4. 採点
 
@@ -227,7 +227,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
-上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。T-007共有とQ-013の代替色・香りは後続である。
+上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`として実装された後、根拠台帳の全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。approved release未選択、Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`は後続である。
 
 `result-text-v2`を承認・有効化した後は、診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。共有モデル生成時は`titleReflection`を除外する。
 

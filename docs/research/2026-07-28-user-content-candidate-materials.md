@@ -24,7 +24,7 @@
 - 色はQ-013の標準1＋代替2、主・副・差、用途色、コントラスト規則へ再構成してから審査する。
 - 香りは名称候補だけを抽出可能とし、説明文は効果・心理状態・能力の断定を除いて再審査する。
 - 各候補は版付きCSVへ転記後、構造検証、禁止表現lint、人手Content Approvalを通す。
-- Q-006、Q-012、Q-013のrelease gateが未解決である事実を変更しない。
+- この候補資料の確認や自動採用禁止は、2026-07-28に完了したQ-006 `result-text-v1`のContent Approvalを上書きせず、approved release未選択、Q-012正式release未完了、Q-013 production data未作成、`result-text-v2`の`titleReflection`作成・Content Approval pendingという各状態も変更しない。候補資料自体のContent Approvalは未実施のままである。
 
 ## 3. 初見で確認した注意点
 

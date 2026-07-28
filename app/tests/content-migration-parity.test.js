@@ -181,6 +181,21 @@ test("T-007 production source records exact statuses and remains authorable with
   assert.deepEqual(approvals.rows[5], {
     gate_id: "E-5", display_order: 6, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "情緒安定性のhigh/middle/low語彙と根拠IDをユーザー承認。",
   });
+  assert.deepEqual(approvals.rows[6], {
+    gate_id: "T-0", display_order: 7, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "バランス型と単独傾向10件の中立副題・称号理由・カタログ一致をユーザー承認。副題と理由の「〜しやすい」反復を抑えた再修正もユーザー承認。",
+  });
+  assert.deepEqual(approvals.rows[7], {
+    gate_id: "T-1", display_order: 8, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "組み合わせ称号No.12〜21の中立副題・称号理由・カタログ一致をユーザー承認。副題と理由の「〜しやすい」反復を抑えた再修正もユーザー承認。",
+  });
+  assert.deepEqual(approvals.rows[8], {
+    gate_id: "T-2", display_order: 9, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "組み合わせ称号No.22〜31の中立副題・称号理由・カタログ一致をユーザー承認。副題と理由の「〜しやすい」反復を抑えた再修正もユーザー承認。",
+  });
+  assert.deepEqual(approvals.rows[9], {
+    gate_id: "T-3", display_order: 10, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "組み合わせ称号No.32〜41の中立副題・称号理由・カタログ一致と「〜しやすい」反復を抑えた表現をユーザー承認。",
+  });
+  assert.deepEqual(approvals.rows[10], {
+    gate_id: "T-4", display_order: 11, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "組み合わせ称号No.42〜51の中立副題・称号理由・カタログ一致と「〜しやすい」反復を抑えた表現をユーザー承認。",
+  });
   assert.deepEqual(approvals.rows[11], {
     gate_id: "F-1", display_order: 12, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "知性・想像力の20問観察文と50問8節をユーザー承認。",
   });
@@ -196,10 +211,12 @@ test("T-007 production source records exact statuses and remains authorable with
   assert.deepEqual(approvals.rows[15], {
     gate_id: "F-5", display_order: 16, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "情緒安定性の20問観察文と50問8節をユーザー承認。",
   });
-  assert.ok([
-    ...approvals.rows.slice(6, 11),
-    ...approvals.rows.slice(16),
-  ].every((row) => row.status === "reviewed" && row.approved_by === "" && row.approved_on === ""));
+  assert.deepEqual(approvals.rows[16], {
+    gate_id: "X-1", display_order: 17, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "20問結果のtitle 2件＋5因子観察文＝7件の全体表示をユーザー承認。",
+  });
+  assert.deepEqual(approvals.rows[17], {
+    gate_id: "X-2", display_order: 18, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "50問結果のtitle 2件＋5因子×8節＝42件の全体表示をユーザー承認。",
+  });
 
   const result = await loadAndCompileResultContent(SOURCE);
   const evidence = await table(SOURCE, "evidence/result-evidence-v1/result-evidence.csv");
