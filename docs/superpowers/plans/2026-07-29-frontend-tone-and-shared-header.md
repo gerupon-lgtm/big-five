@@ -857,7 +857,7 @@ npm.cmd run dev
 
 Expected: `http://localhost:4174/`で正式版が待受ける。検証終了後に同セッションを停止する。
 
-- [ ] **Step 5: 360×800で主要フローを確認する**
+- [x] **Step 5: 360×800で主要フローを確認する**
 
 Chromeで開始から20問分岐まで進め、履歴、20問結果、保存済み50問結果、比較を開く。
 
@@ -872,7 +872,7 @@ SELF CHECK/HISTORY/1 / 20問/PREVIEW RESULT/DETAIL RESULT/COMPARISONの上端が
 横overflowなし
 ```
 
-- [ ] **Step 6: 320×800と200%文字拡大を確認する**
+- [x] **Step 6: 320×800と200%文字拡大を確認する**
 
 ```text
 共通ヘッダーが横overflowしない
@@ -883,7 +883,7 @@ SELF CHECK/HISTORY/1 / 20問/PREVIEW RESULT/DETAIL RESULT/COMPARISONの上端が
 固定比較バーが本文とsafe areaを隠さない
 ```
 
-- [ ] **Step 7: 960×900とキーボードを確認する**
+- [x] **Step 7: 960×900とキーボードを確認する**
 
 ```text
 本文最大幅が維持され、主見出しが24pxを超えて拡大しない
@@ -939,8 +939,9 @@ Expected: `origin/codex/big-five-ui-tone-refresh`が作成または更新され�
 - 自動検証: `npm.cmd test`は511 tests、511 pass、0 fail。`npm.cmd run check`は46 JavaScript filesとcanonical runtime version 1件で成功。`npm.cmd run qa:preview:build`は100 files、6,631,601 bytesで成功。
 - ブラウザ実フロー: 20問回答→簡易プレビュー、簡易プレビュー→残り30問→50問詳細結果、履歴表示、互換な50問結果2件の選択→比較表示を確認した。
 - 狭幅・広幅: 320px、360px、960px幅の主要画面で横overflowなし。360px回答画面は`中断してトップへ`が`white-space: nowrap`、設問20px、回答文字16px、回答ボタン高56px。
-- 記録境界: dev serverの起動・停止、アプリ内ブラウザでの360×800主要フロー、幅別の横overflow、最終独立レビュー、push前状態を確認した。Step 5のChrome指定、Step 6の200%文字拡大、Step 7のキーボード確認は、この2026-07-29検証で全項目を完走した事実がないため未完了表示を維持する。Step 11のpushはこの時点では未実施である。
+- Chrome追加検証: Step 5〜7を完走した。320×800、360×800、960×900の開始・回答・履歴・結果・比較で横overflowなしを確認し、共有ヘッダー高52px、主見出し上端131px相当で揃えた。360pxのkicker／進捗上端は104px相当、回答設問20px、回答文字16px、回答ボタン高56pxである。960pxでは回答設問22px、回答文字16px、回答ボタン高56px、開始・履歴・結果・比較の主見出し24pxである。
+- 200%文字拡大・キーボード: Chrome実測は`devicePixelRatio` 2、CSS viewport 960×487で、開始・回答・履歴・詳細結果・比較の横overflowなし、共有ヘッダー高52px、主見出し24px以下、各ヘッダー操作のnowrap、回答文字16px・回答ボタン高56pxを維持した。`Tab`／`Shift+Tab`と`Enter`で開始、回答、結果展開、履歴管理dialogを操作し、`Escape`で閉じた後にfocusが`履歴削除`へ戻ること、確認したfocusに`:focus-visible`とsolid outlineがあることを確認した。
 - 最終レビュー補正: 380px以下でも共通ヘッダーを1行に保ち、mark・ブランド文字・gap・右操作余白だけを縮小した。sticky／non-stickyは共通の`min-height`とblock paddingを使い、sticky固有borderを外してkicker／進捗と`h1`の開始位置をそろえた。`.screen-kicker`はブランド緑を明示し、開始画面の履歴導線とF-005/F-006のコンテンツgate参照を現行実装・AGENTS.mdへ同期した。
-- 最終レビュー補正の検証: `app/tests/frontend-tone.test.js`はREDで2件失敗後、GREENで2件成功。集中48件、`npm.cmd test` 511件、`npm.cmd run check`、`git diff --check`に成功した。200%文字拡大・キーボードを新たに確認済みとはしていない。
+- 最終レビュー補正の検証: `app/tests/frontend-tone.test.js`はREDで2件失敗後、GREENで2件成功。集中48件、`npm.cmd test` 511件、`npm.cmd run check`、`git diff --check`に成功した。後続のChrome追加検証で320×800、360×800、960×900、200%文字拡大、キーボード操作を完走した。
 - 最終独立再レビュー: Spec／Standardsの両担当が補正commit `e07271a`を再確認し、Critical／Important／MinorなしでPASSとした。360px実測では開始・回答ともヘッダー高52px、kicker上端104px、主見出し上端131pxで一致した。
 - origin同期: `codex/big-five-ui-tone-refresh`をoriginへpushし、upstream trackingを設定した。

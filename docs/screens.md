@@ -381,3 +381,5 @@ Q-007確定前の【想定】:
 - ダークモードはMVP必須ではない。実装する場合もコントラストを再検証する。
 
 2026-07-29のフロントエンドトーン検証では、320px、360px、960px幅の主要画面で横overflowがないことを確認した。360px回答画面では`中断してトップへ`が`white-space: nowrap`で1行を維持し、設問20px、回答文字16px、回答ボタン高56pxであることを確認した。ブラウザ実フローは20問回答から簡易プレビュー、残り30問から50問詳細結果、履歴表示、互換な50問結果2件の比較表示まで通過した。自動検証は`npm.cmd test`が511件成功・失敗0件、`npm.cmd run check`が46 JavaScript filesとcanonical runtime version 1件で成功、`npm.cmd run qa:preview:build`が100 files・6,631,601 bytesで成功した。
+
+同日のChrome追加検証では、320×800、360×800、960×900の開始・回答・履歴・結果・比較に横overflowがないことを確認した。共有ヘッダー高は3幅とも52px、主見出し上端は131px相当で、360pxのkicker／進捗上端は104px相当である。960px回答画面は設問22px、回答文字16px、回答ボタン高56px、開始・履歴・結果・比較の主見出し24pxである。200%文字拡大は`devicePixelRatio` 2、CSS viewport 960×487で、開始・回答・履歴・詳細結果・比較の横overflowなし、共有ヘッダー高52px、主見出し24px以下、ヘッダー操作のnowrap、回答文字16px・回答ボタン高56pxを維持した。キーボードでは開始、回答、結果の展開、履歴管理dialogを`Tab`／`Shift+Tab`と`Enter`で操作し、`Escape`後にfocusが`履歴削除`へ戻ること、確認したfocusに`:focus-visible`とsolid outlineがあることを確認した。
