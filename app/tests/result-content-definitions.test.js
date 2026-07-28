@@ -258,6 +258,36 @@ test("Q-006 E-1/F-1 uses the reviewed interest wording for intellect and imagina
   );
 });
 
+test("Q-006 E-2/F-2 uses the reviewed preparation and organization wording for conscientiousness observations", () => {
+  const byId = new Map(FactorResultTextDefinitions.map((definition) => [
+    definition.id,
+    definition.text,
+  ]));
+  assert.deepEqual(
+    Object.fromEntries([
+      ...["preview20", "detail50"].flatMap((mode) => [
+        [`${mode}-conscientiousness-high-observation`, byId.get(`${mode}-conscientiousness-high-observation`)],
+        [`${mode}-conscientiousness-middle-observation`, byId.get(`${mode}-conscientiousness-middle-observation`)],
+        [`${mode}-conscientiousness-low-observation`, byId.get(`${mode}-conscientiousness-low-observation`)],
+      ]),
+    ]),
+    {
+      "preview20-conscientiousness-high-observation":
+        "今回の20問では、物事を早めに進めたり整理して取り組んだりする傾向が、尺度内で高めに見られました。",
+      "preview20-conscientiousness-middle-observation":
+        "今回の20問では、物事を早めに進めたり整理して取り組んだりする傾向が、尺度内の中間域にありました。",
+      "preview20-conscientiousness-low-observation":
+        "今回の20問では、物事を早めに進めたり整理して取り組んだりする傾向が、尺度内で低めに見られました。",
+      "detail50-conscientiousness-high-observation":
+        "今回の50問では、準備や整理をしながら物事を進める傾向が、尺度内で高めに見られました。",
+      "detail50-conscientiousness-middle-observation":
+        "今回の50問では、準備や整理をしながら物事を進める傾向が、尺度内の中間域にありました。",
+      "detail50-conscientiousness-low-observation":
+        "今回の50問では、準備や整理をしながら物事を進める傾向が、尺度内で低めに見られました。",
+    },
+  );
+});
+
 test("Q-006 F-1 uses the reviewed high-band reflection prompts for intellect and imagination", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"

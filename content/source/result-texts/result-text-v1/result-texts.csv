@@ -128,10 +128,10 @@ detail50-intellectImagination-low-relationship,result-text-v1,126,relationship,r
 detail50-intellectImagination-low-stress,result-text-v1,127,stress,reflectionPrompt,detail50,intellectImagination,low,,false,"考える範囲が広がったとき、「まずは目の前で確かめられることから決めよう」と、考える範囲を絞った場面はありましたか。",reviewed
 detail50-intellectImagination-low-question,result-text-v1,128,question,reflectionPrompt,detail50,intellectImagination,low,,false,最近、実際に手を動かしたり現物を見たりしたことで、物事が理解しやすくなったと感じた経験はありましたか。,reviewed
 detail50-intellectImagination-low-action,result-text-v1,129,action,actionHint,detail50,intellectImagination,low,,false,"よければ、今日見聞きした少し難しい話を、「自分の生活で言うとどうなるか」に当てはめて考えてみませんか。",reviewed
-preview20-conscientiousness-high-observation,result-text-v1,130,observation,scaleObservation,preview20,conscientiousness,high,,true,今回の20問では、物事を早めに進めたり整理したりすることを重視する回答が全体として高めでした。,reviewed
-preview20-conscientiousness-middle-observation,result-text-v1,131,observation,scaleObservation,preview20,conscientiousness,middle,,true,今回の20問では、物事を早めに進めたり整理したりすることを重視する回答が尺度内の中間域でした。,reviewed
-preview20-conscientiousness-low-observation,result-text-v1,132,observation,scaleObservation,preview20,conscientiousness,low,,true,今回の20問では、物事を早めに進めたり整理したりすることを重視する回答が全体として低めでした。,reviewed
-detail50-conscientiousness-high-observation,result-text-v1,133,observation,scaleObservation,detail50,conscientiousness,high,,false,今回の50問では、準備や整理を重視する回答が全体として高めでした。,reviewed
+preview20-conscientiousness-high-observation,result-text-v1,130,observation,scaleObservation,preview20,conscientiousness,high,,true,今回の20問では、物事を早めに進めたり整理して取り組んだりする傾向が、尺度内で高めに見られました。,reviewed
+preview20-conscientiousness-middle-observation,result-text-v1,131,observation,scaleObservation,preview20,conscientiousness,middle,,true,今回の20問では、物事を早めに進めたり整理して取り組んだりする傾向が、尺度内の中間域にありました。,reviewed
+preview20-conscientiousness-low-observation,result-text-v1,132,observation,scaleObservation,preview20,conscientiousness,low,,true,今回の20問では、物事を早めに進めたり整理して取り組んだりする傾向が、尺度内で低めに見られました。,reviewed
+detail50-conscientiousness-high-observation,result-text-v1,133,observation,scaleObservation,detail50,conscientiousness,high,,false,今回の50問では、準備や整理をしながら物事を進める傾向が、尺度内で高めに見られました。,reviewed
 detail50-conscientiousness-high-strength,result-text-v1,134,strength,reflectionPrompt,detail50,conscientiousness,high,,false,最近、始める前に予定や持ち物を整えた場面はありましたか。,reviewed
 detail50-conscientiousness-high-tradeoff,result-text-v1,135,tradeoff,reflectionPrompt,detail50,conscientiousness,high,,false,予定どおりに進めたいとき、手順をどこまで細かくするか迷った場面はありましたか。,reviewed
 detail50-conscientiousness-high-work,result-text-v1,136,work,reflectionPrompt,detail50,conscientiousness,high,,false,仕事や学びで、始める前に手順や期限を確認した場面はありましたか。,reviewed
@@ -139,7 +139,7 @@ detail50-conscientiousness-high-relationship,result-text-v1,137,relationship,ref
 detail50-conscientiousness-high-stress,result-text-v1,138,stress,reflectionPrompt,detail50,conscientiousness,high,,false,予定が崩れたとき、やることを並べ直した場面はありましたか。,reviewed
 detail50-conscientiousness-high-question,result-text-v1,139,question,reflectionPrompt,detail50,conscientiousness,high,,false,最近、準備しておいて助かったと感じた場面はありましたか。,reviewed
 detail50-conscientiousness-high-action,result-text-v1,140,action,actionHint,detail50,conscientiousness,high,,false,よければ、次に取りかかることを一つだけメモしてみませんか。,reviewed
-detail50-conscientiousness-middle-observation,result-text-v1,141,observation,scaleObservation,detail50,conscientiousness,middle,,false,今回の50問では、準備や整理を重視する回答が尺度内の中間域でした。,reviewed
+detail50-conscientiousness-middle-observation,result-text-v1,141,observation,scaleObservation,detail50,conscientiousness,middle,,false,今回の50問では、準備や整理をしながら物事を進める傾向が、尺度内の中間域にありました。,reviewed
 detail50-conscientiousness-middle-strength,result-text-v1,142,strength,reflectionPrompt,detail50,conscientiousness,middle,,false,仕事や日々の用事で、先に準備するか始めながら決めるかを選んだ場面はありましたか。,reviewed
 detail50-conscientiousness-middle-tradeoff,result-text-v1,143,tradeoff,reflectionPrompt,detail50,conscientiousness,middle,,false,予定を立てた場面と、その場で進め方を決めた場面に違いはありましたか。,reviewed
 detail50-conscientiousness-middle-work,result-text-v1,144,work,reflectionPrompt,detail50,conscientiousness,middle,,false,仕事や学びで、準備してから始めるか、まず着手するかを選んだ場面はありましたか。,reviewed
@@ -147,7 +147,7 @@ detail50-conscientiousness-middle-relationship,result-text-v1,145,relationship,r
 detail50-conscientiousness-middle-stress,result-text-v1,146,stress,reflectionPrompt,detail50,conscientiousness,middle,,false,やることが重なったとき、順番を決め直した場面はありましたか。,reviewed
 detail50-conscientiousness-middle-question,result-text-v1,147,question,reflectionPrompt,detail50,conscientiousness,middle,,false,最近、予定を立てたことと、その場で変えたことはありましたか。,reviewed
 detail50-conscientiousness-middle-action,result-text-v1,148,action,actionHint,detail50,conscientiousness,middle,,false,よければ、明日の予定から優先したいことを一つだけ選んでみませんか。,reviewed
-detail50-conscientiousness-low-observation,result-text-v1,149,observation,scaleObservation,detail50,conscientiousness,low,,false,今回の50問では、準備や整理を重視する回答が全体として低めでした。,reviewed
+detail50-conscientiousness-low-observation,result-text-v1,149,observation,scaleObservation,detail50,conscientiousness,low,,false,今回の50問では、準備や整理をしながら物事を進める傾向が、尺度内で低めに見られました。,reviewed
 detail50-conscientiousness-low-strength,result-text-v1,150,strength,reflectionPrompt,detail50,conscientiousness,low,,false,最近、準備や整理を後にして、まず取りかかった場面はありましたか。,reviewed
 detail50-conscientiousness-low-tradeoff,result-text-v1,151,tradeoff,reflectionPrompt,detail50,conscientiousness,low,,false,用事が重なったとき、準備や整理の順番に迷った場面はありましたか。,reviewed
 detail50-conscientiousness-low-work,result-text-v1,152,work,reflectionPrompt,detail50,conscientiousness,low,,false,仕事や学びで、先に始めてから手順を決めた場面はありましたか。,reviewed
