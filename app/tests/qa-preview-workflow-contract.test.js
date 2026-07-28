@@ -64,6 +64,10 @@ function assertWorkflowContract(workflow) {
       "  id-token: write",
     ].join("\n"),
   );
+  assert.deepEqual(
+    workflow.match(/^[ \t]*permissions[ \t]*:/gm),
+    ["permissions:"],
+  );
   assert.match(workflow, /actions\/checkout@v6/);
   assert.match(workflow, /actions\/setup-node@v7/);
   assert.match(workflow, /node-version:\s*24/);
@@ -127,6 +131,18 @@ test("QA Pages workflow contract rejects broadened deployment authority", async 
       workflow: workflow.replace(
         "  id-token: write",
         "  id-token: write\n  issues: write",
+      ),
+    },
+    {
+      name: "job-level permissions",
+      workflow: workflow.replace(
+        "  build:\n    runs-on: ubuntu-latest",
+        [
+          "  build:",
+          "    permissions:",
+          "      issues: write",
+          "    runs-on: ubuntu-latest",
+        ].join("\n"),
       ),
     },
     {
