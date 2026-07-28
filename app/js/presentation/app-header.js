@@ -11,22 +11,32 @@ export function appendAppHeader(parent, {
 
   const brand = documentObject.createElement("div");
   brand.className = "app-brand";
-  appendTextElement(brand, "span", "Big Five｜", "app-brand-part");
-  appendTextElement(brand, "span", "自己理解支援ツール", "app-brand-part");
+  const mark = appendTextElement(brand, "span", "5", "app-mark");
+  mark.setAttribute("aria-hidden", "true");
+  const brandCopy = documentObject.createElement("span");
+  brandCopy.className = "app-brand-copy";
+  appendTextElement(brandCopy, "span", "Big Five 自己理解支援チェック", "app-brand-name");
+  appendTextElement(brandCopy, "span", "BIG FIVE SELF UNDERSTANDING", "app-brand-subtitle");
+  brand.append(brandCopy);
   header.append(brand);
 
   if (screenLabel) {
     appendTextElement(header, "span", screenLabel, "app-screen-label");
   }
   if (action) {
-    const button = appendTextElement(
-      header,
-      "button",
-      action.label,
-      "app-header-action",
-    );
-    button.setAttribute("type", "button");
-    button.addEventListener("click", action.onClick);
+    if (action.href) {
+      const link = appendTextElement(header, "a", action.label, "app-header-action");
+      link.setAttribute("href", action.href);
+    } else {
+      const button = appendTextElement(
+        header,
+        "button",
+        action.label,
+        "app-header-action",
+      );
+      button.setAttribute("type", "button");
+      button.addEventListener("click", action.onClick);
+    }
   }
 
   parent.append(header);
