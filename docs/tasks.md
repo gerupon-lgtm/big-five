@@ -16,8 +16,8 @@
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approvalは2026-07-28に完了 |
 | F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 共通ヘッダー、設問折返し、回答画面固有の文字階層、中断UIまで実装・browser smoke済み |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A | 状態別再開、preview終了、新規置換確認を保存成功・失敗・取消まで実装済み |
-| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 称号・猫heroと称号理由を分離し、5因子行・棒、単一開閉、設問構成・方法情報、7件の保存済み結果文への到達を実装済み。`result-text-v1` Content Approvalと`titleReflection`作成・承認はpending |
-| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 称号・猫heroと称号理由、5因子行・棒、同時1因子／1詳細の二段階開閉、設問構成・方法情報、42件の保存済み結果文、トップ直接導線を実装済み。`result-text-v1` Content Approvalと`titleReflection`作成・承認はpending |
+| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 称号・猫heroと称号理由を分離し、5因子行・棒、単一開閉、設問構成・方法情報、7件の保存済み結果文への到達を実装済み。`result-text-v1` Content Approvalは2026-07-28に完了。`titleReflection`作成・承認はpending |
+| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 称号・猫heroと称号理由、5因子行・棒、同時1因子／1詳細の二段階開閉、設問構成・方法情報、42件の保存済み結果文、トップ直接導線を実装済み。`result-text-v1` Content Approvalは2026-07-28に完了。`titleReflection`作成・承認はpending |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A | 名前付きレーダー、固定順5因子行・棒、同時1因子／1詳細の二段階開閉、設問構成sheetと4つの固定方法sheetを実装済み |
 | F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A | 簡潔カード、保存済み結果への直接導線、固定比較導線、閉じられる履歴管理dialogを実装・browser smoke済み |
@@ -62,7 +62,7 @@
 | T-008 | 全画面統合・レスポンシブ・a11y | F-001〜F-016, F-018 | 主要フローを360px・PC・キーボードで完結 |
 | T-009 | 説明・プライバシー・CSP | F-001, F-002, F-007, F-014, F-015 | 限界、非送信、削除、版、CSPを確認可能 |
 | T-010 | ベータ匿名集計API・DB・事前説明 | F-017 | OCIへ匿名集計し、二重送信・通信失敗でも診断結果を維持 |
-| T-011 | GitHub Pages CI/CD・運用 | F-014, NF-01, NF-04, NF-06 | テスト成功時だけPagesへ配信、切戻し可能 |
+| T-011 | GitHub Pages CI/CD・運用 | F-014, NF-01, NF-04, NF-06 | テスト成功時だけPagesへ配信、切戻し可能。2026-07-28のQA一時プレビューは`codex/big-five-q006`から現行ES Modules runtimeだけを公開し、approved releaseの選択、JSON runtimeの有効化、T-011完了を意味しない |
 | T-012 | MVP受入・ブラウザ検証 | 全機能/NF | 要件17.1と主要異常系を検証し記録 |
 
 ## 3. フェーズ
@@ -416,6 +416,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 ### T-011 GitHub Pages CI/CD・運用
 
 - 依存: T-009
+- 状態（2026-07-28）: QA一時プレビューは`codex/big-five-q006`から現行ES Modules runtimeだけを公開する。approved releaseの選択、JSON runtimeの有効化、T-011本番デプロイ完了を意味しない。
 - 開始ゲート: Q-008、Q-010
 - 作業:
   - GitHub Actionsでテスト・静的検証・Pagesデプロイ。

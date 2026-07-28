@@ -476,3 +476,20 @@ test("F-002 maps to T-005 in the trace row, task section, and T-005 spec", async
     );
   }
 });
+
+test("QA Pages runbook separates preview deployment from production release", async () => {
+  const [runbook, tasks] = await Promise.all([
+    readFile(new URL("../../docs/qa-preview-pages.md", import.meta.url), "utf8"),
+    readFile(new URL("../../docs/tasks.md", import.meta.url), "utf8"),
+  ]);
+  assert.match(runbook, /https:\/\/gerupon-lgtm\.github\.io\/big-five\//);
+  assert.match(runbook, /Settings.*Pages.*GitHub Actions/s);
+  assert.match(runbook, /localStorage/);
+  assert.match(runbook, /外部通信0件/);
+  assert.match(runbook, /公開を解除/);
+  assert.match(runbook, /T-011.*完了.*意味しない/s);
+  assert.match(tasks, /F-005.*result-text-v1.*2026-07-28.*完了/);
+  assert.match(tasks, /F-006.*result-text-v1.*2026-07-28.*完了/);
+  assert.match(tasks, /titleReflection.*pending/);
+  assert.match(tasks, /QA一時プレビュー.*T-011.*完了.*意味しない/s);
+});
