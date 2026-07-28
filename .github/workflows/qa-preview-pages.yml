@@ -29,14 +29,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run all tests
-        run: |
-          set +e
-          npm test 2>&1 | tee qa-test-output.log
-          test_status=${PIPESTATUS[0]}
-          if [ "$test_status" -ne 0 ]; then
-            node -e "const fs=require('node:fs'); const output=fs.readFileSync('qa-test-output.log','utf8').slice(-4000).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A'); console.log('::error title=Node test failure::'+output)"
-          fi
-          exit "$test_status"
+        run: npm test
       - name: Run static checks
         run: npm run check
       - name: Build QA preview artifact
