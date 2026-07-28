@@ -213,7 +213,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 `composeResultTexts`の責務はdefinitionの条件選択、欠落・重複・件数、`version`、section-first／`FACTOR_ORDER`のsection・factor順を検証し、`RenderedResultText`の5フィールド（`id`、`version`、`section`、`text`、`evidenceRefs`）だけへ投影することである。previewはtitle 2件＋5観察文の7件、detailはtitle 2件＋5因子×8節の42件である。配列、各record、複製した`evidenceRefs`をdeep freezeし、入力を変更・freezeしない。
 
-`result-text-v2`では称号ごとの`titleReflection`を1〜3件追加する。コンパイラは専用CSVから固定順へ投影し、1件目だけをpreview許可とする。`composeResultTexts`はpreviewで1件目、detailで1〜3件を選択し、ランダム値・現在時刻・DOM・香り・色を入力にしない。既存`result-text-v1`の237件と承認状態は上書きしない。
+`result-text-v2`では称号ごとの`titleReflection`を1〜3件追加する。コンパイラは専用CSVから固定順へ投影し、1件目だけをpreview許可とする。`composeResultTexts`はpreviewで1件目、detailで1〜3件を選択し、ランダム値・現在時刻・DOM・香り・色を入力にしない。既存`result-text-v1`の237件と承認状態は上書きしない。51称号分の`titleReflection`は現在も作成・Content Approval pendingであり、未承認文面をruntimeへ補完しない。
 
 ### 6.3 ResultModelとResultSnapshot
 
@@ -229,7 +229,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。T-007共有とQ-013の代替色・香りは後続である。
 
-`result-text-v2`では診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。共有モデル生成時は`titleReflection`を除外する。
+`result-text-v2`を承認・有効化した後は、診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。共有モデル生成時は`titleReflection`を除外する。
 
 ## 7. 履歴保存
 
@@ -275,7 +275,9 @@ live controllerは`#/answer`を正規routeとし、ResultSnapshotをメモリ上
 - 20問ではResultSnapshotに存在しないdetail sectionを生成・補完しない。
 - 開閉後は対象見出しへフォーカスを奪わず、見出しがviewport内に残る最小限のスクロール調整だけを行う。
 
-称号別`titleReflection`の開閉もpresentation層の一時状態とする。1件目は常時表示し、50問だけ残り最大2件を1つの`ほかのヒントを見る`で一括開閉する。因子詳細の開閉状態とは独立させ、第三階層を作らない。
+現行presentationは、称号・猫heroと`titleReason`を独立sectionにし、名前付きレーダーの下へ固定順5因子のコンパクトな行・棒・数値を表示する。preview20の7件、detail50の42件は保存順を変えず表示モデルへ投影し、上記の同時1因子／同一因子内1詳細の規則から全件へ到達できる。`titleReflection`は未承認のため現行件数へ含めない。
+
+承認済み`result-text-v2`を有効化した後は、称号別`titleReflection`の開閉もpresentation層の一時状態とする。1件目は常時表示し、50問だけ残り最大2件を1つの`ほかのヒントを見る`で一括開閉する。因子詳細の開閉状態とは独立させ、第三階層を作らない。
 
 ResultSnapshotの42件はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。カテゴリ行の短いサマリは内容を代替する固定UI説明であり、スコア別結果文を生成・要約しない。`詳しく見る`で元の`RenderedResultText`と根拠を表示する。
 
@@ -283,9 +285,11 @@ ResultSnapshotの42件はsection-firstのhistorical copyを維持し、表示時
 
 50問結果の`トップへ戻る`は保存済みsnapshotなら新規ProgressRecordを作らず`#/start`へ遷移する。保存失敗したlive snapshotでは確認を要求し、取消時は画面・メモリ上のsnapshotを維持する。`もう一度診断する`だけが新規ProgressRecordを生成する。
 
-履歴の`データの管理`はモーダル状態をpresentation層だけに持つ。起動時に内部へフォーカスを移し、明示的な閉じる、backdropだけのタップ、Escで閉じる。内部タップをbackdrop扱いせず、閉じた後は起動元へフォーカスを戻す。個別削除・全削除の確認とストレージ処理は従来のdomain APIを再利用する。
+履歴の`データの管理`はモーダル状態をpresentation層だけに持つ。起動時に明示closeへフォーカスを移し、close、`event.target === dialog`のbackdrop click、native `cancel`またはfallback keydownのEscapeで閉じる。内部タップをbackdrop扱いせず、閉じた後は起動元へフォーカスを戻す。`showModal`がない、または例外となるfallbackでは、dialog外の背景分岐を`inert`＋`aria-hidden`で隔離し、Tab／Shift+Tabをdialog内の先頭・末尾へ循環させ、close時に元の背景状態を復元する。個別削除・全削除の確認とストレージ処理は従来のdomain APIを再利用する。
 
 2026-07-27の実ブラウザ検証では、360pxで新規開始、20問分岐、preview、選択猫1体のviewport遅延読込、追加30問、detailまで通過し、320pxの200%相当狭幅でも横overflowなし・42文面維持を確認した。強制storage失敗でも20回答とpreview結果をメモリ上で維持し、指定通知を表示した。preview結果の資産inventoryは同一originのscript 35件、stylesheet 1件、選択猫画像1件だけで、外部資産0件だった。
+
+2026-07-28の最終実ブラウザ検証では、320px、360px、960pxの結果・履歴で横overflowなし、360×800で履歴管理dialog全体がviewport内に収まることを確認した。因子・詳細の単一開閉、設問構成sheet、4方法sheet、50問結果のトップ直接遷移、履歴から保存済み結果への直接遷移、dialogの明示close・正確なbackdrop click・Escape・focus入場／復帰を通過し、console error／warningは0件だった。HEADの自動検証は全460件、`npm.cmd run check`、`git diff --check`に成功した。
 
 パレット変更は該当ResultSnapshotのselectedPaletteIdだけを更新する。スコア、称号、文章、猫、版を変更しない。
 
