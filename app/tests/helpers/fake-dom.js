@@ -9,6 +9,7 @@ export class FakeElement {
     this.className = "";
     this.disabled = false;
     this.hidden = false;
+    this.open = false;
   }
 
   append(child) {
@@ -40,8 +41,29 @@ export class FakeElement {
     this.listeners.set(type, listener);
   }
 
-  dispatch(type) {
-    this.listeners.get(type)?.({ currentTarget: this });
+  dispatch(type, eventInit = {}) {
+    const event = {
+      ...eventInit,
+      currentTarget: this,
+      target: eventInit.target ?? this,
+      defaultPrevented: false,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+    };
+    this.listeners.get(type)?.(event);
+    return event;
+  }
+
+  showModal() {
+    this.open = true;
+    this.setAttribute("open", "");
+  }
+
+  close() {
+    this.open = false;
+    this.removeAttribute("open");
+    this.dispatch("close");
   }
 
   focus() {

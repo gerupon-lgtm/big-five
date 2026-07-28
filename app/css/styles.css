@@ -230,23 +230,33 @@ h1 {
   font-size: 1.25rem;
 }
 
-.history-management-menu {
-  position: absolute;
-  z-index: 12;
-  top: 52px;
-  right: 0;
-  width: min(100%, 420px);
-  max-height: min(70vh, 560px);
-  padding: 16px;
+.history-management-modal {
+  width: min(calc(100% - 24px), 480px);
+  max-height: min(82vh, 640px);
+  margin: auto;
+  padding: 0;
   border: 1px solid #bed4cc;
-  border-radius: 16px;
+  border-radius: 20px;
   background: #fff;
-  box-shadow: 0 18px 50px rgb(42 81 69 / 18%);
+  color: #19332f;
+  box-shadow: 0 18px 50px rgb(42 81 69 / 24%);
+}
+
+.history-management-modal::backdrop {
+  background: rgb(25 51 47 / 38%);
+}
+
+.history-management-content {
+  max-height: min(82vh, 640px);
+  padding: clamp(16px, 5vw, 28px);
   overflow: auto;
 }
 
-.history-management-menu[hidden] {
-  display: none;
+.history-management-close {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  margin-inline-start: auto;
 }
 
 .history-card {

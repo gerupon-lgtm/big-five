@@ -188,17 +188,18 @@ test("T-008A F-013 exposes deletion and versions only through history management
     ({ className }) => className === "history-management-toggle",
   );
   const menu = collectElements(host).find(
-    ({ className }) => className === "history-management-menu",
+    ({ className }) => className === "history-management-modal",
   );
   assert.equal(toggle.textContent, "…");
   assert.equal(toggle.attributes.get("aria-label"), "履歴の管理");
   assert.equal(toggle.attributes.get("aria-expanded"), "false");
-  assert.equal(menu.hidden, true);
+  assert.equal(toggle.attributes.get("aria-controls"), "history-management-modal");
+  assert.equal(menu.open, false);
 
   toggle.dispatch("click");
 
   assert.equal(toggle.attributes.get("aria-expanded"), "true");
-  assert.equal(menu.hidden, false);
+  assert.equal(menu.open, true);
   assert.match(collectText(menu), /この結果を削除/);
   assert.match(collectText(menu), /端末内データをすべて削除/);
   assert.match(collectText(menu), /診断時のバージョン/);
@@ -212,6 +213,108 @@ test("T-008A F-013 exposes deletion and versions only through history management
   clickButton(menu, "端末内データをすべて削除");
   assert.deepEqual(deleted, [target.resultId]);
   assert.equal(deleteAllCalls, 1);
+});
+
+test("T-008A F-013 opens the management modal with focus on its close control", () => {
+  const { host } = createFakeScreen();
+
+  renderHistoryScreen(
+    host,
+    { status: "ok", results: [], ...screenLabels },
+    {},
+  );
+
+  const launcher = collectElements(host).find(
+    ({ className }) => className === "history-management-toggle",
+  );
+  const modal = collectElements(host).find(
+    ({ className }) => className === "history-management-modal",
+  );
+  launcher.dispatch("click");
+
+  const close = collectElements(modal).find(
+    ({ className }) => className === "history-management-close",
+  );
+  assert.equal(modal.open, true);
+  assert.equal(launcher.attributes.get("aria-expanded"), "true");
+  assert.equal(modal.attributes.get("aria-label"), "履歴の管理");
+  assert.equal(host.ownerDocument.activeElement, close);
+});
+
+test("T-008A F-013 explicit close restores focus to its launcher", () => {
+  const { host } = createFakeScreen();
+
+  renderHistoryScreen(
+    host,
+    { status: "ok", results: [], ...screenLabels },
+    {},
+  );
+
+  const launcher = collectElements(host).find(
+    ({ className }) => className === "history-management-toggle",
+  );
+  const modal = collectElements(host).find(
+    ({ className }) => className === "history-management-modal",
+  );
+  launcher.dispatch("click");
+  collectElements(modal).find(
+    ({ className }) => className === "history-management-close",
+  ).dispatch("click");
+
+  assert.equal(modal.open, false);
+  assert.equal(launcher.attributes.get("aria-expanded"), "false");
+  assert.equal(host.ownerDocument.activeElement, launcher);
+});
+
+test("T-008A F-013 closes only for an exact modal backdrop click", () => {
+  const { host } = createFakeScreen();
+
+  renderHistoryScreen(
+    host,
+    { status: "ok", results: [], ...screenLabels },
+    {},
+  );
+
+  const launcher = collectElements(host).find(
+    ({ className }) => className === "history-management-toggle",
+  );
+  const modal = collectElements(host).find(
+    ({ className }) => className === "history-management-modal",
+  );
+  const content = collectElements(modal).find(
+    ({ className }) => className === "history-management-content",
+  );
+  launcher.dispatch("click");
+  modal.dispatch("click", { target: content });
+  assert.equal(modal.open, true);
+  modal.dispatch("click");
+
+  assert.equal(modal.open, false);
+  assert.equal(host.ownerDocument.activeElement, launcher);
+});
+
+test("T-008A F-013 handles native dialog cancel as Escape", () => {
+  const { host } = createFakeScreen();
+
+  renderHistoryScreen(
+    host,
+    { status: "ok", results: [], ...screenLabels },
+    {},
+  );
+
+  const launcher = collectElements(host).find(
+    ({ className }) => className === "history-management-toggle",
+  );
+  const modal = collectElements(host).find(
+    ({ className }) => className === "history-management-modal",
+  );
+  launcher.dispatch("click");
+  const event = modal.dispatch("cancel");
+
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(modal.open, false);
+  assert.equal(launcher.attributes.get("aria-expanded"), "false");
+  assert.equal(host.ownerDocument.activeElement, launcher);
 });
 
 test("T-008A F-013 keeps all-data deletion reachable for empty history", () => {
