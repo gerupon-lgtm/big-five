@@ -125,11 +125,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.app-screen-label {
-  margin-inline-start: auto;
-  white-space: nowrap;
-}
-
 .app-header-action {
   flex: 0 0 auto;
   min-height: 36px;

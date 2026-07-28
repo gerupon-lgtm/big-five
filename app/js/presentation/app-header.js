@@ -1,7 +1,6 @@
 import { appendTextElement } from "./screen-helpers.js";
 
 export function appendAppHeader(parent, {
-  screenLabel = "",
   action = null,
   sticky = false,
 } = {}) {
@@ -15,14 +14,11 @@ export function appendAppHeader(parent, {
   mark.setAttribute("aria-hidden", "true");
   const brandCopy = documentObject.createElement("span");
   brandCopy.className = "app-brand-copy";
-  appendTextElement(brandCopy, "span", "Big Five 自己理解支援チェック", "app-brand-name");
+  appendTextElement(brandCopy, "span", "Big Five 自己理解チェック", "app-brand-name");
   appendTextElement(brandCopy, "span", "BIG FIVE SELF UNDERSTANDING", "app-brand-subtitle");
   brand.append(brandCopy);
   header.append(brand);
 
-  if (screenLabel) {
-    appendTextElement(header, "span", screenLabel, "app-screen-label");
-  }
   if (action) {
     if (action.href) {
       const link = appendTextElement(header, "a", action.label, "app-header-action");
