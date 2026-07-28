@@ -352,6 +352,38 @@ test("Q-006 F-2 uses the reviewed middle-band reflection prompts for conscientio
   );
 });
 
+test("Q-006 F-2 uses the reviewed low-band reflection prompts for conscientiousness", () => {
+  const lowDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "conscientiousness"
+    && appliesTo.band === "low"
+  );
+  assert.deepEqual(
+    Object.fromEntries(lowDetail.map(({ section, text: resultText }) => [
+      section,
+      resultText,
+    ])),
+    {
+      observation:
+        "今回の50問では、準備や整理をしながら物事を進める傾向が、尺度内で低めに見られました。",
+      strength:
+        "最近、細かく準備する前にまず動き始めたことで、早く流れをつかめた場面はありましたか。",
+      tradeoff:
+        "まず取りかかってから、「先に少し整理しておけばよかった」と感じた場面はありましたか。",
+      work:
+        "仕事や学びのなかで、まず手を動かし、必要な手順をあとから決めたことで進めやすかった場面はありましたか。",
+      relationship:
+        "誰かと一緒に進めるとき、予定や役割を細かく決めずに始めて、あとから確認が必要になった場面はありましたか。",
+      stress:
+        "やることが重なったとき、どれから始めるか決められず、気持ちが落ち着かなくなったことはありませんか。",
+      question:
+        "最近、「準備より先に始めてよかった」と感じた場面と、「少し整えておけばよかった」と感じた場面はありましたか。",
+      action:
+        "もしよければ、今気になっていることを一つ選び、「最初にすること」だけメモしてみませんか。",
+    },
+  );
+});
+
 test("Q-006 F-1 uses the reviewed high-band reflection prompts for intellect and imagination", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"
