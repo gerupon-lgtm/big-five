@@ -849,7 +849,7 @@ QA preview artifact build成功
 whitespace errorなし
 ```
 
-- [ ] **Step 4: dev serverを起動する**
+- [x] **Step 4: dev serverを起動する**
 
 ```powershell
 npm.cmd run dev
@@ -893,7 +893,7 @@ focus-visibleが常に確認できる
 Escape後のdialog focusが履歴削除へ戻る
 ```
 
-- [ ] **Step 8: delegate-developmentの最終独立レビューを行う**
+- [x] **Step 8: delegate-developmentの最終独立レビューを行う**
 
 Spec reviewerは設計書の3〜12章、Standards reviewerはAGENTS.md、`docs/screens.md`、変更diffだけを確認する。最大12ファイル、Critical／Important／Minorのみ報告し、追加subreviewは禁止する。
 
@@ -913,7 +913,7 @@ git add -- docs/screens.md docs/tasks.md docs/superpowers/plans/2026-07-29-front
 git commit -m "docs: record frontend tone verification"
 ```
 
-- [ ] **Step 10: push前の最終状態を確認する**
+- [x] **Step 10: push前の最終状態を確認する**
 
 ```powershell
 git status --short --branch
@@ -939,6 +939,7 @@ Expected: `origin/codex/big-five-ui-tone-refresh`が作成または更新され�
 - 自動検証: `npm.cmd test`は511 tests、511 pass、0 fail。`npm.cmd run check`は46 JavaScript filesとcanonical runtime version 1件で成功。`npm.cmd run qa:preview:build`は100 files、6,631,601 bytesで成功。
 - ブラウザ実フロー: 20問回答→簡易プレビュー、簡易プレビュー→残り30問→50問詳細結果、履歴表示、互換な50問結果2件の選択→比較表示を確認した。
 - 狭幅・広幅: 320px、360px、960px幅の主要画面で横overflowなし。360px回答画面は`中断してトップへ`が`white-space: nowrap`、設問20px、回答文字16px、回答ボタン高56px。
-- 記録境界: ブラウザ実フローと幅別の横overflow確認は上記のexactな事実だけを記録した。Step 4のdev server起動・停止、Step 5の全確認項目、Step 6の200%文字拡大、Step 7のキーボード確認、Step 8の最終独立レビューは、この2026-07-29検証記録として全項目の完了事実が提示されていないため未完了表示を維持する。Step 11のpushは本コミットの対象外であり実施しない。
+- 記録境界: dev serverの起動・停止、アプリ内ブラウザでの360×800主要フロー、幅別の横overflow、最終独立レビュー、push前状態を確認した。Step 5のChrome指定、Step 6の200%文字拡大、Step 7のキーボード確認は、この2026-07-29検証で全項目を完走した事実がないため未完了表示を維持する。Step 11のpushはこの時点では未実施である。
 - 最終レビュー補正: 380px以下でも共通ヘッダーを1行に保ち、mark・ブランド文字・gap・右操作余白だけを縮小した。sticky／non-stickyは共通の`min-height`とblock paddingを使い、sticky固有borderを外してkicker／進捗と`h1`の開始位置をそろえた。`.screen-kicker`はブランド緑を明示し、開始画面の履歴導線とF-005/F-006のコンテンツgate参照を現行実装・AGENTS.mdへ同期した。
 - 最終レビュー補正の検証: `app/tests/frontend-tone.test.js`はREDで2件失敗後、GREENで2件成功。集中48件、`npm.cmd test` 511件、`npm.cmd run check`、`git diff --check`に成功した。200%文字拡大・キーボードを新たに確認済みとはしていない。
+- 最終独立再レビュー: Spec／Standardsの両担当が補正commit `e07271a`を再確認し、Critical／Important／MinorなしでPASSとした。360px実測では開始・回答ともヘッダー高52px、kicker上端104px、主見出し上端131pxで一致した。
