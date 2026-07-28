@@ -925,7 +925,7 @@ npm.cmd run check
 
 Expected: worktree clean、計画したcommitだけ、全テスト／静的検証成功。
 
-- [ ] **Step 11: originへpushする**
+- [x] **Step 11: originへpushする**
 
 ```powershell
 git push -u origin codex/big-five-ui-tone-refresh
@@ -943,3 +943,4 @@ Expected: `origin/codex/big-five-ui-tone-refresh`が作成または更新され�
 - 最終レビュー補正: 380px以下でも共通ヘッダーを1行に保ち、mark・ブランド文字・gap・右操作余白だけを縮小した。sticky／non-stickyは共通の`min-height`とblock paddingを使い、sticky固有borderを外してkicker／進捗と`h1`の開始位置をそろえた。`.screen-kicker`はブランド緑を明示し、開始画面の履歴導線とF-005/F-006のコンテンツgate参照を現行実装・AGENTS.mdへ同期した。
 - 最終レビュー補正の検証: `app/tests/frontend-tone.test.js`はREDで2件失敗後、GREENで2件成功。集中48件、`npm.cmd test` 511件、`npm.cmd run check`、`git diff --check`に成功した。200%文字拡大・キーボードを新たに確認済みとはしていない。
 - 最終独立再レビュー: Spec／Standardsの両担当が補正commit `e07271a`を再確認し、Critical／Important／MinorなしでPASSとした。360px実測では開始・回答ともヘッダー高52px、kicker上端104px、主見出し上端131pxで一致した。
+- origin同期: `codex/big-five-ui-tone-refresh`をoriginへpushし、upstream trackingを設定した。
