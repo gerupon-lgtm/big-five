@@ -316,7 +316,7 @@ test("Q-006 screens preserve text sharing fallbacks independently in preview and
   ], documentPaths.screens);
 });
 
-test("Q-006 records only E-1/E-2 and F-1/F-2 as approved while the overall gate stays open", async () => {
+test("Q-006 records E-1 through E-3 and F-1 through F-3 as approved while the overall gate stays open", async () => {
   const [requirements, t005Spec, tasks, evidenceLedger] = await Promise.all([
     readProjectDocument(documentPaths.requirements),
     readProjectDocument(documentPaths.t005Spec),
@@ -335,20 +335,24 @@ test("Q-006 records only E-1/E-2 and F-1/F-2 as approved while the overall gate 
     "Content Approval pending",
     "E-1",
     "E-2",
-    "E-3〜E-5",
+    "E-3",
+    "E-4〜E-5",
     "T-0〜T-4",
     "F-1",
     "F-2",
-    "F-3〜F-5",
+    "F-3",
+    "F-4〜F-5",
     "X-1〜X-2",
   ], documentPaths.requirements);
   assert.match(gateSection, /E-0[^。\n]*approved/);
   assert.match(gateSection, /E-1[^。\n]*approved[^。\n]*2026-07-28/);
   assert.match(gateSection, /E-2[^。\n]*approved[^。\n]*2026-07-28/);
-  assert.match(gateSection, /E-3〜E-5[^。\n]*draft[^。\n]*承認日なし/);
+  assert.match(gateSection, /E-3[^。\n]*approved[^。\n]*2026-07-28/);
+  assert.match(gateSection, /E-4〜E-5[^。\n]*draft[^。\n]*承認日なし/);
   assert.match(gateSection, /F-1[^。\n]*approved[^。\n]*2026-07-28/);
   assert.match(gateSection, /F-2[^。\n]*approved[^。\n]*2026-07-28/);
-  assert.match(gateSection, /T-0〜T-4[^。\n]*F-3〜F-5[^。\n]*reviewed[^。\n]*(?:clean|通過)[^。\n]*人手(?:内容)?承認[^。\n]*代替[^。\n]*ない/);
+  assert.match(gateSection, /F-3[^。\n]*approved[^。\n]*2026-07-28/);
+  assert.match(gateSection, /T-0〜T-4[^。\n]*F-4〜F-5[^。\n]*reviewed[^。\n]*(?:clean|通過)[^。\n]*人手(?:内容)?承認[^。\n]*代替[^。\n]*ない/);
   assert.match(gateSection, /X-1〜X-2[^。\n]*reviewed[^。\n]*人手approval record[^。\n]*ない/);
   assert.match(gateSection, /完全解決[^。\n]*E-0〜E-5[^。\n]*T-0〜T-4[^。\n]*F-1〜F-5[^。\n]*X-1〜X-2[^。\n]*人手approval record/);
 
@@ -364,21 +368,23 @@ test("Q-006 records only E-1/E-2 and F-1/F-2 as approved while the overall gate 
     "E-0",
     "E-1",
     "E-2",
-    "E-3〜E-5",
+    "E-3",
+    "E-4〜E-5",
     "T-0〜T-4",
     "F-1",
     "F-2",
-    "F-3〜F-5",
+    "F-3",
+    "F-4〜F-5",
     "X-1〜X-2",
   ], documentPaths.t005Spec);
   const specReviewedGateLine = matchingLine(specGate, /T-0〜T-4/, "T-005 spec reviewed gates");
-  assertIncludesAll(specReviewedGateLine, ["F-3〜F-5", "reviewed", "人手approval record", "ない"], documentPaths.t005Spec);
+  assertIncludesAll(specReviewedGateLine, ["F-4〜F-5", "reviewed", "人手approval record", "ない"], documentPaths.t005Spec);
   const specExperienceGateLine = matchingLine(specGate, /X-1〜X-2/, "T-005 spec experience gates");
   assertIncludesAll(specExperienceGateLine, ["reviewed", "人手approval record", "なし"], documentPaths.t005Spec);
 
   const taskGate = sectionBetween(tasks, "#### Q-006ドメイン実装記録（2026-07-26）", "### T-006 履歴・比較・削除");
-  assertIncludesAll(taskGate, ["initial reviewed copy", "Content Approval pending", "E-0", "E-1", "E-2", "E-3〜E-5", "T-0〜T-4", "F-1", "F-2", "F-3〜F-5", "X-1〜X-2"], documentPaths.tasks);
-  assert.match(taskGate, /T-0〜T-4[^。\n]*F-3〜F-5[^。\n]*reviewed[^。\n]*人手approval record[^。\n]*なし/);
+  assertIncludesAll(taskGate, ["initial reviewed copy", "Content Approval pending", "E-0", "E-1", "E-2", "E-3", "E-4〜E-5", "T-0〜T-4", "F-1", "F-2", "F-3", "F-4〜F-5", "X-1〜X-2"], documentPaths.tasks);
+  assert.match(taskGate, /T-0〜T-4[^。\n]*F-4〜F-5[^。\n]*reviewed[^。\n]*人手approval record[^。\n]*なし/);
   assert.match(taskGate, /X-1〜X-2[^。\n]*reviewed[^。\n]*人手approval record[^。\n]*なし/);
 
   const initialStateLine = matchingLine(tasks, /- 初期状態:/, "Q-006 initial-state history");
@@ -387,8 +393,10 @@ test("Q-006 records only E-1/E-2 and F-1/F-2 as approved while the overall gate 
   const evidenceGates = sectionBetween(evidenceLedger, "## Content Approval Gates（E-0〜E-5）", "## 結果節の主張種別");
   assert.match(evidenceGates, /^\| E-1 \|.*\| approved \| 2026-07-28 \|/m);
   assert.match(evidenceGates, /^\| E-2 \|.*\| approved \| 2026-07-28 \|/m);
+  assert.match(evidenceGates, /^\| E-3 \|.*\| approved \| 2026-07-28 \|/m);
   assert.match(evidenceGates, /F-1[^。\n]*2026-07-28[^。\n]*ユーザー承認/);
   assert.match(evidenceGates, /F-2[^。\n]*2026-07-28[^。\n]*ユーザー承認/);
+  assert.match(evidenceGates, /F-3[^。\n]*2026-07-28[^。\n]*ユーザー承認/);
 });
 
 test("F-002 maps to T-005 in the trace row, task section, and T-005 spec", async () => {

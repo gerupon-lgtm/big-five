@@ -240,11 +240,12 @@
 - `ResultEvidenceDefinition`は固定6件、`ResultTextDefinition`は10 sectionとsection別`claimKind`を持つexact schemaとする。
 - `result-text-v1`は51称号の中立副題・理由102件と、5因子×3 bandのpreview/detail文135件、合計237件のliteral定義として実装・独立レビュー済みである。
 - 文面は`result-text-v1 initial reviewed copy`であり、全gateの必要な人手approval recordが揃うまでは`Content Approval pending`とする。
-- E-0、E-1、E-2は根拠台帳どおりapprovedであり、E-1とE-2の承認日は2026-07-28である。
-- E-3〜E-5は根拠台帳どおり`draft`で承認日なしとし、承認日を補わない。
+- E-0、E-1、E-2、E-3は根拠台帳どおりapprovedであり、E-1〜E-3の承認日は2026-07-28である。
+- E-4〜E-5は根拠台帳どおり`draft`で承認日なしとし、承認日を補わない。
 - F-1は知性・想像力の20問観察文と50問8節についてapprovedであり、承認日は2026-07-28である。
 - F-2は勤勉性の20問観察文と50問8節についてapprovedであり、承認日は2026-07-28である。
-- T-0〜T-4とF-3〜F-5は`reviewed`で実装・独立レビューがcleanだが、人手内容承認の代替ではない。
+- F-3は外向性の20問観察文と50問8節についてapprovedであり、承認日は2026-07-28である。
+- T-0〜T-4とF-4〜F-5は`reviewed`で実装・独立レビューがcleanだが、人手内容承認の代替ではない。
 - X-1〜X-2は`reviewed`だが人手approval recordがないため、preview／detail全体表示の承認が必要である。
 - 20問はtitle 2件＋5因子の観察文＝7件を表示し、詳細節を抑制する。20問の限界と50問で変わり得る注意は別の必須UI文面として表示する。
 - 50問はtitle 2件＋5因子×8節＝42件を、ResultSnapshotではsection-first・各section内固定因子順のhistorical copyとして保持する。結果画面ではsnapshotを変更せず因子別に投影し、`question`と`action`を1つの「振り返りと行動ヒント」カテゴリへまとめて段階表示できる。
@@ -559,7 +560,7 @@ MVPにアカウント・管理者機能はない。利用者は当該ブラウ�
 
 | No | 確認事項 | 確認先／決定者 | 期限 | 次工程 | 設計影響 |
 |---|---|---|---|---|---|
-| Q-006 | `result-text-v1 initial reviewed copy`のE-1／E-2／F-1／F-2は2026-07-28にapproved。E-3〜E-5、T-0〜T-4、F-3〜F-5、X-1〜X-2の各gateに必要な人手approval recordを揃える。完了まではContent Approval pending | ユーザー | 正式公開前 | コンテンツ承認／画面統合 | 後で可 |
+| Q-006 | `result-text-v1 initial reviewed copy`のE-1／E-2／E-3／F-1／F-2／F-3は2026-07-28にapproved。E-4〜E-5、T-0〜T-4、F-4〜F-5、X-1〜X-2の各gateに必要な人手approval recordを揃える。完了まではContent Approval pending | ユーザー | 正式公開前 | コンテンツ承認／画面統合 | 後で可 |
 | Q-007 | 共有画像の寸法、形式、トリミング、文字量 | ユーザー | 共有画面実装前 | 基本設計 | 後で可 |
 | Q-008 | GitHub Pagesの公開元、Actionsワークフロー、初期URL、任意のカスタムドメイン | ユーザー | 公開設計前 | 基本設計 | 後で可 |
 | Q-009 | ベータ参加者の募集方法とアンケート手段 | ユーザー | ベータ開始前 | 運用設計 | 後で可 |
@@ -600,7 +601,7 @@ MVPにアカウント・管理者機能はない。利用者は当該ブラウ�
 
 - Q-001〜Q-005はIPIP採用、表示換算、51分類と`title-rule-v1`の決定により解消済みである。
 - 基本設計では、IPIPの50項目・正逆方向・因子割当、20問プレビューの項目集合、0〜100換算をトレーサビリティ付きで仕様化する。
-- Q-012とQ-013の設計条件は解決済みである。Q-006は`result-text-v1 initial reviewed copy`と根拠・合成・snapshotまで実装済みで、E-1／E-2／F-1／F-2は2026-07-28にapprovedとなったが、E-3〜E-5、T-0〜T-4、F-3〜F-5、X-1〜X-2の各gateに必要な人手approval recordがすべて揃うまで要確認事項に残る。Q-011は送信先・集計項目・匿名化方針が解決済みで、保持期間等の運用値だけが残る。結果判定設計のブロッカーは解消済みである。
+- Q-012とQ-013の設計条件は解決済みである。Q-006は`result-text-v1 initial reviewed copy`と根拠・合成・snapshotまで実装済みで、E-1／E-2／E-3／F-1／F-2／F-3は2026-07-28にapprovedとなったが、E-4〜E-5、T-0〜T-4、F-4〜F-5、X-1〜X-2の各gateに必要な人手approval recordがすべて揃うまで要確認事項に残る。Q-011は送信先・集計項目・匿名化方針が解決済みで、保持期間等の運用値だけが残る。結果判定設計のブロッカーは解消済みである。
 
 ## 21. 参考資料
 

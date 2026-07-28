@@ -172,16 +172,22 @@ test("T-007 production source records exact statuses and remains authorable with
   assert.deepEqual(approvals.rows[2], {
     gate_id: "E-2", display_order: 3, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "勤勉性のhigh/middle/low語彙と根拠IDをユーザー承認。",
   });
+  assert.deepEqual(approvals.rows[3], {
+    gate_id: "E-3", display_order: 4, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "外向性のhigh/middle/low語彙と根拠IDをユーザー承認。",
+  });
   assert.deepEqual(approvals.rows[11], {
     gate_id: "F-1", display_order: 12, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "知性・想像力の20問観察文と50問8節をユーザー承認。",
   });
   assert.deepEqual(approvals.rows[12], {
     gate_id: "F-2", display_order: 13, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "勤勉性の20問観察文と50問8節をユーザー承認。",
   });
-  assert.ok(approvals.rows.slice(3, 6).every((row) => row.status === "draft" && row.approved_by === "" && row.approved_on === ""));
+  assert.deepEqual(approvals.rows[13], {
+    gate_id: "F-3", display_order: 14, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "外向性の20問観察文と50問8節をユーザー承認。",
+  });
+  assert.ok(approvals.rows.slice(4, 6).every((row) => row.status === "draft" && row.approved_by === "" && row.approved_on === ""));
   assert.ok([
     ...approvals.rows.slice(6, 11),
-    ...approvals.rows.slice(13),
+    ...approvals.rows.slice(14),
   ].every((row) => row.status === "reviewed" && row.approved_by === "" && row.approved_on === ""));
 
   const result = await loadAndCompileResultContent(SOURCE);

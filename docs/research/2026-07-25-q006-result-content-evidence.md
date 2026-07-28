@@ -63,13 +63,13 @@
 | E-0 | 共通資料、20/50の限界、非診断注意 | IPIP日本語50項目版、20問は簡易プレビュー、20問日本語版Mini-IPIPの独立妥当性は未検証、称号は非公式、振り返り・行動は測定事実でない | approved | 2026-07-20（要件）、2026-07-25（T-005文面契約） | source label、locator、支持範囲のユーザー承認記録をこの台帳に追記する |
 | E-1 | 知性・想像力のhigh/middle/low語彙と根拠ID | 20問・50問の観察文6件と、50問のstrength／tradeoff／work／relationship／stress／question／action各3 band、計27文をユーザー承認。観察文は尺度内の傾向だけを述べ、残り21文は測定事実ではなく振り返り・行動ヒントとして`evidence-result-presentation-contract`に限定する | approved | 2026-07-28 | 承認済み27文と、尺度観察／振り返り・行動ヒントの根拠境界を維持する |
 | E-2 | 勤勉性のhigh/middle/low語彙と根拠ID | 20問・50問の観察文6件と、50問のstrength／tradeoff／work／relationship／stress／question／action各3 band、計27文をユーザー承認。観察文は尺度内の傾向だけを述べ、残り21文は測定事実ではなく振り返り・行動ヒントとして`evidence-result-presentation-contract`に限定する | approved | 2026-07-28 | 承認済み27文と、尺度観察／振り返り・行動ヒントの根拠境界を維持する |
-| E-3 | 外向性のhigh/middle/low語彙と根拠ID | 因子名、因子定義、公式10項目の固定は承認済み。結果文語彙は未レビュー | draft | — | high/middle/low文面バッチをContent Approval Gatesでレビューする |
+| E-3 | 外向性のhigh/middle/low語彙と根拠ID | 20問・50問の観察文6件と、50問のstrength／tradeoff／work／relationship／stress／question／action各3 band、計27文をユーザー承認。観察文は尺度内の傾向だけを述べ、残り21文は測定事実ではなく振り返り・行動ヒントとして`evidence-result-presentation-contract`に限定する | approved | 2026-07-28 | 承認済み27文と、尺度観察／振り返り・行動ヒントの根拠境界を維持する |
 | E-4 | 協調性のhigh/middle/low語彙と根拠ID | 因子名、因子定義、公式10項目の固定は承認済み。結果文語彙は未レビュー | draft | — | high/middle/low文面バッチをContent Approval Gatesでレビューする |
 | E-5 | 情緒安定性のhigh/middle/low語彙と根拠ID | 因子名、因子定義、公式10項目の固定は承認済み。結果文語彙は未レビュー | draft | — | high/middle/low文面バッチをContent Approval Gatesでレビューする |
 
-E-1は知性・想像力、E-2は勤勉性のhigh/middle/low語彙、根拠ID、20問・50問の対象各27文をContent Approval Gatesでレビューし、2026-07-28にユーザー承認された。E-3〜E-5は、ここに記した項目対応だけでは`approved`にならず、各因子の20問・50問文面バッチをレビューした後に限り更新する。承認日のない`draft`へ日付を補わない。
+E-1は知性・想像力、E-2は勤勉性、E-3は外向性のhigh/middle/low語彙、根拠ID、20問・50問の対象各27文をContent Approval Gatesでレビューし、2026-07-28にユーザー承認された。E-4〜E-5は、ここに記した項目対応だけでは`approved`にならず、各因子の20問・50問文面バッチをレビューした後に限り更新する。承認日のない`draft`へ日付を補わない。
 
-F-1は知性・想像力、F-2は勤勉性の20問観察文と50問8節について、対応するE gateと同じ対象各27文を2026-07-28にユーザー承認した。F-3〜F-5、T-0〜T-4、X-1〜X-2は`reviewed`だが人手approval recordがなく、Q-006全体は`Content Approval pending`のままである。
+F-1は知性・想像力、F-2は勤勉性、F-3は外向性の20問観察文と50問8節について、対応するE gateと同じ対象各27文を2026-07-28にユーザー承認した。F-4〜F-5、T-0〜T-4、X-1〜X-2は`reviewed`だが人手approval recordがなく、Q-006全体は`Content Approval pending`のままである。
 
 ## 結果節の主張種別
 
