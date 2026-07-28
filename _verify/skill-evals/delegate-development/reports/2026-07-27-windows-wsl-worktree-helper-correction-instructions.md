@@ -121,3 +121,58 @@ Bash/Service/CreateInstance/E_ACCESSDENIED
 
 配布済みskillは変更せず、本作業では同じlinked worktree内だけを対象にした
 PowerShell手順でworkspace、brief、review packageを生成する。
+
+## 2026-07-29 UIトーン再設計worktreeでの再発
+
+### 結果
+
+設計承認済みの
+`docs/superpowers/plans/2026-07-29-frontend-tone-and-shared-header.md`
+を対象に、Git Bashの絶対pathを指定して配布済み`sdd-workspace`を実行したが、
+2026-07-28と同じMSYS pathへの権限エラーが再発した。
+
+### 再現環境
+
+- worktree:
+  `C:\Users\user\Documents\診断系アプリ開発\.worktrees\big-five-ui-tone-refresh`
+- branch: `codex/big-five-ui-tone-refresh`
+- shell: `C:\Program Files\Git\bin\bash.exe`
+- helper:
+  `C:\Users\user\.codex\skills\delegate-development\scripts\sdd-workspace`
+
+### 再現コマンドと出力
+
+```powershell
+& 'C:\Program Files\Git\bin\bash.exe' `
+  'C:\Users\user\.codex\skills\delegate-development\scripts\sdd-workspace' `
+  'docs/superpowers/plans/2026-07-29-frontend-tone-and-shared-header.md'
+```
+
+```text
+/usr/bin/mkdir: cannot create directory ‘/c/Users/user’: Permission denied
+```
+
+### 影響
+
+- plan別workspaceとledgerをhelperで初期化できない。
+- 同じ仕組みを使う`task-brief`と`review-package`も、Windows linked
+  worktreeの通常sandboxでは同種の失敗が見込まれる。
+- アプリの設計、実装、テストの不具合ではない。
+
+### 修正指示
+
+1. Windows正規経路となるPowerShell版`sdd-workspace.ps1`、
+   `task-brief.ps1`、`review-package.ps1`を配布物へ追加する。
+2. `.sh`版が解決した作成先をWindows pathとMSYS pathの両方で診断表示し、
+   `mkdir`実行前に書込み可能性を確認する。
+3. `/c/...`への`permission denied`を一般的なmkdir失敗にせず、
+   `SDD_WINDOWS_SANDBOX_WRITE_DENIED`等の安定コード、解決済みWindows path、
+   PowerShell版の正確な代替コマンドを出力する。
+4. Codexの`workspace-write`環境で、通常checkoutとlinked worktreeの双方から
+   `.superpowers/sdd/<plan>/`を追加権限なしで作成できる回帰テストを加える。
+
+### 暫定回避と判断
+
+配布済みskillは直接変更しない。アプリworktree内の
+`.superpowers/sdd/2026-07-29-frontend-tone-and-shared-header/`だけを
+PowerShellで限定作成し、briefとreview packageも同じworkspaceへ生成する。
