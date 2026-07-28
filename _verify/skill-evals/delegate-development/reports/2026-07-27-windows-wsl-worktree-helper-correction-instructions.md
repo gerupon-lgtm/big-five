@@ -43,3 +43,41 @@ PowerShellでplan見出しを抽出し、同じ`.superpowers/sdd/{plan-slug}/`�
 ## 未解決・リスク
 
 配布元へ修正が反映されるまで、Windows linked worktreeでは3ヘルパーの手動代替が必要である。
+
+## 2026-07-28 Codex通常sandboxでの追加再現
+
+### 結果
+
+Windows Git Bashを絶対パスで明示して`delegate-development`同梱の
+`sdd-workspace`をlinked worktreeから実行しても、Codex通常sandboxでは
+worktree内の`.superpowers/sdd/`を作成できなかった。PowerShellで同じ
+worktree内へ限定作成する暫定回避が必要だった。
+
+### 再現コマンドと出力
+
+```powershell
+& 'C:\Program Files\Git\bin\bash.exe' `
+  'C:\Users\user\.codex\skills\delegate-development\scripts\sdd-workspace' `
+  'docs/superpowers/plans/2026-07-28-questionnaire-typography.md'
+```
+
+```text
+/usr/bin/mkdir: cannot create directory ‘/c/Users/user’: Permission denied
+```
+
+同じ実行主体・worktreeで、`review-package`はsandbox外実行へ切り替えると
+`.superpowers/sdd/2026-07-28-questionnaire-typography/`へ生成できた。
+
+### 修正指示への追記
+
+1. PowerShell版3 helperをWindowsの正規経路として同梱し、Codex通常sandboxで
+   linked worktree内の生成先へ書き込める回帰を追加する。
+2. `.sh`版がMSYS形式`/c/...`の生成先でpermission deniedになった場合は、
+   一般的な`mkdir`失敗へ畳み込まず、PowerShell版の正確な代替コマンドと
+   解決済みWindows pathを表示する。
+3. Windows helperの成功条件へ「sandbox外権限を要求しない」を追加する。
+
+### 判断
+
+本件はアプリ実装の不具合へ読み替えず、配布済みskillを直接変更しない。
+正典worktreeではPowerShellによる限定作成を使って本体作業を継続する。
