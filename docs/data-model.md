@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.5 |
+| 設計版 | 0.6 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-27 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.10 |
+| 更新日 | 2026-07-28 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.11 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -210,15 +210,30 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 | sceneId | `pause` \| `reset` \| `quiet-focus` | ○ | 利用場面 |
 | accordLabel | string | ○ | 香調名 |
 | description | string | ○ | 雰囲気の説明 |
+| materialExamples | string[1..3] | schema 2のみ○ | 通常結果で表示する「香りの素材例」。固定順 |
 | disclaimerId | string | ○ | 共通注意書き |
 
 商品、用量、滴数、配合、摂取、塗布、ディフューザー使用法の項目は持たない。
+
+人手編集では`fragrance-material-examples.csv`を独立した関連表とし、`fragrance_id`、`presentation_definition_version`、香調内で1から連続する`display_order`、`material_name`、`status`を持つ。コンパイラが1〜3件を`materialExamples`へ結合する。名称は香りのイメージ補助に限定し、商品、使用法、効果のデータを持たない。
+
+#### 2.10.1 FragranceMaterialExample
+
+| 項目 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| fragranceId | string | ○ | 親`FragranceSuggestion` |
+| presentationDefinitionVersion | string | ○ | 親と一致する演出定義版 |
+| displayOrder | integer | ○ | 親ごとに1から連続 |
+| materialName | string | ○ | 「香りの素材例」として表示する一般名称 |
+| status | enum | ○ | `draft`／`reviewed`／`approved`／`rejected` |
+
+同じ親に1〜3件だけを許可し、名称重複、参照切れ、版不一致、順序欠損を拒否する。このauthoring relation自体はruntime JSONへ残さず、固定順の`materialExamples`へ投影する。
 
 ### 2.11 PresentationDefinitionSet
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
-| schemaVersion | `1` | ○ | exact schema版 |
+| schemaVersion | `1` \| `2` | ○ | 現行runtimeは1。素材例を有効化する`presentation-v2`は2 |
 | presentationDefinitionVersion | string | ○ | 色・香り定義版 |
 | scenes | SceneDefinition[3] | ○ | pause/reset/quiet-focus固定順 |
 | palettes | PaletteDefinition[] | ○ | 版付きパレットライブラリ |
@@ -226,6 +241,8 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 | titleSelectors | TitlePresentationSelector[51] | ○ | 称号ごとの候補参照 |
 
 sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを切り替えたい`、`quiet-focus = 静かに取り組みたい`とする。
+
+schema 1の`presentation-v1`は素材例を持たない現行互換契約とし、schema 2の`presentation-v2`は全`FragranceSuggestion`に`materialExamples`を必須とする。Q-013のapproved release選択前に現行runtimeへschema 2を混在させない。
 
 #### TitlePresentationSelector
 

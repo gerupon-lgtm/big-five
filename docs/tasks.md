@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.5 |
+| 設計版 | 0.6 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-27 |
-| 要件正典 | 要件定義書v1.10 |
+| 更新日 | 2026-07-28 |
+| 要件正典 | 要件定義書v1.11 |
 | 初期リリース | `mvp-0.1.0` |
 
 ## 1. トレーサビリティ表（正典）
@@ -29,7 +29,7 @@
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A | 基盤確定。Q-014の保存失敗時中断・終了処理待ち |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面接続を実装。共有接続待ち |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
-| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013設計済み。実データ待ち |
+| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialExample, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013設計済み。素材例を含む実データ待ち |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -191,7 +191,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 開始ゲート:
   - Q-006: `result-text-v1 initial reviewed copy`、根拠、合成、snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordが揃うまで`Content Approval pending`
   - Q-012: 制作・技術実装済み。51体すべてについてproject-ownerの制作確認を経て、共通encoder設定、1024px正方形、透明余白、ハッシュ整合、runtime manifest、単一画像遅延loaderを固定済み。ただし正式なapproved release選択は未完了
-  - Q-013: 構造と選択規則は確定。全パレット・香調・用途色展開データ
+  - Q-013: 構造と選択規則は確定。各香調1〜3件の素材例、通常結果だけの表示、共有除外も2026-07-28に確定。全パレット・香調・素材例・用途色展開データ
 - 作業:
   - S-003/S-004の結果モデルと画面を実装。
   - レーダー＋代替テキストを実装。
@@ -337,6 +337,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - S-006を猫サムネイル・称号・日時・20/50問・`結果を見る`へ簡潔化し、最大2件・互換結果のみ・明示実行の比較モード、管理メニューの個別削除・全削除・版情報へ接続した。
   - `createQuestionComposition`と`createResultDisclosureModel`を追加し、設問本文・回答を出さない正逆方向件数と、section-first snapshotからfactor-first表示モデルへの不変投影を実装した。レーダーの5因子名描画とアクセシブルなボトムシート基盤も追加した。
   - 全444テスト、静的検証44 JavaScript、`git diff --check`に成功した。残作業は結果hero、因子一覧・二段階展開、設問構成／方法情報の画面接続、最終responsive・keyboard browser smokeである。
+  - Q-013素材例仕様（2026-07-28）: 各香調に1〜3件の「香りの素材例」を版付き関連CSVから追加し、通常結果だけに表示して共有から除外する設計を承認した。ユーザー共有の評価コメント・象徴色・香り資料は51称号を網羅する候補検討資料としてハッシュを記録したが、直接移植・自動採用・承認済み扱いを禁止する。実装とproduction data作成はQ-013 release gate内の後続作業である。
 
 ### T-008 全画面統合・レスポンシブ・アクセシビリティ
 
@@ -442,6 +443,6 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
 | 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを制作・技術確認済み。runtime manifest、整合検査、単一画像遅延loader、live／保存済み結果画面接続まで実装済み | Q-012の正式なapproved release選択は未完了。共有はT-007で接続 |
-| 色・香り実データ | 候補数・分類・選択規則は確定。全パレット・香調・用途色が未制作 | Q-013設計を基にT-005で制作 |
+| 色・香り実データ | 候補数・分類・選択規則、香調ごとの素材例1〜3件、通常結果だけの表示、共有除外は確定。全パレット・香調・素材例・用途色が未制作 | Q-013設計を基にT-005で制作 |
 
 これは要件漏れではなく、要件書19章に期限付きで残る後続決定である。
