@@ -149,6 +149,73 @@ test("QA artifact audit rejects a symlinked artifact root without following it",
   );
 });
 
+test("QA artifact audit rejects a tampered search exclusion directive", async (t) => {
+  const root = await tempDirectory(t, "big-five-qa-audit-noindex-");
+  const output = join(root, "artifact");
+  await assembleQaPreview({
+    appDir: resolve("app"),
+    outputDir: output,
+    allowedParentDir: root,
+  });
+  const indexPath = join(output, "index.html");
+  const html = await readFile(indexPath, "utf8");
+  await writeFile(
+    indexPath,
+    html.replace("noindex,nofollow", "index,follow"),
+    "utf8",
+  );
+
+  await assert.rejects(
+    () => auditQaPreviewArtifact(output),
+    (error) => error?.code === "QA_PREVIEW_ARTIFACT_INVALID",
+  );
+});
+
+test("QA artifact audit rejects a conflicting robots meta variant", async (t) => {
+  const root = await tempDirectory(t, "big-five-qa-audit-robots-meta-");
+  const output = join(root, "artifact");
+  await assembleQaPreview({
+    appDir: resolve("app"),
+    outputDir: output,
+    allowedParentDir: root,
+  });
+  const indexPath = join(output, "index.html");
+  const html = await readFile(indexPath, "utf8");
+  await writeFile(
+    indexPath,
+    html.replace(
+      "</head>",
+      '    <meta name = "robots" content="index,follow">\n  </head>',
+    ),
+    "utf8",
+  );
+
+  await assert.rejects(
+    () => auditQaPreviewArtifact(output),
+    (error) => error?.code === "QA_PREVIEW_ARTIFACT_INVALID",
+  );
+});
+
+test("QA artifact audit rejects a tampered robots.txt", async (t) => {
+  const root = await tempDirectory(t, "big-five-qa-audit-robots-");
+  const output = join(root, "artifact");
+  await assembleQaPreview({
+    appDir: resolve("app"),
+    outputDir: output,
+    allowedParentDir: root,
+  });
+  await writeFile(
+    join(output, "robots.txt"),
+    "User-agent: *\nDisallow:\n",
+    "utf8",
+  );
+
+  await assert.rejects(
+    () => auditQaPreviewArtifact(output),
+    (error) => error?.code === "QA_PREVIEW_ARTIFACT_INVALID",
+  );
+});
+
 test("QA artifact rejects symlinks without following them", async (t) => {
   const root = await tempDirectory(t, "big-five-qa-link-");
   const app = join(root, "app");

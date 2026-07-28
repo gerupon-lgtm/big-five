@@ -160,6 +160,17 @@ export async function auditQaPreviewArtifact(outputDir) {
         !files.some((file) => file.startsWith("assets/characters/"))) {
       throw qaError("QA_PREVIEW_ARTIFACT_INVALID");
     }
+    const html = await readFile(path.join(root, "index.html"), "utf8");
+    const requiredRobotsMeta =
+      '<meta name="robots" content="noindex,nofollow">';
+    if (html.split(requiredRobotsMeta).length - 1 !== 1 ||
+        (html.match(
+          /<meta\b[^>]*\sname\s*=\s*(?:"robots"|'robots'|robots(?=\s|\/?>))[^>]*>/gi,
+        ) ?? []).length !== 1 ||
+        await readFile(path.join(root, "robots.txt"), "utf8") !==
+          "User-agent: *\nDisallow: /\n") {
+      throw qaError("QA_PREVIEW_ARTIFACT_INVALID");
+    }
     let totalBytes = 0;
     for (const file of files) {
       totalBytes += (await stat(path.join(outputDir, ...file.split("/")))).size;
