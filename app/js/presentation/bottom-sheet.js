@@ -47,32 +47,48 @@ export function appendBottomSheetLauncher(
     "secondary-button",
   );
   closeButton.setAttribute("type", "button");
+  let sheetOpen = false;
 
   function openSheet() {
+    if (sheetOpen) return;
     if (typeof sheet.showModal === "function") {
       sheet.showModal();
     } else {
       sheet.setAttribute("open", "");
     }
+    sheetOpen = true;
     button.setAttribute("aria-expanded", "true");
   }
 
+  function finishClose() {
+    if (!sheetOpen) return;
+    sheetOpen = false;
+    button.setAttribute("aria-expanded", "false");
+    button.focus?.();
+  }
+
   function closeSheet() {
+    if (!sheetOpen) return;
     if (typeof sheet.close === "function" && sheet.open) {
       sheet.close();
     } else {
       sheet.removeAttribute("open");
     }
-    button.setAttribute("aria-expanded", "false");
-    button.focus?.();
+    finishClose();
   }
 
   button.addEventListener("click", openSheet);
   closeButton.addEventListener("click", closeSheet);
-  sheet.addEventListener("close", () => {
-    button.setAttribute("aria-expanded", "false");
-    button.focus?.();
+  sheet.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeSheet();
   });
+  sheet.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !sheetOpen) return;
+    event.preventDefault();
+    closeSheet();
+  });
+  sheet.addEventListener("close", finishClose);
   parent.append(sheet);
   return button;
 }

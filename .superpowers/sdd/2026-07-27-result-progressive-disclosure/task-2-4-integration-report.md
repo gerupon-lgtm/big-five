@@ -49,3 +49,25 @@ git diff --check
 
 - Q-006、Q-012、Q-013の承認待ちコンテンツや `result-text-v2` / `titleReflection` には触れていない。
 - 実ブラウザのシートのEscape操作・スクロール・狭幅見た目は既存のブラウザスモーク対象だが、今回の追加UIについては今後の手動確認で補強できる。
+
+## ブラウザ検証調整
+
+360×800の実ブラウザ検証で、方法情報ダイアログを開いた後に実キー入力でEscapeを押しても5秒以内に閉じず、ランチャーが `aria-expanded="true"` のまま残る事象を確認した。ネイティブ既定動作だけに依存せず、`cancel` と `keydown` の両経路をアプリの閉じる契約へ接続した。同期的に `close` イベントが発生しても、閉じる処理とランチャーへのフォーカス復元は各1回だけ実行する。
+
+TDD RED:
+
+```powershell
+node --test app/tests/bottom-sheet.test.js app/tests/result-screen.test.js
+```
+
+結果: 18件中16件成功、2件失敗。`cancel` が `defaultPrevented=false` のままで、`keydown` Escapeも処理されないという、明示ハンドラ欠落による期待どおりの失敗だった。
+
+TDD GREEN:
+
+```powershell
+node --test app/tests/bottom-sheet.test.js app/tests/result-screen.test.js
+```
+
+結果: 18件成功、失敗0件。ネイティブ `cancel` と決定的な `keydown` Escapeフォールバックの両方で、ダイアログ閉鎖、`aria-expanded="false"`、ランチャーフォーカス復元を確認した。同期 `close` と後続 `cancel` を含めてもclose/focus呼出しは各1回だった。
+
+ブラウザ調整後の最終検証は `npm.cmd test` が459件成功、`npm.cmd run check` が `Static check passed (44 JavaScript files, one canonical runtime version).`、`git diff --check` が成功した。

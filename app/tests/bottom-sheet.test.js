@@ -58,3 +58,62 @@ test("T-008A F-015 rejects incomplete bottom sheet input", () => {
     /BOTTOM_SHEET_INVALID/,
   );
 });
+
+test("T-008A F-008 handles native cancel as Escape and restores launcher state", () => {
+  const { host } = createFakeScreen();
+  const launcher = appendBottomSheetLauncher(host, {
+    id: "method-limitations",
+    label: "この結果の限界",
+    title: "この結果の限界",
+    body: "結果を解釈するときの限界です。",
+  });
+  const dialog = collectElements(host).find(
+    ({ tagName }) => tagName === "dialog",
+  );
+
+  launcher.dispatch("click");
+  const event = dialog.dispatch("cancel");
+
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(dialog.open, false);
+  assert.equal(dialog.attributes.has("open"), false);
+  assert.equal(launcher.attributes.get("aria-expanded"), "false");
+  assert.equal(host.ownerDocument.activeElement, launcher);
+});
+
+test("T-008A F-008 closes once on keydown Escape even when close dispatches synchronously", () => {
+  const { host } = createFakeScreen();
+  const launcher = appendBottomSheetLauncher(host, {
+    id: "method-sources",
+    label: "出典・利用条件",
+    title: "出典・利用条件",
+    body: "尺度の出典と利用条件です。",
+  });
+  const dialog = collectElements(host).find(
+    ({ tagName }) => tagName === "dialog",
+  );
+  const nativeClose = dialog.close.bind(dialog);
+  let closeCalls = 0;
+  let focusCalls = 0;
+  dialog.close = () => {
+    closeCalls += 1;
+    nativeClose();
+  };
+  launcher.focus = () => {
+    focusCalls += 1;
+    host.ownerDocument.activeElement = launcher;
+  };
+
+  launcher.dispatch("click");
+  const event = dialog.dispatch("keydown", { key: "Escape" });
+
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(dialog.open, false);
+  assert.equal(launcher.attributes.get("aria-expanded"), "false");
+  assert.equal(closeCalls, 1);
+  assert.equal(focusCalls, 1);
+
+  dialog.dispatch("cancel");
+  assert.equal(closeCalls, 1);
+  assert.equal(focusCalls, 1);
+});
