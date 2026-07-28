@@ -288,6 +288,38 @@ test("Q-006 E-2/F-2 uses the reviewed preparation and organization wording for c
   );
 });
 
+test("Q-006 F-2 uses the reviewed high-band reflection prompts for conscientiousness", () => {
+  const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "conscientiousness"
+    && appliesTo.band === "high"
+  );
+  assert.deepEqual(
+    Object.fromEntries(highDetail.map(({ section, text: resultText }) => [
+      section,
+      resultText,
+    ])),
+    {
+      observation:
+        "今回の50問では、準備や整理をしながら物事を進める傾向が、尺度内で高めに見られました。",
+      strength:
+        "最近、予定や持ち物をあらかじめ整えておいたことで、落ち着いて取りかかれた場面はありましたか。",
+      tradeoff:
+        "予定をきちんと立てようとして、手順を細かく決めることに時間がかかってしまった場面はありましたか。",
+      work:
+        "仕事や学びのなかで、期限から逆算して手順を整理したことで、落ち着いて進められた場面はありましたか。",
+      relationship:
+        "誰かと一緒に進めるとき、役割や予定を先に確認したことで、お互いに動きやすくなった場面はありましたか。",
+      stress:
+        "急な変更で予定が崩れたとき、やることの順番を何度も組み直して、かえって疲れたことはありませんか。",
+      question:
+        "最近、「先に準備しておいてよかった」と、安心したり助かったりした場面はありましたか。",
+      action:
+        "もしよければ、明日取りかかることを一つ選び、最初の一歩だけメモしてみませんか。",
+    },
+  );
+});
+
 test("Q-006 F-1 uses the reviewed high-band reflection prompts for intellect and imagination", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"
