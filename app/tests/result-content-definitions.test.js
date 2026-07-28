@@ -228,6 +228,68 @@ test("20-question preview copy stays within the four-item observation contract",
   }
 });
 
+test("Q-006 E-1/F-1 uses the reviewed interest wording for intellect and imagination observations", () => {
+  const byId = new Map(FactorResultTextDefinitions.map((definition) => [
+    definition.id,
+    definition.text,
+  ]));
+  assert.deepEqual(
+    Object.fromEntries([
+      ...["preview20", "detail50"].flatMap((mode) => [
+        [`${mode}-intellectImagination-high-observation`, byId.get(`${mode}-intellectImagination-high-observation`)],
+        [`${mode}-intellectImagination-middle-observation`, byId.get(`${mode}-intellectImagination-middle-observation`)],
+        [`${mode}-intellectImagination-low-observation`, byId.get(`${mode}-intellectImagination-low-observation`)],
+      ]),
+    ]),
+    {
+      "preview20-intellectImagination-high-observation":
+        "今回の20問では、新しい考え方や発想への関心は、尺度内で高めの傾向が見られました。",
+      "preview20-intellectImagination-middle-observation":
+        "今回の20問では、新しい考え方や発想への関心は、尺度内の中間域にある傾向が見られました。",
+      "preview20-intellectImagination-low-observation":
+        "今回の20問では、新しい考え方や発想への関心は、尺度内で低めの傾向が見られました。",
+      "detail50-intellectImagination-high-observation":
+        "今回の50問では、新しい考え方や発想への関心は、尺度内で高めの傾向が見られました。",
+      "detail50-intellectImagination-middle-observation":
+        "今回の50問では、新しい考え方や発想への関心は、尺度内の中間域にある傾向が見られました。",
+      "detail50-intellectImagination-low-observation":
+        "今回の50問では、新しい考え方や発想への関心は、尺度内で低めの傾向が見られました。",
+    },
+  );
+});
+
+test("Q-006 F-1 uses the reviewed high-band reflection prompts for intellect and imagination", () => {
+  const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "intellectImagination"
+    && appliesTo.band === "high"
+  );
+  assert.deepEqual(
+    Object.fromEntries(highDetail.map(({ section, text: resultText }) => [
+      section,
+      resultText,
+    ])),
+    {
+      observation:
+        "今回の50問では、新しい考え方や発想への関心は、尺度内で高めの傾向が見られました。",
+      strength:
+        "最近、時間を忘れて新しいアイデアや知識について考えたり、調べたりしたことはありましたか。",
+      tradeoff:
+        "いろいろな発想が広がったとき、ひとつの結論を選ぶまでに時間がかかった場面はありましたか。",
+      work:
+        "仕事や学びのなかで、新しいやり方や考え方に「いいな」と惹かれた瞬間はありましたか。",
+      relationship:
+        "人との対話のなかで、お互いの意見が重なり合い、思いがけず話が大きく広がった経験はありますか。",
+      stress:
+        "予想外のトラブルが起きたとき、別の見方や可能性を探し続けて、かえって疲れたことはありませんか。",
+      question:
+        "最近、ふと耳にした言葉や新しい考え方に対して、「もっと深く調べてみたい」と好奇心をくすぐられたことはありますか。",
+      action:
+        "もしよければ、今日心に残った「キーワード」や「気づき」を、スマホや手帳に一つだけ書き留めてみませんか。",
+    },
+  );
+});
+
 test("preview observations use only the four selected items for each reviewed factor", () => {
   const byId = new Map(FactorResultTextDefinitions.map((definition) => [
     definition.id,
@@ -270,10 +332,10 @@ test("50-question detail copy separates scale observations from presentation pro
     }
     if (PROMPT_SECTIONS.has(definition.section) && definition.section !== "action") {
       assert.equal(definition.claimKind, "reflectionPrompt");
-      assert.match(definition.text, /ましたか。$/);
+      assert.match(definition.text, /(?:ましたか|ありますか|ありませんか)。$/);
     }
     if (definition.section === "action") {
-      assert.match(definition.text, /^(?:よければ|無理のない範囲で|気が向けば)/);
+      assert.match(definition.text, /^(?:もしよければ|よければ|無理のない範囲で|気が向けば)/);
       assert.match(definition.text, /みませんか。$/);
     }
   }
