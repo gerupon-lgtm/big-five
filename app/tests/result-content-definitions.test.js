@@ -380,6 +380,70 @@ test("Q-006 F-4 uses the reviewed high-band reflection prompts for agreeableness
   );
 });
 
+test("Q-006 F-4 uses the reviewed middle-band reflection prompts for agreeableness", () => {
+  const middleDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "agreeableness"
+    && appliesTo.band === "middle"
+  );
+  assert.deepEqual(
+    Object.fromEntries(middleDetail
+      .filter(({ section }) => section !== "observation")
+      .map(({ section, text: resultText }) => [
+        section,
+        resultText,
+      ])),
+    {
+      strength:
+        "最近、「相手に合わせよう」と思った場面と、「今回は自分の意見を伝えよう」と思った場面がありましたか。",
+      tradeoff:
+        "意見が合わないとき、「相手の気持ちを大切にしたい」気持ちと「自分の考えもきちんと伝えたい」気持ちの間で迷ったことはありましたか。",
+      work:
+        "仕事や学びのなかで、「周りに協力を頼むか」「まずは自分で進めるか」で迷った場面はありましたか。",
+      relationship:
+        "人との会話で、「相手に合わせるか」「自分の希望を伝えるか」を、その場の関係や雰囲気に合わせて選んだことはありましたか。",
+      stress:
+        "意見が合わないとき、どこまで相手に譲り、どこから自分の考えを伝えるかで悩んだことはありませんか。",
+      question:
+        "最近、「相手に合わせてよかった」と感じた場面と、「自分の希望を伝えてよかった」と感じた場面はありましたか。",
+      action:
+        "もしよければ、次の会話で、相手に聞きたいこと、または、自分から伝えたいことを一つだけ決めてみませんか。",
+    },
+  );
+});
+
+test("Q-006 F-4 uses the reviewed low-band reflection prompts for agreeableness", () => {
+  const lowDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "agreeableness"
+    && appliesTo.band === "low"
+  );
+  assert.deepEqual(
+    Object.fromEntries(lowDetail
+      .filter(({ section }) => section !== "observation")
+      .map(({ section, text: resultText }) => [
+        section,
+        resultText,
+      ])),
+    {
+      strength:
+        "最近、曖昧な状況のなかで自分の考えをはっきり伝えたことにより、話が整理された場面はありましたか。",
+      tradeoff:
+        "自分の考えをはっきり伝えたあと、相手の反応を見て、「少し言い方を変えてもよかったかもしれない」と感じた場面はありましたか。",
+      work:
+        "仕事や学びのなかで、周りに合わせるよりも、必要だと思うことをはっきり伝えたことで、課題が明確になった場面はありましたか。",
+      relationship:
+        "人との会話で、自分の考えを率直に伝えたものの、相手がどう受け取ったか気になった場面はありましたか。",
+      stress:
+        "意見が合わないとき、「これ以上話してもまとまらない」と、早く結論を出したくなったことはありませんか。",
+      question:
+        "最近、自分とは違う考えを聞いて、「その見方もあるな」と思った場面はありましたか。",
+      action:
+        "もしよければ、次に自分の意見を伝えたあと、「あなたはどう思う？」と相手の考えを一つたずねてみませんか。",
+    },
+  );
+});
+
 test("Q-006 F-3 uses the reviewed high-band reflection prompts for extraversion", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"
