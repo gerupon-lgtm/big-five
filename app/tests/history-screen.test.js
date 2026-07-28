@@ -317,6 +317,30 @@ test("T-008A F-013 handles native dialog cancel as Escape", () => {
   assert.equal(host.ownerDocument.activeElement, launcher);
 });
 
+test("T-008A F-013 handles real Escape keydown in native dialog mode", () => {
+  const { host } = createFakeScreen();
+
+  renderHistoryScreen(
+    host,
+    { status: "ok", results: [], ...screenLabels },
+    {},
+  );
+
+  const launcher = collectElements(host).find(
+    ({ className }) => className === "history-management-toggle",
+  );
+  const modal = collectElements(host).find(
+    ({ className }) => className === "history-management-modal",
+  );
+  launcher.dispatch("click");
+  const event = modal.dispatch("keydown", { key: "Escape" });
+
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(modal.open, false);
+  assert.equal(launcher.attributes.get("aria-expanded"), "false");
+  assert.equal(host.ownerDocument.activeElement, launcher);
+});
+
 test("T-008A F-013 fallback without showModal isolates background and wraps focus", () => {
   const { host } = createFakeScreen();
 

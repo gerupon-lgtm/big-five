@@ -397,12 +397,12 @@ function renderHistoryHeader(parent, historyState, actions) {
   });
   dialog.addEventListener("close", closeManagement);
   dialog.addEventListener("keydown", (event) => {
-    if (!fallbackMode) return;
     if (event.key === "Escape") {
       event.preventDefault();
       closeManagement();
       return;
     }
+    if (!fallbackMode) return;
     if (event.key !== "Tab") return;
     const focusable = fallbackFocusableElements();
     if (focusable.length === 0) return;
