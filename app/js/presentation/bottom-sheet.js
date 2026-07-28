@@ -9,7 +9,7 @@ function requireText(value) {
 
 export function appendBottomSheetLauncher(
   parent,
-  { id, label, title, body } = {},
+  { id, label, title, body, appendContent } = {},
 ) {
   if (!parent || typeof parent.append !== "function") {
     throw new TypeError("BOTTOM_SHEET_INVALID");
@@ -18,6 +18,9 @@ export function appendBottomSheetLauncher(
   const safeLabel = requireText(label);
   const safeTitle = requireText(title);
   const safeBody = requireText(body);
+  if (appendContent !== undefined && typeof appendContent !== "function") {
+    throw new TypeError("BOTTOM_SHEET_INVALID");
+  }
 
   const button = appendTextElement(
     parent,
@@ -36,6 +39,7 @@ export function appendBottomSheetLauncher(
   const heading = appendTextElement(sheet, "h2", safeTitle);
   heading.id = `${safeId}-title`;
   appendTextElement(sheet, "p", safeBody);
+  appendContent?.(sheet);
   const closeButton = appendTextElement(
     sheet,
     "button",

@@ -494,8 +494,11 @@ dd {
 
 .result-title,
 .result-character,
+.result-hero,
+.result-title-reason,
 .result-factors,
-.result-details {
+.result-details,
+.result-method-information {
   margin-top: 28px;
   padding: clamp(20px, 5vw, 32px);
   border: 1px solid #bed4cc;
@@ -506,6 +509,8 @@ dd {
 
 .result-title h2,
 .result-character h2,
+.result-hero h2,
+.result-title-reason h2,
 .result-factors h2,
 .result-details h2 {
   margin-top: 0;
@@ -553,6 +558,87 @@ dd {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.factor-score-column-heading {
+  margin: 20px 0 8px;
+  color: #526b66;
+  font-size: 0.9rem;
+  text-align: end;
+}
+
+.factor-score-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, 1.4fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #d6e4df;
+  border-radius: 14px;
+  background: #f8fbf9;
+}
+
+.factor-score-name,
+.factor-score-value,
+.factor-score-row > .factor-disclosure-trigger {
+  margin: 0;
+}
+
+.factor-score-name {
+  font-size: 1rem;
+}
+
+.factor-score-bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dce9e4;
+}
+
+.factor-score-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #26705c;
+}
+
+.factor-score-value {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.factor-disclosure-trigger {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.factor-disclosure-panel {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.factor-description,
+.factor-category-summary {
+  color: #526b66;
+  line-height: 1.7;
+}
+
+.factor-category {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #d6e4df;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.category-disclosure-trigger {
+  font-weight: 700;
+}
+
+.category-disclosure-panel .result-text-item {
+  margin-top: 12px;
 }
 
 .factor-result {
@@ -635,6 +721,24 @@ dd {
 
 .bottom-sheet p {
   line-height: 1.75;
+}
+
+.question-composition-table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+}
+
+.question-composition-table th,
+.question-composition-table td {
+  padding: 8px;
+  border-bottom: 1px solid #d6e4df;
+  text-align: start;
+}
+
+.question-composition-table th:not(:first-child),
+.question-composition-table td:not(:first-child) {
+  text-align: end;
 }
 
 .questionnaire-screen {
@@ -758,6 +862,14 @@ noscript {
 
   .factor-result-list {
     grid-template-columns: 1fr;
+  }
+
+  .factor-score-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .factor-score-bar {
+    grid-column: 1 / -1;
   }
 
   .questionnaire-screen {

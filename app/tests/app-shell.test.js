@@ -486,7 +486,7 @@ test("T-005 F-016 preserves a saved result when its character ID is absent from 
   assert.match(text, /診断時の選択色ID：palette-default/);
   assert.match(text, /画像を利用できない場合も診断結果は有効です/);
   assert.equal(
-    collectElements(host).filter(({ className }) => className === "factor-result").length,
+    collectElements(host).filter(({ className }) => className === "factor-score-row").length,
     5,
   );
   assert.equal(
@@ -1054,4 +1054,68 @@ test("T-005 F-016 opens a saved history result without duplicating its observer 
   hashchange();
   assert.equal(observed, 2);
   assert.equal(disconnected, 1);
+});
+
+test("T-008A F-005 returns a saved detail result directly to the top without creating progress", () => {
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000096",
+  });
+  let confirmations = 0;
+  let writes = 0;
+  const raw = JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: "2026-07-27T12:00:00.000Z",
+    progressByDiagnosis: {},
+    results: [snapshot],
+  });
+  const { host, windowObject } = createAppHarness({
+    hash: `#/result?resultId=${snapshot.resultId}`,
+    storage: {
+      getItem: () => raw,
+      setItem() { writes += 1; },
+    },
+    confirmProvider: () => {
+      confirmations += 1;
+      return false;
+    },
+  });
+
+  clickButton(host, "トップへ戻る");
+
+  assert.equal(windowObject.location.hash, "#/start");
+  assert.equal(confirmations, 0);
+  assert.equal(writes, 0);
+  assert.match(collectText(host), /診断を始める/);
+});
+
+test("T-008A F-015 confirms before leaving an unsaved live detail result and preserves it on cancel", () => {
+  let confirmation = false;
+  let writes = 0;
+  const { host, windowObject } = createAppHarness({
+    storage: {
+      getItem: () => null,
+      setItem() {
+        writes += 1;
+        throw new Error("storage unavailable");
+      },
+    },
+    confirmProvider: () => confirmation,
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "結果を見ずに、あと30問続ける");
+  for (let index = 0; index < 30; index += 1) answerCurrent(host);
+  const writesAtResult = writes;
+
+  clickButton(host, "トップへ戻る");
+  assert.match(windowObject.location.hash, /^#\/result/);
+  assert.match(collectText(host), /50問詳細結果/);
+  assert.equal(writes, writesAtResult);
+
+  confirmation = true;
+  clickButton(host, "トップへ戻る");
+  assert.equal(windowObject.location.hash, "#/start");
+  assert.equal(writes, writesAtResult);
+  assert.match(collectText(host), /診断を始める/);
 });
