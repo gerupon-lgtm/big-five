@@ -8,6 +8,8 @@ import {
   validateCharacterManifest,
 } from "./domain/character-manifest.js";
 import { compareResultSnapshots } from "./domain/result-comparison.js";
+import { createQuestionComposition } from "./domain/question-composition.js";
+import { resolveRegisteredDiagnosticDefinition } from "./domain/diagnostic-definition-registry.js";
 import { createStartVersionViewModel } from "./domain/version-model.js";
 import {
   choosePreviewExit,
@@ -44,6 +46,55 @@ const factorDescriptions = Object.freeze(Object.fromEntries(
 const titleLabels = Object.freeze(Object.fromEntries(
   TitleProfileDefinitions.map(({ titleId, label }) => [titleId, label]),
 ));
+const questionCompositionByMode = Object.freeze({
+  preview20: createQuestionComposition({
+    mode: "preview20",
+    definition: DiagnosticDefinition,
+    questionDefinitions: QuestionDefinitions,
+  }),
+  detail50: createQuestionComposition({
+    mode: "detail50",
+    definition: DiagnosticDefinition,
+    questionDefinitions: QuestionDefinitions,
+  }),
+});
+const diagnosticDefinitionRegistry = Object.freeze([
+  Object.freeze({
+    scaleVersion: DiagnosticDefinition.scaleVersion,
+    questionVersion: DiagnosticDefinition.questionVersion,
+    scoringVersion: DiagnosticDefinition.scoringVersion,
+    definition: DiagnosticDefinition,
+    questionCompositionByMode,
+  }),
+]);
+
+function createMethodInfo(definition, mode) {
+  return Object.freeze([
+    Object.freeze({
+      id: "basis",
+      title: "測定の土台",
+      body: `${definition.scaleName}を用いて、Big Fiveの5因子を確認します。`,
+    }),
+    Object.freeze({
+      id: "scoring",
+      title: "スコアの計算方法",
+      body: "正方向・逆方向をそろえた1〜5の平均を、表示用に0〜100へ換算しています。",
+    }),
+    Object.freeze({
+      id: "limitations",
+      title: "この結果の限界",
+      body: (mode === "preview20"
+        ? definition.limitations
+        : [definition.limitations[0], definition.limitations[2]]
+      ).join(" "),
+    }),
+    Object.freeze({
+      id: "sources",
+      title: "出典・利用条件",
+      body: definition.source.map(({ label }) => label).join(" / "),
+    }),
+  ]);
+}
 const validatedCharacterManifest = validateCharacterManifest(
   CharacterManifest,
   TitleProfileDefinitions,
@@ -451,6 +502,10 @@ export function startApp({
   }
 
   function renderResult(snapshot, persistenceFailed, previewProgress = null) {
+    const definitionRegistration = resolveRegisteredDiagnosticDefinition(
+      snapshot.versionTuple,
+      diagnosticDefinitionRegistry,
+    );
     let characterEntry = null;
     try {
       characterEntry = resolveCharacterEntry(
@@ -517,6 +572,19 @@ export function startApp({
       titleLabels,
     }, {
       ...previewActions,
+      onReturnToStart() {
+        if (
+          persistenceFailed &&
+          !requestConfirmation(
+            "この結果は端末の履歴に保存されていないため、トップへ戻ると再び開けません。トップへ戻りますか？",
+          )
+        ) {
+          return;
+        }
+        liveResult = null;
+        resultActionNotice = null;
+        setRoute("#/start");
+      },
       onRetry() {
         liveResult = null;
         resultActionNotice = null;
@@ -536,6 +604,18 @@ export function startApp({
       decodeImage: effectiveDecodeImage,
       loadCharacterImage,
       observeViewport: effectiveObserveViewport,
+      definitionSupported: definitionRegistration !== null,
+      ...(definitionRegistration ? {
+        questionComposition:
+          definitionRegistration.questionCompositionByMode[snapshot.mode],
+        methodInfo: createMethodInfo(
+          definitionRegistration.definition,
+          snapshot.mode,
+        ),
+      } : {
+        methodInformationUnavailable:
+          "診断時の尺度・設問・採点版に対応する説明は、このアプリでは確認できません。保存された称号・スコア・結果文は、そのまま確認できます。",
+      }),
     });
   }
 

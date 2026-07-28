@@ -235,10 +235,23 @@ function renderHistoryHeader(parent, historyState, actions) {
   toggle.setAttribute("type", "button");
   toggle.setAttribute("aria-label", "履歴の管理");
   toggle.setAttribute("aria-expanded", "false");
+  toggle.setAttribute("aria-controls", "history-management-modal");
 
-  const menu = header.ownerDocument.createElement("div");
-  menu.className = "history-management-menu";
-  menu.hidden = true;
+  const dialog = header.ownerDocument.createElement("dialog");
+  dialog.className = "history-management-modal";
+  dialog.setAttribute("id", "history-management-modal");
+  dialog.setAttribute("aria-modal", "true");
+  dialog.setAttribute("aria-label", "履歴の管理");
+  const menu = dialog.ownerDocument.createElement("div");
+  menu.className = "history-management-content";
+  dialog.append(menu);
+  const closeButton = appendTextElement(
+    menu,
+    "button",
+    "閉じる",
+    "history-management-close",
+  );
+  closeButton.setAttribute("type", "button");
   const deleteAll = appendTextElement(
     menu,
     "button",
@@ -279,11 +292,153 @@ function renderHistoryHeader(parent, historyState, actions) {
     menu.append(details);
   }
 
-  toggle.addEventListener("click", () => {
-    menu.hidden = !menu.hidden;
-    toggle.setAttribute("aria-expanded", menu.hidden ? "false" : "true");
+  let modalOpen = false;
+  let fallbackMode = false;
+  let fallbackBackgroundStates = [];
+
+  function subtreeContainsDialog(element) {
+    if (element === dialog) return true;
+    return Array.from(element.children ?? []).some(subtreeContainsDialog);
+  }
+
+  function fallbackBackgroundBranches(container) {
+    return Array.from(container.children ?? []).flatMap((child) => {
+      if (child === dialog) return [];
+      if (!subtreeContainsDialog(child)) return [child];
+      return fallbackBackgroundBranches(child);
+    });
+  }
+
+  function activateFallbackModality() {
+    dialog.className =
+      "history-management-modal history-management-modal--fallback";
+    dialog.setAttribute("data-presentation", "fallback-modal");
+    fallbackBackgroundStates = fallbackBackgroundBranches(parent).map((element) => ({
+      element,
+      inert: Boolean(element.inert),
+      ariaHidden: element.getAttribute("aria-hidden"),
+    }));
+    for (const { element } of fallbackBackgroundStates) {
+      element.inert = true;
+      element.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  function restoreFallbackModality() {
+    for (const { element, inert, ariaHidden } of fallbackBackgroundStates) {
+      element.inert = inert;
+      if (ariaHidden === null) {
+        element.removeAttribute("aria-hidden");
+      } else {
+        element.setAttribute("aria-hidden", ariaHidden);
+      }
+    }
+    fallbackBackgroundStates = [];
+    dialog.className = "history-management-modal";
+    dialog.removeAttribute("data-presentation");
+  }
+
+  function fallbackFocusableElements() {
+    const focusableTags = new Set(["a", "button", "input", "select", "summary", "textarea"]);
+    return collectReachableDescendants(dialog).filter((element) =>
+      focusableTags.has(String(element.tagName).toLowerCase()) && !element.disabled
+    );
+  }
+
+  function collectReachableDescendants(element) {
+    return Array.from(element.children ?? []).flatMap((child) => {
+      if (
+        child.hidden
+        || child.inert
+        || child.getAttribute("aria-hidden") === "true"
+      ) {
+        return [];
+      }
+      if (String(child.tagName).toLowerCase() === "details" && !child.open) {
+        const summary = Array.from(child.children ?? []).find(
+          (candidate) =>
+            String(candidate.tagName).toLowerCase() === "summary",
+        );
+        return summary
+          ? [child, summary, ...collectReachableDescendants(summary)]
+          : [child];
+      }
+      return [child, ...collectReachableDescendants(child)];
+    });
+  }
+
+  function closeManagement() {
+    if (!modalOpen) return;
+    const wasFallback = fallbackMode;
+    modalOpen = false;
+    fallbackMode = false;
+    toggle.setAttribute("aria-expanded", "false");
+    if (dialog.open) {
+      if (typeof dialog.close === "function") {
+        dialog.close();
+      } else {
+        dialog.open = false;
+        dialog.removeAttribute("open");
+      }
+    }
+    if (wasFallback) restoreFallbackModality();
+    toggle.focus?.();
+  }
+
+  function openManagement() {
+    if (modalOpen) return;
+    modalOpen = true;
+    toggle.setAttribute("aria-expanded", "true");
+    if (typeof dialog.showModal === "function") {
+      try {
+        dialog.showModal();
+      } catch {
+        fallbackMode = true;
+        dialog.open = true;
+        dialog.setAttribute("open", "");
+        activateFallbackModality();
+      }
+    } else {
+      fallbackMode = true;
+      dialog.open = true;
+      dialog.setAttribute("open", "");
+      activateFallbackModality();
+    }
+    closeButton.focus?.();
+  }
+
+  closeButton.addEventListener("click", closeManagement);
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) closeManagement();
   });
-  header.append(menu);
+  dialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeManagement();
+  });
+  dialog.addEventListener("close", closeManagement);
+  dialog.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeManagement();
+      return;
+    }
+    if (!fallbackMode) return;
+    if (event.key !== "Tab") return;
+    const focusable = fallbackFocusableElements();
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    const active = dialog.ownerDocument.activeElement;
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus?.();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus?.();
+    }
+  });
+  toggle.addEventListener("click", openManagement);
+  header.append(dialog);
   parent.append(header);
 }
 

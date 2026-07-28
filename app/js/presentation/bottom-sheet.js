@@ -9,7 +9,7 @@ function requireText(value) {
 
 export function appendBottomSheetLauncher(
   parent,
-  { id, label, title, body } = {},
+  { id, label, title, body, appendContent } = {},
 ) {
   if (!parent || typeof parent.append !== "function") {
     throw new TypeError("BOTTOM_SHEET_INVALID");
@@ -18,6 +18,9 @@ export function appendBottomSheetLauncher(
   const safeLabel = requireText(label);
   const safeTitle = requireText(title);
   const safeBody = requireText(body);
+  if (appendContent !== undefined && typeof appendContent !== "function") {
+    throw new TypeError("BOTTOM_SHEET_INVALID");
+  }
 
   const button = appendTextElement(
     parent,
@@ -36,6 +39,7 @@ export function appendBottomSheetLauncher(
   const heading = appendTextElement(sheet, "h2", safeTitle);
   heading.id = `${safeId}-title`;
   appendTextElement(sheet, "p", safeBody);
+  appendContent?.(sheet);
   const closeButton = appendTextElement(
     sheet,
     "button",
@@ -43,32 +47,62 @@ export function appendBottomSheetLauncher(
     "secondary-button",
   );
   closeButton.setAttribute("type", "button");
+  let sheetOpen = false;
+
+  function openInlineFallback() {
+    sheet.className = "bottom-sheet bottom-sheet--inline";
+    sheet.setAttribute("data-presentation", "inline");
+    sheet.open = true;
+    sheet.setAttribute("open", "");
+  }
 
   function openSheet() {
+    if (sheetOpen) return;
     if (typeof sheet.showModal === "function") {
-      sheet.showModal();
+      try {
+        sheet.showModal();
+      } catch {
+        openInlineFallback();
+      }
     } else {
-      sheet.setAttribute("open", "");
+      openInlineFallback();
     }
+    sheetOpen = true;
     button.setAttribute("aria-expanded", "true");
+    closeButton.focus?.();
+  }
+
+  function finishClose() {
+    if (!sheetOpen) return;
+    sheetOpen = false;
+    sheet.className = "bottom-sheet";
+    sheet.removeAttribute("data-presentation");
+    button.setAttribute("aria-expanded", "false");
+    button.focus?.();
   }
 
   function closeSheet() {
+    if (!sheetOpen) return;
     if (typeof sheet.close === "function" && sheet.open) {
       sheet.close();
     } else {
       sheet.removeAttribute("open");
     }
-    button.setAttribute("aria-expanded", "false");
-    button.focus?.();
+    finishClose();
   }
 
   button.addEventListener("click", openSheet);
   closeButton.addEventListener("click", closeSheet);
-  sheet.addEventListener("close", () => {
-    button.setAttribute("aria-expanded", "false");
-    button.focus?.();
+  sheet.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeSheet();
   });
+  sheet.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !sheetOpen) return;
+    event.preventDefault();
+    closeSheet();
+  });
+  sheet.addEventListener("close", finishClose);
   parent.append(sheet);
   return button;
 }

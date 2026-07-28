@@ -230,23 +230,60 @@ h1 {
   font-size: 1.25rem;
 }
 
-.history-management-menu {
-  position: absolute;
-  z-index: 12;
-  top: 52px;
-  right: 0;
-  width: min(100%, 420px);
-  max-height: min(70vh, 560px);
-  padding: 16px;
+.history-management-modal {
+  width: min(calc(100% - 24px), 480px);
+  max-height: min(82vh, 640px);
+  margin: auto;
+  padding: 0;
   border: 1px solid #bed4cc;
-  border-radius: 16px;
+  border-radius: 20px;
   background: #fff;
-  box-shadow: 0 18px 50px rgb(42 81 69 / 18%);
+  color: #19332f;
+  box-shadow: 0 18px 50px rgb(42 81 69 / 24%);
+}
+
+.history-management-modal::backdrop {
+  background: rgb(25 51 47 / 38%);
+}
+
+.history-management-modal.history-management-modal--fallback[open] {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 12px;
+  border: 0;
+  border-radius: 0;
+  background: rgb(25 51 47 / 38%);
+  box-shadow: none;
+}
+
+.history-management-modal--fallback .history-management-content {
+  width: min(100%, 480px);
+  max-height: min(82vh, 640px);
+  border: 1px solid #bed4cc;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgb(42 81 69 / 24%);
+}
+
+.history-management-content {
+  max-height: min(82vh, 640px);
+  padding: clamp(16px, 5vw, 28px);
   overflow: auto;
 }
 
-.history-management-menu[hidden] {
-  display: none;
+.history-management-close {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  margin-inline-start: auto;
 }
 
 .history-card {
@@ -494,8 +531,11 @@ dd {
 
 .result-title,
 .result-character,
+.result-hero,
+.result-title-reason,
 .result-factors,
-.result-details {
+.result-details,
+.result-method-information {
   margin-top: 28px;
   padding: clamp(20px, 5vw, 32px);
   border: 1px solid #bed4cc;
@@ -506,6 +546,8 @@ dd {
 
 .result-title h2,
 .result-character h2,
+.result-hero h2,
+.result-title-reason h2,
 .result-factors h2,
 .result-details h2 {
   margin-top: 0;
@@ -553,6 +595,93 @@ dd {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.factor-score-column-heading {
+  margin: 20px 0 8px;
+  color: #526b66;
+  font-size: 0.9rem;
+  text-align: end;
+}
+
+.factor-score-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, 1.4fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #d6e4df;
+  border-radius: 14px;
+  background: #f8fbf9;
+}
+
+.factor-score-name,
+.factor-score-value,
+.factor-score-row > .factor-disclosure-trigger {
+  margin: 0;
+}
+
+.factor-score-name {
+  font-size: 1rem;
+}
+
+.factor-score-bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dce9e4;
+}
+
+.factor-score-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #26705c;
+}
+
+.factor-score-value {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.factor-disclosure-trigger {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.factor-disclosure-panel {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.factor-description,
+.factor-category-summary {
+  color: #526b66;
+  line-height: 1.7;
+}
+
+.factor-category {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #d6e4df;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.factor-category-label {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.category-disclosure-trigger {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.category-disclosure-panel .result-text-item {
+  margin-top: 12px;
 }
 
 .factor-result {
@@ -629,12 +758,40 @@ dd {
   background: rgb(25 51 47 / 38%);
 }
 
+.bottom-sheet.bottom-sheet--inline {
+  position: static;
+  inset: auto;
+  width: 100%;
+  max-height: none;
+  margin: 16px 0 0;
+  border-radius: 16px;
+  box-shadow: none;
+}
+
 .bottom-sheet h2 {
   margin-top: 0;
 }
 
 .bottom-sheet p {
   line-height: 1.75;
+}
+
+.question-composition-table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+}
+
+.question-composition-table th,
+.question-composition-table td {
+  padding: 8px;
+  border-bottom: 1px solid #d6e4df;
+  text-align: start;
+}
+
+.question-composition-table th:not(:first-child),
+.question-composition-table td:not(:first-child) {
+  text-align: end;
 }
 
 .questionnaire-screen {
@@ -758,6 +915,14 @@ noscript {
 
   .factor-result-list {
     grid-template-columns: 1fr;
+  }
+
+  .factor-score-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .factor-score-bar {
+    grid-column: 1 / -1;
   }
 
   .questionnaire-screen {

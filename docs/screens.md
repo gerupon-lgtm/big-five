@@ -154,7 +154,7 @@ flowchart TD
 
 ## 7. S-003 基本結果
 
-Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。Q-013の代替色・香りとT-007共有は後続である。文面は`result-text-v1 initial reviewed copy`で、E-1〜E-5は`Content Approval pending`とする。
+Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。結果画面は称号・猫heroと称号理由を別sectionにし、名前付きレーダー、固定順5因子のコンパクトな行・棒・数値、同時1因子／同一因子内1詳細だけの二段階開閉、設問構成sheet、4つの固定方法sheetまで接続済みである。保存済みsnapshotの`scaleVersion`、`questionVersion`、`scoringVersion`が登録済み診断定義と完全一致する場合だけ、その定義の設問構成・方法説明を表示する。未登録の履歴版では現行版の件数・限界・出典を流用せず、説明を利用できない旨と、保存済みの称号・スコア・結果文は確認できる旨を表示する。Q-013の代替色・香りとT-007共有は後続である。`result-text-v1`の237件は既存E-0の状態を除きContent Approval pending、`result-text-v2`の51称号分`titleReflection`は作成・Content Approval pendingとする。
 
 ### ファーストビュー
 
@@ -168,7 +168,7 @@ Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独
 - 固定因子順の因子名、棒、数値、小さな「説明を見る」
 - 日本語版20項目が独立検証済みではない旨
 
-現行`result-text-v1`の表示入力は`RenderedResultText` 7件（`titleSubtitle`、`titleReason`、`FACTOR_ORDER`順の5因子それぞれの観察文）である。`result-text-v2`では固定順1件目の`titleReflection`を加える。20問簡易プレビューの限界と「50問で変わり得る」注意は、版付き結果文とは別の必須UI文面として表示する。
+現行`result-text-v1`の表示入力は`RenderedResultText` 7件（`titleSubtitle`、`titleReason`、`FACTOR_ORDER`順の5因子それぞれの観察文）であり、heroの中立副題と独立した「この称号になった理由」から始め、5因子の段階展開ですべてへ到達できる。`result-text-v2`では固定順1件目の`titleReflection`を加えるが、51称号分の文面作成とContent Approvalが完了するまで現行画面へ補完表示しない。20問簡易プレビューの限界と「50問で変わり得る」注意は、版付き結果文とは別の必須UI文面として表示する。
 
 ### 続き
 
@@ -190,7 +190,7 @@ Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独
 
 ## 8. S-004 詳細結果
 
-50問完答callerはanswer-freeのsnapshotを生成・保存し、`#/result?resultId=...`でS-004を開く。保存成功時は結果追加とProgressRecord削除を原子的に行い、保存失敗時もlive結果と全42件の文面を維持して通知し、callerは回答地図と完答ProgressRecordへの参照を破棄する。42件は中立副題、称号になった理由、続いてsection-first・`FACTOR_ORDER`順の5因子それぞれの観察文、強み、裏返り、仕事、人間関係、ストレス、問いかけ、行動ヒントで構成する。
+50問完答callerはanswer-freeのsnapshotを生成・保存し、`#/result?resultId=...`でS-004を開く。保存成功時は結果追加とProgressRecord削除を原子的に行い、保存失敗時もlive結果と全42件の文面を維持して通知し、callerは回答地図と完答ProgressRecordへの参照を破棄する。42件は中立副題、称号になった理由、続いてsection-first・`FACTOR_ORDER`順の5因子それぞれの観察文、強み、裏返り、仕事、人間関係、ストレス、問いかけ、行動ヒントで構成する。表示時はfactor-firstへ不変投影し、同時1因子／同一因子内1詳細だけを開く二段階開閉から全42件へ到達できる。
 
 ### 表示
 
@@ -212,6 +212,8 @@ Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独
 猫画像、Canvasまたは共有APIが失敗しても、称号、結果文、根拠への導線、共有テキストへの経路を同じ結果画面から利用できるようにする。Clipboardも利用できない場合は選択可能テキストへ到達可能にする。
 
 `トップへ戻る`は保存済みResultSnapshotなら確認なしで`#/start`へ移動する。履歴保存に失敗したlive結果では、戻ると再表示できないことを確認し、取消時は同じ結果画面を維持する。
+
+2026-07-28の実ブラウザ検証では、320px、360px、960pxの結果画面で横overflowがないこと、因子と詳細の単一開閉、設問構成sheetと4方法sheet、保存済み50問結果のトップ直接遷移を確認し、console error／warningは0件だった。
 
 ### 表現制約
 
@@ -270,7 +272,7 @@ Q-007確定前の【想定】:
 
 ## 11. S-006 履歴
 
-簡潔な通常カード、Q-012猫サムネイルの個別遅延読込、固定比較操作、管理メニューは2026-07-27に実装・テスト済みである。管理メニューを閉じやすいボトムシート／モーダルへ変更する改善は未実装である。
+簡潔な通常カード、Q-012猫サムネイルの個別遅延読込、保存済み結果への直接遷移、固定比較操作、履歴管理modal/dialogは実装・テスト済みである。管理dialogは明示的なclose、dialog自体だけのbackdrop click、native `cancel`とfallback keydownのEscape、内部へのfocus入場と起動元への復帰を持つ。`showModal`なし／例外時は明示的な全viewport fallback surfaceと中央panelを表示し、背景を`inert`＋`aria-hidden`で隔離する。Tab／Shift+Tabは閉じた`details`配下を除外し、`summary`を含む実際に到達可能な操作だけで循環する。
 
 ### 表示
 
@@ -285,6 +287,8 @@ Q-007確定前の【想定】:
 - 履歴ヘッダーの`…`から`データの管理`ボトムシート／モーダルを開き、日時・20問／50問で識別できる個別削除、全削除、版情報を表示
 - 明示的な「閉じる」、背景部分のタップ、Escキーで閉じる。内部タップでは閉じず、終了後は`…`へフォーカスを戻す
 - 個別削除と全削除は確認後に実行する
+
+2026-07-28の実ブラウザ検証では、320px、360px、960pxで横overflowがなく、360×800で管理dialog全体がviewport内に収まることを確認した。明示close、backdrop、Escape、focus入場・復帰を通過し、console error／warningは0件だった。
 
 ### 比較選択
 

@@ -1,18 +1,9 @@
 import { validateResultSnapshot } from "../domain/result-snapshot.js";
+import { createResultDisclosureModel } from "../domain/result-disclosure-model.js";
 import { drawResultRadar } from "./radar-chart.js";
 import { appendAppHeader } from "./app-header.js";
+import { appendBottomSheetLauncher } from "./bottom-sheet.js";
 import { appendTextElement, formatCompletedAt } from "./screen-helpers.js";
-
-const SECTION_LABELS = Object.freeze({
-  observation: "今の傾向",
-  strength: "活かしやすい強み",
-  tradeoff: "気をつけたいこと",
-  work: "仕事・学び",
-  relationship: "人との関わり",
-  stress: "ストレスとの付き合い方",
-  question: "振り返りの問い",
-  action: "小さな行動",
-});
 
 function appendEvidence(parent, record) {
   const details = parent.ownerDocument.createElement("details");
@@ -26,48 +17,17 @@ function appendEvidence(parent, record) {
   parent.append(details);
 }
 
-function appendRenderedText(parent, record, heading) {
+function appendRenderedText(parent, record) {
   const article = parent.ownerDocument.createElement("article");
   article.className = "result-text-item";
-  if (heading) appendTextElement(article, "h3", heading);
-  const paragraph = appendTextElement(
-    article,
-    "p",
-    record.text,
-    "result-text-record",
-  );
+  const paragraph = appendTextElement(article, "p", record.text, "result-text-record");
   paragraph.setAttribute("data-result-text-id", record.id);
   paragraph.setAttribute("data-result-text-section", record.section);
   appendEvidence(article, record);
   parent.append(article);
 }
 
-function renderTitle(parent, snapshot, labels) {
-  const section = parent.ownerDocument.createElement("section");
-  section.className = "result-title";
-  const prefix = snapshot.mode === "preview20" ? "仮称号" : "称号";
-  appendTextElement(
-    section,
-    "h2",
-    `${prefix}：${labels.titleLabels[snapshot.titleId] ?? snapshot.titleId}`,
-  );
-  appendRenderedText(section, snapshot.renderedTexts[0]);
-  appendRenderedText(section, snapshot.renderedTexts[1]);
-  appendTextElement(
-    section,
-    "p",
-    "この称号は自己理解を助ける独自のプロフィール表現であり、心理学上の正式なタイプではありません。",
-    "notice title-disclaimer",
-  ).setAttribute("role", "note");
-  parent.append(section);
-}
-
-function renderCharacterMetadata(parent, snapshot, dependencies) {
-  const section = parent.ownerDocument.createElement("section");
-  section.className = "result-character";
-  appendTextElement(section, "h2", "結果キャラクター");
-  appendTextElement(section, "p", `キャラクターID：${snapshot.characterId}`);
-
+function appendCharacterFrame(parent, snapshot, dependencies) {
   const {
     characterEntry,
     decodeImage,
@@ -82,27 +42,16 @@ function renderCharacterMetadata(parent, snapshot, dependencies) {
     typeof loadCharacterImage !== "function" ||
     typeof observeViewport !== "function"
   ) {
-    appendTextElement(
-      section,
-      "p",
-      "画像を利用できない場合も診断結果は有効です。",
-      "character-fallback",
-    );
-    parent.append(section);
+    appendTextElement(parent, "p", "画像を利用できない場合も診断結果は有効です。", "character-fallback");
     return;
   }
 
-  const frame = section.ownerDocument.createElement("div");
+  const frame = parent.ownerDocument.createElement("div");
   frame.className = "result-character-frame";
   frame.setAttribute("data-character-state", "pending");
-  const fallback = appendTextElement(
-    frame,
-    "p",
-    characterEntry.alt,
-    "character-fallback",
-  );
+  const fallback = appendTextElement(frame, "p", characterEntry.alt, "character-fallback");
   fallback.setAttribute("role", "status");
-  section.append(frame);
+  parent.append(frame);
 
   let loadStarted = false;
   async function loadOnEntry() {
@@ -130,12 +79,30 @@ function renderCharacterMetadata(parent, snapshot, dependencies) {
   } catch {
     frame.setAttribute("data-character-state", "unavailable");
   }
+  appendTextElement(parent, "p", "画像を利用できない場合も診断結果は有効です。", "character-availability-note");
+}
+
+function renderResultHero(parent, snapshot, labels, dependencies) {
+  const hero = parent.ownerDocument.createElement("section");
+  hero.className = "result-hero";
+  const prefix = snapshot.mode === "preview20" ? "仮称号" : "称号";
+  appendTextElement(hero, "h2", `${prefix}：${labels.titleLabels[snapshot.titleId] ?? snapshot.titleId}`);
+  appendCharacterFrame(hero, snapshot, dependencies);
+  appendRenderedText(hero, snapshot.renderedTexts[0]);
   appendTextElement(
-    section,
+    hero,
     "p",
-    "画像を利用できない場合も診断結果は有効です。",
-    "character-availability-note",
-  );
+    "この称号は自己理解を助ける独自のプロフィール表現であり、心理学上の正式なタイプではありません。",
+    "notice title-disclaimer",
+  ).setAttribute("role", "note");
+  parent.append(hero);
+}
+
+function renderTitleReason(parent, snapshot) {
+  const section = parent.ownerDocument.createElement("section");
+  section.className = "result-title-reason";
+  appendTextElement(section, "h2", "この称号になった理由");
+  appendRenderedText(section, snapshot.renderedTexts[1]);
   parent.append(section);
 }
 
@@ -154,43 +121,131 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
 
   let radarResult;
   try {
-    radarResult = drawRadar(canvas, snapshot.factors, {
-      factorLabels: labels.factorLabels,
-    });
+    radarResult = drawRadar(canvas, snapshot.factors, { factorLabels: labels.factorLabels });
   } catch {
     radarResult = { drawn: false, errorCode: "RADAR_DRAW_FAILED" };
   }
   if (!radarResult?.drawn) {
     canvas.hidden = true;
-    const notice = appendTextElement(
-      section,
-      "p",
-      "レーダーチャートを表示できません。5因子の数値は以下で確認できます。",
-      "notice radar-notice",
-    );
+    const notice = appendTextElement(section, "p", "レーダーチャートを表示できません。5因子の数値は以下で確認できます。", "notice radar-notice");
     notice.setAttribute("role", "status");
-    if (radarResult?.errorCode) {
-      notice.setAttribute("data-error-code", radarResult.errorCode);
-    }
+    if (radarResult?.errorCode) notice.setAttribute("data-error-code", radarResult.errorCode);
   }
 
+  appendTextElement(section, "h3", "0–100", "factor-score-column-heading");
   const factorList = section.ownerDocument.createElement("div");
   factorList.className = "factor-result-list";
-  for (const factor of snapshot.factors) {
-    const details = section.ownerDocument.createElement("details");
-    details.className = "factor-result";
-    appendTextElement(
-      details,
-      "summary",
-      `${labels.factorLabels[factor.factorId] ?? factor.factorId} ${factor.displayScore} / 100 説明を見る`,
-    );
-    const description = labels.factorDescriptions[factor.factorId];
-    if (typeof description === "string" && description.length > 0) {
-      appendTextElement(details, "p", description);
+  const disclosure = createResultDisclosureModel(snapshot, labels);
+  let openFactor = null;
+  let openCategory = null;
+
+  function closeCategory() {
+    if (!openCategory) return;
+    openCategory.trigger.setAttribute("aria-expanded", "false");
+    openCategory.panel.hidden = true;
+    openCategory = null;
+  }
+
+  function closeFactor() {
+    if (!openFactor) return;
+    openFactor.trigger.setAttribute("aria-expanded", "false");
+    openFactor.panel.hidden = true;
+    openFactor = null;
+    closeCategory();
+  }
+
+  for (const factor of disclosure) {
+    const row = section.ownerDocument.createElement("section");
+    row.className = "factor-score-row";
+    const heading = appendTextElement(row, "h3", factor.label, "factor-score-name");
+    const bar = row.ownerDocument.createElement("div");
+    bar.className = "factor-score-bar";
+    bar.setAttribute("role", "progressbar");
+    bar.setAttribute("aria-label", `${factor.label}のスコア`);
+    bar.setAttribute("aria-valuemin", "0");
+    bar.setAttribute("aria-valuemax", "100");
+    bar.setAttribute("aria-valuenow", String(factor.displayScore));
+    const fill = row.ownerDocument.createElement("span");
+    fill.className = "factor-score-bar-fill";
+    fill.setAttribute("style", `width: ${factor.displayScore}%`);
+    bar.append(fill);
+    row.append(bar);
+    appendTextElement(row, "p", `${factor.displayScore}`, "factor-score-value");
+    const trigger = appendTextElement(row, "button", "説明を見る", "factor-disclosure-trigger");
+    trigger.setAttribute("type", "button");
+    trigger.setAttribute("aria-expanded", "false");
+    const panel = row.ownerDocument.createElement("div");
+    panel.className = "factor-disclosure-panel";
+    panel.id = `factor-disclosure-${factor.factorId}`;
+    panel.hidden = true;
+    trigger.setAttribute("aria-controls", panel.id);
+    appendTextElement(panel, "p", factor.description, "factor-description");
+
+    for (const category of factor.categories) {
+      const categorySection = panel.ownerDocument.createElement("section");
+      categorySection.className = "factor-category";
+      appendTextElement(
+        categorySection,
+        "h4",
+        category.label,
+        "factor-category-label",
+      );
+      appendTextElement(
+        categorySection,
+        "p",
+        category.summary,
+        "factor-category-summary",
+      );
+      const categoryTrigger = appendTextElement(
+        categorySection,
+        "button",
+        "詳しく見る",
+        "category-disclosure-trigger",
+      );
+      categoryTrigger.setAttribute("type", "button");
+      categoryTrigger.setAttribute("aria-expanded", "false");
+      const categoryPanel = panel.ownerDocument.createElement("div");
+      categoryPanel.className = "category-disclosure-panel";
+      categoryPanel.id = `category-disclosure-${factor.factorId}-${category.categoryId}`;
+      categoryPanel.hidden = true;
+      categoryTrigger.setAttribute("aria-controls", categoryPanel.id);
+      for (const record of category.records) appendRenderedText(categoryPanel, record);
+      categorySection.append(categoryPanel);
+      categoryTrigger.addEventListener("click", () => {
+        const isOpen = openCategory?.trigger === categoryTrigger;
+        closeCategory();
+        if (!isOpen) {
+          categoryTrigger.setAttribute("aria-expanded", "true");
+          categoryPanel.hidden = false;
+          openCategory = { trigger: categoryTrigger, panel: categoryPanel };
+          categoryTrigger.scrollIntoView?.({ block: "nearest" });
+        }
+      });
+      categoryPanel.hidden = true;
+      panel.append(categorySection);
     }
-    factorList.append(details);
+    trigger.addEventListener("click", () => {
+      const isOpen = openFactor?.trigger === trigger;
+      closeFactor();
+      if (!isOpen) {
+        trigger.setAttribute("aria-expanded", "true");
+        panel.hidden = false;
+        openFactor = { trigger, panel };
+        trigger.scrollIntoView?.({ block: "nearest" });
+      }
+    });
+    row.append(panel);
+    factorList.append(row);
   }
   section.append(factorList);
+  if (snapshot.mode === "detail50") {
+    appendTextElement(
+      section,
+      "p",
+      "※因子名の「説明を見る」から、それぞれの意味を確認できます。",
+      "factor-help-note",
+    );
+  }
   parent.append(section);
 }
 
@@ -204,20 +259,10 @@ function renderBoundaryNotices(parent, boundaryFlags, labels) {
     const item = section.ownerDocument.createElement("li");
     if (flag.type === "factor-near-band-boundary") {
       const factorLabel = labels.factorLabels[flag.factorId] ?? flag.factorId;
-      appendTextElement(
-        item,
-        "p",
-        `${factorLabel}は境界に近く、回答や状況により表示帯が変わり得ます。`,
-      );
+      appendTextElement(item, "p", `${factorLabel}は境界に近く、回答や状況により表示帯が変わり得ます。`);
     } else {
-      const factorNames = flag.factorIds
-        .map((factorId) => labels.factorLabels[factorId] ?? factorId)
-        .join("と");
-      appendTextElement(
-        item,
-        "p",
-        `称号の代表因子について、${factorNames}が僅差です。`,
-      );
+      const factorNames = flag.factorIds.map((factorId) => labels.factorLabels[factorId] ?? factorId).join("と");
+      appendTextElement(item, "p", `称号の代表因子について、${factorNames}が僅差です。`);
     }
     list.append(item);
   }
@@ -225,35 +270,59 @@ function renderBoundaryNotices(parent, boundaryFlags, labels) {
   parent.append(section);
 }
 
-function renderResultTexts(parent, snapshot, labels) {
-  const section = parent.ownerDocument.createElement("section");
-  section.className = "result-details";
-  appendTextElement(
-    section,
-    "h2",
-    snapshot.mode === "preview20" ? "5因子の観察" : "詳しい自己理解のヒント",
-  );
-
-  let previousSection = null;
-  snapshot.renderedTexts.slice(2).forEach((record, index) => {
-    if (record.section !== previousSection) {
-      appendTextElement(section, "h3", SECTION_LABELS[record.section] ?? record.section);
-      previousSection = record.section;
-    }
-    const factor = snapshot.factors[index % snapshot.factors.length];
-    appendRenderedText(
-      section,
-      record,
-      labels.factorLabels[factor.factorId] ?? factor.factorId,
-    );
-  });
-  if (snapshot.mode === "detail50") {
+function renderMethodInformation(parent, labels, dependencies) {
+  const {
+    questionComposition,
+    methodInfo,
+    methodInformationUnavailable,
+  } = dependencies;
+  if (
+    typeof methodInformationUnavailable === "string"
+    && methodInformationUnavailable.length > 0
+  ) {
+    const section = parent.ownerDocument.createElement("section");
+    section.className = "result-method-information unavailable";
     appendTextElement(
       section,
       "p",
-      "※因子名の「説明を見る」から、それぞれの意味を確認できます。",
-      "factor-help-note",
-    );
+      methodInformationUnavailable,
+      "notice method-information-unavailable",
+    ).setAttribute("role", "note");
+    parent.append(section);
+    return;
+  }
+  if (!Array.isArray(questionComposition) || !Array.isArray(methodInfo)) return;
+  const section = parent.ownerDocument.createElement("section");
+  section.className = "result-method-information";
+  appendBottomSheetLauncher(section, {
+    id: "question-composition",
+    label: "因子ごとの設問構成を見る",
+    title: "因子ごとの設問構成",
+    body: "各因子に含まれる正方向・逆方向の設問数です。",
+    appendContent(sheet) {
+      const table = sheet.ownerDocument.createElement("table");
+      table.className = "question-composition-table";
+      const header = sheet.ownerDocument.createElement("tr");
+      for (const label of ["因子", "正方向", "逆方向"]) appendTextElement(header, "th", label);
+      table.append(header);
+      for (const row of questionComposition) {
+        const tableRow = sheet.ownerDocument.createElement("tr");
+        tableRow.className = "question-composition-row";
+        appendTextElement(tableRow, "th", labels.factorLabels[row.factorId] ?? row.factorId);
+        appendTextElement(tableRow, "td", String(row.positiveCount));
+        appendTextElement(tableRow, "td", String(row.negativeCount));
+        table.append(tableRow);
+      }
+      sheet.append(table);
+    },
+  });
+  for (const method of methodInfo) {
+    appendBottomSheetLauncher(section, {
+      id: `method-${method.id}`,
+      label: method.title,
+      title: method.title,
+      body: method.body,
+    });
   }
   parent.append(section);
 }
@@ -262,155 +331,72 @@ function renderActions(parent, snapshot, actions) {
   const controls = parent.ownerDocument.createElement("nav");
   controls.className = "result-actions";
   controls.setAttribute("aria-label", "診断結果の操作");
-
-  if (
-    snapshot.mode === "preview20" &&
-    typeof actions.onContinueDetail === "function"
-  ) {
-    const continueButton = appendTextElement(
-      controls,
-      "button",
-      "あと30問続ける",
-      "primary-button",
-    );
-    continueButton.setAttribute("type", "button");
-    continueButton.addEventListener(
-      "click",
-      () => actions.onContinueDetail?.(snapshot),
-    );
+  if (snapshot.mode === "preview20" && typeof actions.onContinueDetail === "function") {
+    const button = appendTextElement(controls, "button", "あと30問続ける", "primary-button");
+    button.setAttribute("type", "button");
+    button.addEventListener("click", () => actions.onContinueDetail?.(snapshot));
   }
-  if (
-    snapshot.mode === "preview20" &&
-    typeof actions.onPausePreview === "function"
-  ) {
-    const pauseButton = appendTextElement(
-      controls,
-      "button",
-      "中断してトップへ",
-      "secondary-button",
-    );
-    pauseButton.setAttribute("type", "button");
-    pauseButton.addEventListener("click", () => actions.onPausePreview?.());
+  if (snapshot.mode === "preview20" && typeof actions.onPausePreview === "function") {
+    const button = appendTextElement(controls, "button", "中断してトップへ", "secondary-button");
+    button.setAttribute("type", "button");
+    button.addEventListener("click", () => actions.onPausePreview?.());
   }
-  if (
-    snapshot.mode === "preview20" &&
-    typeof actions.onFinishPreview === "function"
-  ) {
-    const finishButton = appendTextElement(
-      controls,
-      "button",
-      "簡易プレビューで終了する",
-      "text-button",
-    );
-    finishButton.setAttribute("type", "button");
-    finishButton.addEventListener("click", () => actions.onFinishPreview?.());
+  if (snapshot.mode === "preview20" && typeof actions.onFinishPreview === "function") {
+    const button = appendTextElement(controls, "button", "簡易プレビューで終了する", "text-button");
+    button.setAttribute("type", "button");
+    button.addEventListener("click", () => actions.onFinishPreview?.());
   }
-  if (
-    snapshot.mode === "detail50" &&
-    typeof actions.onRetry === "function"
-  ) {
-    const retryButton = appendTextElement(
-      controls,
-      "button",
-      "もう一度診断する",
-      "secondary-button",
-    );
-    retryButton.setAttribute("type", "button");
-    retryButton.addEventListener("click", () => actions.onRetry?.());
+  if (snapshot.mode === "detail50" && typeof actions.onReturnToStart === "function") {
+    const button = appendTextElement(controls, "button", "トップへ戻る", "text-button");
+    button.setAttribute("type", "button");
+    button.addEventListener("click", () => actions.onReturnToStart?.());
   }
-
-  const historyLink = appendTextElement(
-    controls,
-    "a",
-    "結果履歴を見る",
-    "text-link",
-  );
+  if (snapshot.mode === "detail50" && typeof actions.onRetry === "function") {
+    const button = appendTextElement(controls, "button", "もう一度診断する", "secondary-button");
+    button.setAttribute("type", "button");
+    button.addEventListener("click", () => actions.onRetry?.());
+  }
+  const historyLink = appendTextElement(controls, "a", "結果履歴を見る", "text-link");
   historyLink.setAttribute("href", "#/history");
-
   if (typeof actions.onShare === "function") {
-    const shareButton = appendTextElement(
-      controls,
-      "button",
-      "結果を共有する",
-      "secondary-button",
-    );
-    shareButton.setAttribute("type", "button");
-    shareButton.addEventListener("click", () => actions.onShare(snapshot));
+    const button = appendTextElement(controls, "button", "結果を共有する", "secondary-button");
+    button.setAttribute("type", "button");
+    button.addEventListener("click", () => actions.onShare(snapshot));
   }
   parent.append(controls);
 }
 
-export function renderSavedResultScreen(
-  host,
-  snapshot,
-  labels,
-  actions = {},
-  dependencies = {},
-) {
+export function renderSavedResultScreen(host, snapshot, labels, actions = {}, dependencies = {}) {
   let savedSnapshot;
   try {
     savedSnapshot = validateResultSnapshot(snapshot);
   } catch {
     throw new TypeError("RESULT_SCREEN_INVALID");
   }
-
   const documentObject = host.ownerDocument ?? document;
   const main = documentObject.createElement("main");
   main.className = `app-shell result-screen ${savedSnapshot.mode}`;
-  appendAppHeader(main, {
-    screenLabel: savedSnapshot.mode === "preview20" ? "簡易結果" : "詳細結果",
-  });
-  appendTextElement(
-    main,
-    "h1",
-    savedSnapshot.mode === "preview20" ? "20問簡易プレビュー" : "50問詳細結果",
-  );
+  appendAppHeader(main, { screenLabel: savedSnapshot.mode === "preview20" ? "簡易結果" : "詳細結果" });
+  appendTextElement(main, "h1", savedSnapshot.mode === "preview20" ? "20問簡易プレビュー" : "50問詳細結果");
   if (typeof dependencies.notice === "string" && dependencies.notice.length > 0) {
     const notice = appendTextElement(main, "p", dependencies.notice, "notice error-notice result-storage-error");
     notice.setAttribute("role", "alert");
   }
-  const completed = appendTextElement(
-    main,
-    "time",
-    formatCompletedAt(savedSnapshot.completedAt),
-    "result-completed-at",
-  );
+  renderResultHero(main, savedSnapshot, labels, dependencies);
+  renderTitleReason(main, savedSnapshot);
+  renderRadarAndFactors(main, savedSnapshot, labels, dependencies.drawRadar ?? drawResultRadar);
+  const completed = appendTextElement(main, "time", formatCompletedAt(savedSnapshot.completedAt), "result-completed-at");
   completed.setAttribute("datetime", savedSnapshot.completedAt);
-  if (savedSnapshot.mode === "preview20") {
-    appendTextElement(
-      main,
-      "p",
-      "20問だけでは捉えきれない面があります。あと30問に回答すると、より詳しい結果を確認できます。",
-      "notice preview-limit",
-    );
-    appendTextElement(
-      main,
-      "p",
-      "20項目版は、独立した日本語版としての妥当性検証を受けていません。50問では、スコア・仮称号・仮キャラクターが変わり得ます。",
-      "notice preview-validation-notice",
-    ).setAttribute("role", "note");
+  if (
+    savedSnapshot.mode === "preview20"
+    && dependencies.definitionSupported !== false
+  ) {
+    appendTextElement(main, "p", "20問だけでは捉えきれない面があります。あと30問に回答すると、より詳しい結果を確認できます。", "notice preview-limit");
+    appendTextElement(main, "p", "20項目版は、独立した日本語版としての妥当性検証を受けていません。50問では、スコア・仮称号・仮キャラクターが変わり得ます。", "notice preview-validation-notice").setAttribute("role", "note");
   }
-
-  renderTitle(main, savedSnapshot, labels);
-  renderCharacterMetadata(main, savedSnapshot, dependencies);
-  appendTextElement(
-    main,
-    "p",
-    `診断時の選択色ID：${savedSnapshot.selectedPaletteId}`,
-    "result-palette-metadata",
-  );
-  renderRadarAndFactors(
-    main,
-    savedSnapshot,
-    labels,
-    dependencies.drawRadar ?? drawResultRadar,
-  );
-  renderBoundaryNotices(
-    main,
-    savedSnapshot.boundaryFlags,
-    labels,
-  );
-  renderResultTexts(main, savedSnapshot, labels);
+  appendTextElement(main, "p", `診断時の選択色ID：${savedSnapshot.selectedPaletteId}`, "result-palette-metadata");
+  renderBoundaryNotices(main, savedSnapshot.boundaryFlags, labels);
+  renderMethodInformation(main, labels, dependencies);
   renderActions(main, savedSnapshot, actions);
   host.replaceChildren(main);
 }
