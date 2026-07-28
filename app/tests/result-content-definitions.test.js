@@ -290,6 +290,38 @@ test("Q-006 F-1 uses the reviewed high-band reflection prompts for intellect and
   );
 });
 
+test("Q-006 F-1 uses the reviewed middle-band reflection prompts for intellect and imagination", () => {
+  const middleDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "intellectImagination"
+    && appliesTo.band === "middle"
+  );
+  assert.deepEqual(
+    Object.fromEntries(middleDetail.map(({ section, text: resultText }) => [
+      section,
+      resultText,
+    ])),
+    {
+      observation:
+        "今回の50問では、新しい考え方や発想への関心は、尺度内の中間域にある傾向が見られました。",
+      strength:
+        "最近、「もう少し調べるか」「まずはやってみるか、ここで区切るか」を選んだ場面はありましたか。",
+      tradeoff:
+        "少し複雑なテーマについて、「じっくり考えたい」と感じるときと、「今は少し疲れる」と感じるときがありましたか。",
+      work:
+        "仕事や学びのなかで、「慣れたやり方で確実に進めるか」「少し時間がかかっても新しい方法を試すか」、どちらで進めるか考えた場面はありましたか。",
+      relationship:
+        "相手の考えを聞きながら、「もう少し掘り下げたい」気持ちと「そろそろ別の話題に移りたい」気持ちの間で迷った場面はありましたか。",
+      stress:
+        "情報が多いとき、「いろいろな視点を取り入れるか」「いったん一つに絞るか」で迷った場面はありましたか。",
+      question:
+        "最近、気になったことについて、「このくらい分かれば十分」と、自分なりに区切りをつけた場面はありましたか。",
+      action:
+        "もしよければ、最近少しだけ気になっているテーマについて、「時間があれば調べてみたいこと」を一つメモしてみませんか。",
+    },
+  );
+});
+
 test("preview observations use only the four selected items for each reviewed factor", () => {
   const byId = new Map(FactorResultTextDefinitions.map((definition) => [
     definition.id,

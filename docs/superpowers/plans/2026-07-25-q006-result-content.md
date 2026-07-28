@@ -626,6 +626,21 @@ For each factor×band, create the eight sections in `DETAIL_SECTIONS` order. Use
   text: "仕事や学びのなかで、新しいやり方や考え方に「いいな」と惹かれた瞬間はありましたか。",
   evidenceRefs: ["evidence-result-presentation-contract"],
   previewAllowed: false,
+},
+{
+  id: "detail50-intellectImagination-middle-work",
+  version: "result-text-v1",
+  appliesTo: {
+    mode: "detail50",
+    questionCount: 50,
+    factorId: "intellectImagination",
+    band: "middle",
+  },
+  section: "work",
+  claimKind: "reflectionPrompt",
+  text: "仕事や学びのなかで、「慣れたやり方で確実に進めるか」「少し時間がかかっても新しい方法を試すか」、どちらで進めるか考えた場面はありましたか。",
+  evidenceRefs: ["evidence-result-presentation-contract"],
+  previewAllowed: false,
 }
 ```
 
