@@ -1,7 +1,7 @@
 gate_id,display_order,status,approved_by,approved_on,note
 E-0,1,approved,user,2026-07-20,要件で承認済みの共通資料・20/50の限界・非診断注意。
 E-1,2,approved,user,2026-07-28,知性・想像力のhigh/middle/low語彙と根拠IDをユーザー承認。
-E-2,3,draft,,,
+E-2,3,approved,user,2026-07-28,勤勉性のhigh/middle/low語彙と根拠IDをユーザー承認。
 E-3,4,draft,,,
 E-4,5,draft,,,
 E-5,6,draft,,,
@@ -11,7 +11,7 @@ T-2,9,reviewed,,,
 T-3,10,reviewed,,,
 T-4,11,reviewed,,,
 F-1,12,approved,user,2026-07-28,知性・想像力の20問観察文と50問8節をユーザー承認。
-F-2,13,reviewed,,,
+F-2,13,approved,user,2026-07-28,勤勉性の20問観察文と50問8節をユーザー承認。
 F-3,14,reviewed,,,
 F-4,15,reviewed,,,
 F-5,16,reviewed,,,

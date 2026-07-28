@@ -47,7 +47,7 @@
 - 振り返り文の後へ `※因子名の「説明を見る」から、それぞれの意味を確認できます。` を小さく控えめな文字で表示する。
 - 履歴には診断時に表示した文章を順序と版ごと保存し、後の文章版から再生成・上書きしない。開閉状態は保存しない。
 
-Q-006の称号ラフに加え、版付き根拠、全因子・全称号の文面、決定的合成、診断時文章を保持するsnapshotは実装・独立レビュー済みである。文面は`result-text-v1 initial reviewed copy`であり、根拠台帳のE-1とF-1は2026-07-28にapproved、E-2〜E-5は`draft`、T-0〜T-4／F-2〜F-5／X-1〜X-2は`reviewed`だが人手approval recordなしのため`Content Approval pending`である。実装レビューを人手内容承認へ読み替えず、Q-006を完全解決またはT-005全体完了とは扱わない。
+Q-006の称号ラフに加え、版付き根拠、全因子・全称号の文面、決定的合成、診断時文章を保持するsnapshotは実装・独立レビュー済みである。文面は`result-text-v1 initial reviewed copy`であり、根拠台帳のE-1／E-2／F-1／F-2は2026-07-28にapproved、E-3〜E-5は`draft`、T-0〜T-4／F-3〜F-5／X-1〜X-2は`reviewed`だが人手approval recordなしのため`Content Approval pending`である。実装レビューを人手内容承認へ読み替えず、Q-006を完全解決またはT-005全体完了とは扱わない。
 
 ### 2.3 Q-006実装済み契約
 
@@ -75,9 +75,11 @@ Q-006の称号ラフに加え、版付き根拠、全因子・全称号の文面
 - 状態: `result-text-v1 initial reviewed copy`。全gateの必要な人手approval recordが揃うまでは`Content Approval pending`。
 - E-0: 根拠台帳どおりapproved。
 - E-1: 知性・想像力のhigh/middle/low語彙と根拠IDについて、2026-07-28にapproved。
-- E-2〜E-5: 根拠台帳どおり`draft`、承認日なし、`Content Approval pending`。
+- E-2: 勤勉性のhigh/middle/low語彙と根拠IDについて、2026-07-28にapproved。
+- E-3〜E-5: 根拠台帳どおり`draft`、承認日なし、`Content Approval pending`。
 - F-1: 知性・想像力の20問観察文と50問8節について、2026-07-28にapproved。
-- T-0〜T-4、F-2〜F-5: `reviewed`。implementation auditと独立レビューは完了したが、人手approval recordはないため`approved`と記録しない。
+- F-2: 勤勉性の20問観察文と50問8節について、2026-07-28にapproved。
+- T-0〜T-4、F-3〜F-5: `reviewed`。implementation auditと独立レビューは完了したが、人手approval recordはないため`approved`と記録しない。
 - X-1〜X-2: `reviewed`だが人手approval recordなし。preview／detail全体のContent Approvalとして残す。
 - 完全解決条件: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateについて必要な人手approval recordがすべて揃うこと。
 
@@ -266,7 +268,7 @@ FragranceSceneSelector<S> = exact {
 
 ## 7. 残作業
 
-1. Q-006: E-1／F-1は2026-07-28にapproved。E-2〜E-5、T-0〜T-4、F-2〜F-5、X-1〜X-2の各gateに必要な人手approval recordを根拠台帳へ記録する。残gateの承認までは`result-text-v1 initial reviewed copy`かつ`Content Approval pending`として扱う。
+1. Q-006: E-1／E-2／F-1／F-2は2026-07-28にapproved。E-3〜E-5、T-0〜T-4、F-3〜F-5、X-1〜X-2の各gateに必要な人手approval recordを根拠台帳へ記録する。残gateの承認までは`result-text-v1 initial reviewed copy`かつ`Content Approval pending`として扱う。
 2. Q-006/T-005: `composeResultTexts`／`createResultSnapshot`／`saveResultSnapshot`を完答controllerへ統合する。保存済みsnapshotのS-003/S-004表示は接続済み。
 3. T-006/T-005: S-006/S-007初期画面、変動注意文、履歴カードから独立したS-003/S-004を開く遷移は統合済み。追加30問へのS-002接続とT-007共有は各後続画面実装時に接続する。
 4. Q-012: 3体パイロット制作・承認、encoderと余白値の固定、残り48体の量産。

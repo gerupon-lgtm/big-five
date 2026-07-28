@@ -189,7 +189,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 依存: T-003, T-004
 - 対応機能: F-002, F-005, F-006, F-007, F-008, F-016, F-018
 - 開始ゲート:
-  - Q-006: `result-text-v1 initial reviewed copy`、根拠、合成、snapshotは実装済み。E-1／F-1は2026-07-28にapproved。E-2〜E-5、T-0〜T-4、F-2〜F-5、X-1〜X-2の各gateに必要な人手approval recordが揃うまで`Content Approval pending`
+  - Q-006: `result-text-v1 initial reviewed copy`、根拠、合成、snapshotは実装済み。E-1／E-2／F-1／F-2は2026-07-28にapproved。E-3〜E-5、T-0〜T-4、F-3〜F-5、X-1〜X-2の各gateに必要な人手approval recordが揃うまで`Content Approval pending`
   - Q-012: 制作・技術実装済み。51体すべてについてproject-ownerの制作確認を経て、共通encoder設定、1024px正方形、透明余白、ハッシュ整合、runtime manifest、単一画像遅延loaderを固定済み。ただし正式なapproved release選択は未完了
   - Q-013: 構造と選択規則は確定。香り素材の独立マスタ、香調ごとの素材ID 1〜3件、通常結果だけの表示、共有除外も2026-07-28に確定。全パレット・香調・香り素材・関連・用途色展開データ
 - 作業:
@@ -216,7 +216,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 定義: title 102件＋factor 135件＝237件の`result-text-v1` literal定義。
 - 合成: `composeResultTexts`がdefinitionの条件選択、欠落・重複・件数、`version`、section-first・固定factor順を検証し、preview 7件／detail 42件を5フィールド`RenderedResultText`へ投影してdeep freezeする。
 - snapshot: `createResultSnapshot`が各位置のexact production record IDを検証し、9フィールド`VersionTuple`と診断時文章を含む13フィールド`ResultSnapshot`を生成する。生回答、`diagnosisId`、結果定義、DOM・Canvas状態を含めず、`characterAssetVersion`と`characterManifestVersion`を分離する。
-- gate: 根拠台帳ではE-0とE-1がapprovedで、E-1の承認日は2026-07-28。F-1も知性・想像力の20問観察文と50問8節について2026-07-28にapproved。E-2〜E-5は`draft`で承認日なし。T-0〜T-4／F-2〜F-5は`reviewed`でimplementation auditと独立レビュー済みだが人手approval recordなし。X-1〜X-2も`reviewed`だが人手approval recordなし。したがって`Content Approval pending`を維持する。
+- gate: 根拠台帳ではE-0、E-1、E-2がapprovedで、E-1とE-2の承認日は2026-07-28。F-1は知性・想像力、F-2は勤勉性の20問観察文と50問8節について2026-07-28にapproved。E-3〜E-5は`draft`で承認日なし。T-0〜T-4／F-3〜F-5は`reviewed`でimplementation auditと独立レビュー済みだが人手approval recordなし。X-1〜X-2も`reviewed`だが人手approval recordなし。したがって`Content Approval pending`を維持する。
 - 完全解決条件: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateについて必要な人手approval recordがすべて揃うこと。
 - 画面: live／保存済みS-003/S-004、5軸レーダー、境界・僅差補足、Canvas代替、Q-012の該当猫1体のviewport遅延読込と画像失敗時altを実装済み。共有と代替色・香りは後続T-007/Q-013統合。
 - 永続化: 13フィールドproduction ResultSnapshot validatorと`saveResultSnapshot`に加え、回答完答からの本番callerをS-001/S-002へ接続済み。previewは進捗を保持し、detailは保存成否にかかわらずcaller-held回答参照を破棄する。
@@ -450,7 +450,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 | 項目 | 理由 | 着手条件 |
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
-| Q-006人手Content Approval | `result-text-v1 initial reviewed copy` 237件と根拠・合成・snapshotは実装済み。E-1／F-1は2026-07-28にapproved。E-2〜E-5、T-0〜T-4、F-2〜F-5、X-1〜X-2の各gateに必要な人手approval recordがすべて揃うまで`Content Approval pending` | Q-006 |
+| Q-006人手Content Approval | `result-text-v1 initial reviewed copy` 237件と根拠・合成・snapshotは実装済み。E-1／E-2／F-1／F-2は2026-07-28にapproved。E-3〜E-5、T-0〜T-4、F-3〜F-5、X-1〜X-2の各gateに必要な人手approval recordがすべて揃うまで`Content Approval pending` | Q-006 |
 | Q-014結果・履歴・中断再開UI | 回答中断、preview終了、状態別再開、新規開始確認、結果hero、5因子行・棒、単一開閉の二段階展開、設問構成／4方法sheet、50問トップ導線、簡潔な履歴、固定比較導線、履歴管理dialog、responsive・keyboard browser smokeまで実装済み。`result-text-v2`の51称号分`titleReflection`だけが作成・Content Approval pending | T-008A |
 | 結果・履歴画面統合 | Q-006ドメイン、ResultSnapshot保存、S-001/S-002 live controller、完答caller、追加30問、S-003/S-004 live／保存済み画面、S-006履歴、S-007比較、Q-012猫画像遅延表示、Q-014のtitleReflection以外のUIを実装済み。共有、Q-013代替色・香り、titleReflection制作・承認は未完了 | T-005/T-007/T-008A/T-008 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
