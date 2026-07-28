@@ -322,6 +322,38 @@ test("Q-006 F-1 uses the reviewed middle-band reflection prompts for intellect a
   );
 });
 
+test("Q-006 F-1 uses the reviewed low-band reflection prompts for intellect and imagination", () => {
+  const lowDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "intellectImagination"
+    && appliesTo.band === "low"
+  );
+  assert.deepEqual(
+    Object.fromEntries(lowDetail.map(({ section, text: resultText }) => [
+      section,
+      resultText,
+    ])),
+    {
+      observation:
+        "今回の50問では、新しい考え方や発想への関心は、尺度内で低めの傾向が見られました。",
+      strength:
+        "最近、抽象的な説明を、自分の経験や具体的な事実に基づいて分かりやすくまとめ直した場面はありましたか。",
+      tradeoff:
+        "抽象的な話題が続いたとき、「結局、何をどうすればいいのだろう」と現実味が湧かず、戸惑った場面はありましたか。",
+      work:
+        "仕事や学びのなかで、手順やマニュアルなど、具体的な形があるほうが進めやすいと感じた出来事はありましたか。",
+      relationship:
+        "人との会話で、理想や仮定の話よりも、具体的な出来事に戻したくなった場面はありましたか。",
+      stress:
+        "考える範囲が広がったとき、「まずは目の前で確かめられることから決めよう」と、考える範囲を絞った場面はありましたか。",
+      question:
+        "最近、実際に手を動かしたり現物を見たりしたことで、物事が理解しやすくなったと感じた経験はありましたか。",
+      action:
+        "よければ、今日見聞きした少し難しい話を、「自分の生活で言うとどうなるか」に当てはめて考えてみませんか。",
+    },
+  );
+});
+
 test("preview observations use only the four selected items for each reviewed factor", () => {
   const byId = new Map(FactorResultTextDefinitions.map((definition) => [
     definition.id,
