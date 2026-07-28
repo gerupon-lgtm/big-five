@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.6 |
+| 設計版 | 0.7 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-07-28 |
-| 入力要件 | 要件定義書v1.11 |
+| 入力要件 | 要件定義書v1.12 |
 | 実行方式 | 通常版はブラウザ内完結。ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -213,6 +213,8 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 `composeResultTexts`の責務はdefinitionの条件選択、欠落・重複・件数、`version`、section-first／`FACTOR_ORDER`のsection・factor順を検証し、`RenderedResultText`の5フィールド（`id`、`version`、`section`、`text`、`evidenceRefs`）だけへ投影することである。previewはtitle 2件＋5観察文の7件、detailはtitle 2件＋5因子×8節の42件である。配列、各record、複製した`evidenceRefs`をdeep freezeし、入力を変更・freezeしない。
 
+`result-text-v2`では称号ごとの`titleReflection`を1〜3件追加する。コンパイラは専用CSVから固定順へ投影し、1件目だけをpreview許可とする。`composeResultTexts`はpreviewで1件目、detailで1〜3件を選択し、ランダム値・現在時刻・DOM・香り・色を入力にしない。既存`result-text-v1`の237件と承認状態は上書きしない。
+
 ### 6.3 ResultModelとResultSnapshot
 
 `composeResultModel`はFactorResult、TitleClassification、RenderedResultTextをexact schemaで検証し、5因子、称号・キャラクターID、境界フラグ、表示文を深く複製する。未知フィールド、設問数から到達不能な因子統計、設問数と閾値が矛盾するBoundaryFlagを拒否する。
@@ -226,6 +228,8 @@ displayScore = round((rawMean - 1) / 4 * 100)
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
 上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`で、根拠台帳E-1〜E-5の人手`Content Approval pending`である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。T-007共有とQ-013の代替色・香りは後続である。
+
+`result-text-v2`では診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。共有モデル生成時は`titleReflection`を除外する。
 
 ## 7. 履歴保存
 
@@ -244,7 +248,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 11. 履歴順は`completedAt`の実時刻降順、同時刻は`resultId`辞書順とする。返却配列と各snapshotはdeep freezeする。
 12. 個別削除は確認後、指定`resultId`と一致する最初の有効ResultSnapshotだけを削除する。途中回答、非対象結果、破損結果の構造と順序を保持し、対象なしでは書き込まない。
 13. 全削除は確認後、現行StorageEnvelopeの`progressByDiagnosis`と`results`だけを空にする。確認取消、壊れたJSON、将来schema、保存失敗では既存値を変更しない。
-14. S-006は履歴0件でも管理メニューから全削除へ到達できる。通常カードは猫サムネイル、称号、実施日時、20問／50問、結果表示導線だけを投影する。比較モードは選択ResultSnapshot IDを最大2件の一時状態として持ち、1件目は取消・再選択でき、互換結果だけを2件目候補として有効化する。2件選択だけでは遷移せず、固定アクションバーの明示実行でS-007へ進む。
+14. S-006は履歴0件でも`データの管理`から全削除へ到達できる。通常カードは猫サムネイル、称号、実施日時、20問／50問、結果表示導線だけを投影する。比較モードは選択ResultSnapshot IDを最大2件の一時状態として持ち、1件目は取消・再選択でき、互換結果だけを2件目候補として有効化する。2件選択だけでは遷移せず、固定アクションバーの明示実行でS-007へ進む。
 
 状態遷移:
 
@@ -271,9 +275,15 @@ live controllerは`#/answer`を正規routeとし、ResultSnapshotをメモリ上
 - 20問ではResultSnapshotに存在しないdetail sectionを生成・補完しない。
 - 開閉後は対象見出しへフォーカスを奪わず、見出しがviewport内に残る最小限のスクロール調整だけを行う。
 
+称号別`titleReflection`の開閉もpresentation層の一時状態とする。1件目は常時表示し、50問だけ残り最大2件を1つの`ほかのヒントを見る`で一括開閉する。因子詳細の開閉状態とは独立させ、第三階層を作らない。
+
 ResultSnapshotの42件はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。カテゴリ行の短いサマリは内容を代替する固定UI説明であり、スコア別結果文を生成・要約しない。`詳しく見る`で元の`RenderedResultText`と根拠を表示する。
 
 `因子ごとの設問構成を見る`はDiagnosticDefinitionとQuestionDefinitionから、現在modeの固定questionId集合を因子・`keyedDirection`別に件数集計する純粋モデルを使う。設問本文、回答、スコア、称号を出力へ含めない。測定の土台等の固定説明は診断定義版とmodeだけを入力とし、ResultSnapshotの称号・数値で分岐しない。
+
+50問結果の`トップへ戻る`は保存済みsnapshotなら新規ProgressRecordを作らず`#/start`へ遷移する。保存失敗したlive snapshotでは確認を要求し、取消時は画面・メモリ上のsnapshotを維持する。`もう一度診断する`だけが新規ProgressRecordを生成する。
+
+履歴の`データの管理`はモーダル状態をpresentation層だけに持つ。起動時に内部へフォーカスを移し、明示的な閉じる、backdropだけのタップ、Escで閉じる。内部タップをbackdrop扱いせず、閉じた後は起動元へフォーカスを戻す。個別削除・全削除の確認とストレージ処理は従来のdomain APIを再利用する。
 
 2026-07-27の実ブラウザ検証では、360pxで新規開始、20問分岐、preview、選択猫1体のviewport遅延読込、追加30問、detailまで通過し、320pxの200%相当狭幅でも横overflowなし・42文面維持を確認した。強制storage失敗でも20回答とpreview結果をメモリ上で維持し、指定通知を表示した。preview結果の資産inventoryは同一originのscript 35件、stylesheet 1件、選択猫画像1件だけで、外部資産0件だった。
 
@@ -355,9 +365,9 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 
 - `pause`、`reset`、`quiet-focus`の固定順で、各2件、合計6件を同時表示する。
 - 共有は各場面の`shareFragranceId`を1件、合計3件へ要約する。
-- `fragrance-material-examples.csv`を香調ごとに1〜3行で検証し、コンパイラが固定順の`materialExamples`へ結合する。通常結果だけに「香りの素材例」として表示し、共有モデルから除外する。
+- `fragrance-materials.csv`を版付き香り素材マスタ、`fragrance-material-examples.csv`を香調と素材IDの関連表として検証する。コンパイラが香調ごとの固定順`materialIds`へ結合し、runtimeは素材マスタから表示名を解決する。通常結果だけに「香りの素材例」として表示し、共有モデルから除外する。
 - ユーザー状態を推測する入力・処理を持たない。
-- 植物・精油名は`materialExamples`だけに許可する。商品、ブランド、購入URL、適合推奨、量、滴数、濃度、配合、摂取、塗布、ディフューザー等の使用法、治療・改善・能力向上効果のデータを定義スキーマで禁止する。
+- 植物・精油名は香り素材マスタの`displayName`だけに許可する。商品、ブランド、購入URL、適合推奨、量、滴数、濃度、配合、摂取、塗布、ディフューザー等の使用法、治療・改善・能力向上効果のデータを定義スキーマで禁止する。
 
 ## 12. 共有カード
 

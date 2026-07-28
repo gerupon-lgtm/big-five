@@ -14,7 +14,7 @@
 ## 2. 決定事項
 
 - 植物名と精油名を表示上区別せず、ラベルを「香りの素材例」に統一する。
-- 各`FragranceSuggestion`へ1〜3件の素材例を固定順で関連付ける。
+- 香り素材を`FragranceMaterialDefinition`としてマスタ化し、各`FragranceSuggestion`へ1〜3件の`materialId`を固定順で関連付ける。
 - 表示順は香調名、雰囲気説明、素材例、共通注意書きとする。
 - 素材例はS-003／S-004の通常結果画面だけに表示する。
 - 共有カードと共有テキストには素材例を含めない。注意書きから切り離された名称表示と情報過多を避けるためである。
@@ -29,29 +29,39 @@
 
 ## 3. データモデル
 
-`FragranceSuggestion`へコンパイル済みの`materialExamples`を追加する。
+実行時は称号別selectorから`fragranceId`、香調候補から`materialId`、香り素材マスタから表示名を順に解決する。
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
-| materialExamples | string[1..3] | ○ | 香りを想像するための一般名称。表示順を保持 |
+| materialIds | string[1..3] | ○ | `FragranceMaterialDefinition`への参照。表示順を保持 |
 
-人手編集CSVではカンマ区切りの複合値を持たせず、`fragrance-material-examples.csv`を独立した関連表とする。
+香り素材の人手編集正典は`fragrance-materials.csv`とする。
+
+| 列 | 型 | 制約 |
+|---|---|---|
+| material_id | id | 同一版で一意 |
+| presentation_definition_version | version | 対象演出定義版と一致 |
+| display_name | text | 通常結果に表示する一般名称。非空、前後空白なし |
+| material_kind | enum | `plant-name`／`essential-oil-name`。画面上は区別しない |
+| status | enum | `draft`／`reviewed`／`approved`／`rejected` |
+
+香調候補との多対多関係は`fragrance-material-examples.csv`とする。カンマ区切りの複合値や表示名を重複保持しない。
 
 | 列 | 型 | 制約 |
 |---|---|---|
 | fragrance_id | id | `fragrances.csv`の同一版レコードを参照 |
+| material_id | id | `fragrance-materials.csv`の同一版レコードを参照 |
 | presentation_definition_version | version | 対象香調と一致 |
 | display_order | integer | 香調ごとに1から連続し、1〜3件 |
-| material_name | text | 非空、前後空白なし、同一香調内重複なし |
 | status | enum | `draft`／`reviewed`／`approved`／`rejected` |
 
-コンパイラは関連表を`FragranceSuggestion.materialExamples`へ固定順で結合する。参照切れ、版不一致、0件、4件以上、順序欠損、重複、未知列を拒否する。生成されるpresentation JSONは従来どおり1リソースであり、生成JSONを人が編集しない。
+コンパイラは関連表を`FragranceSuggestion.materialIds`へ固定順で結合し、香り素材マスタを同じpresentation JSONの`fragranceMaterials`へ出力する。参照切れ、版不一致、0件、4件以上、順序欠損、同一香調内の素材重複、素材ID・表示名重複、未知列を拒否する。生成JSONを人が編集しない。
 
-`FragranceSuggestion`のexact shapeが変わるため、素材例を有効化する定義は`PresentationDefinitionSet.schemaVersion = 2`、`presentationDefinitionVersion = presentation-v2`とする。現在の`presentation-v1`／schema 1 runtimeは、Q-013のapproved releaseが選択されるまで変更しない。schema 1の定義へ素材例を混在させず、schema 2で素材例が欠ける定義も拒否する。
+`FragranceSuggestion`とrootのexact shapeが変わるため、素材例を有効化する定義は`PresentationDefinitionSet.schemaVersion = 2`、`presentationDefinitionVersion = presentation-v2`とする。現在の`presentation-v1`／schema 1 runtimeは、Q-013のapproved releaseが選択されるまで変更しない。schema 1の定義へ素材参照を混在させず、schema 2で`fragranceMaterials`または香調ごとの素材参照が欠ける定義も拒否する。
 
 ## 4. 表現と安全境界
 
-素材例で許可するのは、香りのイメージを助ける一般的な名称だけである。`accordLabel`と`description`に植物・精油名を埋め込む既存禁止は維持し、許可範囲を`materialExamples`だけへ限定する。
+素材例で許可するのは、香りのイメージを助ける一般的な名称だけである。`accordLabel`と`description`に植物・精油名を埋め込む既存禁止は維持し、許可範囲を`FragranceMaterialDefinition.displayName`だけへ限定する。
 
 以下は引き続き禁止する。
 
@@ -95,8 +105,8 @@
 
 ## 7. 検証
 
-- schema: 専用CSVのexact header、型、1〜3件、固定順、重複、参照、版、statusを検証する。
-- compiler: CSVから`materialExamples`へ決定的に結合し、入力順や環境に左右されない。
+- schema: 素材マスタと関連CSVのexact header、型、1〜3件、固定順、重複、参照、版、statusを検証する。
+- compiler: 関連CSVから`materialIds`へ決定的に結合し、入力順や環境に左右されない。
 - copy lint: 素材例以外の植物・精油名、商品・使用法・効果表現を拒否する。
 - presentation: 1件、2件、3件、長い名称、素材例fallback、320px／200%、読み上げ順を確認する。
 - privacy: 素材例表示に生回答、追加質問、ネットワーク通信を追加しない。
@@ -106,7 +116,7 @@
 ## 8. 完了条件
 
 - 通常結果画面の各香調候補に「香りの素材例」が1〜3件表示される。
-- 素材例は版付きCSVだけから生成され、コードや画面へ直書きされない。
+- 素材例は版付きの香り素材マスタと関連CSVだけから生成され、コードや画面へ直書きされない。
 - 商品、使用法、効果の提案と誤認させる表示がない。
 - 共有カード・共有テキストに素材例が含まれない。
 - 参考資料からの直接移植や承認済み扱いが行われていない。

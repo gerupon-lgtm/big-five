@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.6 |
+| 設計版 | 0.7 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-07-28 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.11 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.12 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -210,24 +210,35 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 | sceneId | `pause` \| `reset` \| `quiet-focus` | ○ | 利用場面 |
 | accordLabel | string | ○ | 香調名 |
 | description | string | ○ | 雰囲気の説明 |
-| materialExamples | string[1..3] | schema 2のみ○ | 通常結果で表示する「香りの素材例」。固定順 |
+| materialIds | string[1..3] | schema 2のみ○ | `FragranceMaterialDefinition`への固定順参照 |
 | disclaimerId | string | ○ | 共通注意書き |
 
 商品、用量、滴数、配合、摂取、塗布、ディフューザー使用法の項目は持たない。
 
-人手編集では`fragrance-material-examples.csv`を独立した関連表とし、`fragrance_id`、`presentation_definition_version`、香調内で1から連続する`display_order`、`material_name`、`status`を持つ。コンパイラが1〜3件を`materialExamples`へ結合する。名称は香りのイメージ補助に限定し、商品、使用法、効果のデータを持たない。
+人手編集では香り素材を`fragrance-materials.csv`へ独立マスタ化し、`fragrance-material-examples.csv`は香調と素材IDの関連だけを持つ。コンパイラが1〜3件の`materialIds`へ結合する。名称は香り素材マスタだけに保持し、商品、使用法、効果のデータを持たない。
 
-#### 2.10.1 FragranceMaterialExample
+#### 2.10.1 FragranceMaterialDefinition
+
+| 項目 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| materialId | string | ○ | 同一演出定義版で一意 |
+| version | string | ○ | PresentationDefinitionSetと一致 |
+| displayName | string | ○ | 「香りの素材例」として表示する一般名称 |
+| materialKind | `plant-name` \| `essential-oil-name` | ○ | 審査用区分。画面では区別しない |
+
+人手編集CSVでは上記に`status`を加え、runtime JSONでは承認状態を除外する。
+
+#### 2.10.2 FragranceMaterialExampleRelation
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
 | fragranceId | string | ○ | 親`FragranceSuggestion` |
-| presentationDefinitionVersion | string | ○ | 親と一致する演出定義版 |
-| displayOrder | integer | ○ | 親ごとに1から連続 |
-| materialName | string | ○ | 「香りの素材例」として表示する一般名称 |
+| materialId | string | ○ | `FragranceMaterialDefinition`参照 |
+| presentationDefinitionVersion | string | ○ | 親・素材と一致する演出定義版 |
+| displayOrder | integer | ○ | 香調ごとに1から連続 |
 | status | enum | ○ | `draft`／`reviewed`／`approved`／`rejected` |
 
-同じ親に1〜3件だけを許可し、名称重複、参照切れ、版不一致、順序欠損を拒否する。このauthoring relation自体はruntime JSONへ残さず、固定順の`materialExamples`へ投影する。
+同じ香調に1〜3件だけを許可し、素材重複、参照切れ、版不一致、順序欠損を拒否する。このauthoring relation自体はruntime JSONへ残さず、固定順の`materialIds`へ投影する。
 
 ### 2.11 PresentationDefinitionSet
 
@@ -238,11 +249,12 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 | scenes | SceneDefinition[3] | ○ | pause/reset/quiet-focus固定順 |
 | palettes | PaletteDefinition[] | ○ | 版付きパレットライブラリ |
 | fragrances | FragranceSuggestion[] | ○ | 版付き香調ライブラリ |
+| fragranceMaterials | FragranceMaterialDefinition[] | schema 2のみ○ | 版付き香り素材マスタ |
 | titleSelectors | TitlePresentationSelector[51] | ○ | 称号ごとの候補参照 |
 
 sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを切り替えたい`、`quiet-focus = 静かに取り組みたい`とする。
 
-schema 1の`presentation-v1`は素材例を持たない現行互換契約とし、schema 2の`presentation-v2`は全`FragranceSuggestion`に`materialExamples`を必須とする。Q-013のapproved release選択前に現行runtimeへschema 2を混在させない。
+schema 1の`presentation-v1`は素材例を持たない現行互換契約とし、schema 2の`presentation-v2`は`fragranceMaterials`と全`FragranceSuggestion.materialIds`を必須とする。Q-013のapproved release選択前に現行runtimeへschema 2を混在させない。
 
 #### TitlePresentationSelector
 
@@ -253,6 +265,21 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 | fragranceScenes | FragranceSceneSelector[3] | ○ | 3場面固定順 |
 
 標準パレットは`TitleProfileDefinition.defaultPaletteId`だけを正典とし、selectorへ重複保持しない。各FragranceSceneSelectorは同じ場面の候補2件と、その候補内の共有代表1件を持つ。未知フィールド、ID重複、版不一致、参照切れ、個数・順序違反、生回答・得点・猫色による条件を拒否する。
+
+### 2.12 TitleReflectionCommentDefinition（`result-text-v2`予定）
+
+| 項目 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| textId | string | ○ | 全結果文内で一意な安定ID |
+| resultTextVersion | string | ○ | 初回有効化は`result-text-v2` |
+| titleId | string | ○ | 51種類の称号参照 |
+| displayOrder | integer | ○ | 称号ごとに1から連続し、1〜3 |
+| text | string | ○ | 任意の参考情報として表示する振り返りヒント |
+| status | enum | ○ | `draft`／`reviewed`／`approved`／`rejected` |
+
+人手編集正典は結果文版配下の`title-reflection-comments.csv`とする。コンパイラは`section = titleReflection`、`claimKind = reflectionPrompt`へ投影し、1件目だけ`previewAllowed = true`とする。`result-text-v1`の237件へ混在させず、`result-text-v2`の版単位で検証・承認する。
+
+20問は固定順1件目、50問は1〜3件をRenderedResultTextとしてResultSnapshotへ複製する。後のCSV変更で保存済み履歴を再生成しない。共有モデルへは投影しない。
 
 ## 3. 端末内ストレージ
 

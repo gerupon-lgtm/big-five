@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.6 |
+| 設計版 | 0.7 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-07-28 |
-| 要件正典 | 要件定義書v1.11 |
+| 要件正典 | 要件定義書v1.12 |
 | 初期リリース | `mvp-0.1.0` |
 
 ## 1. トレーサビリティ表（正典）
@@ -16,20 +16,20 @@
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approval pending |
 | F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 基盤実装済み。Q-014の共通ヘッダー・設問折返し・中断UI待ち |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A | 基盤実装済み。Q-014の状態別再開・preview終了・新規置換確認待ち |
-| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005, T-008A | Q-006 preview定義・合成・snapshot、完答caller、live／保存済み画面を実装。Q-014 UIとContent Approval pending |
-| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, ResultSnapshot | T-003, T-005, T-008A | Q-006 detail定義・合成・snapshot、完答caller、live／保存済み画面を実装。Q-014 UIとContent Approval pending |
+| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | Q-006 preview定義・合成・snapshot、完答caller、live／保存済み画面を実装。称号別ヒントとQ-014 UI、Content Approval pending |
+| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | Q-006 detail定義・合成・snapshot、完答caller、live／保存済み画面を実装。称号別ヒント、トップ導線、Q-014 UI、Content Approval pending |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A | レーダー基盤実装済み。Q-014の因子名・棒・段階展開待ち |
-| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A | 保存・表示基盤実装済み。Q-014の簡潔カード待ち |
+| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A | 簡潔カード・比較導線実装済み。閉じられるデータ管理画面待ち |
 | F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A | 比較基盤実装済み。Q-014の固定比較導線待ち |
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareViewModel | T-007 | Q-007待ち |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007 | Q-007待ち |
-| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A | 削除基盤実装済み。Q-014のpreview終了・管理メニュー待ち |
+| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A | 削除・preview終了・管理メニュー基盤実装済み。管理モーダルの閉じ方改善待ち |
 | F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | 確定 |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A | 基盤確定。Q-014の保存失敗時中断・終了処理待ち |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面接続を実装。共有接続待ち |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
-| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialExample, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013設計済み。素材例を含む実データ待ち |
+| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013設計済み。香り素材マスタを含む実データ待ち |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -191,9 +191,10 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 開始ゲート:
   - Q-006: `result-text-v1 initial reviewed copy`、根拠、合成、snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordが揃うまで`Content Approval pending`
   - Q-012: 制作・技術実装済み。51体すべてについてproject-ownerの制作確認を経て、共通encoder設定、1024px正方形、透明余白、ハッシュ整合、runtime manifest、単一画像遅延loaderを固定済み。ただし正式なapproved release選択は未完了
-  - Q-013: 構造と選択規則は確定。各香調1〜3件の素材例、通常結果だけの表示、共有除外も2026-07-28に確定。全パレット・香調・素材例・用途色展開データ
+  - Q-013: 構造と選択規則は確定。香り素材の独立マスタ、香調ごとの素材ID 1〜3件、通常結果だけの表示、共有除外も2026-07-28に確定。全パレット・香調・香り素材・関連・用途色展開データ
 - 作業:
   - S-003/S-004の結果モデルと画面を実装。
+  - `result-text-v2`の称号別振り返りヒントを20問1件、50問1〜3件で表示し、診断時snapshotへ保持する。
   - レーダー＋代替テキストを実装。
   - 該当猫1体の遅延読込と代替表示を実装。
   - 色候補と香調候補を追加質問なしで表示。
@@ -304,6 +305,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 依存: T-004、T-005、T-006
 - 対応機能: F-003、F-004、F-005、F-006、F-008、F-009、F-010、F-013、F-015、F-018
 - 正典: `docs/superpowers/specs/2026-07-27-result-history-resume-ui-design.md`
+- 称号別ヒント正典: `docs/superpowers/specs/2026-07-28-title-reflection-comments-design.md`
 - 回答中断・再開計画: `docs/superpowers/plans/2026-07-27-questionnaire-resume-interruption.md`
 - 結果段階表示計画: `docs/superpowers/plans/2026-07-27-result-progressive-disclosure.md`
 - 履歴・比較計画: `docs/superpowers/plans/2026-07-27-history-compact-comparison.md`
@@ -312,11 +314,12 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 全画面の控えめなアプリ名、設問のbalanced wrapping、回答画面の中断導線を実装する。
   - 20問選択前、簡易プレビュー表示後、21〜49問の状態別再開と、新規開始時の置換確認を実装する。
   - 簡易プレビューに追加30問、中断、20問で終了の3操作を実装し、結果保存失敗・進捗削除失敗を非破壊で扱う。
-  - 結果を称号・猫・理由、名前付きレーダー、5因子一覧、同時1因子／1詳細の段階展開へ再構成する。
+  - 結果を称号・猫・理由、任意の振り返りヒント、名前付きレーダー、5因子一覧、同時1因子／1詳細の段階展開へ再構成する。
+  - 50問結果へトップの直接導線を追加し、未保存live結果だけ離脱確認する。
   - 因子ごとの正方向・逆方向項目数と、4つの固定説明を同一画面上のアクセシブルな展開UIで表示する。
-  - 履歴カードを猫・称号・日時・20/50問・結果表示へ絞り、固定下部アクションバーの比較トグルと、個別削除・全削除・版情報を持つ管理メニューを実装する。
+  - 履歴カードを猫・称号・日時・20/50問・結果表示へ絞り、固定下部アクションバーの比較トグルと、個別削除・全削除・版情報を持つ管理モーダルを実装する。明示的な閉じる、背景タップ、Esc、フォーカス復帰を保証する。
 - 変更禁止:
-  - Q-006の237結果文、表示順を含むResultSnapshot、採点、称号判定、Q-012画像・altを変更しない。
+  - `result-text-v1`の237結果文と承認状態、既存ResultSnapshot、採点、称号判定、Q-012画像・altを上書きしない。称号別ヒントは別版`result-text-v2`として追加する。
   - Q-013の未承認パレット・香調を仮置きしない。
   - 中断と破棄を同一操作にしない。
 - 完了条件:
@@ -324,6 +327,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 20問の3操作、直近1件再開、新規開始確認が保存成功・保存失敗・取消で仕様どおり動く。
   - 称号・猫・理由が結果の先頭にあり、5因子と全保存済み結果文が段階展開から到達可能である。
   - 履歴から通常結果を開け、互換2件だけをトグル選択し、明示実行で比較できる。
+  - 50問結果からトップへ直接戻れ、履歴管理を閉じるボタン・背景タップ・Escで閉じられる。
   - 360px、320pxの200%相当、キーボードで固定要素の被りと横スクロールがない。
 - 検証方法:
   - presentation単体: questionnaire、start、result、history。
@@ -337,7 +341,8 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - S-006を猫サムネイル・称号・日時・20/50問・`結果を見る`へ簡潔化し、最大2件・互換結果のみ・明示実行の比較モード、管理メニューの個別削除・全削除・版情報へ接続した。
   - `createQuestionComposition`と`createResultDisclosureModel`を追加し、設問本文・回答を出さない正逆方向件数と、section-first snapshotからfactor-first表示モデルへの不変投影を実装した。レーダーの5因子名描画とアクセシブルなボトムシート基盤も追加した。
   - 全444テスト、静的検証44 JavaScript、`git diff --check`に成功した。残作業は結果hero、因子一覧・二段階展開、設問構成／方法情報の画面接続、最終responsive・keyboard browser smokeである。
-  - Q-013素材例仕様（2026-07-28）: 各香調に1〜3件の「香りの素材例」を版付き関連CSVから追加し、通常結果だけに表示して共有から除外する設計を承認した。ユーザー共有の評価コメント・象徴色・香り資料は51称号を網羅する候補検討資料としてハッシュを記録したが、直接移植・自動採用・承認済み扱いを禁止する。実装とproduction data作成はQ-013 release gate内の後続作業である。
+  - Q-013素材例仕様（2026-07-28）: 香り素材を版付き独立マスタ、香調との関連を素材ID 1〜3件として管理し、通常結果だけに表示して共有から除外する設計を承認した。色はパレット単位マスタを維持する。ユーザー共有の評価コメント・象徴色・香り資料は51称号を網羅する候補検討資料としてハッシュを記録したが、直接移植・自動採用・承認済み扱いを禁止する。実装とproduction data作成はQ-013 release gate内の後続作業である。
+  - Q-014追補（2026-07-28）: `result-text-v2`で称号別の振り返りヒント1〜3件を追加し、20問は1件、50問は1件＋追加最大2件とする。50問結果のトップ導線、履歴管理モーダルの閉じる・背景タップ・Esc・フォーカス復帰も承認した。実装は後続計画で行う。
 
 ### T-008 全画面統合・レスポンシブ・アクセシビリティ
 
@@ -438,11 +443,11 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
 | Q-006人手Content Approval | `result-text-v1 initial reviewed copy` 237件と根拠・合成・snapshotは実装済み。E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateに必要な人手approval recordがすべて揃うまで`Content Approval pending` | Q-006 |
-| Q-014結果・履歴・中断再開UI | 回答中断、preview終了、直近1件再開、新規開始確認、簡潔な履歴、固定比較導線は実装済み。称号・猫hero、因子一覧・二段階展開、設問構成／方法情報の画面接続とbrowser smokeが未完了 | T-008A |
+| Q-014結果・履歴・中断再開UI | 回答中断、preview終了、直近1件再開、新規開始確認、簡潔な履歴、固定比較導線は実装済み。称号別ヒント、称号・猫hero、因子一覧・二段階展開、設問構成／方法情報、50問トップ導線、履歴管理モーダルとbrowser smokeが未完了 | T-008A |
 | 結果・履歴画面統合 | Q-006ドメイン、ResultSnapshot保存、S-001/S-002 live controller、完答caller、追加30問、S-003/S-004 live／保存済み画面、S-006履歴、S-007比較、Q-012猫画像遅延表示は実装済み。Q-014 UI、共有、代替色・香りが未実装 | T-005/T-007/T-008A/T-008 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
 | 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを制作・技術確認済み。runtime manifest、整合検査、単一画像遅延loader、live／保存済み結果画面接続まで実装済み | Q-012の正式なapproved release選択は未完了。共有はT-007で接続 |
-| 色・香り実データ | 候補数・分類・選択規則、香調ごとの素材例1〜3件、通常結果だけの表示、共有除外は確定。全パレット・香調・素材例・用途色が未制作 | Q-013設計を基にT-005で制作 |
+| 色・香り実データ | 候補数・分類・選択規則、香り素材の独立マスタ、香調ごとの素材ID 1〜3件、通常結果だけの表示、共有除外は確定。全パレット・香調・香り素材・関連・用途色が未制作 | Q-013設計を基にT-005で制作 |
 
 これは要件漏れではなく、要件書19章に期限付きで残る後続決定である。
