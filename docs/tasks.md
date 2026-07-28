@@ -12,19 +12,19 @@
 
 | 要件ID | 機能名 | 画面 | 処理 | データ | タスク | 状態 |
 |---|---|---|---|---|---|---|
-| F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008 | 確定 |
+| F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008A, T-008 | `Big Five 自己理解チェック`／`BIG FIVE SELF UNDERSTANDING`の共通ヘッダーと、`SELF CHECK`／`自分のことを知る`／承認済みBig Five・IPIP説明を実装・browser smoke済み |
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approvalは2026-07-28に完了 |
-| F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 共通ヘッダー、設問折返し、回答画面固有の文字階層、中断UIまで実装・browser smoke済み |
+| F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 共通ヘッダー、緑の進捗／設問`h1`、折り返さない`中断してトップへ`、設問20px・回答文字16px・回答ボタン高56pxを実装・360px browser smoke済み |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A | 状態別再開、preview終了、新規置換確認を保存成功・失敗・取消まで実装済み |
-| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 称号・猫heroと称号理由を分離し、5因子行・棒、単一開閉、設問構成・方法情報、7件の保存済み結果文への到達を実装済み。`result-text-v1` Content Approvalは2026-07-28に完了。`titleReflection`作成・承認はpending |
-| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 称号・猫heroと称号理由、5因子行・棒、同時1因子／1詳細の二段階開閉、設問構成・方法情報、42件の保存済み結果文、トップ直接導線を実装済み。`result-text-v1` Content Approvalは2026-07-28に完了。`titleReflection`作成・承認はpending |
+| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | `PREVIEW RESULT`／「20問簡易プレビュー」の共通見出しを実装し、称号・猫hero、称号理由、5因子行・棒、単一開閉、設問構成・方法情報、7件の保存済み結果文、結果下部操作を維持。`result-text-v1` Content Approvalは2026-07-28に完了。`titleReflection`作成・承認はpending |
+| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | `DETAIL RESULT`／「50問詳細結果」の共通見出しを実装し、称号・猫hero、称号理由、5因子行・棒、同時1因子／1詳細の二段階開閉、設問構成・方法情報、42件の保存済み結果文、結果下部操作、トップ直接導線を維持。`result-text-v1` Content Approvalは2026-07-28に完了。`titleReflection`作成・承認はpending |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A | 名前付きレーダー、固定順5因子行・棒、同時1因子／1詳細の二段階開閉、設問構成sheetと4つの固定方法sheetを実装済み |
-| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A | 簡潔カード、保存済み結果への直接導線、固定比較導線、閉じられる履歴管理dialogを実装・browser smoke済み |
-| F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A | 互換2件だけのトグル選択と固定アクションバーからの明示比較を実装済み |
+| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A | `HISTORY`／「診断結果の履歴」、ヘッダーの`トップ画面へ`、明示的な`履歴削除`、簡潔カード、保存済み結果への直接導線、固定比較導線、既存履歴管理dialogを実装・browser smoke済み |
+| F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A | `COMPARISON`／「診断結果の比較」、ヘッダーの`履歴へ戻る`、互換2件だけのトグル選択と固定アクションバーからの明示比較を実装・browser smoke済み |
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareViewModel | T-007 | Q-007待ち |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007 | Q-007待ち |
-| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A | 削除・preview終了に加え、明示close・正確なbackdrop click・native／fallback Escape・focus入退場・fallback背景隔離・Tab containmentを持つ履歴管理dialogを実装済み |
+| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A | 省略記号ではなく`履歴削除`から開く既存履歴管理dialog、削除・preview終了、明示close・正確なbackdrop click・native／fallback Escape・focus入退場・fallback背景隔離・Tab containmentを実装済み |
 | F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | 確定 |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A | 保存失敗時の中断・preview終了、live結果維持、履歴dialogのnative／fallback代替動作を実装済み。共有系fallbackはT-007 |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面接続を実装。共有接続待ち |
@@ -58,7 +58,7 @@
 | T-005 | 結果画面・猫・レーダー・色香り | F-002, F-005, F-006, F-007, F-008, F-016, F-018 | 基本・詳細結果を代替表示込みで閲覧可能 |
 | T-006 | 履歴・比較・削除 | F-009, F-010, F-013, F-015 | 当時結果を保存し、互換2件だけ比較 |
 | T-007 | 共有カード・保存・コピー | F-011, F-012, F-014, F-015, F-018 | 選択配色カードを保存・共有し段階代替 |
-| T-008A | 結果・履歴・中断再開UI再整理 | F-003〜F-006, F-008〜F-010, F-013, F-015, F-018 | `titleReflection`以外のQ-014 UIを320／360／960px・キーボード・保存失敗込みで検証済み。文面制作・承認gateを維持 |
+| T-008A | 結果・履歴・中断再開UI再整理 | F-001, F-003〜F-006, F-008〜F-010, F-013, F-015, F-018 | `titleReflection`以外のQ-014 UIは320／360／960px・キーボード・保存失敗込みで検証済み。2026-07-29の共通ヘッダー／見出しは同3幅の横overflowなしを確認。文面制作・承認gateを維持 |
 | T-008 | 全画面統合・レスポンシブ・a11y | F-001〜F-016, F-018 | 主要フローを360px・PC・キーボードで完結 |
 | T-009 | 説明・プライバシー・CSP | F-001, F-002, F-007, F-014, F-015 | 限界、非送信、削除、版、CSPを確認可能 |
 | T-010 | ベータ匿名集計API・DB・事前説明 | F-017 | OCIへ匿名集計し、二重送信・通信失敗でも診断結果を維持 |
@@ -303,15 +303,18 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 ### T-008A 結果・履歴・中断再開UI再整理
 
 - 依存: T-004、T-005、T-006
-- 対応機能: F-003、F-004、F-005、F-006、F-008、F-009、F-010、F-013、F-015、F-018
+- 対応機能: F-001、F-003、F-004、F-005、F-006、F-008、F-009、F-010、F-013、F-015、F-018
 - 正典: `docs/superpowers/specs/2026-07-27-result-history-resume-ui-design.md`
 - 称号別ヒント正典: `docs/superpowers/specs/2026-07-28-title-reflection-comments-design.md`
 - 回答中断・再開計画: `docs/superpowers/plans/2026-07-27-questionnaire-resume-interruption.md`
 - 回答文字計画: `docs/superpowers/plans/2026-07-28-questionnaire-typography.md`
 - 結果段階表示計画: `docs/superpowers/plans/2026-07-27-result-progressive-disclosure.md`
 - 履歴・比較計画: `docs/superpowers/plans/2026-07-27-history-compact-comparison.md`
+- フロントエンドトーン正典: `docs/superpowers/specs/2026-07-29-frontend-tone-and-shared-header-design.md`
+- フロントエンドトーン計画: `docs/superpowers/plans/2026-07-29-frontend-tone-and-shared-header.md`
 - 状態: DONE_WITH_CONCERNS。T-008Aの画面接続と実ブラウザ検証は完了したが、`result-text-v2`の51称号分`titleReflection`は作成・Content Approval pendingのため、T-008A全体を完全完了とはしない
 - 作業:
+  - `Big Five 自己理解チェック`／`BIG FIVE SELF UNDERSTANDING`の共通ヘッダーと、緑のkicker／進捗＋`h1`の共通見出しを開始・回答・20問分岐・結果・履歴・比較へ適用する。
   - 全画面の控えめなアプリ名、設問のbalanced wrapping、回答画面固有の20〜22px設問文・16px選択肢・行間1.5・最低高56px、中断導線を実装する。
   - 20問選択前、簡易プレビュー表示後、21〜49問の状態別再開と、新規開始時の置換確認を実装する。
   - 簡易プレビューに追加30問、中断、20問で終了の3操作を実装し、結果保存失敗・進捗削除失敗を非破壊で扱う。
@@ -331,6 +334,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 50問結果からトップへ直接戻れ、履歴管理を閉じるボタン・背景タップ・Escで閉じられる。
   - 360px、320pxの200%相当、キーボードで固定要素の被りと横スクロールがない。
   - 回答画面でトップ用の大見出し規則を継承せず、設問20〜22px、選択肢16px、最低高56pxを維持し、結果・履歴画面の文字スケールを変更しない。
+  - 共通ヘッダー名・副題、画面別kicker／`h1`、履歴・比較のヘッダー操作、`履歴削除`が仕様どおりで、320px、360px、960pxの主要画面に横overflowがない。
 - 検証方法:
   - presentation単体: questionnaire、start、result、history。
   - app-shell結合: 1〜19問、20問選択前、preview表示後、21〜49問、50問完答、新規開始取消／確定。
@@ -350,6 +354,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 結果・履歴UI実装（2026-07-28）: 結果heroと「この称号になった理由」を分離し、名前付きレーダーの下へ固定順5因子のコンパクトな行・棒・数値を表示した。20問7件／50問42件の保存済み結果文は、同時1因子・同一因子内1詳細だけを開く二段階開閉からすべて到達できる。因子別の正逆方向件数sheet、スコアや称号で変化しない4つの方法sheet、50問結果の`トップへ戻る`、履歴カードから保存済み結果を開く導線も画面接続した。保存結果の尺度・設問・採点版が登録済みtupleと完全一致する場合だけ該当方法情報を表示し、未登録版では現行件数・限界・出典を流用しない。
   - 履歴管理dialog実装（2026-07-28）: `データの管理`を閉じられるmodal/dialogへ変更した。明示的な`閉じる`、dialog自体だけのbackdrop click、native `cancel`とfallback keydownのEscape、closeへの初期focus、起動元へのfocus復帰を実装した。`showModal`なし／例外時は全viewport fallback surfaceと中央panelを表示し、背景分岐を`inert`＋`aria-hidden`で隔離する。Tab／Shift+Tabは閉じた`details`配下を除外し、実際に到達可能な操作だけで循環する。
   - 最終検証（2026-07-28）: 実ブラウザで320px、360px、960pxの結果・履歴を確認し、全幅で横overflowなし、360×800で履歴modal全体がviewport内に収まることを確認した。明示close、正確なbackdrop click、Escape、focus入場・復帰も通過し、console error／warningは0件だった。追加の自動回帰検証では、未登録の履歴診断版、ボトムシートのインラインfallback、保存結果を含む履歴fallback、承認済み結果開示ラベルを含む全465件、`npm.cmd run check`、`git diff --check`に成功した。
+  - フロントエンドトーン実装・検証（2026-07-29）: 共通表示名を`Big Five 自己理解チェック`、副題を`BIG FIVE SELF UNDERSTANDING`へ統一し、全対象画面へ緑のkicker／進捗＋`h1`を適用した。開始画面は`SELF CHECK`／`自分のことを知る`と承認済みBig Five・IPIP説明、結果画面は`PREVIEW RESULT`／`DETAIL RESULT`、履歴はヘッダーの`トップ画面へ`と`履歴削除`、比較はヘッダーの`履歴へ戻る`を使用する。ブラウザでは20問回答→簡易プレビュー→残り30問→50問詳細結果、履歴、互換な50問結果2件の比較を通過し、320px、360px、960pxで主要画面の横overflowなしを確認した。360px回答画面は`中断してトップへ`がnowrap、設問20px、回答文字16px、回答ボタン高56pxである。`npm.cmd test`は510件成功・失敗0件、`npm.cmd run check`は46 JavaScript files・canonical runtime version 1件で成功、`npm.cmd run qa:preview:build`は100 files・6,631,222 bytesで成功した。
   - 残る懸念: `result-text-v1`のContent Approvalは2026-07-28に完了した。`result-text-v2`の51称号分`titleReflection`は作成・Content Approval pending、approved release未選択、Q-012の正式releaseとQ-013 production dataも未完了であり、承認済みとして扱わない。
 
 ### T-008 全画面統合・レスポンシブ・アクセシビリティ

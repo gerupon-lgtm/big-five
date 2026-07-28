@@ -812,7 +812,7 @@ git commit -m "style: align result screen heading"
 - Produces: 320/360/960px、200%文字拡大、キーボード、主要画面の検証記録
 - Preserves: approved release未選択、Q-012/Q-013/T-007等の既存gate状態
 
-- [ ] **Step 1: 画面正典を実装済み契約へ同期する**
+- [x] **Step 1: 画面正典を実装済み契約へ同期する**
 
 `docs/screens.md`の共通UI、S-001、S-002、S-003/S-004、S-006、S-007へ次を明記する。
 
@@ -827,11 +827,11 @@ git commit -m "style: align result screen heading"
 比較: COMPARISON、履歴へ戻るをヘッダー
 ```
 
-- [ ] **Step 2: タスク台帳を実装・検証事実へ同期する**
+- [x] **Step 2: タスク台帳を実装・検証事実へ同期する**
 
 `docs/tasks.md`のT-008AおよびF-001/F-003/F-005/F-006/F-009/F-010/F-013へ、共通表示名称、縦位置、履歴削除、狭幅確認を追記する。未完了gateを完了へ変更しない。
 
-- [ ] **Step 3: 全自動検証を実行する**
+- [x] **Step 3: 全自動検証を実行する**
 
 ```powershell
 npm.cmd test
@@ -904,7 +904,7 @@ Spec reviewerは設計書の3〜12章、Standards reviewerはAGENTS.md、`docs/s
 - 文面承認を自動テスト承認へ読み替えていない
 - domain、content、storage schema、GitHub Pages権限に差分なし
 
-- [ ] **Step 9: 実装計画へ実績を記録してコミットする**
+- [x] **Step 9: 実装計画へ実績を記録してコミットする**
 
 本Taskのチェックボックス、検証件数、ブラウザ確認日、レビュー結果をこの計画末尾へ追記する。
 
@@ -932,3 +932,11 @@ git push -u origin codex/big-five-ui-tone-refresh
 ```
 
 Expected: `origin/codex/big-five-ui-tone-refresh`が作成または更新され、GitHub上からQA preview更新用の後続操作へ進める。
+
+## Task 5実績（2026-07-29）
+
+- 文書同期: `docs/screens.md`と`docs/tasks.md`へ共通表示名`Big Five 自己理解チェック`、英字副題`BIG FIVE SELF UNDERSTANDING`、緑のkicker／進捗＋`h1`の共通見出し、画面別のヘッダー操作と`履歴削除`を反映した。Q-006、Q-012、Q-013およびapproved releaseの既存gate状態は変更していない。
+- 自動検証: `npm.cmd test`は510 tests、510 pass、0 fail。`npm.cmd run check`は46 JavaScript filesとcanonical runtime version 1件で成功。`npm.cmd run qa:preview:build`は100 files、6,631,222 bytesで成功。
+- ブラウザ実フロー: 20問回答→簡易プレビュー、簡易プレビュー→残り30問→50問詳細結果、履歴表示、互換な50問結果2件の選択→比較表示を確認した。
+- 狭幅・広幅: 320px、360px、960px幅の主要画面で横overflowなし。360px回答画面は`中断してトップへ`が`white-space: nowrap`、設問20px、回答文字16px、回答ボタン高56px。
+- 記録境界: ブラウザ実フローと幅別の横overflow確認は上記のexactな事実だけを記録した。Step 4のdev server起動・停止、Step 5の全確認項目、Step 6の200%文字拡大、Step 7のキーボード確認、Step 8の最終独立レビューは、この2026-07-29検証記録として全項目の完了事実が提示されていないため未完了表示を維持する。Step 11のpushは本コミットの対象外であり実施しない。
