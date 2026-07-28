@@ -348,6 +348,132 @@ test("Q-006 E-4/F-4 uses the reviewed consideration wording for agreeableness ob
   );
 });
 
+test("Q-006 E-5/F-5 uses the reviewed calmness wording for emotional stability observations", () => {
+  const byId = new Map(FactorResultTextDefinitions.map((definition) => [
+    definition.id,
+    definition.text,
+  ]));
+  assert.deepEqual(
+    Object.fromEntries([
+      ...["preview20", "detail50"].flatMap((mode) => [
+        [`${mode}-emotionalStability-high-observation`, byId.get(`${mode}-emotionalStability-high-observation`)],
+        [`${mode}-emotionalStability-middle-observation`, byId.get(`${mode}-emotionalStability-middle-observation`)],
+        [`${mode}-emotionalStability-low-observation`, byId.get(`${mode}-emotionalStability-low-observation`)],
+      ]),
+    ]),
+    {
+      "preview20-emotionalStability-high-observation":
+        "今回の20問では、落ち着きを保ちやすく、気分も安定しやすい傾向が、尺度内で高めに見られました。",
+      "preview20-emotionalStability-middle-observation":
+        "今回の20問では、落ち着きを保ちやすく、気分も安定しやすい傾向が、尺度内の中間域にありました。",
+      "preview20-emotionalStability-low-observation":
+        "今回の20問では、落ち着きを保ちやすく、気分も安定しやすい傾向が、尺度内で低めに見られました。",
+      "detail50-emotionalStability-high-observation":
+        "今回の50問では、心配やストレスを感じたときにも落ち着きを保ちやすく、気分も安定しやすい傾向が、尺度内で高めに見られました。",
+      "detail50-emotionalStability-middle-observation":
+        "今回の50問では、心配やストレスを感じたときにも落ち着きを保ちやすく、気分も安定しやすい傾向が、尺度内の中間域にありました。",
+      "detail50-emotionalStability-low-observation":
+        "今回の50問では、心配やストレスを感じたときにも落ち着きを保ちやすく、気分も安定しやすい傾向が、尺度内で低めに見られました。",
+    },
+  );
+});
+
+test("Q-006 F-5 uses the reviewed high-band reflection prompts for emotional stability", () => {
+  const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "emotionalStability"
+    && appliesTo.band === "high"
+  );
+  assert.deepEqual(
+    Object.fromEntries(highDetail
+      .filter(({ section }) => section !== "observation")
+      .map(({ section, text: resultText }) => [
+        section,
+        resultText,
+      ])),
+    {
+      strength:
+        "最近、予想外の出来事があっても、状況を整理しながら落ち着いて対応できた場面はありましたか。",
+      tradeoff:
+        "周りから「大丈夫？」と声をかけられて、あとから自分の疲れや気持ちの変化に気づいた場面はありましたか。",
+      work:
+        "仕事や学びのなかで、急な変更があっても、まず状況を整理してから取り組めた場面はありましたか。",
+      relationship:
+        "人との会話で、意見が合わないときにも、落ち着いて相手の話を聞けた場面はありましたか。",
+      stress:
+        "負担が重なったときにも、「まずは一つずつ」と落ち着いて対処できた場面はありましたか。",
+      question:
+        "最近、心配なことがあっても、意識を別のことへ切り替えられた場面はありましたか。",
+      action:
+        "もしよければ、最近落ち着いて対応できた場面と、そのとき役に立ったことを一つだけメモしてみませんか。",
+    },
+  );
+});
+
+test("Q-006 F-5 uses the reviewed middle-band reflection prompts for emotional stability", () => {
+  const middleDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "emotionalStability"
+    && appliesTo.band === "middle"
+  );
+  assert.deepEqual(
+    Object.fromEntries(middleDetail
+      .filter(({ section }) => section !== "observation")
+      .map(({ section, text: resultText }) => [
+        section,
+        resultText,
+      ])),
+    {
+      strength:
+        "最近、同じような出来事でも、「落ち着いて対応できたとき」と「気持ちが揺れたとき」がありましたか。",
+      tradeoff:
+        "予想外のことが起きたとき、「まず状況を整理できた場面」と「気持ちが先に動いた場面」がありましたか。",
+      work:
+        "仕事や学びのなかで、急な変更を落ち着いて受け止められたときと、少し焦ったときの両方がありましたか。",
+      relationship:
+        "人との会話で、相手の言葉を落ち着いて聞けたときと、気持ちが大きく動いたときがありましたか。",
+      stress:
+        "負担が重なったとき、落ち着いて進められた日と、気持ちに余裕がなくなった日がありましたか。",
+      question:
+        "最近、「これがあると落ち着きやすい」「こうなると心配が強まりやすい」と感じたきっかけはありましたか。",
+      action:
+        "もしよければ、今日の気分と、そのきっかけになった出来事を、それぞれ短い言葉で一つずつメモしてみませんか。",
+    },
+  );
+});
+
+test("Q-006 F-5 uses the reviewed low-band reflection prompts for emotional stability", () => {
+  const lowDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "emotionalStability"
+    && appliesTo.band === "low"
+  );
+  assert.deepEqual(
+    Object.fromEntries(lowDetail
+      .filter(({ section }) => section !== "observation")
+      .map(({ section, text: resultText }) => [
+        section,
+        resultText,
+      ])),
+    {
+      strength:
+        "最近、心配や気分の揺れに早めに気づいて、無理をする前に少し立ち止まれた場面はありましたか。",
+      tradeoff:
+        "心配なことが頭から離れず、目の前のことに集中しにくくなった場面はありましたか。",
+      work:
+        "仕事や学びのなかで、予定外の変更があると、「この先どうなるのだろう」と不安が強まった場面はありましたか。",
+      relationship:
+        "人との会話のあと、相手の言葉や表情を思い返して、「あの言い方はどういう意味だったのだろう」と考え続けたことはありませんか。",
+      stress:
+        "負担が重なったとき、普段なら気にならないことにもイライラしたり、気持ちが沈んだりしたことはありませんか。",
+      question:
+        "最近、心配や気分の揺れが強まる前に、考えがまとまりにくくなるなどの小さな変化に気づいたことはありましたか。",
+      action:
+        "もしよければ、最近気持ちが揺れた場面と、そのとき少し安心できたことを一つずつメモしてみませんか。",
+    },
+  );
+});
+
 test("Q-006 F-4 uses the reviewed high-band reflection prompts for agreeableness", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"
@@ -742,11 +868,13 @@ test("preview observations use only the four selected items for each reviewed fa
     assert.match(extraversion.text, /人との会話や人前でのやり取りを好む傾向/);
     assert.doesNotMatch(extraversion.text, /自分から話しかけ|注目を集め/);
   }
-  const emotionalStabilityLow = byId.get(
-    "preview20-emotionalStability-low-observation",
-  );
-  assert.match(emotionalStabilityLow.text, /慌て|気分の揺れ|落ち込み/);
-  assert.doesNotMatch(emotionalStabilityLow.text, /心配/);
+  for (const band of BANDS) {
+    const emotionalStability = byId.get(
+      `preview20-emotionalStability-${band}-observation`,
+    );
+    assert.match(emotionalStability.text, /落ち着きを保ちやすく、気分も安定しやすい傾向/);
+    assert.doesNotMatch(emotionalStability.text, /心配|ストレス/);
+  }
 });
 
 test("50-question detail copy separates scale observations from presentation prompts", () => {

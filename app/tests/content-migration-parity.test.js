@@ -178,6 +178,9 @@ test("T-007 production source records exact statuses and remains authorable with
   assert.deepEqual(approvals.rows[4], {
     gate_id: "E-4", display_order: 5, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "協調性のhigh/middle/low語彙と根拠IDをユーザー承認。",
   });
+  assert.deepEqual(approvals.rows[5], {
+    gate_id: "E-5", display_order: 6, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "情緒安定性のhigh/middle/low語彙と根拠IDをユーザー承認。",
+  });
   assert.deepEqual(approvals.rows[11], {
     gate_id: "F-1", display_order: 12, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "知性・想像力の20問観察文と50問8節をユーザー承認。",
   });
@@ -190,10 +193,12 @@ test("T-007 production source records exact statuses and remains authorable with
   assert.deepEqual(approvals.rows[14], {
     gate_id: "F-4", display_order: 15, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "協調性の20問観察文と50問8節をユーザー承認。",
   });
-  assert.ok(approvals.rows.slice(5, 6).every((row) => row.status === "draft" && row.approved_by === "" && row.approved_on === ""));
+  assert.deepEqual(approvals.rows[15], {
+    gate_id: "F-5", display_order: 16, status: "approved", approved_by: "user", approved_on: "2026-07-28", note: "情緒安定性の20問観察文と50問8節をユーザー承認。",
+  });
   assert.ok([
     ...approvals.rows.slice(6, 11),
-    ...approvals.rows.slice(15),
+    ...approvals.rows.slice(16),
   ].every((row) => row.status === "reviewed" && row.approved_by === "" && row.approved_on === ""));
 
   const result = await loadAndCompileResultContent(SOURCE);
