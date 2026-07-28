@@ -1,4 +1,5 @@
 import { appendAppHeader } from "./app-header.js";
+import { appendScreenHeading } from "./screen-heading.js";
 import { appendTextElement } from "./screen-helpers.js";
 
 const ANSWER_OPTIONS = Object.freeze([
@@ -95,20 +96,17 @@ function renderStorageError(parent) {
 
 function renderQuestion(main, viewModel, actions) {
   appendAppHeader(main, {
-    screenLabel: "回答中",
     sticky: true,
     action: {
       label: "中断してトップへ",
       onClick: actions.onPause,
     },
   });
-  appendTextElement(
-    main,
-    "p",
-    `${viewModel.currentIndex + 1} / ${viewModel.totalCount}問`,
-    "eyebrow questionnaire-progress",
-  );
-  appendTextElement(main, "h1", viewModel.questionText, "questionnaire-question");
+  appendScreenHeading(main, {
+    kicker: `${viewModel.currentIndex + 1} / ${viewModel.totalCount}問`,
+    title: viewModel.questionText,
+    titleClassName: "questionnaire-question",
+  });
 
   const options = main.ownerDocument.createElement("div");
   options.className = "answer-options";
@@ -155,14 +153,17 @@ function renderQuestion(main, viewModel, actions) {
 
 function renderPreviewChoice(main, viewModel, actions) {
   appendAppHeader(main, {
-    screenLabel: "20問完了",
     sticky: true,
     action: {
       label: "中断してトップへ",
       onClick: actions.onPause,
     },
   });
-  appendTextElement(main, "h1", "20問の回答が完了しました");
+  appendScreenHeading(main, {
+    kicker: "20 / 20問",
+    title: "20問の回答が完了しました",
+    titleClassName: "preview-choice-title",
+  });
   appendTextElement(
     main,
     "p",

@@ -32,7 +32,19 @@ test("startApp renders the start heading and canonical version from a hash route
   startApp({ documentObject, historyObject, windowObject });
 
   const renderedText = collectText(host);
-  assert.match(renderedText, /Big Five｜\s*自己理解支援ツール/);
+  assert.match(renderedText, /Big Five 自己理解チェック/);
+  assert.equal(
+    collectElements(host)
+      .find(({ className }) => className === "app-brand-name")
+      .textContent,
+    "Big Five 自己理解チェック",
+  );
+  assert.equal(
+    collectElements(host)
+      .find(({ className }) => className === "app-brand-subtitle")
+      .textContent,
+    "BIG FIVE SELF UNDERSTANDING",
+  );
   assert.match(renderedText, /バージョン mvp-0\.1\.0/);
   assert.match(renderedText, /ipip-ja-50-v1/);
   assert.match(renderedText, /ipip-ja-50-question-set-v1/);

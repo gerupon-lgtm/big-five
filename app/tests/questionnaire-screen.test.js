@@ -61,6 +61,11 @@ test("T-004 S-002 renders one question with natural five-point labels and curren
   const text = collectText(host);
   assert.match(text, /7 \/ 20問/);
   assert.match(text, /にぎやかな集まりが好きだ/);
+  const heading = collectElements(host)
+    .find(({ className }) => className === "screen-heading");
+  assert.ok(heading);
+  assert.match(collectText(heading), /7 \/ 20問/);
+  assert.match(collectText(heading), /にぎやかな集まりが好きだ/);
   assert.deepEqual(
     buttons(host)
       .filter(({ className }) => className.includes("answer-option"))
@@ -165,6 +170,11 @@ test("T-004 S-002 renders the 20-question decision before exposing any result", 
   renderQuestionnaireScreen(host, previewViewModel(), previewActions());
 
   const text = collectText(host);
+  const heading = collectElements(host)
+    .find(({ className }) => className === "screen-heading");
+  assert.ok(heading);
+  assert.match(collectText(heading), /20 \/ 20問/);
+  assert.match(collectText(heading), /20問の回答が完了しました/);
   assert.match(text, /20問の回答が完了しました/);
   assert.match(text, /20問の簡易プレビューを見る/);
   assert.match(text, /結果を見ずに、あと30問続ける/);
@@ -231,10 +241,10 @@ test("T-004 S-002 renders every control as a non-submit button", () => {
   }
 });
 
-test("T-008A S-002 uses the shared sticky header and keeps discard in secondary management", () => {
-  for (const [viewModel, actions, expectedLabel] of [
-    [questionViewModel(), questionActions(), "回答中"],
-    [previewViewModel(), previewActions(), "20問完了"],
+test("T-008A S-002 uses the shared sticky header action and keeps discard in secondary management", () => {
+  for (const [viewModel, actions] of [
+    [questionViewModel(), questionActions()],
+    [previewViewModel(), previewActions()],
   ]) {
     const { host } = createFakeScreen();
     renderQuestionnaireScreen(host, viewModel, actions);
@@ -244,9 +254,9 @@ test("T-008A S-002 uses the shared sticky header and keeps discard in secondary 
     assert.ok(header);
     assert.equal(
       collectElements(header)
-        .find(({ className }) => className === "app-screen-label")
+        .find(({ className }) => className === "app-header-action")
         .textContent,
-      expectedLabel,
+      "中断してトップへ",
     );
     const management = collectElements(host)
       .find(({ className }) => className === "questionnaire-management");

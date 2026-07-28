@@ -25,6 +25,13 @@ test("T-005 S-001 offers a new diagnosis action and accurate available-flow copy
   assert.equal(starts, 1);
   assert.match(collectText(host), /20問の簡易プレビューから始め、希望に応じて50問の詳しい結果まで進められます/);
   assert.doesNotMatch(collectText(host), /診断本体を構築中/);
+  assert.match(collectText(host), /Big Five 自己理解チェック/);
+  assert.match(collectText(host), /SELF CHECK/);
+  assert.match(collectText(host), /自分のことを知る/);
+  assert.match(collectText(host), /Big Fiveは、性格傾向を5つの因子から捉える考え方です/);
+  assert.match(collectText(host), /IPIP日本語50項目版/);
+  assert.doesNotMatch(collectText(host), /5つの傾向/);
+  assert.doesNotMatch(collectText(host), /正式版MVPを準備中です/);
 });
 
 test("T-005 S-001 offers resume only when the caller provides a compatible progress callback", () => {
@@ -43,23 +50,38 @@ test("T-005 S-001 offers resume only when the caller provides a compatible progr
   assert.equal(resumes, 1);
 });
 
-test("T-008A S-001 renders the shared official app header and concise start heading", () => {
+test("T-008A S-001 renders the shared official app header, start heading, and secondary history navigation", () => {
   const { host } = createFakeScreen();
 
   renderStartScreen(host, versionModel, {});
 
   assert.equal(host.children[0].children[0].className, "app-header");
-  assert.deepEqual(
+  assert.equal(
     collectElements(host)
-      .filter(({ className }) => className === "app-brand-part")
-      .map(({ textContent }) => textContent),
-    ["Big Five｜", "自己理解支援ツール"],
+      .find(({ className }) => className === "app-brand-name")
+      .textContent,
+    "Big Five 自己理解チェック",
   );
   assert.equal(
     collectElements(host)
       .filter(({ tagName, textContent }) =>
-        tagName === "h1" && textContent === "5つの傾向").length,
+        tagName === "h1" && textContent === "自分のことを知る").length,
     1,
+  );
+  const secondaryNavigation = collectElements(host)
+    .find(({ className }) => className === "start-secondary-navigation");
+  assert.ok(secondaryNavigation);
+  assert.equal(
+    collectElements(secondaryNavigation)
+      .find(({ className }) => className === "text-link start-history-link")
+      .attributes.get("href"),
+    "#/history",
+  );
+  assert.match(collectText(secondaryNavigation), /診断結果の履歴を見る/);
+  assert.equal(
+    collectElements(host)
+      .filter(({ className }) => className === "app-header-action").length,
+    0,
   );
 });
 
