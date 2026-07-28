@@ -47,7 +47,7 @@
 - 振り返り文の後へ `※因子名の「説明を見る」から、それぞれの意味を確認できます。` を小さく控えめな文字で表示する。
 - 履歴には診断時に表示した文章を順序と版ごと保存し、後の文章版から再生成・上書きしない。開閉状態は保存しない。
 
-Q-006の称号ラフに加え、版付き根拠、全因子・全称号の文面、決定的合成、診断時文章を保持するsnapshotは実装・独立レビュー済みである。文面は`result-text-v1 initial reviewed copy`であり、根拠台帳のE-1とF-1は2026-07-28にapproved、E-2〜E-5は`draft`、T-0〜T-4／F-2〜F-5／X-1〜X-2は`reviewed`だが人手approval recordなしのため`Content Approval pending`である。実装レビューを人手内容承認へ読み替えず、Q-006を完全解決またはT-005全体完了とは扱わない。
+Q-006の称号ラフに加え、版付き根拠、全因子・全称号の文面、決定的合成、診断時文章を保持するsnapshotは実装・独立レビュー済みである。文面は`result-text-v1 initial reviewed copy`として実装された後、根拠台帳のE-0〜E-5／F-1〜F-5／T-0〜T-4／X-1〜X-2がすべてapprovedとなり、Content Approvalを2026-07-28に完了した。ただし、approved release未選択、Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`は未完了であり、T-005全体完了とは扱わない。
 
 ### 2.3 Q-006実装済み契約
 
@@ -72,14 +72,26 @@ Q-006の称号ラフに加え、版付き根拠、全因子・全称号の文面
 
 ### 2.4 Q-006の現在gate
 
-- 状態: `result-text-v1 initial reviewed copy`。全gateの必要な人手approval recordが揃うまでは`Content Approval pending`。
+- 状態: `result-text-v1 initial reviewed copy`として実装後、全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了。
 - E-0: 根拠台帳どおりapproved。
 - E-1: 知性・想像力のhigh/middle/low語彙と根拠IDについて、2026-07-28にapproved。
-- E-2〜E-5: 根拠台帳どおり`draft`、承認日なし、`Content Approval pending`。
+- E-2: 勤勉性のhigh/middle/low語彙と根拠IDについて、2026-07-28にapproved。
+- E-3: 外向性のhigh/middle/low語彙と根拠IDについて、2026-07-28にapproved。
+- E-4: 協調性のhigh/middle/low語彙と根拠IDについて、2026-07-28にapproved。
+- E-5: 情緒安定性のhigh/middle/low語彙と根拠IDについて、2026-07-28にapproved。
 - F-1: 知性・想像力の20問観察文と50問8節について、2026-07-28にapproved。
-- T-0〜T-4、F-2〜F-5: `reviewed`。implementation auditと独立レビューは完了したが、人手approval recordはないため`approved`と記録しない。
-- X-1〜X-2: `reviewed`だが人手approval recordなし。preview／detail全体のContent Approvalとして残す。
-- 完全解決条件: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateについて必要な人手approval recordがすべて揃うこと。
+- F-2: 勤勉性の20問観察文と50問8節について、2026-07-28にapproved。
+- F-3: 外向性の20問観察文と50問8節について、2026-07-28にapproved。
+- F-4: 協調性の20問観察文と50問8節について、2026-07-28にapproved。
+- F-5: 情緒安定性の20問観察文と50問8節について、2026-07-28にapproved。
+- T-0: バランス型と単独傾向10件の中立副題・称号理由・カタログ一致について2026-07-28にapproved。
+- T-1: 組み合わせ称号No.12〜21の中立副題・称号理由・カタログ一致について2026-07-28にapproved。
+- T-2: 組み合わせ称号No.22〜31の中立副題・称号理由・カタログ一致について2026-07-28にapproved。
+- T-3: 組み合わせ称号No.32〜41の中立副題・称号理由・カタログ一致と「〜しやすい」反復を抑えた表現について2026-07-28にapproved。
+- T-4: 組み合わせ称号No.42〜51の中立副題・称号理由・カタログ一致と「〜しやすい」反復を抑えた表現について2026-07-28にapproved。
+- X-1: 20問結果のtitle 2件＋固定因子順の5因子観察文＝7件の全体表示について2026-07-28にapproved。詳細節は除外し、20問の限界と50問で変わり得る注意は別の必須UI文面として維持する。
+- X-2: 50問結果のtitle 2件＋5因子×8節＝42件の全体表示について2026-07-28にapproved。section-first snapshotを画面では因子別に投影し、`question`と`action`を「振り返りと行動ヒント」カテゴリへまとめて段階表示する。
+- 解決状態: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の各gateがすべてapprovedとなり、Q-006は2026-07-28に解決済み。
 
 ## 3. Q-012 キャラクター
 
@@ -266,7 +278,7 @@ FragranceSceneSelector<S> = exact {
 
 ## 7. 残作業
 
-1. Q-006: E-1／F-1は2026-07-28にapproved。E-2〜E-5、T-0〜T-4、F-2〜F-5、X-1〜X-2の各gateに必要な人手approval recordを根拠台帳へ記録する。残gateの承認までは`result-text-v1 initial reviewed copy`かつ`Content Approval pending`として扱う。
+1. コンテンツrelease: Q-006の全18 gateは2026-07-28にapprovedとなったが、approved releaseの選択、Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`は未完了として維持する。
 2. Q-006/T-005: `composeResultTexts`／`createResultSnapshot`／`saveResultSnapshot`を完答controllerへ統合する。保存済みsnapshotのS-003/S-004表示は接続済み。
 3. T-006/T-005: S-006/S-007初期画面、変動注意文、履歴カードから独立したS-003/S-004を開く遷移は統合済み。追加30問へのS-002接続とT-007共有は各後続画面実装時に接続する。
 4. Q-012: 3体パイロット制作・承認、encoderと余白値の固定、残り48体の量産。

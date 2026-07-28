@@ -153,7 +153,7 @@ test("T-005 F-006 preview composes the production title and observations in cano
     id: "title-pair-intellectImagination-high--extraversion-low-subtitle",
     version: "result-text-v1",
     section: "titleSubtitle",
-    text: "知性・想像力が高く、外向性が低い方向のプロフィール",
+    text: "静かな環境で考えを深める思索派",
     evidenceRefs: ["evidence-title-rule-v1"],
   });
 });

@@ -145,7 +145,7 @@ exact schemaとして未知フィールド、空文字、空の`supportedClaims`
 
 `claimKind`は節ごとに固定する。`titleSubtitle`と`titleReason`は`entertainmentReason`、`observation`は`scaleObservation`、`strength`から`question`までは`reflectionPrompt`、`action`は`actionHint`とする。20問で許可する節は`titleSubtitle`、`titleReason`、`observation`だけである。
 
-`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件のliteral定義として実装済みである。これは実装・独立レビュー済みの`initial reviewed copy`であり、根拠台帳のE-1〜E-5は`Content Approval pending`のため、Q-006の人手承認完了を意味しない。
+`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件のliteral定義として実装済みである。`initial reviewed copy`として実装・独立レビューされた後、根拠台帳の全18 gateがapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。ただしapproved releaseは未選択で、Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`も未完了である。
 
 ### 2.7 TitleProfileDefinition
 
