@@ -81,3 +81,43 @@ worktree内へ限定作成する暫定回避が必要だった。
 
 本件はアプリ実装の不具合へ読み替えず、配布済みskillを直接変更しない。
 正典worktreeではPowerShellによる限定作成を使って本体作業を継続する。
+
+## 2026-07-28 Windows `bash` 自動選択時の追加再現
+
+### 結果
+
+PowerShellからPATH上の`bash`を使って`sdd-workspace`を実行すると、
+`C:\Windows\System32\bash.exe`（WSL launcher）が選択され、スクリプトへ
+到達する前にWSL instance作成が`Bash/Service/CreateInstance/E_ACCESSDENIED`
+で失敗した。
+
+### 再現コマンドと出力
+
+```powershell
+where.exe bash
+bash 'C:/Users/user/.codex/skills/delegate-development/scripts/sdd-workspace' `
+  'docs/superpowers/plans/2026-07-27-result-progressive-disclosure.md'
+```
+
+```text
+C:\Windows\System32\bash.exe
+Bash/Service/CreateInstance/E_ACCESSDENIED
+```
+
+同じ環境には`C:\Program Files\Git\bin\bash.exe`が存在するため、PATH上の
+`bash`を無条件に実行するだけでは、Git BashとWSL launcherを区別できない。
+
+### 修正指示への追記
+
+1. WindowsではPATH上の`bash`を正規経路にせず、PowerShell版helperを優先する。
+2. `.sh`版を使う場合は、実行前に解決済み実体がGit BashかWSL launcherかを
+   判定し、`System32\bash.exe`を自動選択しない。
+3. WSL launcherの起動失敗をhelper本体の失敗へ畳み込まず、選択したshellの
+   絶対path、`E_ACCESSDENIED`、PowerShell版の代替コマンドを表示する。
+4. PATHの先頭が`C:\Windows\System32`で、Git Bashも別pathに存在する
+   Windows環境を回帰ケースへ追加する。
+
+### 判断
+
+配布済みskillは変更せず、本作業では同じlinked worktree内だけを対象にした
+PowerShell手順でworkspace、brief、review packageを生成する。
