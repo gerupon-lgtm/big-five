@@ -654,7 +654,7 @@ dd {
   letter-spacing: 0.04em;
 }
 
-.questionnaire-question {
+.questionnaire-screen > .questionnaire-question {
   max-width: none;
   font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.375rem);
   line-height: 1.5;

@@ -18,7 +18,10 @@ function declarationsFor(styles, selector) {
 
 test("T-008A F-003 keeps the approved questionnaire typography scoped to S-002", async () => {
   const styles = await readFile(stylesUrl, "utf8");
-  const question = declarationsFor(styles, ".questionnaire-question");
+  const question = declarationsFor(
+    styles,
+    ".questionnaire-screen > .questionnaire-question",
+  );
   const progress = declarationsFor(styles, ".questionnaire-progress");
   const options = declarationsFor(styles, ".answer-options");
   const option = declarationsFor(styles, ".answer-option");
