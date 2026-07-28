@@ -124,6 +124,31 @@ test("QA artifact audit reports a stable error for a missing output", async (t) 
   );
 });
 
+test("QA artifact audit rejects a symlinked artifact root without following it", async (t) => {
+  const root = await tempDirectory(t, "big-five-qa-audit-link-");
+  const target = join(root, "artifact");
+  const linkedRoot = join(root, "linked-artifact");
+  await assembleQaPreview({
+    appDir: resolve("app"),
+    outputDir: target,
+    allowedParentDir: root,
+  });
+  try {
+    await symlink(target, linkedRoot, "junction");
+  } catch (error) {
+    if (error?.code === "EPERM") {
+      t.skip("symlink creation is not permitted in this environment");
+      return;
+    }
+    throw error;
+  }
+
+  await assert.rejects(
+    () => auditQaPreviewArtifact(linkedRoot),
+    (error) => error?.code === "QA_PREVIEW_ARTIFACT_INVALID",
+  );
+});
+
 test("QA artifact rejects symlinks without following them", async (t) => {
   const root = await tempDirectory(t, "big-five-qa-link-");
   const app = join(root, "app");

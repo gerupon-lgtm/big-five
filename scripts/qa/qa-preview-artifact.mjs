@@ -144,7 +144,12 @@ async function copyTree({ source, destination, extension }) {
 
 export async function auditQaPreviewArtifact(outputDir) {
   try {
-    const files = await collectFiles(path.resolve(outputDir));
+    const root = path.resolve(outputDir);
+    const rootInfo = await lstat(root);
+    if (!rootInfo.isDirectory() || rootInfo.isSymbolicLink()) {
+      throw qaError("QA_PREVIEW_ARTIFACT_INVALID");
+    }
+    const files = await collectFiles(root);
     if (files.length === 0 ||
         files.some((file) => !isAllowedArtifactPath(file)) ||
         !files.includes("index.html") ||
