@@ -288,6 +288,36 @@ test("Q-006 E-2/F-2 uses the reviewed preparation and organization wording for c
   );
 });
 
+test("Q-006 E-3/F-3 uses the reviewed interaction wording for extraversion observations", () => {
+  const byId = new Map(FactorResultTextDefinitions.map((definition) => [
+    definition.id,
+    definition.text,
+  ]));
+  assert.deepEqual(
+    Object.fromEntries([
+      ...["preview20", "detail50"].flatMap((mode) => [
+        [`${mode}-extraversion-high-observation`, byId.get(`${mode}-extraversion-high-observation`)],
+        [`${mode}-extraversion-middle-observation`, byId.get(`${mode}-extraversion-middle-observation`)],
+        [`${mode}-extraversion-low-observation`, byId.get(`${mode}-extraversion-low-observation`)],
+      ]),
+    ]),
+    {
+      "preview20-extraversion-high-observation":
+        "今回の20問では、人との会話や人前でのやり取りを好む傾向が、尺度内で高めに見られました。",
+      "preview20-extraversion-middle-observation":
+        "今回の20問では、人との会話や人前でのやり取りを好む傾向が、尺度内の中間域にありました。",
+      "preview20-extraversion-low-observation":
+        "今回の20問では、人との会話や人前でのやり取りを好む傾向が、尺度内で低めに見られました。",
+      "detail50-extraversion-high-observation":
+        "今回の50問では、人との交流や人前に出ることを好む傾向が、尺度内で高めに見られました。",
+      "detail50-extraversion-middle-observation":
+        "今回の50問では、人との交流や人前に出ることを好む傾向が、尺度内の中間域にありました。",
+      "detail50-extraversion-low-observation":
+        "今回の50問では、人との交流や人前に出ることを好む傾向が、尺度内で低めに見られました。",
+    },
+  );
+});
+
 test("Q-006 F-2 uses the reviewed high-band reflection prompts for conscientiousness", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"
@@ -487,7 +517,7 @@ test("preview observations use only the four selected items for each reviewed fa
   ]));
   for (const band of BANDS) {
     const extraversion = byId.get(`preview20-extraversion-${band}-observation`);
-    assert.match(extraversion.text, /人との会話や集まりでのふるまい/);
+    assert.match(extraversion.text, /人との会話や人前でのやり取りを好む傾向/);
     assert.doesNotMatch(extraversion.text, /自分から話しかけ|注目を集め/);
   }
   const emotionalStabilityLow = byId.get(

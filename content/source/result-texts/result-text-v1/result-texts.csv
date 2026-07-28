@@ -155,10 +155,10 @@ detail50-conscientiousness-low-relationship,result-text-v1,153,relationship,refl
 detail50-conscientiousness-low-stress,result-text-v1,154,stress,reflectionPrompt,detail50,conscientiousness,low,,false,やることが重なったとき、どれから始めるか決められず、気持ちが落ち着かなくなったことはありませんか。,reviewed
 detail50-conscientiousness-low-question,result-text-v1,155,question,reflectionPrompt,detail50,conscientiousness,low,,false,"最近、「準備より先に始めてよかった」と感じた場面と、「少し整えておけばよかった」と感じた場面はありましたか。",reviewed
 detail50-conscientiousness-low-action,result-text-v1,156,action,actionHint,detail50,conscientiousness,low,,false,"もしよければ、今気になっていることを一つ選び、「最初にすること」だけメモしてみませんか。",reviewed
-preview20-extraversion-high-observation,result-text-v1,157,observation,scaleObservation,preview20,extraversion,high,,true,今回の20問では、人との会話や集まりでのふるまいを示す回答が全体として高めでした。,reviewed
-preview20-extraversion-middle-observation,result-text-v1,158,observation,scaleObservation,preview20,extraversion,middle,,true,今回の20問では、人との会話や集まりでのふるまいを示す回答が尺度内の中間域でした。,reviewed
-preview20-extraversion-low-observation,result-text-v1,159,observation,scaleObservation,preview20,extraversion,low,,true,今回の20問では、人との会話や集まりでのふるまいを示す回答が全体として低めでした。,reviewed
-detail50-extraversion-high-observation,result-text-v1,160,observation,scaleObservation,detail50,extraversion,high,,false,今回の50問では、人との交流や自分から話しかけることへの関心を示す回答が全体として高めでした。,reviewed
+preview20-extraversion-high-observation,result-text-v1,157,observation,scaleObservation,preview20,extraversion,high,,true,今回の20問では、人との会話や人前でのやり取りを好む傾向が、尺度内で高めに見られました。,reviewed
+preview20-extraversion-middle-observation,result-text-v1,158,observation,scaleObservation,preview20,extraversion,middle,,true,今回の20問では、人との会話や人前でのやり取りを好む傾向が、尺度内の中間域にありました。,reviewed
+preview20-extraversion-low-observation,result-text-v1,159,observation,scaleObservation,preview20,extraversion,low,,true,今回の20問では、人との会話や人前でのやり取りを好む傾向が、尺度内で低めに見られました。,reviewed
+detail50-extraversion-high-observation,result-text-v1,160,observation,scaleObservation,detail50,extraversion,high,,false,今回の50問では、人との交流や人前に出ることを好む傾向が、尺度内で高めに見られました。,reviewed
 detail50-extraversion-high-strength,result-text-v1,161,strength,reflectionPrompt,detail50,extraversion,high,,false,最近、人との集まりで会話を始めたり話題を広げたりした場面はありましたか。,reviewed
 detail50-extraversion-high-tradeoff,result-text-v1,162,tradeoff,reflectionPrompt,detail50,extraversion,high,,false,人との会話が続いたとき、話す時間と聞く時間の配分を振り返った場面はありましたか。,reviewed
 detail50-extraversion-high-work,result-text-v1,163,work,reflectionPrompt,detail50,extraversion,high,,false,仕事や学びで、自分から声をかけて話を進めた場面はありましたか。,reviewed
@@ -166,7 +166,7 @@ detail50-extraversion-high-relationship,result-text-v1,164,relationship,reflecti
 detail50-extraversion-high-stress,result-text-v1,165,stress,reflectionPrompt,detail50,extraversion,high,,false,人と話す予定が続いたとき、一人で過ごす時間が必要だと感じた場面はありましたか。,reviewed
 detail50-extraversion-high-question,result-text-v1,166,question,reflectionPrompt,detail50,extraversion,high,,false,最近、会話のきっかけを自分から作った場面はありましたか。,reviewed
 detail50-extraversion-high-action,result-text-v1,167,action,actionHint,detail50,extraversion,high,,false,よければ、話してみたい人へ短いあいさつを一つしてみませんか。,reviewed
-detail50-extraversion-middle-observation,result-text-v1,168,observation,scaleObservation,detail50,extraversion,middle,,false,今回の50問では、人との交流や自分から話しかけることへの関心を示す回答が尺度内の中間域でした。,reviewed
+detail50-extraversion-middle-observation,result-text-v1,168,observation,scaleObservation,detail50,extraversion,middle,,false,今回の50問では、人との交流や人前に出ることを好む傾向が、尺度内の中間域にありました。,reviewed
 detail50-extraversion-middle-strength,result-text-v1,169,strength,reflectionPrompt,detail50,extraversion,middle,,false,最近、自分から話した場面と、相手の話を待った場面に違いはありましたか。,reviewed
 detail50-extraversion-middle-tradeoff,result-text-v1,170,tradeoff,reflectionPrompt,detail50,extraversion,middle,,false,人との集まりで、話すか様子を見るかをその場で選んだことはありましたか。,reviewed
 detail50-extraversion-middle-work,result-text-v1,171,work,reflectionPrompt,detail50,extraversion,middle,,false,仕事や学びで、自分から相談するか、まず一人で考えるかを選んだ場面はありましたか。,reviewed
@@ -174,7 +174,7 @@ detail50-extraversion-middle-relationship,result-text-v1,172,relationship,reflec
 detail50-extraversion-middle-stress,result-text-v1,173,stress,reflectionPrompt,detail50,extraversion,middle,,false,会話が続いたとき、そのまま参加するか少し離れるか迷った場面はありましたか。,reviewed
 detail50-extraversion-middle-question,result-text-v1,174,question,reflectionPrompt,detail50,extraversion,middle,,false,最近、自分から話した場面と、相手から話しかけられるのを待った場面はありましたか。,reviewed
 detail50-extraversion-middle-action,result-text-v1,175,action,actionHint,detail50,extraversion,middle,,false,よければ、次の会話で話したいことか聞きたいことを一つ決めてみませんか。,reviewed
-detail50-extraversion-low-observation,result-text-v1,176,observation,scaleObservation,detail50,extraversion,low,,false,今回の50問では、人との交流や注目を集めることへの関心を示す回答が全体として低めでした。,reviewed
+detail50-extraversion-low-observation,result-text-v1,176,observation,scaleObservation,detail50,extraversion,low,,false,今回の50問では、人との交流や人前に出ることを好む傾向が、尺度内で低めに見られました。,reviewed
 detail50-extraversion-low-strength,result-text-v1,177,strength,reflectionPrompt,detail50,extraversion,low,,false,最近、人との集まりで少人数や静かな場所を選んだ場面はありましたか。,reviewed
 detail50-extraversion-low-tradeoff,result-text-v1,178,tradeoff,reflectionPrompt,detail50,extraversion,low,,false,話したいことがあったとき、声をかけるまでに間を置いた場面はありましたか。,reviewed
 detail50-extraversion-low-work,result-text-v1,179,work,reflectionPrompt,detail50,extraversion,low,,false,仕事や学びで、相談する前に一人で考えをまとめた場面はありましたか。,reviewed
