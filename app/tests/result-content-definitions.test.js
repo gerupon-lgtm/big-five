@@ -318,6 +318,38 @@ test("Q-006 E-3/F-3 uses the reviewed interaction wording for extraversion obser
   );
 });
 
+test("Q-006 F-3 uses the reviewed high-band reflection prompts for extraversion", () => {
+  const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "extraversion"
+    && appliesTo.band === "high"
+  );
+  assert.deepEqual(
+    Object.fromEntries(highDetail
+      .filter(({ section }) => section !== "observation")
+      .map(({ section, text: resultText }) => [
+        section,
+        resultText,
+      ])),
+    {
+      strength:
+        "最近、人が集まる場で自分から声をかけたことで、会話の輪が自然に広がった場面はありましたか。",
+      tradeoff:
+        "会話が盛り上がったとき、つい自分が話し続けてしまい、「もう少し相手の話も聞けばよかった」と感じた場面はありましたか。",
+      work:
+        "仕事や学びのなかで、自分から声をかけたことで、相談や話し合いがスムーズに進んだ場面はありましたか。",
+      relationship:
+        "初めて会う人や、まだあまり話したことのない人に自分から声をかけたことで、距離が少し縮まった場面はありましたか。",
+      stress:
+        "人と話したり出かけたりする予定が続いたとき、「少し一人で落ち着きたい」と感じたことはありませんか。",
+      question:
+        "最近、自分から話しかけたことで、思いがけない話やつながりが生まれた場面はありましたか。",
+      action:
+        "もしよければ、今日話してみたい人へ、短いあいさつや一言を自分から伝えてみませんか。",
+    },
+  );
+});
+
 test("Q-006 F-2 uses the reviewed high-band reflection prompts for conscientiousness", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"
