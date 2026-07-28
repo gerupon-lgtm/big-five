@@ -380,4 +380,4 @@ Q-007確定前の【想定】:
 - 200%文字拡大、キーボードのみ、スクリーンリーダーの主要フロー
 - ダークモードはMVP必須ではない。実装する場合もコントラストを再検証する。
 
-2026-07-29のフロントエンドトーン検証では、320px、360px、960px幅の主要画面で横overflowがないことを確認した。360px回答画面では`中断してトップへ`が`white-space: nowrap`で1行を維持し、設問20px、回答文字16px、回答ボタン高56pxであることを確認した。ブラウザ実フローは20問回答から簡易プレビュー、残り30問から50問詳細結果、履歴表示、互換な50問結果2件の比較表示まで通過した。自動検証は`npm.cmd test`が510件成功・失敗0件、`npm.cmd run check`が46 JavaScript filesとcanonical runtime version 1件で成功、`npm.cmd run qa:preview:build`が100 files・6,631,222 bytesで成功した。
+2026-07-29のフロントエンドトーン検証では、320px、360px、960px幅の主要画面で横overflowがないことを確認した。360px回答画面では`中断してトップへ`が`white-space: nowrap`で1行を維持し、設問20px、回答文字16px、回答ボタン高56pxであることを確認した。ブラウザ実フローは20問回答から簡易プレビュー、残り30問から50問詳細結果、履歴表示、互換な50問結果2件の比較表示まで通過した。自動検証は`npm.cmd test`が511件成功・失敗0件、`npm.cmd run check`が46 JavaScript filesとcanonical runtime version 1件で成功、`npm.cmd run qa:preview:build`が100 files・6,631,601 bytesで成功した。

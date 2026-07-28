@@ -936,7 +936,7 @@ Expected: `origin/codex/big-five-ui-tone-refresh`が作成または更新され�
 ## Task 5実績（2026-07-29）
 
 - 文書同期: `docs/screens.md`と`docs/tasks.md`へ共通表示名`Big Five 自己理解チェック`、英字副題`BIG FIVE SELF UNDERSTANDING`、緑のkicker／進捗＋`h1`の共通見出し、画面別のヘッダー操作と`履歴削除`を反映した。Q-006、Q-012、Q-013およびapproved releaseの既存gate状態は変更していない。
-- 自動検証: `npm.cmd test`は510 tests、510 pass、0 fail。`npm.cmd run check`は46 JavaScript filesとcanonical runtime version 1件で成功。`npm.cmd run qa:preview:build`は100 files、6,631,222 bytesで成功。
+- 自動検証: `npm.cmd test`は511 tests、511 pass、0 fail。`npm.cmd run check`は46 JavaScript filesとcanonical runtime version 1件で成功。`npm.cmd run qa:preview:build`は100 files、6,631,601 bytesで成功。
 - ブラウザ実フロー: 20問回答→簡易プレビュー、簡易プレビュー→残り30問→50問詳細結果、履歴表示、互換な50問結果2件の選択→比較表示を確認した。
 - 狭幅・広幅: 320px、360px、960px幅の主要画面で横overflowなし。360px回答画面は`中断してトップへ`が`white-space: nowrap`、設問20px、回答文字16px、回答ボタン高56px。
 - 記録境界: ブラウザ実フローと幅別の横overflow確認は上記のexactな事実だけを記録した。Step 4のdev server起動・停止、Step 5の全確認項目、Step 6の200%文字拡大、Step 7のキーボード確認、Step 8の最終独立レビューは、この2026-07-29検証記録として全項目の完了事実が提示されていないため未完了表示を維持する。Step 11のpushは本コミットの対象外であり実施しない。
