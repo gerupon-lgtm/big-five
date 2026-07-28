@@ -85,6 +85,31 @@ test("T-008A S-001 renders the shared official app header, start heading, and se
   );
 });
 
+test("T-008A S-001 keeps the diagnostic label and version details inside the diagnostic disclosure", () => {
+  const { host } = createFakeScreen();
+
+  renderStartScreen(host, versionModel, {});
+
+  const diagnosticVersion = collectElements(host)
+    .find(({ className }) => className === "diagnostic-version");
+  assert.ok(diagnosticVersion);
+  assert.equal(diagnosticVersion.tagName, "details");
+  assert.equal(
+    diagnosticVersion.children
+      .find(({ tagName }) => tagName === "summary")
+      .textContent,
+    "この診断について",
+  );
+  assert.equal(
+    collectElements(diagnosticVersion)
+      .find(({ tagName }) => tagName === "h2")
+      .textContent,
+    "診断データの版",
+  );
+  assert.match(collectText(diagnosticVersion), /バージョン mvp-0\.1\.0/);
+  assert.match(collectText(diagnosticVersion), /質問 ipip-ja-50-question-set-v1/);
+});
+
 test("T-008A F-004 renders the state-aware resume label once", () => {
   const { host } = createFakeScreen();
   let resumes = 0;

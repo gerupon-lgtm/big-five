@@ -68,8 +68,9 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
   appendTextElement(
     diagnosticVersion,
     "summary",
-    versionModel.diagnosticVersionLabel,
+    "この診断について",
   );
+  appendTextElement(diagnosticVersion, "h2", versionModel.diagnosticVersionLabel);
   appendTextElement(diagnosticVersion, "p", versionModel.versionLabel, "version");
   const diagnosticVersionList = documentObject.createElement("ul");
   for (const item of versionModel.diagnosticVersionItems) {
