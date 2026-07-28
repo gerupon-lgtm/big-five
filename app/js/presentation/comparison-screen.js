@@ -1,4 +1,6 @@
 import { comparisonErrorMessage } from "./comparison-copy.js";
+import { appendAppHeader } from "./app-header.js";
+import { appendScreenHeading } from "./screen-heading.js";
 import { appendTextElement, formatCompletedAt } from "./screen-helpers.js";
 
 const PRESENTATION_VERSION_FIELDS = [
@@ -45,9 +47,14 @@ export function renderComparisonScreen(host, state) {
   const documentObject = host.ownerDocument ?? document;
   const main = documentObject.createElement("main");
   main.className = "app-shell comparison-screen";
-  const backLink = appendTextElement(main, "a", "履歴へ戻る", "text-link");
-  backLink.setAttribute("href", "#/history");
-  appendTextElement(main, "h1", "診断結果の比較");
+  appendAppHeader(main, {
+    action: { label: "履歴へ戻る", href: "#/history" },
+  });
+  appendScreenHeading(main, {
+    kicker: "COMPARISON",
+    title: "診断結果の比較",
+    titleClassName: "comparison-title",
+  });
 
   if (state.status === "missing-selection") {
     renderHistoryReturn(main, "比較する2件を履歴から選んでください。");

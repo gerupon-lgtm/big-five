@@ -1,6 +1,7 @@
 import { compareResultSnapshots } from "../domain/result-comparison.js";
 import { comparisonErrorMessage } from "./comparison-copy.js";
 import { appendAppHeader } from "./app-header.js";
+import { appendScreenHeading } from "./screen-heading.js";
 import { appendTextElement, formatCompletedAt } from "./screen-helpers.js";
 
 function appendCardIdentity(parent, snapshot, labels, phrasingOnly = false) {
@@ -8,7 +9,7 @@ function appendCardIdentity(parent, snapshot, labels, phrasingOnly = false) {
     parent,
     phrasingOnly ? "span" : "h2",
     labels.titleLabels[snapshot.titleId] ?? snapshot.titleId,
-    "history-title",
+    "history-card-title",
   );
   const metadata = parent.ownerDocument.createElement(
     phrasingOnly ? "span" : "p",
@@ -209,27 +210,15 @@ function renderComparisonBar(
 }
 
 function renderHistoryHeader(parent, historyState, actions) {
+  if (historyState.status !== "ok") return;
+
   const header = parent.ownerDocument.createElement("header");
   header.className = "history-header";
-  const headingGroup = header.ownerDocument.createElement("div");
-  appendTextElement(headingGroup, "h1", "診断結果の履歴");
-  appendTextElement(
-    headingGroup,
-    "p",
-    "結果はこの端末のブラウザ内にだけ保存されます。",
-    "lead compact-lead",
-  );
-  header.append(headingGroup);
-
-  if (historyState.status !== "ok") {
-    parent.append(header);
-    return;
-  }
 
   const toggle = appendTextElement(
     header,
     "button",
-    "…",
+    "履歴削除",
     "history-management-toggle",
   );
   toggle.setAttribute("type", "button");
@@ -520,14 +509,20 @@ export function renderHistoryScreen(
       : dependencies;
     const main = documentObject.createElement("main");
     main.className = "app-shell history-screen";
-    appendAppHeader(main, { screenLabel: "履歴" });
-    const backLink = appendTextElement(
+    appendAppHeader(main, {
+      action: { label: "トップ画面へ", href: "#/start" },
+    });
+    appendScreenHeading(main, {
+      kicker: "HISTORY",
+      title: "診断結果の履歴",
+      titleClassName: "history-title",
+    });
+    appendTextElement(
       main,
-      "a",
-      "開始画面へ戻る",
-      "text-link",
+      "p",
+      "結果はこの端末のブラウザ内にだけ保存されます。",
+      "lead compact-lead history-lead",
     );
-    backLink.setAttribute("href", "#/start");
     renderHistoryHeader(main, historyState, actions);
     renderOperationNotice(main, actions.operationNotice);
 

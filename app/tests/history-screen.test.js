@@ -188,10 +188,21 @@ test("T-008A F-013 exposes deletion and versions only through history management
   const toggle = collectElements(host).find(
     ({ className }) => className === "history-management-toggle",
   );
+  const headerAction = collectElements(host)
+    .find(({ className }) => className === "app-header-action");
   const menu = collectElements(host).find(
     ({ className }) => className === "history-management-modal",
   );
-  assert.equal(toggle.textContent, "…");
+  assert.equal(headerAction.tagName, "a");
+  assert.equal(headerAction.textContent, "トップ画面へ");
+  assert.equal(headerAction.attributes.get("href"), "#/start");
+  assert.equal(
+    collectElements(host).filter(({ textContent }) => textContent === "開始画面へ戻る").length,
+    0,
+  );
+  assert.match(collectText(host), /HISTORY/);
+  assert.match(collectText(host), /診断結果の履歴/);
+  assert.equal(toggle.textContent, "履歴削除");
   assert.equal(toggle.attributes.get("aria-label"), "履歴の管理");
   assert.equal(toggle.attributes.get("aria-expanded"), "false");
   assert.equal(toggle.attributes.get("aria-controls"), "history-management-modal");
@@ -360,8 +371,8 @@ test("T-008A F-013 fallback without showModal isolates background and wraps focu
   const appHeader = collectElements(host).find(
     ({ className }) => className === "app-header",
   );
-  const backLink = collectElements(host).find(
-    ({ className }) => className === "text-link",
+  const screenHeading = collectElements(host).find(
+    ({ className }) => className === "screen-heading",
   );
   modal.showModal = undefined;
   launcher.dispatch("click");
@@ -375,7 +386,7 @@ test("T-008A F-013 fallback without showModal isolates background and wraps focu
   );
   assert.equal(appHeader.inert, true);
   assert.equal(appHeader.getAttribute("aria-hidden"), "true");
-  assert.equal(backLink.inert, true);
+  assert.equal(screenHeading.inert, true);
   assert.equal(launcher.inert, true);
 
   deleteAll.focus();
@@ -390,7 +401,7 @@ test("T-008A F-013 fallback without showModal isolates background and wraps focu
   modal.dispatch("click");
   assert.equal(appHeader.inert, false);
   assert.equal(appHeader.getAttribute("aria-hidden"), null);
-  assert.equal(backLink.inert, false);
+  assert.equal(screenHeading.inert, false);
   assert.equal(launcher.inert, false);
   assert.equal(host.ownerDocument.activeElement, launcher);
 });

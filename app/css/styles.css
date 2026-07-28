@@ -278,15 +278,20 @@ h1 {
   gap: 16px;
 }
 
-.history-header h1 {
-  max-width: none;
-  font-size: clamp(1.8rem, 7vw, 3.2rem);
+.history-title,
+.comparison-title {
+  font-size: clamp(1.375rem, 1.25rem + 0.6vw, 1.5rem);
+}
+
+.history-lead {
+  margin-top: 12px;
 }
 
 .history-management-toggle {
   flex: 0 0 auto;
-  margin-inline-start: auto;
-  font-size: 1.25rem;
+  margin-top: 18px;
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 .history-management-modal {
@@ -433,7 +438,7 @@ h1 {
   font-size: 1.2rem;
 }
 
-.history-title {
+.history-card-title {
   display: block;
   font-size: 1.2rem;
   font-weight: 700;

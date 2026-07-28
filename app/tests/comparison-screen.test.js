@@ -17,6 +17,16 @@ const factorLabels = Object.freeze({
   emotionalStability: "情緒安定性",
 });
 
+function assertComparisonHeader(host) {
+  const headerAction = collectElements(host)
+    .find(({ className }) => className === "app-header-action");
+  assert.equal(headerAction.tagName, "a");
+  assert.equal(headerAction.textContent, "履歴へ戻る");
+  assert.equal(headerAction.attributes.get("href"), "#/history");
+  assert.match(collectText(host), /COMPARISON/);
+  assert.match(collectText(host), /診断結果の比較/);
+}
+
 test("T-006 S-007 renders chronological raw-mean deltas with non-color direction labels", () => {
   const { host } = createFakeScreen();
   const before = createTestResultSnapshot({
@@ -40,6 +50,7 @@ test("T-006 S-007 renders chronological raw-mean deltas with non-color direction
   });
 
   const text = collectText(host);
+  assertComparisonHeader(host);
   assert.match(text, /診断結果の比較/);
   assert.match(text, /古い結果/);
   assert.match(text, /今回の結果/);
@@ -116,6 +127,7 @@ test("T-006 S-007 returns missing, deleted, and incompatible selections to histo
   ]) {
     const { host } = createFakeScreen();
     renderComparisonScreen(host, state);
+    assertComparisonHeader(host);
     assert.match(collectText(host), message);
     assert.ok(collectElements(host).some(({ attributes }) => attributes.get("href") === "#/history"));
   }
