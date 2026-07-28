@@ -2,6 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
+async function readQaPreviewWorkflow() {
+  const workflow = await readFile(
+    ".github/workflows/qa-preview-pages.yml",
+    "utf8",
+  );
+  return workflow.replaceAll("\r\n", "\n");
+}
+
 function extractTopLevelBlock(workflow, key) {
   const lines = workflow.replaceAll("\r\n", "\n").split("\n");
   const start = lines.indexOf(`${key}:`);
@@ -106,18 +114,12 @@ function assertWorkflowContract(workflow) {
 }
 
 test("QA Pages workflow verifies and uploads only dist/qa-preview", async () => {
-  const workflow = await readFile(
-    ".github/workflows/qa-preview-pages.yml",
-    "utf8",
-  );
+  const workflow = await readQaPreviewWorkflow();
   assertWorkflowContract(workflow);
 });
 
 test("QA Pages workflow contract rejects broadened deployment authority", async () => {
-  const workflow = await readFile(
-    ".github/workflows/qa-preview-pages.yml",
-    "utf8",
-  );
+  const workflow = await readQaPreviewWorkflow();
   const mutations = [
     {
       name: "pull_request trigger",
