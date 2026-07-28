@@ -382,6 +382,38 @@ test("Q-006 F-3 uses the reviewed middle-band reflection prompts for extraversio
   );
 });
 
+test("Q-006 F-3 uses the reviewed low-band reflection prompts for extraversion", () => {
+  const lowDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
+    appliesTo.mode === "detail50"
+    && appliesTo.factorId === "extraversion"
+    && appliesTo.band === "low"
+  );
+  assert.deepEqual(
+    Object.fromEntries(lowDetail
+      .filter(({ section }) => section !== "observation")
+      .map(({ section, text: resultText }) => [
+        section,
+        resultText,
+      ])),
+    {
+      strength:
+        "最近、大人数の集まりより少人数や静かな場所を選んだことで、落ち着いて話せた場面はありましたか。",
+      tradeoff:
+        "話したいことがあっても、「今声をかけて大丈夫かな」と考えているうちに、きっかけを逃した場面はありましたか。",
+      work:
+        "仕事や学びのなかで、一人で考えを整理してから相談したことで、伝えたいことがまとまった場面はありましたか。",
+      relationship:
+        "親しい人と少人数で過ごしたことで、無理なく自然に話せた場面はありましたか。",
+      stress:
+        "急に人から注目されたとき、何を話せばよいか分からず、その場から少し離れたくなったことはありませんか。",
+      question:
+        "最近、すぐに会話へ加わらず、まず周りの様子を見たことで、話しやすいタイミングを見つけられた場面はありましたか。",
+      action:
+        "もしよければ、伝えたい相手を一人だけ思い浮かべ、話したいことを一文だけメモしてみませんか。",
+    },
+  );
+});
+
 test("Q-006 F-2 uses the reviewed high-band reflection prompts for conscientiousness", () => {
   const highDetail = FactorResultTextDefinitions.filter(({ appliesTo }) =>
     appliesTo.mode === "detail50"
