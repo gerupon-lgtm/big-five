@@ -307,6 +307,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 正典: `docs/superpowers/specs/2026-07-27-result-history-resume-ui-design.md`
 - 称号別ヒント正典: `docs/superpowers/specs/2026-07-28-title-reflection-comments-design.md`
 - 回答中断・再開計画: `docs/superpowers/plans/2026-07-27-questionnaire-resume-interruption.md`
+- 回答文字計画: `docs/superpowers/plans/2026-07-28-questionnaire-typography.md`
 - 結果段階表示計画: `docs/superpowers/plans/2026-07-27-result-progressive-disclosure.md`
 - 履歴・比較計画: `docs/superpowers/plans/2026-07-27-history-compact-comparison.md`
 - 状態: 実装中。回答中断・状態別再開・preview終了、共通ヘッダー、簡潔な履歴・固定比較導線、結果用純粋モデル、名前付きレーダー描画、ボトムシート基盤まで完了
