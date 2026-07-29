@@ -28,14 +28,30 @@ test("T-008A keeps sticky header behavior without redefining brand geometry", as
   assert.doesNotMatch(stickyHeader, /\.app-brand-subtitle/);
 });
 
-test("T-008A keeps all shared-header labels readable in one 320px row", async () => {
+test("T-008A preserves the approved 380px header contract", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
-  const narrowStyles = styles.slice(styles.indexOf("@media (max-width: 380px)"));
+  const narrowStyles = styles.slice(
+    styles.indexOf("@media (max-width: 380px)"),
+    styles.indexOf("@media (max-width: 340px)"),
+  );
 
   assert.match(narrowStyles, /\.app-header\s*\{[^}]*gap:\s*6px[^}]*flex-wrap:\s*nowrap/s);
-  assert.match(narrowStyles, /\.app-brand\s*\{[^}]*flex:\s*0 0 auto[^}]*min-width:\s*max-content[^}]*gap:\s*6px/s);
+  assert.match(narrowStyles, /\.app-brand\s*\{[^}]*gap:\s*8px/s);
   assert.match(narrowStyles, /\.app-mark\s*\{[^}]*flex-basis:\s*34px[^}]*width:\s*34px[^}]*height:\s*34px/s);
   assert.match(narrowStyles, /\.app-brand-name\s*\{[^}]*font-size:\s*0\.84rem/s);
-  assert.match(narrowStyles, /\.app-brand-subtitle\s*\{[^}]*font-size:\s*0\.55rem[^}]*letter-spacing:\s*0/s);
+  assert.match(narrowStyles, /\.app-brand-subtitle\s*\{[^}]*font-size:\s*0\.55rem[^}]*letter-spacing:\s*0\.1em/s);
   assert.match(narrowStyles, /\.app-header-action\s*\{[^}]*padding-inline:\s*0[^}]*font-size:\s*0\.72rem[^}]*white-space:\s*nowrap/s);
+});
+
+test("T-008A uses the approved one-row 320px header fallback", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+  const compactStyles = styles.slice(styles.indexOf("@media (max-width: 340px)"));
+
+  assert.match(compactStyles, /\.app-header\s*\{[^}]*gap:\s*4px[^}]*flex-wrap:\s*nowrap/s);
+  assert.match(compactStyles, /\.app-header\.is-sticky\s*\{[^}]*padding-inline:\s*0/s);
+  assert.match(compactStyles, /\.app-brand\s*\{[^}]*gap:\s*6px/s);
+  assert.match(compactStyles, /\.app-mark\s*\{[^}]*flex-basis:\s*32px[^}]*width:\s*32px[^}]*height:\s*32px/s);
+  assert.match(compactStyles, /\.app-brand-name\s*\{[^}]*font-size:\s*0\.8rem/s);
+  assert.match(compactStyles, /\.app-brand-subtitle\s*\{[^}]*font-size:\s*0\.52rem[^}]*letter-spacing:\s*0\.08em/s);
+  assert.match(compactStyles, /\.app-header-action\s*\{[^}]*font-size:\s*0\.7rem[^}]*white-space:\s*nowrap/s);
 });

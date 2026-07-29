@@ -1004,9 +1004,7 @@ noscript {
   }
 
   .app-brand {
-    flex: 0 0 auto;
-    min-width: max-content;
-    gap: 6px;
+    gap: 8px;
   }
 
   .app-mark {
@@ -1022,7 +1020,7 @@ noscript {
 
   .app-brand-subtitle {
     font-size: 0.55rem;
-    letter-spacing: 0;
+    letter-spacing: 0.1em;
   }
 
   .app-header-action {
@@ -1079,6 +1077,41 @@ noscript {
 
   dd + dt {
     margin-top: 8px;
+  }
+}
+
+@media (max-width: 340px) {
+  .app-header {
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .app-header.is-sticky {
+    padding-inline: 0;
+  }
+
+  .app-brand {
+    gap: 6px;
+  }
+
+  .app-mark {
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .app-brand-name {
+    font-size: 0.8rem;
+  }
+
+  .app-brand-subtitle {
+    font-size: 0.52rem;
+    letter-spacing: 0.08em;
+  }
+
+  .app-header-action {
+    font-size: 0.7rem;
+    white-space: nowrap;
   }
 }
 
