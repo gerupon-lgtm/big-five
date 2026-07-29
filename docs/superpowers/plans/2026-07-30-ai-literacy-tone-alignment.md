@@ -721,3 +721,9 @@ Pagesだけで再現する不具合があれば、公開成功とはせず、loc
 - Placeholder scan: 実装手順に未定義関数や将来記入用の山括弧はなく、browser-smokeへ記録する値は取得コマンド、基準computed値、狭幅fallback値まで定義した。
 - Type/name consistency: `start-main-panel`、`start-overview`、`appendAppHeader`、`appendScreenHeading`、`appendTextElement`は全タスクで同じ名前を使用している。
 - Verification integrity: 仮モックではなく実アプリの画面と実測値を完了条件にし、結果・履歴・比較の本文構造が変わっていないことも確認対象に含めた。
+
+## 実行注記（2026-07-30）
+
+- delegate-developmentのSDD workspaceは意図的に`.gitignore`対象で、短期作業用として扱う。そのためStep 9の記載と異なり、`browser-smoke.md`はcommitしない作業証跡とし、再利用が必要な実測値・判定・制約はcommit対象の設計書、`docs/screens.md`、`docs/tasks.md`へ同期した。
+- automation bridgeから`navigator.userAgent`を取得できなかったため、browser欄には実行環境`Codex in-app Chromium runtime`だけを記録し、UA文字列は補完・推測していない。
+- この役割分担は証跡を破棄する判断ではない。ignore対象の`browser-smoke.md`とTask reportを作業中の詳細ledgerとし、正典文書をレビュー・履歴参照可能なdurable evidenceとする。
