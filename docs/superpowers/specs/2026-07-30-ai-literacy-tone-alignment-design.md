@@ -1,6 +1,6 @@
 # AIリテラシー検定トンマナ整合デザイン
 
-- 状態: ユーザー方針承認済み・実装前
+- 状態: 実装・検証済み
 - 対象版: `mvp-0.1.0`
 - 対応タスク: T-008Aの追加デザイン調整
 - 対応機能: F-001、F-003〜F-006、F-009、F-010
@@ -89,6 +89,8 @@ C:\Users\user\Claude\Projects\AIリテラシー検定\ai-literacy-test
 - ブランド名と副題は一つの縦積みとして中央をアイコンの中央へ揃える。
 - ヘッダー下paddingは`18px`、下marginは`26px`とし、間に1pxの区切り線を置く。
 - モバイルの左右基準は`clamp(14px, 4vw, 28px)`とする。
+- 380px以下では、アイコン`34px × 34px`、アプリ名`0.84rem`、副題`0.55rem`まで縮小する。
+- 340px以下では、右側操作との重なりを避ける最小fallbackとして、アイコン`32px × 32px`、アプリ名`0.8rem`、副題`0.52rem`、ヘッダー要素間`4px`、アイコンと文字の間`6px`、右側操作`0.7rem`を使う。文面の省略・変更やヘッダーの折返しは行わない。
 
 ### 4.2 色
 
@@ -168,6 +170,8 @@ C:\Users\user\Claude\Projects\AIリテラシー検定\ai-literacy-test
 - 回答、結果、履歴、比較のDOM構造と操作契約を壊さない。
 - 全テスト、静的検証、`git diff --check`を通す。
 
+2026-07-30の実装後検証では、`npm.cmd test`が533件成功・失敗0件、`npm.cmd run check`が48 JavaScript files・canonical runtime version 1件で成功した。`npm.cmd run content:validate`は警告658件・エラー0件で、approved release未選択、Q-012、Q-013の既知gateを維持した。`npm.cmd run qa:preview:build`は102 files・6,663,780 bytesで成功し、`git diff --check`も成功した。
+
 ### 8.2 実画面検証
 
 仮案画面ではなく、実際のアプリを次の幅で表示する。
@@ -191,6 +195,8 @@ C:\Users\user\Claude\Projects\AIリテラシー検定\ai-literacy-test
 - console error／warning
 
 実画面のトップ、回答、結果、履歴、比較をスクリーンショットで確認する。AIリテラシー検定の参照画面との差が残る場合は、仮案ではなく実画面のCSS値を再調整する。
+
+2026-07-30にcommit `7bb0503`のローカル実アプリをCodex in-app Chromium runtimeで検証した。開始画面の`scrollWidth/clientWidth`は320×800で`305/305`、360×800で`360/360`、414×896で`414/414`、960×900で`960/960`だった。ヘッダー実測値は320pxで`32px / 12.8px / 8.32px`、360pxで`34px / 13.44px / 8.8px`、414pxと960pxで`38px / 16.32px / 10.88px`だった。全幅で白い主パネルは1個、角丸14px、内側余白はモバイル20px・960pxで34px、入れ子の`status-card`は0個で、履歴導線と診断情報はパネル外にある。360pxの回答、履歴、結果、比較には`start-main-panel`がなく、共通ヘッダー操作のnowrap、回答画面の設問20px・選択肢16px・高さ56px、既存の結果順・履歴・比較内容を維持した。開始・回答・履歴・結果のconsole error／warningは0件で、比較操作も表示上・runtime上のerrorなく完了した。手動キーボードによるfocus-visibleの再確認は今回行わず、既存のCSS・自動テストによる検証を維持する。
 
 ## 9. 完了条件
 
