@@ -359,7 +359,8 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - Chrome追加検証（2026-07-29）: 320×800、360×800、960×900の開始・回答・履歴・結果・比較で横overflowなしを確認した。共有ヘッダー高は52px、主見出し上端は131px相当で揃い、360pxのkicker／進捗上端は104px相当である。960px回答画面は設問22px、回答文字16px、回答ボタン高56px、他の主見出し24pxである。200%文字拡大は`devicePixelRatio` 2、CSS viewport 960×487で横overflowなし、ヘッダー操作のnowrap、回答文字16px・回答ボタン高56pxを維持した。キーボードでは開始、回答、結果展開、履歴管理dialogを操作でき、`Escape`後のfocus復帰と`:focus-visible`のsolid outlineを確認した。
   - `result-text-v2`実装（2026-07-30）: TR-0〜TR-4の153文をすべてユーザー承認済みとして版付きCSVとruntime定義へ反映し、基本237件と合わせた390件を現行runtimeにした。v1→v2の承認済み文面修正は27件である。preview 1件、detail 1件＋追加2件、ゼロ-reflection fallback、部分snapshot拒否、共有候補抽出での除外を実装した。domain集中78件、共有境界等の集中41件、result-screen集中18件は成功した。
   - 追加検証（2026-07-30）: 旧v1件数や版fixtureを前提にした36件を履歴互換契約を弱めず修正し、`npm.cmd test` 530件、最終独立focused review 150件、`npm.cmd run check`、`npm.cmd run content:validate`、`npm.cmd run qa:preview:build`、`git diff --check`に成功した。ローカル実ブラウザで20問previewから50問detailまで通し、preview 1件、detail 1件＋追加2件、称号理由→振り返り→5因子の順、native buttonのfocus／`aria-expanded`、320px・360px・960pxの横overflowなし、console error／warning 0件を確認した。
-  - 残る懸念: approved release未選択、Q-012の正式release、Q-013 production data、T-007共有UIは未完了である。通常runtimeの外部送信0件と`connect-src 'none'`は維持する。Pages上の再確認とpushはT-011のQA一時プレビュー運用として記録する。
+  - Pages確認（2026-07-30）: commit `2e8ac66`を`codex/big-five-q006`へpushし、Actions run `30467272599`のbuild／deploy成功を確認した。公開先の`app-meta.js`は`result-text-v2`、`title-reflection-definitions.js`は承認済みTR文面をHTTP 200で返す。
+  - 残る懸念: approved release未選択、Q-012の正式release、Q-013 production data、T-007共有UIは未完了である。通常runtimeの外部送信0件と`connect-src 'none'`は維持する。
 
 ### T-008 全画面統合・レスポンシブ・アクセシビリティ
 

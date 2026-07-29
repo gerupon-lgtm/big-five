@@ -8,6 +8,11 @@
 
 https://gerupon-lgtm.github.io/big-five/
 
+- QA対象commit: `2e8ac664543d20bd48ab2461f348ad24fd71279b`
+- branch: `codex/big-five-q006`
+- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/30467272599
+- 2026-07-30確認: build／deploy成功。公開先の`app-meta.js`は`result-text-v2`、`title-reflection-definitions.js`は承認済みTR文面を返し、いずれもHTTP 200
+
 ## 初期設定
 
 1. GitHubの`gerupon-lgtm/big-five`を開く。
@@ -43,7 +48,7 @@ https://gerupon-lgtm.github.io/big-five/
 
 ## `result-text-v2`追加QAの状態
 
-`result-text-v2`のpreview 8件、detail 45件、ゼロ-reflection fallback 7件／42件、部分的な振り返りsnapshotの拒否は自動テストで確認済みである。2026-07-30のローカル実ブラウザQAでは、20問回答からpreview、追加30問、detailまで通し、previewはヒント1件だけ、detailは1件＋`ほかのヒントを見る`で追加2件を一括展開することを確認した。表示順は称号理由、振り返り、5因子で、開閉はnative button、`aria-expanded`、focusを維持する。320px、360px、960pxはいずれも横overflowなし、console error／warning 0件だった。共有候補からの除外は自動テストで確認済みだが、T-007共有UI未実装のため共有物のブラウザ確認は行っていない。QA対象変更をpushし、最新のPages deploymentで再確認してから公開URLの確認を完了扱いにする。
+`result-text-v2`のpreview 8件、detail 45件、ゼロ-reflection fallback 7件／42件、部分的な振り返りsnapshotの拒否は自動テストで確認済みである。2026-07-30のローカル実ブラウザQAでは、20問回答からpreview、追加30問、detailまで通し、previewはヒント1件だけ、detailは1件＋`ほかのヒントを見る`で追加2件を一括展開することを確認した。表示順は称号理由、振り返り、5因子で、開閉はnative button、`aria-expanded`、focusを維持する。320px、360px、960pxはいずれも横overflowなし、console error／warning 0件だった。共有候補からの除外は自動テストで確認済みだが、T-007共有UI未実装のため共有物のブラウザ確認は行っていない。commit `2e8ac66`のPages build／deployと公開assetのHTTP 200・v2内容を確認し、この追加QAを完了した。
 
 ## Redeploy
 

@@ -70,7 +70,7 @@ Apply requested replacements to the specified text only. Preserve preceding or s
 
 After explicit approval of a batch, set only that batch’s `review_status` to `approved` and record the exact approval date and the wording hash described in the review document. Do not infer approval from silence or from approval of another batch.
 
-- [ ] **Step 5: Verify the completed matrix and commit once**
+- [x] **Step 5: Verify the completed matrix and commit once**
 
 Run a Node one-liner or a focused test that confirms 51 unique title IDs, exactly three consecutive orders per title, 153 unique candidate records, and TR-0〜TR-4 all explicitly approved.
 
@@ -183,7 +183,7 @@ npm.cmd run content:validate
 
 Expected: all focused tests pass; validation recognizes both result-text versions. `content:build` may still report `RELEASE_NOT_SELECTED`.
 
-- [ ] **Step 6: Commit the authoring contract**
+- [x] **Step 6: Commit the authoring contract**
 
 ```powershell
 git add content scripts/content app/tests/content-table-schema.test.js app/tests/content-result-compiler.test.js app/tests/content-artifact-contract.test.js
@@ -236,7 +236,7 @@ node --test app/tests/result-content-definitions.test.js app/tests/result-compos
 
 Expected: all pass with preview 8 and detail 45 records for the three-hint catalog.
 
-- [ ] **Step 6: Commit the domain extension**
+- [x] **Step 6: Commit the domain extension**
 
 ```powershell
 git add app/js/domain app/js/data app/tests/result-content-definitions.test.js app/tests/result-composer.test.js app/tests/result-snapshot.test.js
@@ -279,7 +279,7 @@ node --test app/tests/result-screen.test.js
 
 Expected: all result-screen tests pass.
 
-- [ ] **Step 5: Commit the presentation**
+- [x] **Step 5: Commit the presentation**
 
 ```powershell
 git add app/js/domain/result-disclosure-model.js app/js/presentation/result-screen.js app/css/styles.css app/tests/result-screen.test.js
@@ -337,7 +337,7 @@ node --test app/tests/project-contract.test.js app/tests/version-contract.test.j
 
 Expected: all pass and no serialized pure share-candidate output contains a `titleReflection` ID or text. This does not claim that T-007 share output composition is implemented.
 
-- [ ] **Step 5: Commit activation**
+- [x] **Step 5: Commit activation**
 
 ```powershell
 git add app/js/config app/js/data app/js/domain app/tests
@@ -385,7 +385,7 @@ At 320px, 360px, and 960px verify preview one hint, detail one plus expansion of
 
 Fix the review target to the commits from this plan, maximum 12 changed source/test/doc files plus generated content definitions, severity Important or higher, no extra subreview, and require no contract violation, unapproved wording, v1 mutation, sharing leak, or missing fallback.
 
-- [ ] **Step 5: Commit documentation and push**
+- [x] **Step 5: Commit documentation and push**
 
 ```powershell
 git add docs
@@ -394,3 +394,5 @@ git push origin codex/big-five-q006
 ```
 
 Record the pushed commit and QA URL in `docs/qa-preview-pages.md`.
+
+Project-ownerのコミット頻度を抑える方針に従い、Task 1〜5の個別コミットは分割せず、実装・承認記録・同期文書を`2e8ac66`へ集約した。`codex/big-five-q006`へのpush後、GitHub Actions run `30467272599`でbuild／deploy成功を確認した。
