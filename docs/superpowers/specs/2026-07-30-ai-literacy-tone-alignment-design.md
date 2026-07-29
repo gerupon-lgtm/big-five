@@ -198,6 +198,8 @@ C:\Users\user\Claude\Projects\AIリテラシー検定\ai-literacy-test
 
 2026-07-30にcommit `7bb0503`のローカル実アプリをCodex in-app Chromium runtimeで検証し、文書commit `eedbeba`でも補足QAを行った。開始画面の`scrollWidth/clientWidth`は320×800で`305/305`、360×800で`360/360`、414×896で`414/414`、960×900で`960/960`だった。ヘッダー実測値は320pxで`32px / 12.8px / 8.32px`、360pxで`34px / 13.44px / 8.8px`、414pxと960pxで`38px / 16.32px / 10.88px`だった。全幅で白い主パネルは1個、角丸14px、内側余白はモバイル20px・960pxで34px、入れ子の`status-card`は0個で、履歴導線と診断情報はパネル外にある。360pxでは回答、20問完答分岐、履歴、結果、比較に`start-main-panel`がなく、横overflowとヘッダー内の重なりもなかった。20問完答分岐は`20 / 20問`、`20問の回答が完了しました`と3操作を表示し、回答画面の設問20px・選択肢16px・高さ56px、既存の結果順・履歴・比較内容を維持した。開始360／960px、回答、20問完答分岐、履歴、結果、比較のスクリーンショットを実見した。開始、回答、履歴、結果、比較のconsole warning／errorは0件で、比較は互換な50問結果2件と5因子を描画した前後にログが空であることを確認した。20問完答分岐のconsoleは個別取得していない。手動focus-visibleは履歴ヘッダーの`トップ画面へ`だけをkeyboard Tabで確認し、computed outlineはsolid 3px `rgb(204, 122, 26)`だった。これより広いキーボード走査は今回の完了根拠に含めない。
 
+commit `e314cc2`のpush後、GitHub Actions run `30482247470`は成功し、build job `90679023727`が31秒、deploy job `90679164991`が21秒で完了した。公開先`https://gerupon-lgtm.github.io/big-five/#/start`の360×800開始画面はdocument `360/360`、header `336/336`、アイコン34px、アプリ名13.44px、副題8.8pxだった。白い主パネルは背景`rgb(255, 255, 255)`、padding 20px、角丸14px、入れ子の`status-card` 0個で、console warning／errorは0件、スクリーンショットも目標と一致した。公開環境で確認したのはこの開始画面だけであり、他画面のPages確認へ読み替えない。runにはconfigure-pages／upload-artifact actionのNode.js 20をNode 24へ強制した非失敗annotationが1件ある。
+
 ## 9. 完了条件
 
 - 全画面の共通ヘッダーがAIリテラシー検定と同じ寸法体系になる。
