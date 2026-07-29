@@ -65,14 +65,14 @@ button:disabled {
 
 .app-header {
   display: flex;
-  align-items: center;
-  gap: 10px 16px;
   width: 100%;
-  min-height: 52px;
-  margin-bottom: 28px;
-  padding-block: 8px;
+  min-height: 56px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 26px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #d6e4df;
   color: #45635d;
-  font-size: 0.78rem;
   flex-wrap: nowrap;
 }
 
@@ -80,8 +80,9 @@ button:disabled {
   position: sticky;
   z-index: 10;
   top: 0;
+  padding-top: 12px;
   padding-inline: 12px;
-  border-radius: 14px;
+  border-radius: 0 0 14px 14px;
   background: rgb(243 247 244 / 94%);
   box-shadow: 0 8px 24px rgb(42 81 69 / 8%);
   backdrop-filter: blur(10px);
@@ -91,40 +92,43 @@ button:disabled {
   display: inline-flex;
   min-width: 0;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   color: #1f6955;
 }
 
 .app-mark {
   display: grid;
-  flex: 0 0 30px;
-  width: 30px;
-  height: 30px;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
   place-items: center;
-  border-radius: 9px;
+  border-radius: 10px;
   background: #26705c;
   color: #fff;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 800;
 }
 
 .app-brand-copy {
   display: grid;
   min-width: 0;
-  gap: 2px;
+  gap: 1px;
+  line-height: 1.2;
 }
 
 .app-brand-name {
-  font-size: 0.75rem;
-  font-weight: 750;
-  line-height: 1.35;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
 .app-brand-subtitle {
-  font-size: 0.5rem;
+  color: #526b66;
+  font-size: 0.68rem;
   line-height: 1.2;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.18em;
   white-space: nowrap;
 }
 
@@ -991,7 +995,7 @@ noscript {
   }
 
   .app-header {
-    gap: 4px;
+    gap: 6px;
     flex-wrap: nowrap;
   }
 
@@ -1000,29 +1004,30 @@ noscript {
   }
 
   .app-brand {
-    gap: 4px;
+    gap: 8px;
   }
 
   .app-mark {
-    flex-basis: 24px;
-    width: 24px;
-    height: 24px;
-    border-radius: 7px;
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
   }
 
   .app-brand-name {
-    font-size: 0.625rem;
+    font-size: 0.84rem;
   }
 
   .app-brand-subtitle {
-    font-size: 0.4rem;
-    letter-spacing: 0.08em;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
   }
 
   .app-header-action {
     margin-inline-start: auto;
-    padding-inline: 4px;
-    font-size: 0.6875rem;
+    padding-inline: 0;
+    font-size: 0.72rem;
+    white-space: nowrap;
   }
 
   .history-card,

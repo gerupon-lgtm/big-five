@@ -6,27 +6,35 @@ test("T-008A S-001 applies the approved shared frontend tone", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
 
   assert.match(styles, /--font-sans:\s*"Sawarabi Gothic",\s*"Hiragino Kaku Gothic ProN",\s*"Yu Gothic",\s*"Meiryo",\s*system-ui,\s*sans-serif/);
-  assert.match(styles, /\.app-brand-name\s*\{[^}]*font-size:\s*0\.75rem/s);
-  assert.match(styles, /\.app-brand-subtitle\s*\{[^}]*font-size:\s*0\.5rem/s);
+  assert.match(styles, /\.app-header\s*\{[^}]*gap:\s*12px[^}]*margin-bottom:\s*26px[^}]*padding-bottom:\s*18px[^}]*border-bottom:\s*1px solid #d6e4df/s);
+  assert.match(styles, /\.app-mark\s*\{[^}]*flex:\s*0 0 38px[^}]*width:\s*38px[^}]*height:\s*38px[^}]*border-radius:\s*10px/s);
+  assert.match(styles, /\.app-brand-name\s*\{[^}]*font-size:\s*1\.02rem[^}]*font-weight:\s*700[^}]*letter-spacing:\s*0\.04em/s);
+  assert.match(styles, /\.app-brand-subtitle\s*\{[^}]*font-size:\s*0\.68rem[^}]*letter-spacing:\s*0\.18em/s);
   assert.match(styles, /\.app-brand-copy\s*\{[^}]*min-width:\s*0/s);
   assert.match(styles, /\.app-header-action\s*\{[^}]*white-space:\s*nowrap/s);
   assert.match(styles, /\.screen-kicker\s*\{[^}]*color:\s*#26705c[^}]*font-size:\s*0\.75rem/s);
   assert.match(styles, /\.screen-title\s*\{[^}]*font-size:\s*clamp\(1\.375rem,\s*1\.25rem \+ 0\.6vw,\s*1\.5rem\)/s);
 });
 
-test("T-008A S-001 keeps sticky and non-sticky headers aligned on narrow screens", async () => {
+test("T-008A keeps sticky header behavior without redefining brand geometry", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
-  const sharedHeader = styles.match(/\.app-header\s*\{([^}]*)\}/)?.[1] ?? "";
   const stickyHeader = styles.match(/\.app-header\.is-sticky\s*\{([^}]*)\}/)?.[1] ?? "";
+
+  assert.match(stickyHeader, /position:\s*sticky/);
+  assert.match(stickyHeader, /top:\s*0/);
+  assert.doesNotMatch(stickyHeader, /font-size:/);
+  assert.doesNotMatch(stickyHeader, /\.app-mark/);
+  assert.doesNotMatch(stickyHeader, /\.app-brand-name/);
+  assert.doesNotMatch(stickyHeader, /\.app-brand-subtitle/);
+});
+
+test("T-008A keeps a readable narrow header and a single-line action", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
   const narrowStyles = styles.slice(styles.indexOf("@media (max-width: 380px)"));
 
-  assert.match(sharedHeader, /min-height:\s*52px/);
-  assert.match(sharedHeader, /padding-block:\s*8px/);
-  assert.match(sharedHeader, /flex-wrap:\s*nowrap/);
-  assert.doesNotMatch(stickyHeader, /padding(?:-block)?:/);
-  assert.doesNotMatch(stickyHeader, /border:/);
-  assert.match(
-    narrowStyles,
-    /\.app-header\s*\{[^}]*flex-wrap:\s*nowrap/s,
-  );
+  assert.match(narrowStyles, /\.app-header\s*\{[^}]*gap:\s*6px[^}]*flex-wrap:\s*nowrap/s);
+  assert.match(narrowStyles, /\.app-mark\s*\{[^}]*flex-basis:\s*34px[^}]*width:\s*34px[^}]*height:\s*34px/s);
+  assert.match(narrowStyles, /\.app-brand-name\s*\{[^}]*font-size:\s*0\.84rem/s);
+  assert.match(narrowStyles, /\.app-brand-subtitle\s*\{[^}]*font-size:\s*0\.55rem/s);
+  assert.match(narrowStyles, /\.app-header-action\s*\{[^}]*padding-inline:\s*0[^}]*font-size:\s*0\.72rem[^}]*white-space:\s*nowrap/s);
 });
