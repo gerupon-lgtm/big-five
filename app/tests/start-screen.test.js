@@ -85,6 +85,47 @@ test("T-008A S-001 renders the shared official app header, start heading, and se
   );
 });
 
+test("T-008A S-001 groups primary start content into one panel without nesting a status card", () => {
+  const { host } = createFakeScreen();
+
+  renderStartScreen(host, versionModel, {
+    onStartNew() {},
+    onResume() {},
+  });
+
+  const main = host.children[0];
+  const panel = collectElements(main)
+    .find(({ className }) => className === "start-main-panel");
+  const secondaryNavigation = collectElements(main)
+    .find(({ className }) => className === "start-secondary-navigation");
+  const diagnosticVersion = collectElements(main)
+    .find(({ className }) => className === "diagnostic-version");
+
+  assert.ok(panel);
+  const overview = collectElements(panel)
+    .find(({ className }) => className === "start-overview");
+  assert.ok(overview);
+  assert.equal(
+    collectElements(panel)
+      .filter(({ className }) => className === "screen-heading").length,
+    1,
+  );
+  assert.equal(
+    collectElements(panel)
+      .filter(({ className }) => className === "lead start-lead").length,
+    1,
+  );
+  assert.equal(
+    collectElements(panel)
+      .filter(({ className }) => className.includes("status-card")).length,
+    0,
+  );
+  assert.equal(panel.children.includes(secondaryNavigation), false);
+  assert.equal(panel.children.includes(diagnosticVersion), false);
+  assert.equal(main.children.includes(secondaryNavigation), true);
+  assert.equal(main.children.includes(diagnosticVersion), true);
+});
+
 test("T-008A S-001 keeps the diagnostic label and version details inside the diagnostic disclosure", () => {
   const { host } = createFakeScreen();
 

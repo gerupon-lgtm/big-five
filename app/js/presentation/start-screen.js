@@ -7,33 +7,36 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
   const main = documentObject.createElement("main");
   main.className = "app-shell start-screen";
   appendAppHeader(main);
-  appendScreenHeading(main, {
+
+  const panel = documentObject.createElement("section");
+  panel.className = "start-main-panel";
+  appendScreenHeading(panel, {
     kicker: "SELF CHECK",
     title: "自分のことを知る",
   });
   appendTextElement(
-    main,
+    panel,
     "p",
     "Big Fiveは、性格傾向を5つの因子から捉える考え方です。本チェックではIPIP日本語50項目版を使用し、回答から現在の傾向を振り返ります。",
     "lead start-lead",
   );
 
-  const status = documentObject.createElement("section");
-  status.className = "start-overview-card status-card";
-  status.setAttribute("aria-labelledby", "build-status-title");
+  const overview = documentObject.createElement("section");
+  overview.className = "start-overview";
+  overview.setAttribute("aria-labelledby", "build-status-title");
   const statusTitle = appendTextElement(
-    status,
+    overview,
     "h2",
     "Big Fiveについて",
   );
   statusTitle.id = "build-status-title";
   appendTextElement(
-    status,
+    overview,
     "p",
     "20問の簡易プレビューから始め、希望に応じて50問の詳しい結果まで進められます。",
   );
   if (typeof actions.onStartNew === "function") {
-    const startButton = appendTextElement(status, "button", "診断を始める", "primary-button");
+    const startButton = appendTextElement(overview, "button", "診断を始める", "primary-button");
     startButton.setAttribute("type", "button");
     startButton.addEventListener("click", actions.onStartNew);
   }
@@ -42,7 +45,7 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
       ? options.resumeLabel
       : "途中から再開する";
     const resumeButton = appendTextElement(
-      status,
+      overview,
       "button",
       resumeLabel,
       "secondary-button",
@@ -50,7 +53,8 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
     resumeButton.setAttribute("type", "button");
     resumeButton.addEventListener("click", actions.onResume);
   }
-  main.append(status);
+  panel.append(overview);
+  main.append(panel);
 
   const secondaryNavigation = documentObject.createElement("nav");
   secondaryNavigation.className = "start-secondary-navigation";
