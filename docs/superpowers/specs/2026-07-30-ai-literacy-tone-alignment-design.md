@@ -200,7 +200,9 @@ C:\Users\user\Claude\Projects\AIリテラシー検定\ai-literacy-test
 
 current HEADで360×800を画面ごとの別tabで再確認した。開始はdocument `345/345`で`診断を始める`、回答21問目は`360/360`で中立選択肢、20問完答分岐は`360/360`で簡易プレビューボタン、結果は`345/345`で`ほかのヒントを見る`、履歴は`345/345`で`トップ画面へ`、比較は`345/345`で`履歴へ戻る`の各1操作にsolid 3pxのfocus-visible outlineがあった。回答・分岐・履歴・比較のヘッダー操作はnowrapで、各tabのconsole warning／errorは0件だった。これは各画面1操作の確認であり、画面内の全focusable要素を走査した主張ではない。
 
-commit `e314cc2`のpush後、GitHub Actions run `30482247470`は成功し、build job `90679023727`が31秒、deploy job `90679164991`が21秒で完了した。公開先`https://gerupon-lgtm.github.io/big-five/#/start`の360×800では、開始画面がdocument `360/360`、header `336/336`、アイコン34px、アプリ名13.44px、副題8.8pxで、白い主パネルは背景`rgb(255, 255, 255)`、padding 20px、角丸14px、入れ子の`status-card` 0個だった。回答画面はdocument `345/345`、`中断してトップへ`がnowrap、ブランドとの間隔6pxで重なりなし、設問20pxだった。履歴画面はdocument `360/360`、`トップ画面へ`がnowrap、ブランドとの間隔52.3pxで重なりがなかった。3画面ともconsole warning／errorは0件でスクリーンショットを実見した。回答画面の保存不可通知は公開browser環境固有で非致命的だった。公開環境で確認したのは開始、回答、履歴だけであり、結果・比較等のPages確認へ読み替えない。runにはconfigure-pages／upload-artifact actionのNode.js 20をNode 24へ強制した非失敗annotationが1件ある。
+commit `e314cc2`のpush後、GitHub Actions run `30482247470`は成功し、build job `90679023727`が31秒、deploy job `90679164991`が21秒で完了した。この時点の公開確認は360×800の開始画面だけで、document `360/360`、header `336/336`、アイコン34px、アプリ名13.44px、副題8.8px、白い主パネルの背景`rgb(255, 255, 255)`、padding 20px、角丸14px、入れ子の`status-card` 0個、console warning／error 0件だった。runにはconfigure-pages／upload-artifact actionのNode.js 20をNode 24へ強制した非失敗annotationが1件ある。
+
+commit `c03c47b`のpush後、GitHub Actions run `30482618659`は成功し、build job `90680317617`が22秒、deploy job `90680454340`が10秒で完了した。このdeployに対して公開先`https://gerupon-lgtm.github.io/big-five/#/start`の360×800で開始、回答、履歴を確認した。開始画面はdocument `360/360`で白い主パネルを維持した。回答画面はdocument `345/345`、`中断してトップへ`がnowrap、ブランドとの間隔6pxで重なりなし、設問20pxだった。履歴画面はdocument `360/360`、`トップ画面へ`がnowrap、ブランドとの間隔52.3pxで重なりがなかった。3画面ともconsole warning／errorは0件でスクリーンショットを実見した。回答画面の保存不可通知は公開browser環境固有で非致命的だった。公開環境で確認したのは開始、回答、履歴だけであり、結果・比較等のPages確認へ読み替えない。
 
 ## 9. 完了条件
 
