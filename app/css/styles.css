@@ -1004,7 +1004,9 @@ noscript {
   }
 
   .app-brand {
-    gap: 8px;
+    flex: 0 0 auto;
+    min-width: max-content;
+    gap: 6px;
   }
 
   .app-mark {
@@ -1020,7 +1022,7 @@ noscript {
 
   .app-brand-subtitle {
     font-size: 0.55rem;
-    letter-spacing: 0.1em;
+    letter-spacing: 0;
   }
 
   .app-header-action {

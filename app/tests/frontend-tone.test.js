@@ -28,13 +28,14 @@ test("T-008A keeps sticky header behavior without redefining brand geometry", as
   assert.doesNotMatch(stickyHeader, /\.app-brand-subtitle/);
 });
 
-test("T-008A keeps a readable narrow header and a single-line action", async () => {
+test("T-008A keeps all shared-header labels readable in one 320px row", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
   const narrowStyles = styles.slice(styles.indexOf("@media (max-width: 380px)"));
 
   assert.match(narrowStyles, /\.app-header\s*\{[^}]*gap:\s*6px[^}]*flex-wrap:\s*nowrap/s);
+  assert.match(narrowStyles, /\.app-brand\s*\{[^}]*flex:\s*0 0 auto[^}]*min-width:\s*max-content[^}]*gap:\s*6px/s);
   assert.match(narrowStyles, /\.app-mark\s*\{[^}]*flex-basis:\s*34px[^}]*width:\s*34px[^}]*height:\s*34px/s);
   assert.match(narrowStyles, /\.app-brand-name\s*\{[^}]*font-size:\s*0\.84rem/s);
-  assert.match(narrowStyles, /\.app-brand-subtitle\s*\{[^}]*font-size:\s*0\.55rem/s);
+  assert.match(narrowStyles, /\.app-brand-subtitle\s*\{[^}]*font-size:\s*0\.55rem[^}]*letter-spacing:\s*0/s);
   assert.match(narrowStyles, /\.app-header-action\s*\{[^}]*padding-inline:\s*0[^}]*font-size:\s*0\.72rem[^}]*white-space:\s*nowrap/s);
 });
