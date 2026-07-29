@@ -12,9 +12,9 @@
 
 | 要件ID | 機能名 | 画面 | 処理 | データ | タスク | 状態 |
 |---|---|---|---|---|---|---|
-| F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008A, T-008 | `Big Five 自己理解チェック`／`BIG FIVE SELF UNDERSTANDING`の共通ヘッダーと、`SELF CHECK`／`自分のことを知る`／承認済みBig Five・IPIP説明を実装・browser smoke済み |
+| F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008A, T-008 | `Big Five 自己理解チェック`／`BIG FIVE SELF UNDERSTANDING`の共通ヘッダー、`SELF CHECK`／`自分のことを知る`／承認済みBig Five・IPIP説明、`このツールについて`、同幅の開始・再開操作を実装・browser smoke済み |
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approvalは2026-07-28に完了 |
-| F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 共通ヘッダー、緑の進捗／設問`h1`、折り返さない`中断してトップへ`、設問20px・回答文字16px・回答ボタン高56pxを実装・360px browser smoke済み |
+| F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 他画面と同じ通常の共通ヘッダー、緑の進捗／設問`h1`、折り返さない`中断してトップへ`、設問20px・回答文字16px・回答ボタン高56pxを実装・320／360／414px browser smoke済み |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A | 状態別再開、preview終了、新規置換確認を保存成功・失敗・取消まで実装済み |
 | F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 現行`result-text-v2`で称号別ヒント1件を含む8件を表示・保存。不完全なヒント組は全件省略して7件へフォールバックし、称号・因子を維持 |
 | F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 現行`result-text-v2`で称号別ヒント3件を含む45件を表示・保存し、1件＋追加2件を展開。不完全なヒント組は全件省略して42件へフォールバック |
@@ -314,9 +314,13 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - フロントエンドトーン正典: `docs/superpowers/specs/2026-07-29-frontend-tone-and-shared-header-design.md`
 - フロントエンドトーン計画: `docs/superpowers/plans/2026-07-29-frontend-tone-and-shared-header.md`
 - AIリテラシー検定トンマナ整合正典: `docs/superpowers/specs/2026-07-30-ai-literacy-tone-alignment-design.md`
+- モバイルヘッダー・開始操作追補正典: `docs/superpowers/specs/2026-07-30-mobile-header-start-actions-followup-design.md`
+- モバイルヘッダー・開始操作追補計画: `docs/superpowers/plans/2026-07-30-mobile-header-start-actions-followup.md`
 - 状態: DONE。既存Q-014画面の実ブラウザ検証に加え、`result-text-v2`の51称号×3件の文面承認、domain、snapshot、結果画面接続、全体回帰、320／360／414／960pxのローカル実ブラウザQA、AIリテラシー検定を基準にした共通ヘッダー寸法と開始画面の一枚パネル整合まで完了した。Pages上の再確認はT-011のQA一時プレビュー運用として別管理する
 - 作業:
   - `Big Five 自己理解チェック`／`BIG FIVE SELF UNDERSTANDING`の共通ヘッダーと、緑のkicker／進捗＋`h1`の共通見出しを開始・回答・20問分岐・結果・履歴・比較へ適用する。
+  - 回答・20問分岐だけにあったsticky変種を廃止し、通常の共通ヘッダーへ統一する。第一候補の`中断してトップへ`は320／360／414pxで重なり・折返し・横overflowなしを実測済み。
+  - 開始画面の説明見出しを`このツールについて`へ改め、開始・再開操作を12px間隔の同幅レスポンシブgridへまとめる。
   - 全画面の控えめなアプリ名、設問のbalanced wrapping、回答画面固有の20〜22px設問文・16px選択肢・行間1.5・最低高56px、中断導線を実装する。
   - 20問選択前、簡易プレビュー表示後、21〜49問の状態別再開と、新規開始時の置換確認を実装する。
   - 簡易プレビューに追加30問、中断、20問で終了の3操作を実装し、結果保存失敗・進捗削除失敗を非破壊で扱う。

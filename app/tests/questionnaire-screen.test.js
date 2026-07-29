@@ -241,7 +241,7 @@ test("T-004 S-002 renders every control as a non-submit button", () => {
   }
 });
 
-test("T-008A S-002 uses the shared sticky header action and keeps discard in secondary management", () => {
+test("T-008A S-002 uses the shared standard header action and keeps discard in secondary management", () => {
   for (const [viewModel, actions] of [
     [questionViewModel(), questionActions()],
     [previewViewModel(), previewActions()],
@@ -250,8 +250,13 @@ test("T-008A S-002 uses the shared sticky header action and keeps discard in sec
     renderQuestionnaireScreen(host, viewModel, actions);
 
     const header = collectElements(host)
-      .find(({ className }) => className === "app-header is-sticky");
+      .find(({ className }) => className === "app-header");
     assert.ok(header);
+    assert.equal(
+      collectElements(host)
+        .filter(({ className }) => className === "app-header is-sticky").length,
+      0,
+    );
     assert.equal(
       collectElements(header)
         .find(({ className }) => className === "app-header-action")

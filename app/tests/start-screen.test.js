@@ -106,6 +106,23 @@ test("T-008A S-001 groups primary start content into one panel without nesting a
     .find(({ className }) => className === "start-overview");
   assert.ok(overview);
   assert.equal(
+    overview.attributes.get("aria-labelledby"),
+    "start-tool-overview-title",
+  );
+  assert.equal(
+    collectElements(overview)
+      .find(({ tagName }) => tagName === "h2")
+      .textContent,
+    "このツールについて",
+  );
+  const startActions = collectElements(overview)
+    .find(({ className }) => className === "start-actions");
+  assert.ok(startActions);
+  assert.deepEqual(
+    startActions.children.map(({ className }) => className),
+    ["primary-button", "secondary-button"],
+  );
+  assert.equal(
     collectElements(panel)
       .filter(({ className }) => className === "screen-heading").length,
     1,

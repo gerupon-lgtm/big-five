@@ -23,20 +23,22 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
 
   const overview = documentObject.createElement("section");
   overview.className = "start-overview";
-  overview.setAttribute("aria-labelledby", "build-status-title");
+  overview.setAttribute("aria-labelledby", "start-tool-overview-title");
   const statusTitle = appendTextElement(
     overview,
     "h2",
-    "Big Fiveについて",
+    "このツールについて",
   );
-  statusTitle.id = "build-status-title";
+  statusTitle.id = "start-tool-overview-title";
   appendTextElement(
     overview,
     "p",
     "20問の簡易プレビューから始め、希望に応じて50問の詳しい結果まで進められます。",
   );
+  const startActions = documentObject.createElement("div");
+  startActions.className = "start-actions";
   if (typeof actions.onStartNew === "function") {
-    const startButton = appendTextElement(overview, "button", "診断を始める", "primary-button");
+    const startButton = appendTextElement(startActions, "button", "診断を始める", "primary-button");
     startButton.setAttribute("type", "button");
     startButton.addEventListener("click", actions.onStartNew);
   }
@@ -45,13 +47,16 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
       ? options.resumeLabel
       : "途中から再開する";
     const resumeButton = appendTextElement(
-      overview,
+      startActions,
       "button",
       resumeLabel,
       "secondary-button",
     );
     resumeButton.setAttribute("type", "button");
     resumeButton.addEventListener("click", actions.onResume);
+  }
+  if (startActions.children.length > 0) {
+    overview.append(startActions);
   }
   panel.append(overview);
   main.append(panel);

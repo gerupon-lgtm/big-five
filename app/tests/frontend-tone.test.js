@@ -16,6 +16,19 @@ test("T-008A S-001 applies the approved shared frontend tone", async () => {
   assert.match(styles, /\.screen-title\s*\{[^}]*font-size:\s*clamp\(1\.375rem,\s*1\.25rem \+ 0\.6vw,\s*1\.5rem\)/s);
 });
 
+test("T-008A S-001 aligns start and resume actions with an equal-width responsive grid", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+
+  assert.match(
+    styles,
+    /\.start-actions\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(150px,\s*1fr\)\)[^}]*gap:\s*12px/s,
+  );
+  assert.match(
+    styles,
+    /\.start-actions\s*>\s*button\s*\{[^}]*width:\s*100%[^}]*margin:\s*0/s,
+  );
+});
+
 test("T-008A keeps sticky header behavior without redefining brand geometry", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
   const stickyHeader = styles.match(/\.app-header\.is-sticky\s*\{([^}]*)\}/)?.[1] ?? "";

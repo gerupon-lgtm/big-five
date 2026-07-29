@@ -96,7 +96,6 @@ function renderStorageError(parent) {
 
 function renderQuestion(main, viewModel, actions) {
   appendAppHeader(main, {
-    sticky: true,
     action: {
       label: "中断してトップへ",
       onClick: actions.onPause,
@@ -153,7 +152,6 @@ function renderQuestion(main, viewModel, actions) {
 
 function renderPreviewChoice(main, viewModel, actions) {
   appendAppHeader(main, {
-    sticky: true,
     action: {
       label: "中断してトップへ",
       onClick: actions.onPause,
