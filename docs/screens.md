@@ -399,6 +399,8 @@ Q-007確定前の【想定】:
 
 追補後の自動検証は`npm.cmd test`が534件成功・失敗0件、`npm.cmd run check`が48 JavaScript files・canonical runtime version 1件、`npm.cmd run content:validate`が警告658件・エラー0件、`npm.cmd run qa:preview:build`が102 files・6,664,018 bytesで成功し、`git diff --check`も成功した。コンテンツ警告はapproved release未選択、Q-012、Q-013の既知gateであり、このUI追補では状態を変更していない。
 
+commit `147b4ac`のpush後、GitHub Actions run `30494610121`は成功し、build job `90720404034`が20秒、deploy job `90720480237`が30秒で完了した。公開先の320／360／414pxでは回答ヘッダーが通常の`app-header`となり、`中断してトップへ`は1行のまま、ブランドとの間隔が順に約`5.4px`／`30.7px`／`12px`で、重なり・横overflowはなかった。開始画面の`このツールについて`も確認し、console warning／errorは0件だった。公開browser環境では保存不可通知が表示されたため、再開ボタン2件表示の同幅gridはローカル実ブラウザ測定を根拠とする。
+
 current HEADで360×800を画面ごとの別tabで再確認し、開始`345/345`、回答21問目`360/360`、20問完答分岐`360/360`、結果`345/345`、履歴`345/345`、比較`345/345`で横overflowがなかった。開始の`診断を始める`、回答の中立選択肢、分岐の簡易プレビューボタン、結果の`ほかのヒントを見る`、履歴の`トップ画面へ`、比較の`履歴へ戻る`の各1操作でsolid 3pxのfocus-visible outlineを確認した。回答・分岐・履歴・比較のヘッダー操作はnowrapで、各tabのconsole warning／errorは0件だった。focus確認は各画面1操作だけで、全操作のキーボード走査ではない。
 
 Pagesの360×800では開始、回答、履歴を確認した。開始はdocument `360/360`で一枚の白い主パネルを維持した。回答は`345/345`で`中断してトップへ`がnowrap、ブランドとの間隔6pxで重なりなし、設問20pxだった。履歴は`360/360`で`トップ画面へ`がnowrap、ブランドとの間隔52.3pxで重なりがなかった。3画面ともconsole warning／errorは0件でスクリーンショットを実見した。回答の保存不可通知は公開browser環境固有で非致命的だった。Pagesの結果・比較等は今回確認していない。

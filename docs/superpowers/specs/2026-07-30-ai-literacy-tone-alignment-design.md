@@ -208,6 +208,8 @@ commit `c03c47b`のpush後、GitHub Actions run `30482618659`は成功し、buil
 
 追補後は`npm.cmd test`が534件成功・失敗0件、`npm.cmd run check`が48 JavaScript files・canonical runtime version 1件、`npm.cmd run content:validate`が警告658件・エラー0件、`npm.cmd run qa:preview:build`が102 files・6,664,018 bytesで成功し、`git diff --check`も成功した。独立レビューはblocker／important／minor 0件で承認した。
 
+commit `147b4ac`のpush後、GitHub Actions run `30494610121`は成功し、build job `90720404034`が20秒、deploy job `90720480237`が30秒で完了した。公開先の320／360／414pxで通常の`app-header`、第一候補`中断してトップへ`の1行表示、重なりなし、横overflowなしを確認した。ブランドとの間隔は順に約`5.4px`／`30.7px`／`12px`だった。開始画面の`このツールについて`も反映され、console warning／errorは0件だった。公開browser環境では保存不可通知が表示されたため、再開ボタンを含む2操作の同幅gridはローカル実ブラウザ測定を根拠とする。
+
 ## 9. 完了条件
 
 - 全画面の共通ヘッダーがAIリテラシー検定と同じ寸法体系になる。
