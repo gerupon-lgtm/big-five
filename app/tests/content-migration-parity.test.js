@@ -6,9 +6,10 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { DiagnosticDefinition, FactorDefinitions, QuestionDefinitions } from "../js/data/diagnostic-definition.js";
+import { FactorResultTextDefinitions } from "../js/data/factor-result-text-definitions.js";
 import { ResultEvidenceDefinitions } from "../js/data/result-evidence-definitions.js";
-import { ResultTextDefinitions } from "../js/data/result-text-definitions.js";
 import { TitleProfileDefinitions } from "../js/data/title-profile-definitions.js";
+import { TitleResultTextDefinitions } from "../js/data/title-result-text-definitions.js";
 import { compileDiagnosisContent } from "../../scripts/content/compile-diagnosis.mjs";
 import { compileResultContent } from "../../scripts/content/compile-result-content.mjs";
 import { compileRelease, validateAuthoringTree } from "../../scripts/content/content-compiler.mjs";
@@ -20,6 +21,10 @@ const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const SOURCE = path.join(ROOT, "content", "source");
 const SCHEMAS = path.join(ROOT, "content", "schemas");
 const APPROVAL_IDS = ["E-0", "E-1", "E-2", "E-3", "E-4", "E-5", "T-0", "T-1", "T-2", "T-3", "T-4", "F-1", "F-2", "F-3", "F-4", "F-5", "X-1", "X-2"];
+const LEGACY_RESULT_TEXT_DEFINITIONS = Object.freeze([
+  ...TitleResultTextDefinitions,
+  ...FactorResultTextDefinitions,
+]);
 
 async function table(sourceDir, relative) {
   const schema = await loadTableSchema(path.join(SCHEMAS, `${path.basename(relative, ".csv")}.schema.json`));
@@ -92,8 +97,8 @@ test("T-007 exporter creates an isolated normalized source tree once and never o
     previewMappings: 20,
     titles: 51,
     titleFactors: 90,
-    resultTexts: 237,
-    resultTextEvidence: 267,
+    resultTexts: 390,
+    resultTextEvidence: 420,
     evidenceDefinitions: 6,
     evidenceClaims: 12,
     approvals: 18,
@@ -125,11 +130,14 @@ test("T-007 migrated CSV deep-equals the current formal definitions through load
   const diagnosis = await loadAndCompileDiagnosis(SOURCE);
   assert.deepEqual(diagnosis.questions, QuestionDefinitions);
   assert.deepEqual(diagnosis.factors, FactorDefinitions);
-  assert.deepEqual(diagnosis.diagnostic, DiagnosticDefinition);
+  assert.deepEqual(diagnosis.diagnostic, {
+    ...DiagnosticDefinition,
+    resultTextVersion: "result-text-v1",
+  });
 
   const result = await loadAndCompileResultContent(SOURCE);
   assert.deepEqual(result.titleProfiles, TitleProfileDefinitions);
-  assert.deepEqual(result.textDefinitions, ResultTextDefinitions);
+  assert.deepEqual(result.textDefinitions, LEGACY_RESULT_TEXT_DEFINITIONS);
   assert.deepEqual(result.evidenceDefinitions, ResultEvidenceDefinitions);
 });
 

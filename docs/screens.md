@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.8 |
+| 設計版 | 0.9 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-28 |
-| 入力要件 | 要件定義書v1.13 |
+| 更新日 | 2026-07-30 |
+| 入力要件 | 要件定義書v1.14 |
 | 対象 | スマートフォン優先、PC対応 |
 
 ## 1. 画面方式
@@ -20,7 +20,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は実装済みで、人は`content/source/`のCSVだけを編集する。3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testがあるが、画面はまだ既存ES Modulesをruntime compatibility authorityとして使い、`app/content/` JSONをfetchしない。
 
-初期件数は50問、固定20問、51称号、237結果文、6根拠である。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
+`result-text-v1`は237件の不変な履歴互換版で、別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなっている。現行ES Modules runtimeの`result-text-v2`は基本237件に、TR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済み修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の根拠定義は引き続き固定6件である。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
 
 ## 2. 画面一覧
 
@@ -157,7 +157,7 @@ flowchart TD
 
 ## 7. S-003 基本結果
 
-Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。結果画面は称号・猫heroと称号理由を別sectionにし、名前付きレーダー、固定順5因子のコンパクトな行・棒・数値、同時1因子／同一因子内1詳細だけの二段階開閉、設問構成sheet、4つの固定方法sheetまで接続済みである。保存済みsnapshotの`scaleVersion`、`questionVersion`、`scoringVersion`が登録済み診断定義と完全一致する場合だけ、その定義の設問構成・方法説明を表示する。未登録の履歴版では現行版の件数・限界・出典を流用せず、説明を利用できない旨と、保存済みの称号・スコア・結果文は確認できる旨を表示する。`result-text-v1`の237件は全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。approved release未選択、Q-012正式release、Q-013 production data、T-007共有、`result-text-v2`の51称号分`titleReflection`は未完了として維持する。
+Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。結果画面は称号・猫hero、称号理由、称号別`titleReflection`を独立sectionにし、名前付きレーダー、固定順5因子のコンパクトな行・棒・数値、同時1因子／同一因子内1詳細だけの二段階開閉、設問構成sheet、4つの固定方法sheetまで接続済みである。保存済みsnapshotの`scaleVersion`、`questionVersion`、`scoringVersion`が登録済み診断定義と完全一致する場合だけ、その定義の設問構成・方法説明を表示する。未登録の履歴版では現行版の件数・限界・出典を流用せず、説明を利用できない旨と、保存済みの称号・スコア・結果文は確認できる旨を表示する。`result-text-v1`の237件は全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`の153件の`titleReflection`はTR-0〜TR-4ですべて承認済みで、現行runtimeへ実装済みである。approved release未選択、Q-012正式release、Q-013 production data、実際のT-007共有UIは未完了として維持する。
 
 ### ファーストビュー
 
@@ -171,7 +171,7 @@ Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独
 - 固定因子順の因子名、棒、数値、小さな「説明を見る」
 - 日本語版20項目が独立検証済みではない旨
 
-現行`result-text-v1`の表示入力は`RenderedResultText` 7件（`titleSubtitle`、`titleReason`、`FACTOR_ORDER`順の5因子それぞれの観察文）であり、heroの中立副題と独立した「この称号になった理由」から始め、5因子の段階展開ですべてへ到達できる。共通見出しの導入後も、この結果内容と結果下部の操作は変更しない。`result-text-v2`では固定順1件目の`titleReflection`を加えるが、51称号分の文面作成とContent Approvalが完了するまで現行画面へ補完表示しない。20問簡易プレビューの限界と「50問で変わり得る」注意は、版付き結果文とは別の必須UI文面として表示する。
+現行`result-text-v2`の通常表示入力は`RenderedResultText` 8件（`titleSubtitle`、`titleReason`、固定順1件目の`titleReflection`、`FACTOR_ORDER`順の5因子それぞれの観察文）である。heroの中立副題と独立した「この称号になった理由」に続けて「振り返りのヒント」1件を表示し、その後の5因子の段階展開から全因子文へ到達できる。称号別振り返り定義が完全な3件組でない場合は当該section全体を省略し、称号・因子を維持した7件のゼロ-reflection fallbackを表示する。部分的な振り返りは表示しない。20問簡易プレビューの限界と「50問で変わり得る」注意は、版付き結果文とは別の必須UI文面として表示する。
 
 ### 続き
 
@@ -193,14 +193,14 @@ Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独
 
 ## 8. S-004 詳細結果
 
-50問完答callerはanswer-freeのsnapshotを生成・保存し、`#/result?resultId=...`でS-004を開く。保存成功時は結果追加とProgressRecord削除を原子的に行い、保存失敗時もlive結果と全42件の文面を維持して通知し、callerは回答地図と完答ProgressRecordへの参照を破棄する。42件は中立副題、称号になった理由、続いてsection-first・`FACTOR_ORDER`順の5因子それぞれの観察文、強み、裏返り、仕事、人間関係、ストレス、問いかけ、行動ヒントで構成する。表示時はfactor-firstへ不変投影し、同時1因子／同一因子内1詳細だけを開く二段階開閉から全42件へ到達できる。
+50問完答callerはanswer-freeのsnapshotを生成・保存し、`#/result?resultId=...`でS-004を開く。保存成功時は結果追加とProgressRecord削除を原子的に行い、保存失敗時もlive結果と文面を維持して通知し、callerは回答地図と完答ProgressRecordへの参照を破棄する。現行`result-text-v2`の通常45件は、中立副題、称号になった理由、固定順3件の`titleReflection`、続いてsection-first・`FACTOR_ORDER`順の5因子それぞれの観察文、強み、裏返り、仕事、人間関係、ストレス、問いかけ、行動ヒントで構成する。表示時は因子文だけをfactor-firstへ不変投影し、同時1因子／同一因子内1詳細だけを開く二段階開閉から全因子文へ到達できる。称号別振り返り定義が完全な3件組でない場合はsection全体を省略して42件のゼロ-reflection fallbackを表示し、部分的な振り返りは受理しない。
 
 ### 表示
 
 - 英字見出し`DETAIL RESULT`と主見出し「50問詳細結果」
 - 称号、猫、中立副題、レーダーチャート
 - 称号になった理由
-- 「振り返りのヒント」1件と「もし合いそうなら、参考にしてみてください」。残り最大2件を「ほかのヒントを見る」で展開
+- 「振り返りのヒント」1件。共通補助文は設けず、各提案を「〜してみませんか。」で結ぶ。残り最大2件を「ほかのヒントを見る」で展開
 - 称号の代表2因子と全5因子
 - 名前付きレーダーと、固定因子順の因子名、棒、数値、「説明を見る」
 - 同時に1因子だけを展開し、「今の傾向」「活かしやすい強み」「強みの裏返り」「仕事」「人間関係」「ストレス」「振り返りと行動ヒント」の短いサマリを表示する
@@ -239,6 +239,8 @@ S-003/S-004に複数パレットを表示する。
 香調候補は「ひと息つきたい」「気持ちを切り替えたい」「静かに取り組みたい」の固定順で、各2件、合計6件を同時表示する。通常結果では各香調の説明直後に「香りの素材例」を1〜3件表示する。共有プレビューでは各場面の代表1件、合計3件へ要約し、素材例は表示しない。
 
 ## 10. S-005 共有プレビュー
+
+実際の共有UI・共有カード・共有テキストはT-007の後続範囲である。先行する純粋な共有候補抽出境界では`titleReflection`を除外済みだが、これをS-005実装完了やブラウザQA完了の証拠にはしない。
 
 ### 表示
 
@@ -383,3 +385,5 @@ Q-007確定前の【想定】:
 2026-07-29のフロントエンドトーン検証では、320px、360px、960px幅の主要画面で横overflowがないことを確認した。360px回答画面では`中断してトップへ`が`white-space: nowrap`で1行を維持し、設問20px、回答文字16px、回答ボタン高56pxであることを確認した。ブラウザ実フローは20問回答から簡易プレビュー、残り30問から50問詳細結果、履歴表示、互換な50問結果2件の比較表示まで通過した。自動検証は`npm.cmd test`が511件成功・失敗0件、`npm.cmd run check`が46 JavaScript filesとcanonical runtime version 1件で成功、`npm.cmd run qa:preview:build`が100 files・6,631,601 bytesで成功した。
 
 同日のChrome追加検証では、320×800、360×800、960×900の開始・回答・履歴・結果・比較に横overflowがないことを確認した。共有ヘッダー高は3幅とも52px、主見出し上端は131px相当で、360pxのkicker／進捗上端は104px相当である。960px回答画面は設問22px、回答文字16px、回答ボタン高56px、開始・履歴・結果・比較の主見出し24pxである。200%文字拡大は`devicePixelRatio` 2、CSS viewport 960×487で、開始・回答・履歴・詳細結果・比較の横overflowなし、共有ヘッダー高52px、主見出し24px以下、ヘッダー操作のnowrap、回答文字16px・回答ボタン高56pxを維持した。キーボードでは開始、回答、結果の展開、履歴管理dialogを`Tab`／`Shift+Tab`と`Enter`で操作し、`Escape`後にfocusが`履歴削除`へ戻ること、確認したfocusに`:focus-visible`とsolid outlineがあることを確認した。
+
+2026-07-30時点で、`result-text-v2`のpreview 1件、detail 1件＋追加2件の展開、ゼロ-reflection fallbackは自動テストで確認済みである。320px、360px、960pxの実ブラウザでの`titleReflection`表示・キーボード操作・横overflow・console確認は未実施であり、完了記録へ読み替えない。

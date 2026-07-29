@@ -47,19 +47,33 @@ test("T-005 F-005 preview completion produces the all-middle snapshot without re
   assert.equal(snapshot.mode, "preview20");
   assert.equal(snapshot.questionCount, 20);
   assert.equal(snapshot.factors.length, 5);
-  assert.equal(snapshot.renderedTexts.length, 7);
+  assert.equal(snapshot.renderedTexts.length, 8);
+  assert.deepEqual(
+    snapshot.renderedTexts.filter(({ section }) => section === "titleReflection")
+      .map(({ id }) => id),
+    ["title-reflection-balanced-1"],
+  );
   assert.equal(snapshot.selectedPaletteId, "palette-default");
   assert.equal(snapshot.characterAssetVersion, "character-balanced-v1");
   assert.equal(containsAnswers(snapshot), false);
 });
 
-test("T-005 F-005 detail completion produces all 42 rendered texts", () => {
+test("T-005 F-005 detail completion produces all 45 rendered texts", () => {
   const snapshot = createDiagnosticResultSnapshot(inputFor({ questionCount: 50 }));
 
   assert.equal(snapshot.mode, "detail50");
   assert.equal(snapshot.questionCount, 50);
   assert.equal(snapshot.factors.length, 5);
-  assert.equal(snapshot.renderedTexts.length, 42);
+  assert.equal(snapshot.renderedTexts.length, 45);
+  assert.deepEqual(
+    snapshot.renderedTexts.filter(({ section }) => section === "titleReflection")
+      .map(({ id }) => id),
+    [
+      "title-reflection-balanced-1",
+      "title-reflection-balanced-2",
+      "title-reflection-balanced-3",
+    ],
+  );
 });
 
 test("T-005 F-006 completion preserves caller identity, completion time, versions, and card template", () => {

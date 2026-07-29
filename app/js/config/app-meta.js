@@ -3,7 +3,7 @@ const diagnosticVersions = Object.freeze({
   scaleVersion: "ipip-ja-50-v1",
   questionVersion: "ipip-ja-50-question-set-v1",
   scoringVersion: "ipip-ja-50-scoring-v1",
-  resultTextVersion: "result-text-v1",
+  resultTextVersion: "result-text-v2",
   titleRuleVersion: "title-rule-v1",
 });
 

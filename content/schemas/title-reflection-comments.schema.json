@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "fileName": "title-reflection-comments.csv",
+  "columns": [
+    { "name": "text_id", "type": "reference", "required": true },
+    { "name": "result_text_version", "type": "version", "required": true },
+    { "name": "title_id", "type": "reference", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "text", "type": "text", "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

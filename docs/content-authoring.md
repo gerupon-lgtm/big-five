@@ -13,7 +13,7 @@ Excelでは「CSV UTF-8」で保存することを推奨します。日本語版
 | 診断、出典、限界、因子 | `content/source/diagnoses/<diagnostic-definition-version>/` | `ipip-ja-50-definition-v1` |
 | 50問と固定20問 | `content/source/questions/<question-version>/` | `ipip-ja-50-question-set-v1` |
 | 称号と因子関係 | `content/source/titles/<title-rule-version>/` | `title-rule-v1` |
-| 結果文と結果文根拠の対応 | `content/source/result-texts/<result-text-version>/` | `result-text-v1` |
+| 結果文、結果文根拠の対応、称号別振り返りヒント | `content/source/result-texts/<result-text-version>/` | `result-text-v2`（現行runtime）／`result-text-v1`（履歴互換） |
 | 根拠と主張の対応 | `content/source/evidence/<result-evidence-version>/` | `result-evidence-v1` |
 | Q-006の人手承認台帳 | `content/source/approvals/result-content-approvals.csv` | 版横断の18行 gate |
 | 公開候補と公開履歴 | `content/source/releases/release-manifest.csv`、`release-history.csv` | 現在は両方ヘッダーのみ |
@@ -31,7 +31,9 @@ Excelでは「CSV UTF-8」で保存することを推奨します。日本語版
 - Q-012のキャラクターカタログとQ-013の演出データは未作成です。
 - release CSVはヘッダーだけで、approved releaseはありません。
 
-現在はQ-006のE-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の全18 gateがapprovedとなり、2026-07-28にContent Approvalを完了しています。ただし、行statusと別gateは引き続き別契約であり、approved releaseは未選択です。Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`も未完了のままです。
+現在はQ-006のE-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の全18 gateがapprovedとなり、2026-07-28に`result-text-v1`のContent Approvalを完了しています。`result-text-v2`は、この不変な237件を履歴互換の基準として残しながら、ユーザー承認済みの文面修正27件を版内へ反映し、TR-0〜TR-4で承認済みの称号別`titleReflection`を51称号×3件＝153件追加した現行runtime版です。結果文は基本237件＋振り返り153件＝390件、結果文と根拠の対応行は267件です。実行時の`ResultEvidenceDefinition`自体は引き続き固定6件であり、267件は根拠定義数ではありません。
+
+ただし、行statusと別gateは引き続き別契約であり、approved releaseは未選択です。Q-012正式releaseとQ-013 production dataも未完了のままです。`result-text-v2`を現行ES Modules runtimeで利用できることを、CSV/JSONの正式release選択と同一視しません。
 
 releaseを選択するには、参照される全行と別gateが`approved`であり、Q-006、Q-012、Q-013の承認条件をすべて満たす必要があります。履歴は追記専用です。差し替えも切り戻しも新しい不変version/release行で行い、過去のapproved history/sourceを書き換えません。
 

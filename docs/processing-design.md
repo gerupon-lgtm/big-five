@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.8 |
+| 設計版 | 0.9 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-28 |
-| 入力要件 | 要件定義書v1.13 |
+| 更新日 | 2026-07-30 |
+| 入力要件 | 要件定義書v1.14 |
 | 実行方式 | 通常版はブラウザ内完結。ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -93,7 +93,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤として、`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。人はCSVだけを編集し、生成`app/content/` JSONを編集・コミットしない。
 
-ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
+ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。現行ES Modules runtimeは`result-text-v2`を使い、v1の基本237件を履歴互換として残した上で、承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を反映する。v2は基本237件＋振り返り153件＝390件、結果文と根拠の対応行は267件であり、実行時の根拠定義自体は固定6件である。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 
 ## 4. 採点
 
@@ -185,9 +185,9 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 ## 6. 結果モデル生成
 
-### 6.1 `result-text-v1`定義選択
+### 6.1 版付き結果文定義の選択
 
-`ResultEvidenceDefinition`、`ResultTextDefinition`、`TitleProfileDefinition`の参照整合を起動時に検証する。`result-text-v1`はtitle 102件＋factor 135件＝237件のliteral定義であり、実行時生成しない。結果文選択へ生回答、DOM、Canvas、localStorage、ネットワーク、猫色、パレット、香りを渡さない。
+`ResultEvidenceDefinition`、`ResultTextDefinition`、`TitleProfileDefinition`の参照整合を起動時に検証する。`result-text-v1`はtitle 102件＋factor 135件＝237件の不変な履歴互換定義である。現行`result-text-v2`は基本237件と称号別`titleReflection`153件の合計390件で、基本文面のうち27件はユーザー承認済みのv2修正版である。結果文選択へ生回答、DOM、Canvas、localStorage、ネットワーク、猫色、パレット、香りを渡さない。
 
 ### 6.2 `composeResultTexts`
 
@@ -206,14 +206,14 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 1. `preview20`と20、`detail50`と50の組だけを許可する。
 2. 全定義が要求`version`と一致することを確認し、混在版を拒否する。
-3. titleは`titleId`に対する`titleSubtitle`、`titleReason`を各1件だけ選ぶ。
+3. titleは`titleId`に対する`titleSubtitle`、`titleReason`を各1件だけ選ぶ。v2の`titleReflection`は完全な固定順3件組を得られる場合に限り、previewは1件目、detailは3件すべてを選ぶ。
 4. factorは`mode`、`questionCount`、`factorId`、`band`がexact一致する定義を、必要な節ごとに各1件だけ選ぶ。
 5. 条件選択後に必要なdefinitionの欠落・重複・件数を検証する。
-6. title 2件を先頭に置き、その後をsection-first、各section内を`FACTOR_ORDER`の固定factor順にする。
+6. title 2件、選択した`titleReflection`、その後をsection-first、各section内を`FACTOR_ORDER`の固定factor順にする。
 
-`composeResultTexts`の責務はdefinitionの条件選択、欠落・重複・件数、`version`、section-first／`FACTOR_ORDER`のsection・factor順を検証し、`RenderedResultText`の5フィールド（`id`、`version`、`section`、`text`、`evidenceRefs`）だけへ投影することである。previewはtitle 2件＋5観察文の7件、detailはtitle 2件＋5因子×8節の42件である。配列、各record、複製した`evidenceRefs`をdeep freezeし、入力を変更・freezeしない。
+`composeResultTexts`の責務はdefinitionの条件選択、欠落・重複・件数、`version`、section-first／`FACTOR_ORDER`のsection・factor順を検証し、`RenderedResultText`の5フィールド（`id`、`version`、`section`、`text`、`evidenceRefs`）だけへ投影することである。v1はpreview 7件／detail 42件、v2の完全定義はpreview 8件／detail 45件である。v2の称号別振り返り定義が0〜2件、順序違い、または重複で完全な3件組にならない場合、composerは振り返りを部分表示せず3件すべてを省略し、称号・因子を維持したpreview 7件／detail 42件を返す。配列、各record、複製した`evidenceRefs`をdeep freezeし、入力を変更・freezeしない。
 
-`result-text-v2`では称号ごとの`titleReflection`を1〜3件追加する。コンパイラは専用CSVから固定順へ投影し、1件目だけをpreview許可とする。`composeResultTexts`はpreviewで1件目、detailで1〜3件を選択し、ランダム値・現在時刻・DOM・香り・色を入力にしない。既存`result-text-v1`の237件と承認状態は上書きしない。51称号分の`titleReflection`は現在も作成・Content Approval pendingであり、未承認文面をruntimeへ補完しない。
+`result-text-v2`では称号ごとの`titleReflection`を3件追加する。コンパイラは専用CSVから固定順へ投影し、1件目だけをpreview許可とする。`composeResultTexts`はpreviewで1件目、detailで3件を選択し、ランダム値・現在時刻・DOM・香り・色を入力にしない。既存`result-text-v1`の237件と承認状態は上書きしない。51称号分153件はTR-0〜TR-4でユーザー承認済みである。
 
 ### 6.3 ResultModelとResultSnapshot
 
@@ -222,14 +222,14 @@ displayScore = round((rawMean - 1) / 4 * 100)
 `createResultSnapshot`は次を実施する。
 
 1. exact 9フィールド入力、`preview20`/20または`detail50`/50、厳密ISO日時を検証する。
-2. `VersionTuple`の9フィールドと、mode別7件／42件のRenderedResultTextの`version`、section・factor順、各位置のexact production record IDをsnapshot境界で検証する。
-3. 表示した文章と根拠参照をResultSnapshotへ複製し、後の`result-text-v1`定義変更から診断時文面を隔離する。
+2. `VersionTuple`の9フィールドと、v1のmode別7件／42件、v2の通常8件／45件またはゼロ-reflection fallback 7件／42件のRenderedResultTextについて、`version`、section・factor順、各位置のexact production record IDをsnapshot境界で検証する。v2の部分的な振り返り組は拒否する。
+3. 表示した文章と根拠参照をResultSnapshotへ複製し、後の版付き結果文定義変更から診断時文面を隔離する。
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
-上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`として実装された後、根拠台帳の全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。approved release未選択、Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`は後続である。
+上記Q-006ドメイン実装と独立レビューは完了している。`result-text-v1`は根拠台帳の全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`はユーザー承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を含む現行runtime版である。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。approved release未選択、Q-012正式release、Q-013 production dataは後続である。
 
-`result-text-v2`を承認・有効化した後は、診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。共有モデル生成時は`titleReflection`を除外する。
+診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。純粋共有候補抽出境界`selectShareableResultTexts`は`titleReflection`を除外するが、実際の共有UI・共有画像・共有テキストはT-007の後続作業である。
 
 ## 7. 履歴保存
 
@@ -275,11 +275,11 @@ live controllerは`#/answer`を正規routeとし、ResultSnapshotをメモリ上
 - 20問ではResultSnapshotに存在しないdetail sectionを生成・補完しない。
 - 開閉後は対象見出しへフォーカスを奪わず、見出しがviewport内に残る最小限のスクロール調整だけを行う。
 
-現行presentationは、称号・猫heroと`titleReason`を独立sectionにし、名前付きレーダーの下へ固定順5因子のコンパクトな行・棒・数値を表示する。preview20の7件、detail50の42件は保存順を変えず表示モデルへ投影し、上記の同時1因子／同一因子内1詳細の規則から全件へ到達できる。`titleReflection`は未承認のため現行件数へ含めない。
+現行presentationは、称号・猫heroと`titleReason`を独立sectionにし、その直後へ`titleReflection`を置き、名前付きレーダーの下へ固定順5因子のコンパクトな行・棒・数値を表示する。完全なv2結果はpreview20の8件、detail50の45件を保存順を変えず表示モデルへ投影する。ゼロ-reflection fallbackでは従来どおり7件／42件を表示し、称号・因子結果を維持する。部分的な振り返り組を画面だけで補完または表示しない。
 
-承認済み`result-text-v2`を有効化した後は、称号別`titleReflection`の開閉もpresentation層の一時状態とする。1件目は常時表示し、50問だけ残り最大2件を1つの`ほかのヒントを見る`で一括開閉する。因子詳細の開閉状態とは独立させ、第三階層を作らない。
+称号別`titleReflection`の開閉はpresentation層の一時状態とする。1件目は常時表示し、50問だけ残り2件を1つの`ほかのヒントを見る`で一括開閉する。因子詳細の開閉状態とは独立させ、第三階層を作らない。
 
-ResultSnapshotの42件はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。カテゴリ行の短いサマリは内容を代替する固定UI説明であり、スコア別結果文を生成・要約しない。`詳しく見る`で元の`RenderedResultText`と根拠を表示する。
+ResultSnapshotの因子文（preview 5件／detail 40件）はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。カテゴリ行の短いサマリは内容を代替する固定UI説明であり、スコア別結果文を生成・要約しない。`詳しく見る`で元の`RenderedResultText`と根拠を表示する。
 
 `因子ごとの設問構成を見る`はDiagnosticDefinitionとQuestionDefinitionから、現在modeの固定questionId集合を因子・`keyedDirection`別に件数集計する純粋モデルを使う。設問本文、回答、スコア、称号を出力へ含めない。測定の土台等の固定説明は診断定義版とmodeだけを入力とし、ResultSnapshotの称号・数値で分岐しない。
 
@@ -374,6 +374,8 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 - 植物・精油名は香り素材マスタの`displayName`だけに許可する。商品、ブランド、購入URL、適合推奨、量、滴数、濃度、配合、摂取、塗布、ディフューザー等の使用法、治療・改善・能力向上効果のデータを定義スキーマで禁止する。
 
 ## 12. 共有カード
+
+この章はT-007の設計であり、現時点で共有画面・カード描画・共有テキスト生成の実装完了を示さない。先行実装済みなのは、ResultSnapshotの結果文から`titleReflection`を除外したdeep-freeze済み候補を返す純粋関数`selectShareableResultTexts`とその単体テストだけである。
 
 ### 12.1 生成
 

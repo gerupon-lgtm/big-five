@@ -1,5 +1,8 @@
 import { validateResultSnapshot } from "../domain/result-snapshot.js";
-import { createResultDisclosureModel } from "../domain/result-disclosure-model.js";
+import {
+  createResultDisclosureModel,
+  createTitleReflectionDisclosureModel,
+} from "../domain/result-disclosure-model.js";
 import { drawResultRadar } from "./radar-chart.js";
 import { appendAppHeader } from "./app-header.js";
 import { appendBottomSheetLauncher } from "./bottom-sheet.js";
@@ -104,6 +107,44 @@ function renderTitleReason(parent, snapshot) {
   section.className = "result-title-reason";
   appendTextElement(section, "h2", "この称号になった理由");
   appendRenderedText(section, snapshot.renderedTexts[1]);
+  parent.append(section);
+}
+
+function renderTitleReflection(parent, snapshot) {
+  const disclosure = createTitleReflectionDisclosureModel(snapshot);
+  if (disclosure.records.length === 0) return;
+
+  const section = parent.ownerDocument.createElement("section");
+  section.className = "result-title-reflection";
+  const heading = appendTextElement(section, "h2", "振り返りのヒント");
+  heading.id = "title-reflection-heading";
+  section.setAttribute("aria-labelledby", heading.id);
+  appendRenderedText(section, disclosure.records[0]);
+
+  if (disclosure.mode === "detail50") {
+    const trigger = appendTextElement(
+      section,
+      "button",
+      "ほかのヒントを見る",
+      "title-reflection-trigger",
+    );
+    trigger.setAttribute("type", "button");
+    trigger.setAttribute("aria-expanded", "false");
+    const extra = section.ownerDocument.createElement("div");
+    extra.className = "title-reflection-extra";
+    extra.id = "title-reflection-extra";
+    extra.hidden = true;
+    trigger.setAttribute("aria-controls", extra.id);
+    for (const record of disclosure.records.slice(1)) appendRenderedText(extra, record);
+    trigger.addEventListener("click", () => {
+      const expanded = trigger.getAttribute("aria-expanded") === "true";
+      trigger.setAttribute("aria-expanded", String(!expanded));
+      trigger.textContent = expanded ? "ほかのヒントを見る" : "閉じる";
+      extra.hidden = expanded;
+    });
+    section.append(extra);
+  }
+
   parent.append(section);
 }
 
@@ -389,6 +430,7 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
   }
   renderResultHero(main, savedSnapshot, labels, dependencies);
   renderTitleReason(main, savedSnapshot);
+  renderTitleReflection(main, savedSnapshot);
   renderRadarAndFactors(main, savedSnapshot, labels, dependencies.drawRadar ?? drawResultRadar);
   const completed = appendTextElement(main, "time", formatCompletedAt(savedSnapshot.completedAt), "result-completed-at");
   completed.setAttribute("datetime", savedSnapshot.completedAt);

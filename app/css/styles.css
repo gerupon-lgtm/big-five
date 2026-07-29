@@ -600,6 +600,7 @@ dd {
 .result-character,
 .result-hero,
 .result-title-reason,
+.result-title-reflection,
 .result-factors,
 .result-details,
 .result-method-information {
@@ -615,9 +616,22 @@ dd {
 .result-character h2,
 .result-hero h2,
 .result-title-reason h2,
+.result-title-reflection h2,
 .result-factors h2,
 .result-details h2 {
   margin-top: 0;
+}
+
+.result-title-reflection,
+.title-reflection-extra {
+  min-width: 0;
+}
+
+.title-reflection-trigger {
+  max-width: 100%;
+  margin-top: 16px;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .result-character-frame {

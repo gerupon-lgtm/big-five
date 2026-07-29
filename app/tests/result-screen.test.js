@@ -41,6 +41,30 @@ function resultTextRecords(host) {
     .filter(({ className }) => className.includes("result-text-record"));
 }
 
+function createReflectionSnapshot({
+  questionCount = 50,
+  reflectionCount = questionCount === 20 ? 1 : 3,
+  resultId = questionCount === 20
+    ? "00000000-0000-4000-8000-000000000080"
+    : "00000000-0000-4000-8000-000000000081",
+} = {}) {
+  const snapshot = structuredClone(createTestResultSnapshot({
+    resultId,
+    questionCount,
+  }));
+  snapshot.versionTuple.resultTextVersion = "result-text-v2";
+  for (const record of snapshot.renderedTexts) record.version = "result-text-v2";
+  const reflections = Array.from({ length: reflectionCount }, (_, index) => ({
+    id: `title-reflection-balanced-${index + 1}`,
+    version: "result-text-v2",
+    section: "titleReflection",
+    text: `振り返りのヒント${index + 1}`,
+    evidenceRefs: ["evidence-result-presentation-contract"],
+  }));
+  snapshot.renderedTexts.splice(2, 0, ...reflections);
+  return snapshot;
+}
+
 test("T-008A S-003/S-004 renders mode-specific result headings without header actions", () => {
   for (const [questionCount, kicker, title] of [
     [20, "PREVIEW RESULT", "20問簡易プレビュー"],
@@ -437,6 +461,147 @@ test("T-008A F-005 renders the hero before the title reason and five factor rows
   assert.match(collectText(main.children[heroIndex]), /称号：/);
   assert.match(collectText(main.children[reasonIndex]), /この称号になった理由/);
   assert.doesNotMatch(collectText(host), /キャラクターID/);
+});
+
+test("T-008A F-005/F-006 shows one preview reflection between reason and factors without a disclosure control", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createReflectionSnapshot({ questionCount: 20 });
+
+  renderSavedResultScreen(host, snapshot, labels, {}, {
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+  });
+
+  const main = host.children[0];
+  const sectionClasses = main.children.map(({ className }) => className);
+  const reasonIndex = sectionClasses.indexOf("result-title-reason");
+  const reflectionIndex = sectionClasses.indexOf("result-title-reflection");
+  const factorsIndex = sectionClasses.indexOf("result-factors");
+  assert.ok(reasonIndex < reflectionIndex && reflectionIndex < factorsIndex);
+  const reflection = main.children[reflectionIndex];
+  const heading = collectElements(reflection).find(({ tagName, textContent }) =>
+    tagName === "h2" && textContent === "振り返りのヒント");
+  assert.ok(heading);
+  assert.equal(reflection.attributes.get("aria-labelledby"), heading.id);
+  assert.deepEqual(
+    resultTextRecords(reflection).map(({ textContent }) => textContent),
+    ["振り返りのヒント1"],
+  );
+  assert.equal(
+    collectElements(reflection).filter(({ className }) =>
+      className === "title-reflection-trigger").length,
+    0,
+  );
+  assert.doesNotMatch(collectText(reflection), /もし合いそうなら|参考にしてみてください/);
+  assert.deepEqual(
+    resultTextRecords(host).map(({ attributes }) =>
+      attributes.get("data-result-text-id")),
+    snapshot.renderedTexts.map(({ id }) => id),
+  );
+  const firstFactor = collectElements(host)
+    .find(({ className }) => className === "factor-score-row");
+  assert.deepEqual(
+    resultTextRecords(firstFactor).map(({ attributes }) =>
+      attributes.get("data-result-text-id")),
+    ["preview20-intellectImagination-middle-observation"],
+  );
+});
+
+test("T-008A F-005/F-006 progressively discloses two detail reflections with one native button", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createReflectionSnapshot();
+
+  renderSavedResultScreen(host, snapshot, labels, {}, {
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+  });
+
+  const reflection = collectElements(host)
+    .find(({ className }) => className === "result-title-reflection");
+  const trigger = collectElements(reflection)
+    .find(({ className }) => className === "title-reflection-trigger");
+  const extra = collectElements(reflection)
+    .find(({ className }) => className === "title-reflection-extra");
+  assert.equal(resultTextRecords(reflection).length, 3);
+  assert.equal(trigger.tagName, "button");
+  assert.equal(trigger.textContent, "ほかのヒントを見る");
+  assert.equal(trigger.attributes.get("type"), "button");
+  assert.equal(trigger.attributes.get("aria-expanded"), "false");
+  assert.equal(trigger.attributes.get("aria-controls"), extra.id);
+  assert.equal(extra.hidden, true);
+  assert.deepEqual(
+    resultTextRecords(host).map(({ attributes }) =>
+      attributes.get("data-result-text-id")).sort(),
+    snapshot.renderedTexts.map(({ id }) => id).sort(),
+  );
+  const firstFactor = collectElements(host)
+    .find(({ className }) => className === "factor-score-row");
+  assert.equal(resultTextRecords(firstFactor).length, 8);
+  assert.ok(resultTextRecords(firstFactor).every(({ attributes }) =>
+    attributes.get("data-result-text-id").includes("intellectImagination")));
+
+  trigger.dispatch("click", { detail: 0 });
+  assert.equal(trigger.attributes.get("aria-expanded"), "true");
+  assert.equal(trigger.textContent, "閉じる");
+  assert.equal(extra.hidden, false);
+
+  const factorTrigger = collectElements(host)
+    .find(({ className }) => className === "factor-disclosure-trigger");
+  factorTrigger.dispatch("click");
+  assert.equal(trigger.attributes.get("aria-expanded"), "true");
+  assert.equal(extra.hidden, false);
+
+  trigger.dispatch("click", { detail: 0 });
+  assert.equal(trigger.attributes.get("aria-expanded"), "false");
+  assert.equal(trigger.textContent, "ほかのヒントを見る");
+  assert.equal(extra.hidden, true);
+});
+
+test("T-008A F-006 omits the reflection section for valid v1 and v2 zero-reflection snapshots", () => {
+  for (const snapshot of [
+    createReflectionSnapshot({
+      reflectionCount: 0,
+      resultId: "00000000-0000-4000-8000-000000000082",
+    }),
+    createTestResultSnapshot({
+      resultId: "00000000-0000-4000-8000-000000000083",
+    }),
+  ]) {
+    const { host } = createFakeScreen();
+    renderSavedResultScreen(host, snapshot, labels, {}, {
+      drawRadar: () => ({ drawn: true, errorCode: null }),
+    });
+
+    assert.equal(
+      collectElements(host).filter(({ className }) =>
+        className === "result-title-reflection").length,
+      0,
+    );
+    assert.equal(
+      collectElements(host).filter(({ className }) =>
+        className === "result-title-reason").length,
+      1,
+    );
+    assert.equal(
+      collectElements(host).filter(({ className }) =>
+        className === "factor-score-row").length,
+      5,
+    );
+    assert.equal(resultTextRecords(host).length, 42);
+  }
+});
+
+test("T-008A F-006 rejects a persisted snapshot with a partial reflection group", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createReflectionSnapshot({
+    reflectionCount: 2,
+    resultId: "00000000-0000-4000-8000-000000000084",
+  });
+
+  assert.throws(
+    () => renderSavedResultScreen(host, snapshot, labels, {}, {
+      drawRadar: () => ({ drawn: true, errorCode: null }),
+    }),
+    { name: "TypeError", message: "RESULT_SCREEN_INVALID" },
+  );
 });
 
 test("T-008A F-005 keeps all detail records in one-factor and one-category disclosure panels", () => {

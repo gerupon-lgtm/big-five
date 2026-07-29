@@ -40,6 +40,7 @@ const TABLES = Object.freeze([
   ["profileFactorRows", "titles", "title_rule_version", "title-profile-factors.csv"],
   ["textRows", "result-texts", "result_text_version", "result-texts.csv"],
   ["textEvidenceRows", "result-texts", "result_text_version", "result-text-evidence.csv"],
+  ["titleReflectionRows", "result-texts", "result_text_version", "title-reflection-comments.csv", true],
   ["evidenceRows", "evidence", "result_evidence_version", "result-evidence.csv"],
   ["evidenceClaimRows", "evidence", "result_evidence_version", "result-evidence-claims.csv"],
   ["sceneRows", "presentation", "presentation_definition_version", "scenes.csv"],
@@ -53,7 +54,7 @@ const TABLES = Object.freeze([
 ]);
 const CORE_TABLE_NAMES = new Set([
   "diagnosisRows", "sourceRows", "limitationRows", "factorRows", "questionRows",
-  "previewRows", "profileRows", "profileFactorRows", "textRows", "textEvidenceRows",
+  "previewRows", "profileRows", "profileFactorRows", "textRows", "textEvidenceRows", "titleReflectionRows",
   "evidenceRows", "evidenceClaimRows",
 ]);
 const CORE_TABLES = TABLES.filter(([name]) => CORE_TABLE_NAMES.has(name));
@@ -116,6 +117,19 @@ async function loadNamedTable(sourceDir, segments, schemaName) {
   } catch (error) {
     if (error instanceof ContentError) throw error;
     throw contentError("RELEASE_RESOURCE_MISSING");
+  }
+}
+
+async function loadOptionalNamedTable(sourceDir, segments, schemaName) {
+  try {
+    return await loadNamedTable(sourceDir, segments, schemaName);
+  } catch (error) {
+    if (!(error instanceof ContentError) || error.code !== "RELEASE_RESOURCE_MISSING") throw error;
+    const schema = await loadSchema(schemaName);
+    return {
+      rows: [],
+      sourceName: path.posix.join(...segments, schema.fileName),
+    };
   }
 }
 
@@ -194,10 +208,12 @@ function freezeCatalogs(catalogs) {
 
 async function loadTables(sourceDir, row, definitions) {
   const result = {};
-  for (const [name, topDir, versionField, fileName] of definitions) {
+  for (const [name, topDir, versionField, fileName, optional] of definitions) {
     const version = row[versionField];
     if (!safeReleaseId(version)) throw contentError("RELEASE_VERSION_REFERENCE_INVALID");
-    result[name] = await loadNamedTable(sourceDir, [topDir, version], fileName);
+    result[name] = optional
+      ? await loadOptionalNamedTable(sourceDir, [topDir, version], fileName)
+      : await loadNamedTable(sourceDir, [topDir, version], fileName);
   }
   return result;
 }
@@ -301,6 +317,7 @@ function validateResultVersions(titleCatalog, textCatalog, evidenceCatalog) {
         profileFactorRows: titleCatalogs.profileFactorRows.rows,
         textRows: textCatalogs.textRows.rows,
         textEvidenceRows: textCatalogs.textEvidenceRows.rows,
+        titleReflectionRows: textCatalogs.titleReflectionRows.rows,
         evidenceRows: evidenceCatalogs.evidenceRows.rows,
         evidenceClaimRows: evidenceCatalogs.evidenceClaimRows.rows,
         titleRuleVersion: titleVersion,
@@ -368,7 +385,7 @@ function compileCoreCatalogs(catalogs, row) {
       diagnosisRows: get("diagnosisRows"), sourceRows: get("sourceRows"), limitationRows: get("limitationRows"), factorRows: get("factorRows"), questionRows: get("questionRows"), previewRows: get("previewRows"),
     });
     const result = compileResultContent({
-      profileRows: get("profileRows"), profileFactorRows: get("profileFactorRows"), textRows: get("textRows"), textEvidenceRows: get("textEvidenceRows"), evidenceRows: get("evidenceRows"), evidenceClaimRows: get("evidenceClaimRows"), titleRuleVersion: row.title_rule_version, resultTextVersion: row.result_text_version,
+      profileRows: get("profileRows"), profileFactorRows: get("profileFactorRows"), textRows: get("textRows"), textEvidenceRows: get("textEvidenceRows"), titleReflectionRows: get("titleReflectionRows"), evidenceRows: get("evidenceRows"), evidenceClaimRows: get("evidenceClaimRows"), titleRuleVersion: row.title_rule_version, resultTextVersion: row.result_text_version,
     });
     return { diagnosis, result };
   } catch (error) {
@@ -586,7 +603,11 @@ export async function compileRelease({ sourceDir, releaseId = undefined }) {
   assertApprovedRows(validated.catalogs);
   const approvalStatus = Object.fromEntries(validated.catalogs.approvals.rows.map((row) => [row.gate_id, row.status]));
   const contentRows = ["profileRows", "profileFactorRows", "textRows", "textEvidenceRows", "evidenceRows", "evidenceClaimRows"].flatMap((name) => validated.catalogs[name].rows);
-  assertReleaseEligible({ rows: contentRows, approvals: approvalStatus });
+  assertReleaseEligible({
+    rows: contentRows,
+    titleReflectionRows: validated.catalogs.titleReflectionRows.rows,
+    approvals: approvalStatus,
+  });
   assertCharacterReleaseEligible(validated.catalogs.characterRows.rows);
   if (!validated.catalogs.sceneRows || !validated.catalogs.characterRows) throw contentError("RELEASE_RESOURCE_MISSING");
   const core = compileCoreCatalogs(validated.catalogs, release);

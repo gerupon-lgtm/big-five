@@ -14,6 +14,7 @@ import { FactorResultTextDefinitions } from "../js/data/factor-result-text-defin
 import { ResultEvidenceDefinitions } from "../js/data/result-evidence-definitions.js";
 import { ResultTextDefinitions } from "../js/data/result-text-definitions.js";
 import { TitleProfileDefinitions } from "../js/data/title-profile-definitions.js";
+import { TitleReflectionDefinitions } from "../js/data/title-reflection-definitions.js";
 import { TitleResultTextDefinitions } from "../js/data/title-result-text-definitions.js";
 import { Q006_TITLE_CATALOG } from "./fixtures/q006-title-catalog.fixture.js";
 
@@ -64,12 +65,22 @@ const detailStrengthText = {
 };
 
 const titleProfiles = [{ titleId: "title-balanced" }];
+const titleReflection = {
+  id: "title-reflection-balanced-1",
+  version: "result-text-v2",
+  appliesTo: { titleId: "title-balanced" },
+  section: "titleReflection",
+  claimKind: "reflectionPrompt",
+  text: "最近、状況に合わせて対応を変えたのはどんなときでしたか。",
+  evidenceRefs: ["evidence-result-presentation-contract"],
+  previewAllowed: true,
+};
 
 test("Q-006 schemas accept exact evidence and result text", () => {
   assert.equal(validateResultEvidenceDefinitions([evidence]).length, 1);
   assert.equal(validateResultTextDefinitions([text]).length, 1);
   assert.deepEqual(RESULT_TEXT_SECTIONS, [
-    "titleSubtitle", "titleReason", "observation", "strength", "tradeoff",
+    "titleSubtitle", "titleReason", "titleReflection", "observation", "strength", "tradeoff",
     "work", "relationship", "stress", "question", "action",
   ]);
   assert.deepEqual(RESULT_CLAIM_KINDS, [
@@ -90,6 +101,7 @@ test("Q-006 schemas reject unknown fields and unsupported claim kinds", () => {
 
 test("Q-006 text schema requires the section-specific claim kind and preview-safe sections", () => {
   assert.equal(validateResultTextDefinitions([detailStrengthText]).length, 1);
+  assert.equal(validateResultTextDefinitions([titleReflection]).length, 1);
   assert.throws(
     () => validateResultTextDefinitions([{
       ...detailStrengthText,
@@ -119,6 +131,21 @@ test("Q-006 text schema requires the section-specific claim kind and preview-saf
     }]),
     /RESULT_TEXT_DEFINITION_INVALID/,
   );
+  assert.throws(
+    () => validateResultTextDefinitions([{
+      ...titleReflection,
+      id: "title-reflection-balanced-2",
+      previewAllowed: true,
+    }]),
+    /RESULT_TEXT_DEFINITION_INVALID/,
+  );
+  assert.throws(
+    () => validateResultTextDefinitions([{
+      ...titleReflection,
+      previewAllowed: false,
+    }]),
+    /RESULT_TEXT_DEFINITION_INVALID/,
+  );
 });
 
 test("Q-006 cross-definition validation rejects unknown outer fields and broken references", () => {
@@ -129,6 +156,12 @@ test("Q-006 cross-definition validation rejects unknown outer fields and broken 
     resultTextVersion: "result-text-v1",
   };
   assert.equal(validateResultContentDefinitions(valid), true);
+  assert.equal(validateResultContentDefinitions({
+    ...valid,
+    evidenceDefinitions: ResultEvidenceDefinitions,
+    textDefinitions: [{ ...titleReflection }],
+    resultTextVersion: "result-text-v2",
+  }), true);
   assert.throws(
     () => validateResultContentDefinitions({ ...valid, extra: true }),
     /RESULT_CONTENT_INVALID/,
@@ -139,6 +172,21 @@ test("Q-006 cross-definition validation rejects unknown outer fields and broken 
   );
   assert.throws(
     () => validateResultContentDefinitions({ ...valid, textDefinitions: [{ ...text, appliesTo: { titleId: "unknown" } }] }),
+    /RESULT_CONTENT_INVALID/,
+  );
+  assert.throws(
+    () => validateResultContentDefinitions({
+      ...valid,
+      textDefinitions: [{ ...text, version: "result-text-v2" }],
+    }),
+    /RESULT_CONTENT_INVALID/,
+  );
+  assert.throws(
+    () => validateResultContentDefinitions({
+      ...valid,
+      textDefinitions: [{ ...text, version: "result-text-v3" }],
+      resultTextVersion: "result-text-v3",
+    }),
     /RESULT_CONTENT_INVALID/,
   );
 });
@@ -504,7 +552,7 @@ test("factor content covers 5 factors, 3 bands, and both modes", () => {
       assert.deepEqual(detail.map(({ section }) => section), DETAIL_SECTIONS);
     }
   }
-  assert.equal(ResultTextDefinitions.length, 237);
+  assert.equal(ResultTextDefinitions.length, 390);
 });
 
 test("factor and aggregate content satisfy the result-content schemas", () => {
@@ -517,17 +565,156 @@ test("factor and aggregate content satisfy the result-content schemas", () => {
       evidenceDefinitions: ResultEvidenceDefinitions,
       textDefinitions: ResultTextDefinitions,
       titleProfiles: TitleProfileDefinitions,
-      resultTextVersion: "result-text-v1",
+      resultTextVersion: "result-text-v2",
     }),
     true,
   );
+  assert.equal(ResultTextDefinitions.every(({ version }) => version === "result-text-v2"), true);
+  assert.equal(TitleReflectionDefinitions.length, 153);
   assert.deepEqual(
-    ResultTextDefinitions.slice(0, TitleResultTextDefinitions.length),
-    TitleResultTextDefinitions,
+    ResultTextDefinitions.slice(-TitleReflectionDefinitions.length),
+    TitleReflectionDefinitions,
   );
+  assert.equal(new Set(ResultTextDefinitions.map(({ id }) => id)).size, 390);
+});
+
+test("Q-014 title reflections cover every title with three approved fixed-order prompts", () => {
+  assert.equal(Object.isFrozen(TitleReflectionDefinitions), true);
+  for (const { titleId } of TitleProfileDefinitions) {
+    const expectedPrefix = `title-reflection-${titleId.slice("title-".length)}-`;
+    const definitions = TitleReflectionDefinitions.filter(
+      ({ appliesTo }) => appliesTo.titleId === titleId,
+    );
+    assert.equal(definitions.length, 3);
+    assert.deepEqual(definitions.map(({ id }) => id), [
+      `${expectedPrefix}1`,
+      `${expectedPrefix}2`,
+      `${expectedPrefix}3`,
+    ]);
+    assert.deepEqual(definitions.map(({ previewAllowed }) => previewAllowed), [true, false, false]);
+    for (const definition of definitions) {
+      assert.deepEqual(Object.keys(definition), [
+        "id", "version", "appliesTo", "section", "claimKind", "text", "evidenceRefs", "previewAllowed",
+      ]);
+      assert.equal(definition.version, "result-text-v2");
+      assert.equal(definition.section, "titleReflection");
+      assert.equal(definition.claimKind, "reflectionPrompt");
+      assert.deepEqual(definition.evidenceRefs, ["evidence-result-presentation-contract"]);
+      assert.equal(Object.isFrozen(definition), true);
+      assert.equal(Object.isFrozen(definition.appliesTo), true);
+      assert.equal(Object.isFrozen(definition.evidenceRefs), true);
+    }
+  }
+});
+
+test("Q-014 title reflection runtime text exactly matches the approved review matrix", async () => {
+  const review = await readFile(
+    new URL("../../docs/research/2026-07-29-title-reflection-content-review.md", import.meta.url),
+    "utf8",
+  );
+  const approvedRows = review
+    .split(/\r?\n/)
+    .filter((line) => /^\| `title-/.test(line))
+    .map((line) => {
+      const cells = line.split("|").map((cell) => cell.trim());
+      return {
+        titleId: cells[1].slice(1, -1),
+        order: Number(cells[2]),
+        text: cells[3],
+        status: cells[5].slice(1, -1),
+      };
+    })
+    .filter(({ status }) => status === "approved");
+  assert.equal(approvedRows.length, 153);
   assert.deepEqual(
-    ResultTextDefinitions.slice(TitleResultTextDefinitions.length),
-    FactorResultTextDefinitions,
+    TitleReflectionDefinitions.map(({ appliesTo, id, text }) => ({
+      titleId: appliesTo.titleId,
+      order: Number(id.at(-1)),
+      text,
+      status: "approved",
+    })),
+    approvedRows,
+  );
+});
+
+test("Q-006 result-text-v2 projects v1 unchanged except the 27 approved E/F corrections", () => {
+  const v1 = [...TitleResultTextDefinitions, ...FactorResultTextDefinitions];
+  const v2Base = ResultTextDefinitions.slice(0, v1.length);
+  const correctedIds = new Set([
+    "preview20-intellectImagination-high-observation",
+    "preview20-intellectImagination-middle-observation",
+    "preview20-intellectImagination-low-observation",
+    "detail50-intellectImagination-high-observation",
+    "detail50-intellectImagination-middle-observation",
+    "detail50-intellectImagination-low-observation",
+    "detail50-conscientiousness-high-observation",
+    "detail50-conscientiousness-middle-observation",
+    "detail50-conscientiousness-low-observation",
+    "detail50-intellectImagination-high-action",
+    "detail50-intellectImagination-middle-action",
+    "detail50-intellectImagination-low-action",
+    "detail50-conscientiousness-high-action",
+    "detail50-conscientiousness-middle-action",
+    "detail50-conscientiousness-low-action",
+    "detail50-extraversion-high-action",
+    "detail50-extraversion-middle-action",
+    "detail50-extraversion-low-action",
+    "detail50-agreeableness-high-action",
+    "detail50-agreeableness-middle-action",
+    "detail50-agreeableness-low-action",
+    "detail50-emotionalStability-high-action",
+    "detail50-emotionalStability-middle-action",
+    "detail50-emotionalStability-low-action",
+    "detail50-intellectImagination-middle-work",
+    "detail50-intellectImagination-low-stress",
+    "detail50-agreeableness-low-strength",
+  ]);
+  assert.equal(correctedIds.size, 27);
+  assert.deepEqual(v2Base.map(({ id }) => id), v1.map(({ id }) => id));
+  for (let index = 0; index < v1.length; index += 1) {
+    const projected = { ...v2Base[index], version: "result-text-v1" };
+    if (correctedIds.has(v1[index].id)) {
+      assert.notEqual(projected.text, v1[index].text, v1[index].id);
+      projected.text = v1[index].text;
+    }
+    assert.deepEqual(projected, v1[index], v1[index].id);
+  }
+  const expectedCorrections = {
+    "preview20-intellectImagination-high-observation": "今回の20問では、新しい考え方や発想への関心が尺度内で高めであるという傾向が見られました。",
+    "preview20-intellectImagination-middle-observation": "今回の20問では、新しい考え方や発想への関心が尺度内の中間域にあるという傾向が見られました。",
+    "preview20-intellectImagination-low-observation": "今回の20問では、新しい考え方や発想への関心が尺度内で低めであるという傾向が見られました。",
+    "detail50-intellectImagination-high-observation": "今回の50問では、新しい考え方や発想への関心が尺度内で高めであるという傾向が見られました。",
+    "detail50-intellectImagination-middle-observation": "今回の50問では、新しい考え方や発想への関心が尺度内の中間域にあるという傾向が見られました。",
+    "detail50-intellectImagination-low-observation": "今回の50問では、新しい考え方や発想への関心が尺度内で低めであるという傾向が見られました。",
+    "detail50-conscientiousness-high-observation": "今回の50問では、物事を準備や整理をしながら進める傾向が、尺度内で高めに見られました。",
+    "detail50-conscientiousness-middle-observation": "今回の50問では、物事を準備や整理をしながら進める傾向が、尺度内の中間域にありました。",
+    "detail50-conscientiousness-low-observation": "今回の50問では、物事を準備や整理をしながら進める傾向が、尺度内で低めに見られました。",
+    "detail50-intellectImagination-high-action": "今日心に残った「キーワード」や「気づき」を、スマホや手帳に書き留めてみませんか。",
+    "detail50-intellectImagination-middle-action": "最近気になっているテーマについて、「時間があれば調べてみたいこと」をメモしてみませんか。",
+    "detail50-intellectImagination-low-action": "今日見聞きした少し難しい話を、「自分の生活で言うとどうなるか」に当てはめて考えてみませんか。",
+    "detail50-conscientiousness-high-action": "明日取りかかることを決め、最初の一歩だけメモしてみませんか。",
+    "detail50-conscientiousness-middle-action": "明日の予定から、先に決めておきたいことを選んでみませんか。",
+    "detail50-conscientiousness-low-action": "今気になっていることから、まず手を動かせそうなものに取りかかってみませんか。",
+    "detail50-extraversion-high-action": "今日話してみたい人へ、短いあいさつや一言を自分から伝えてみませんか。",
+    "detail50-extraversion-middle-action": "今日は人と話したい気分か、静かに過ごしたい気分かを確かめてみませんか。",
+    "detail50-extraversion-low-action": "伝えたい相手を思い浮かべ、話したいことを短くメモしてみませんか。",
+    "detail50-agreeableness-high-action": "最近気になっている相手へ、「最近どう？」と短く声をかけてみませんか。",
+    "detail50-agreeableness-middle-action": "会話の前に、相手に聞きたいことと自分から伝えたいことを整理してみませんか。",
+    "detail50-agreeableness-low-action": "自分の意見を伝えるとき、いちばん大切な理由を添えてみませんか。",
+    "detail50-emotionalStability-high-action": "最近落ち着いて対応できた場面と、そのとき役に立ったことを短くメモしてみませんか。",
+    "detail50-emotionalStability-middle-action": "今日の気分と、そのきっかけになった出来事をそれぞれ短くメモしてみませんか。",
+    "detail50-emotionalStability-low-action": "最近気持ちが揺れた場面と、そのとき少し安心できたことをそれぞれメモしてみませんか。",
+    "detail50-intellectImagination-middle-work": "仕事や学びのなかで、慣れたやり方で確実に進めるか、時間をかけて新しい方法を試すかを考えた場面はありましたか。",
+    "detail50-intellectImagination-low-stress": "考えることが増えたとき、「まずは目の前で確かめられることから決めよう」と、扱う内容を絞った場面はありましたか。",
+    "detail50-agreeableness-low-strength": "最近、曖昧な状況のなかでも自分の考えをはっきり伝えた結果、話が整理された場面はありましたか。",
+  };
+  assert.deepEqual(
+    Object.fromEntries(
+      v2Base
+        .filter(({ id }) => correctedIds.has(id))
+        .map(({ id, text: correctedText }) => [id, correctedText]),
+    ),
+    expectedCorrections,
   );
 });
 

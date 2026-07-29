@@ -34,6 +34,12 @@ const APPROVAL_IDS = ["E-0", "E-1", "E-2", "E-3", "E-4", "E-5", "T-0", "T-1", "T
 const diagnosticVersion = "diagnostic-definition-v1";
 const releaseId = "release-test-v1";
 const execFileAsync = promisify(execFile);
+const BASE_RESULT_TEXT_DEFINITIONS = ResultTextDefinitions.filter(
+  ({ section }) => section !== "titleReflection",
+);
+const TITLE_REFLECTION_DEFINITIONS = ResultTextDefinitions.filter(
+  ({ section }) => section === "titleReflection",
+);
 const factorDetails = {
   intellectImagination: ["知性・想像力", "Intellect/Imagination", "控えめ", "好奇心が強い", "Big Fiveの開放性に対応する特性です。"],
   conscientiousness: ["勤勉性", "Conscientiousness", "柔軟", "計画的", "計画と自己管理に関する特性です。"],
@@ -89,8 +95,19 @@ function resultRows() {
   return {
     profiles: TitleProfileDefinitions.map((profile, index) => ({ title_id: profile.titleId, title_rule_version: appMeta.diagnosticVersions.titleRuleVersion, display_order: index + 1, label: profile.label, kind: profile.kind, character_id: profile.characterId, summary_text_id: profile.summaryTextId, default_palette_id: profile.defaultPaletteId, status: "approved" })),
     profileFactors: TitleProfileDefinitions.flatMap((profile) => profile.factors.map((factor, index) => ({ title_id: profile.titleId, display_order: index + 1, factor_id: factor.factorId, direction: factor.direction, status: "approved" }))),
-    texts: ResultTextDefinitions.map((definition, index) => ({ text_id: definition.id, result_text_version: definition.version, display_order: index + 1, section: definition.section, claim_kind: definition.claimKind, mode: definition.appliesTo.mode ?? "", factor_id: definition.appliesTo.factorId ?? "", band: definition.appliesTo.band ?? "", title_id: definition.appliesTo.titleId ?? "", preview_allowed: String(definition.previewAllowed), text: definition.text, status: "approved" })),
-    textEvidence: ResultTextDefinitions.flatMap((definition) => definition.evidenceRefs.map((evidence_id, index) => ({ text_id: definition.id, display_order: index + 1, evidence_id, status: "approved" }))),
+    texts: BASE_RESULT_TEXT_DEFINITIONS.map((definition, index) => ({ text_id: definition.id, result_text_version: definition.version, display_order: index + 1, section: definition.section, claim_kind: definition.claimKind, mode: definition.appliesTo.mode ?? "", factor_id: definition.appliesTo.factorId ?? "", band: definition.appliesTo.band ?? "", title_id: definition.appliesTo.titleId ?? "", preview_allowed: String(definition.previewAllowed), text: definition.text, status: "approved" })),
+    textEvidence: BASE_RESULT_TEXT_DEFINITIONS.flatMap((definition) => definition.evidenceRefs.map((evidence_id, index) => ({ text_id: definition.id, display_order: index + 1, evidence_id, status: "approved" }))),
+    titleReflections: TitleProfileDefinitions.flatMap(({ titleId }) =>
+      TITLE_REFLECTION_DEFINITIONS
+        .filter(({ appliesTo }) => appliesTo.titleId === titleId)
+        .map((definition, index) => ({
+          text_id: definition.id,
+          result_text_version: definition.version,
+          title_id: titleId,
+          display_order: index + 1,
+          text: definition.text,
+          status: "approved",
+        }))),
     evidence: ResultEvidenceDefinitions.map((definition, index) => ({ evidence_id: definition.evidenceId, result_evidence_version: definition.version, display_order: index + 1, source_type: definition.sourceType, source_label: definition.sourceLabel, locator: definition.locator, status: "approved" })),
     evidenceClaims: ResultEvidenceDefinitions.flatMap((definition) => definition.supportedClaims.map((supported_claim, index) => ({ evidence_id: definition.evidenceId, display_order: index + 1, supported_claim, status: "approved" }))),
   };
@@ -133,7 +150,7 @@ async function createApprovedSourceTree(t, { manifestStatus = "approved" } = {})
   await Promise.all([writeTable(sourceDir, `${d}/diagnosis-sets.csv`, diagnosis.diagnosis), writeTable(sourceDir, `${d}/diagnosis-sources.csv`, diagnosis.sources), writeTable(sourceDir, `${d}/diagnosis-limitations.csv`, diagnosis.limitations), writeTable(sourceDir, `${d}/factor-definitions.csv`, diagnosis.factors)]);
   await Promise.all([writeTable(sourceDir, `questions/${release.question_version}/questions.csv`, diagnosis.questions), writeTable(sourceDir, `questions/${release.question_version}/preview-questions.csv`, diagnosis.previews)]);
   const result = resultRows();
-  await Promise.all([writeTable(sourceDir, `titles/${release.title_rule_version}/title-profiles.csv`, result.profiles), writeTable(sourceDir, `titles/${release.title_rule_version}/title-profile-factors.csv`, result.profileFactors), writeTable(sourceDir, `result-texts/${release.result_text_version}/result-texts.csv`, result.texts), writeTable(sourceDir, `result-texts/${release.result_text_version}/result-text-evidence.csv`, result.textEvidence), writeTable(sourceDir, `evidence/${release.result_evidence_version}/result-evidence.csv`, result.evidence), writeTable(sourceDir, `evidence/${release.result_evidence_version}/result-evidence-claims.csv`, result.evidenceClaims)]);
+  await Promise.all([writeTable(sourceDir, `titles/${release.title_rule_version}/title-profiles.csv`, result.profiles), writeTable(sourceDir, `titles/${release.title_rule_version}/title-profile-factors.csv`, result.profileFactors), writeTable(sourceDir, `result-texts/${release.result_text_version}/result-texts.csv`, result.texts), writeTable(sourceDir, `result-texts/${release.result_text_version}/result-text-evidence.csv`, result.textEvidence), writeTable(sourceDir, `result-texts/${release.result_text_version}/title-reflection-comments.csv`, result.titleReflections), writeTable(sourceDir, `evidence/${release.result_evidence_version}/result-evidence.csv`, result.evidence), writeTable(sourceDir, `evidence/${release.result_evidence_version}/result-evidence-claims.csv`, result.evidenceClaims)]);
   const presentation = presentationRows(); const p = `presentation/${release.presentation_definition_version}`;
   await Promise.all([writeTable(sourceDir, `${p}/scenes.csv`, presentation.scenes), writeTable(sourceDir, `${p}/palettes.csv`, presentation.palettes), writeTable(sourceDir, `${p}/palette-usage-mappings.csv`, presentation.paletteUsage), writeTable(sourceDir, `${p}/fragrances.csv`, presentation.fragrances), writeTable(sourceDir, `${p}/presentation-selectors.csv`, presentation.selectors), writeTable(sourceDir, `${p}/selector-palettes.csv`, presentation.selectorPalettes), writeTable(sourceDir, `${p}/selector-fragrances.csv`, presentation.selectorFragrances)]);
   const characters = TitleProfileDefinitions.map((profile, index) => ({ title_id: profile.titleId, character_manifest_version: release.character_manifest_version, display_order: index + 1, character_id: profile.characterId, asset_version: "character-asset-v1", delivery_webp_path: `assets/characters/${index + 1}.webp`, delivery_sha256: "a".repeat(64), width: 1024, height: 1024, byte_length: 1, has_alpha: "true", alt: "全身が見える猫のイラスト", art_review_status: "approved", anatomy_review_status: "approved", technical_review_status: "approved", accessibility_review_status: "approved", approved_by: "reviewer", approved_at: "2026-07-26T00:00:00.000Z", status: "approved" }));

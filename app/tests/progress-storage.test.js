@@ -70,7 +70,7 @@ function validResult(resultId = "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c003", mode = "
       boundaryFlags: [],
       renderedTexts: sections.map((section, index) => ({
         id: index === 0 ? "title-retained-subtitle" : index === 1 ? "title-retained-reason" : `${mode}-${factorIds[(index - 2) % 5]}-middle-${section}`,
-        version: "result-text-v1",
+        version: progress().versionTuple.resultTextVersion,
         section,
         text: `text-${index}`,
         evidenceRefs: [`evidence-${index}`],

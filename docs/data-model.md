@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.8 |
+| 設計版 | 0.9 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-28 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.13 |
+| 更新日 | 2026-07-30 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.14 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -20,9 +20,9 @@
 
 ### 1.1 CSVコンテンツ作成基盤（移行中）
 
-人手編集正典は`content/source/`の用途別・版付きCSVである。診断は`diagnoses/ipip-ja-50-definition-v1`、設問は`questions/ipip-ja-50-question-set-v1`、称号は`titles/title-rule-v1`、結果文は`result-texts/result-text-v1`、根拠は`evidence/result-evidence-v1`に置く。release manifest/historyは`releases/`、Q-006の別承認台帳は`approvals/result-content-approvals.csv`である。
+人手編集正典は`content/source/`の用途別・版付きCSVである。診断は`diagnoses/ipip-ja-50-definition-v1`、設問は`questions/ipip-ja-50-question-set-v1`、称号は`titles/title-rule-v1`、現行結果文は`result-texts/result-text-v2`、履歴互換用の旧結果文は`result-texts/result-text-v1`、根拠定義は`evidence/result-evidence-v1`に置く。release manifest/historyは`releases/`、Q-006の別承認台帳は`approvals/result-content-approvals.csv`である。
 
-Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。初期データは50問、固定20問、51称号、237結果文、6根拠である。E-0は`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`であり、Q-013は未作成、release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
+Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。`result-text-v1`は237件の不変な履歴互換版である。現行`result-text-v2`は基本237件にTR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済みのv1→v2修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の`ResultEvidenceDefinition`は固定6件であり、両者を同じ件数として扱わない。Q-013は未作成、release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
 
 現在は既存ES Modulesがruntime compatibility authorityで、`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
 
@@ -55,7 +55,7 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つの
 | scaleVersion | string | ○ | `ipip-ja-50-v1` |
 | questionVersion | string | ○ | `ipip-ja-50-question-set-v1` |
 | scoringVersion | string | ○ | `ipip-ja-50-scoring-v1` |
-| resultTextVersion | string | ○ | `result-text-v1` |
+| resultTextVersion | string | ○ | `result-text-v2` |
 | titleRuleVersion | string | ○ | `title-rule-v1` |
 
 ### 2.2 DiagnosticDefinition
@@ -135,7 +135,7 @@ exact schemaとして未知フィールド、空文字、空の`supportedClaims`
 | id | string | ○ | 固定テンプレートID |
 | version | string | ○ | 結果文版 |
 | appliesTo | object | ○ | 因子、方向、区分、組合せ条件 |
-| section | enum | ○ | titleSubtitle/titleReason/observation/strength/tradeoff/work/relationship/stress/question/action |
+| section | enum | ○ | titleSubtitle/titleReason/titleReflection/observation/strength/tradeoff/work/relationship/stress/question/action |
 | claimKind | enum | ○ | scaleObservation/entertainmentReason/reflectionPrompt/actionHint |
 | text | string | ○ | 表示文 |
 | evidenceRefs | string[] | ○ | 根拠対応表の参照ID |
@@ -143,9 +143,9 @@ exact schemaとして未知フィールド、空文字、空の`supportedClaims`
 
 `appliesTo`で許可する条件キーは`mode`、`questionCount`、`factorId`、`band`、`titleId`だけとする。`mode`と`questionCount`を併記する場合は`preview20`と20、`detail50`と50を対応させる。20問を明示した定義は`previewAllowed = true`を必須とし、未知フィールド、重複ID、不正な根拠参照、到達不能条件を拒否する。
 
-`claimKind`は節ごとに固定する。`titleSubtitle`と`titleReason`は`entertainmentReason`、`observation`は`scaleObservation`、`strength`から`question`までは`reflectionPrompt`、`action`は`actionHint`とする。20問で許可する節は`titleSubtitle`、`titleReason`、`observation`だけである。
+`claimKind`は節ごとに固定する。`titleSubtitle`と`titleReason`は`entertainmentReason`、`titleReflection`と`strength`から`question`までは`reflectionPrompt`、`observation`は`scaleObservation`、`action`は`actionHint`とする。20問で許可する節は`titleSubtitle`、`titleReason`、`titleReflection`の固定順1件目、`observation`である。
 
-`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件のliteral定義として実装済みである。`initial reviewed copy`として実装・独立レビューされた後、根拠台帳の全18 gateがapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。ただしapproved releaseは未選択で、Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`も未完了である。
+`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件の不変なliteral定義として履歴互換のため保持する。根拠台帳の全18 gateはapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。現行`result-text-v2`は基本237件＋`titleReflection`153件＝390件であり、基本文面には承認済み修正27件を含む。approved release未選択、Q-012正式release、Q-013 production dataは引き続き別の未完了条件である。
 
 ### 2.7 TitleProfileDefinition
 
@@ -266,7 +266,7 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 
 標準パレットは`TitleProfileDefinition.defaultPaletteId`だけを正典とし、selectorへ重複保持しない。各FragranceSceneSelectorは同じ場面の候補2件と、その候補内の共有代表1件を持つ。未知フィールド、ID重複、版不一致、参照切れ、個数・順序違反、生回答・得点・猫色による条件を拒否する。
 
-### 2.12 TitleReflectionCommentDefinition（`result-text-v2`予定）
+### 2.12 TitleReflectionCommentDefinition（`result-text-v2`）
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
@@ -277,9 +277,9 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 | text | string | ○ | 任意の参考情報として表示する振り返りヒント |
 | status | enum | ○ | `draft`／`reviewed`／`approved`／`rejected` |
 
-人手編集正典は結果文版配下の`title-reflection-comments.csv`とする。コンパイラは`section = titleReflection`、`claimKind = reflectionPrompt`へ投影し、1件目だけ`previewAllowed = true`とする。`result-text-v1`の237件へ混在させず、`result-text-v2`の版単位で検証・承認する。
+人手編集正典は結果文版配下の`title-reflection-comments.csv`とする。コンパイラは`section = titleReflection`、`claimKind = reflectionPrompt`へ投影し、1件目だけ`previewAllowed = true`とする。`result-text-v1`の237件へ混在させず、`result-text-v2`の版単位で検証・承認する。TR-0〜TR-4はすべてユーザー承認済みで、51称号それぞれに固定順3件、合計153件を持つ。
 
-20問は固定順1件目、50問は1〜3件をRenderedResultTextとしてResultSnapshotへ複製する。後のCSV変更で保存済み履歴を再生成しない。共有モデルへは投影しない。
+20問は固定順1件目、50問は1〜3件をRenderedResultTextとしてResultSnapshotへ複製する。完全な3件組を定義から取得できない場合、composerは当該称号の振り返り3件をすべて省略し、称号・因子結果を維持した7件／42件のフォールバックを生成する。ResultSnapshotは`result-text-v2`について振り返り0件または完全な1件／3件だけを受理し、部分保存・順序違い・重複を拒否する。後のCSV変更で保存済み履歴を再生成しない。共有候補抽出境界へは投影しない。
 
 ## 3. 端末内ストレージ
 
@@ -373,7 +373,7 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 | selectedPaletteId | string | ○ | 未選択時も標準ID |
 | cardTemplateVersion | string | ○ | 再生成用 |
 
-`app/js/domain/result-snapshot.js`の`createResultSnapshot`が上記13フィールドのexact schemaを生成する。`resultId`は`crypto.randomUUID()`で生成するRFC 4122 UUID形状とする。`answers`、`diagnosisId`、`resultModel` wrapper、結果定義、DOM・Canvas状態は持たない。`renderedTexts`は結果文更新後も診断時の表示文と根拠参照を維持するため深く複製する。snapshot全体はdeep freezeされ、入力の後続変更から隔離される。
+`app/js/domain/result-snapshot.js`の`createResultSnapshot`が上記13フィールドのexact schemaを生成する。`resultId`は`crypto.randomUUID()`で生成するRFC 4122 UUID形状とする。`answers`、`diagnosisId`、`resultModel` wrapper、結果定義、DOM・Canvas状態は持たない。`renderedTexts`は結果文更新後も診断時の表示文と根拠参照を維持するため深く複製する。`result-text-v1`はpreview 7件／detail 42件、`result-text-v2`は通常preview 8件／detail 45件を保持し、完全な振り返り組を得られない場合だけpreview 7件／detail 42件のゼロ-reflection fallbackを許可する。部分的な振り返り組は無効である。snapshot全体はdeep freezeされ、入力の後続変更から隔離される。
 
 `VersionTuple.characterManifestVersion`はmanifest全体の版、`characterAssetVersion`は選択された1体の`CharacterManifestEntry.assetVersion`であり、互いに独立して保存する。
 
@@ -405,7 +405,7 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 | text | string | ○ | 診断時に表示した文面 |
 | evidenceRefs | string[] | ○ | 診断時の根拠参照ID |
 
-`ResultTextDefinition`から`id`、`version`、`section`、`text`、`evidenceRefs`だけを投影するexact 5フィールドschemaである。`claimKind`、`appliesTo`、`previewAllowed`、未知フィールド、生回答を含めない。`composeResultTexts`とsnapshot生成時に深く複製し、各recordと`evidenceRefs`をdeep freezeする。
+`ResultTextDefinition`から`id`、`version`、`section`、`text`、`evidenceRefs`だけを投影するexact 5フィールドschemaである。`claimKind`、`appliesTo`、`previewAllowed`、未知フィールド、生回答を含めない。`composeResultTexts`とsnapshot生成時に深く複製し、各recordと`evidenceRefs`をdeep freezeする。将来のT-007共有合成で使う純粋境界`selectShareableResultTexts`は`section === "titleReflection"`を除外した候補だけを返す。これは共有画面・共有画像・共有テキスト自体の実装完了を意味せず、T-007は引き続き後続作業である。
 
 ## 4. 比較互換性
 

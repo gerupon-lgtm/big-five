@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { appMeta } from "../js/config/app-meta.js";
 import { DiagnosticDefinition } from "../js/data/diagnostic-definition.js";
+import { ResultTextDefinitions } from "../js/data/result-text-definitions.js";
 import {
   createShareVersionMetadata,
   createStartVersionViewModel,
@@ -25,7 +26,7 @@ test("diagnostic, start, and share models read the same canonical version regist
     scaleVersion: "ipip-ja-50-v1",
     questionVersion: "ipip-ja-50-question-set-v1",
     scoringVersion: "ipip-ja-50-scoring-v1",
-    resultTextVersion: "result-text-v1",
+    resultTextVersion: "result-text-v2",
     titleRuleVersion: "title-rule-v1",
   };
 
@@ -49,6 +50,12 @@ test("diagnostic, start, and share models read the same canonical version regist
   assert.deepEqual(
     Object.fromEntries(Object.keys(expectedDiagnosticVersions).map((field) => [field, DiagnosticDefinition[field]])),
     expectedDiagnosticVersions,
+  );
+  assert.equal(ResultTextDefinitions.length, 390);
+  assert.equal(
+    ResultTextDefinitions.every(({ version }) =>
+      version === expectedDiagnosticVersions.resultTextVersion),
+    true,
   );
 });
 

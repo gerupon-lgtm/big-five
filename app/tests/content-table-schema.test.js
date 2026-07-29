@@ -245,6 +245,48 @@ test("T-005 schema and table loaders accept compatibility references without wea
   }
 });
 
+test("T-008A title reflection authoring schema requires the exact six-column contract", async () => {
+  const schema = await loadTableSchema(new URL(
+    "../../content/schemas/title-reflection-comments.schema.json",
+    import.meta.url,
+  ));
+  assert.deepEqual(schema.columns.map(({ name }) => name), [
+    "text_id",
+    "result_text_version",
+    "title_id",
+    "display_order",
+    "text",
+    "status",
+  ]);
+
+  await withCsv(
+    [
+      "text_id,result_text_version,title_id,display_order,text,status",
+      "title-reflection-balanced-1,result-text-v2,title-balanced,1,振り返り文,approved",
+      "",
+    ].join("\n"),
+    async (filePath) => {
+      const table = await loadCsvTable({ filePath, schema });
+      assert.equal(table.rows.length, 1);
+      assert.equal(table.rows[0].display_order, 1);
+    },
+  );
+
+  await withCsv(
+    [
+      "text_id,result_text_version,title_id,display_order,text,status,unexpected",
+      "title-reflection-balanced-1,result-text-v2,title-balanced,1,振り返り文,approved,extra",
+      "",
+    ].join("\n"),
+    async (filePath) => {
+      await assert.rejects(
+        loadCsvTable({ filePath, schema }),
+        (error) => error instanceof ContentError && error.code === "CSV_COLUMNS_INVALID",
+      );
+    },
+  );
+});
+
 test("T-012 report includes source, one-based row, column, code, and Japanese message", () => {
   const report = formatContentErrors([
     new ContentError({

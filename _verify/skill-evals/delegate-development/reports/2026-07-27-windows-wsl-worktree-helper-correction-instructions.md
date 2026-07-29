@@ -176,3 +176,59 @@ PowerShell手順でworkspace、brief、review packageを生成する。
 配布済みskillは直接変更しない。アプリworktree内の
 `.superpowers/sdd/2026-07-29-frontend-tone-and-shared-header/`だけを
 PowerShellで限定作成し、briefとreview packageも同じworkspaceへ生成する。
+
+## 2026-07-29 正典worktreeフォルダーのorphan化を検出
+
+### 結果
+
+後続作業の再開時、正典として指定されていた
+`C:\Users\user\Documents\診断系アプリ開発\.worktrees\big-five-q006`
+にはプロジェクトファイルとローカル生成物が残っていたが、`.git`管理情報が
+存在せず、`git worktree list --porcelain`にも登録されていなかった。
+
+この状態で同フォルダーから`git rev-parse --show-toplevel`を実行すると、
+親の通常checkout
+`C:\Users\user\Documents\診断系アプリ開発`
+が返り、意図した`codex/big-five-q006`ではなく`main`を操作し得る状態だった。
+orphan化の発生主体は現存証跡だけでは確定できないため、helperが直接削除した
+とは断定しない。
+
+### 影響
+
+- plan別workspace、brief、review packageを誤ったcheckoutへ生成するおそれがある。
+- status、commit、pushの対象branchを誤認するおそれがある。
+- orphanフォルダー内の`.superpowers`、画像生成物、評価記録などを、空の
+  worktree障害物として削除すると未追跡成果物を失う。
+
+### 修正指示への追記
+
+1. helperの開始時に、対象ディレクトリ直下の`.git`が存在すること、
+   `git rev-parse --show-toplevel`の解決済みpathが対象ディレクトリと完全一致
+   すること、`git worktree list --porcelain`に同じpathが存在することを確認する。
+2. 対象ディレクトリが存在する一方で上記3条件のいずれかを満たさない場合、
+   親リポジトリへフォールバックせず
+   `SDD_ORPHAN_WORKTREE_DIRECTORY`で停止する。
+3. 診断には対象path、検出した`.git`種別、解決されたtop-level、worktree登録
+   有無を含める。復旧処理は自動実行せず、既存内容の退避を促す。
+4. worktree作成・再利用helperでは、作成後にも同じ3条件と期待branchを
+   postconditionとして検証する。失敗時は既存ディレクトリを削除しない。
+5. 「内容のあるorphanディレクトリ」「親repo配下で`.git`なし」
+   「登録済みlinked worktree」の3ケースをWindows回帰テストへ追加する。
+
+### 暫定復旧と検証
+
+ユーザー承認後、既存フォルダーを
+`big-five-q006-orphan-backup-2026-07-29`へ削除せず退避し、元のpathへ
+`origin/codex/big-five-q006`を追跡する正規worktreeを再作成した。
+
+- `git worktree list --porcelain`: 正典pathと
+  `refs/heads/codex/big-five-q006`の登録を確認。
+- `git status --short --branch`: local branchとremote trackingの一致を確認。
+- `git rev-parse HEAD`: `1b934b9d129f18cffae3edceb7fc50bdf53a045d`。
+- orphan内だけにあったローカル生成物は退避先へ保持し、削除・上書きしていない。
+
+### 判断
+
+本件もアプリ不具合へ読み替えず、配布済みskillは直接変更しない。以後の作業は
+復旧済み正典worktreeで行い、helper利用前にexact top-levelとworktree登録を
+監督役が確認する。

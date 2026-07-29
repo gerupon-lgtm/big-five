@@ -490,6 +490,6 @@ test("QA Pages runbook separates preview deployment from production release", as
   assert.match(runbook, /T-011.*完了.*意味しない/s);
   assert.match(tasks, /F-005.*result-text-v1.*2026-07-28.*完了/);
   assert.match(tasks, /F-006.*result-text-v1.*2026-07-28.*完了/);
-  assert.match(tasks, /titleReflection.*pending/);
+  assert.match(tasks, /TR-0〜TR-4承認済み`titleReflection`153件＝390件/);
   assert.match(tasks, /QA一時プレビュー.*T-011.*完了.*意味しない/s);
 });

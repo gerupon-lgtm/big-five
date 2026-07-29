@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.8 |
+| 設計版 | 0.9 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-28 |
-| 要件正典 | 要件定義書v1.13 |
+| 更新日 | 2026-07-30 |
+| 要件正典 | 要件定義書v1.14 |
 | 初期リリース | `mvp-0.1.0` |
 
 ## 1. トレーサビリティ表（正典）
@@ -16,8 +16,8 @@
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approvalは2026-07-28に完了 |
 | F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 共通ヘッダー、緑の進捗／設問`h1`、折り返さない`中断してトップへ`、設問20px・回答文字16px・回答ボタン高56pxを実装・360px browser smoke済み |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A | 状態別再開、preview終了、新規置換確認を保存成功・失敗・取消まで実装済み |
-| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | `PREVIEW RESULT`／「20問簡易プレビュー」の共通見出しを実装し、称号・猫hero、称号理由、5因子行・棒、単一開閉、設問構成・方法情報、7件の保存済み結果文、結果下部操作を維持。コンテンツgateは「CSVコンテンツ作成基盤の実装記録」を参照 |
-| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | `DETAIL RESULT`／「50問詳細結果」の共通見出しを実装し、称号・猫hero、称号理由、5因子行・棒、同時1因子／1詳細の二段階開閉、設問構成・方法情報、42件の保存済み結果文、結果下部操作、トップ直接導線を維持。コンテンツgateは「CSVコンテンツ作成基盤の実装記録」を参照 |
+| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 現行`result-text-v2`で称号別ヒント1件を含む8件を表示・保存。不完全なヒント組は全件省略して7件へフォールバックし、称号・因子を維持 |
+| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 現行`result-text-v2`で称号別ヒント3件を含む45件を表示・保存し、1件＋追加2件を展開。不完全なヒント組は全件省略して42件へフォールバック |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A | 名前付きレーダー、固定順5因子行・棒、同時1因子／1詳細の二段階開閉、設問構成sheetと4つの固定方法sheetを実装済み |
 | F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A | `HISTORY`／「診断結果の履歴」、ヘッダーの`トップ画面へ`、明示的な`履歴削除`、簡潔カード、保存済み結果への直接導線、固定比較導線、既存履歴管理dialogを実装・browser smoke済み |
@@ -40,7 +40,7 @@
 ### CSVコンテンツ作成基盤の実装記録（2026-07-26）
 
 - 対応: Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤。`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。
-- 初期状態: 50問、固定20問、51称号、237結果文、6根拠。E-0は`approved`、E-1〜E-5は`draft`、T-0〜T-4/F-1〜F-5/X-1〜X-2は人手approval metadataなしの`reviewed`。CSV上のQ-012/Q-013とrelease manifest/historyはヘッダーのみで開始した。その後Q-012画像は別の版付き制作台帳・runtime manifestで制作・技術実装済みとなったが、正式なapproved release選択は未完了である。Q-013とCSV approved releaseも未作成のままである。
+- 初期状態: 50問、固定20問、51称号、`result-text-v1` 237結果文、6根拠。E-0は`approved`、E-1〜E-5は`draft`、T-0〜T-4/F-1〜F-5/X-1〜X-2は人手approval metadataなしの`reviewed`。現在の`result-text-v2`は基本237件＋TR-0〜TR-4承認済み`titleReflection`153件＝390件、結果文と根拠の対応行267件で、実行時根拠定義は引き続き6件である。v2基本文面には承認済み修正27件を含む。CSV上のQ-012/Q-013とrelease manifest/historyはヘッダーのみで開始した。その後Q-012画像は別の版付き制作台帳・runtime manifestで制作・技術実装済みとなったが、正式なapproved release選択は未完了である。Q-013とCSV approved releaseも未作成のままである。
 - 運用: 人はコミット対象のCSVだけを編集し、`app/content/`の生成JSONを手編集・コミットしない。`npm.cmd run content:validate`で検証し、`npm.cmd run content:build`はapproved complete releaseがない現在`RELEASE_NOT_SELECTED`となる。
 - 移行状態: ES Modulesがruntime compatibility authorityで、runtime JSON fetchとPages deploymentは未実装。通常モードの外部通信は0件、CSPは`connect-src 'none'`を維持する。activation後のActions validate/build/deployは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 - 検証: `node --test app/tests/content-artifact-contract.test.js`、`npm.cmd run content:validate`、`npm.cmd test`、`npm.cmd run check`。Task 6のwarning-order minorは非ブロッキングとして記録し、完了済みfoundationを再開しない。
@@ -57,8 +57,8 @@
 | T-004 | 回答状態機械・途中保存・削除 | F-003, F-004, F-013, F-015 | 新規→20問分岐→50問、再開・破棄が動く |
 | T-005 | 結果画面・猫・レーダー・色香り | F-002, F-005, F-006, F-007, F-008, F-016, F-018 | 基本・詳細結果を代替表示込みで閲覧可能 |
 | T-006 | 履歴・比較・削除 | F-009, F-010, F-013, F-015 | 当時結果を保存し、互換2件だけ比較 |
-| T-007 | 共有カード・保存・コピー | F-011, F-012, F-014, F-015, F-018 | 選択配色カードを保存・共有し段階代替 |
-| T-008A | 結果・履歴・中断再開UI再整理 | F-001, F-003〜F-006, F-008〜F-010, F-013, F-015, F-018 | `titleReflection`以外のQ-014 UIは320／360／960px・キーボード・保存失敗込みで検証済み。2026-07-29の共通ヘッダー／見出しは同3幅の横overflowなしを確認。文面制作・承認gateを維持 |
+| T-007 | 共有カード・保存・コピー | F-011, F-012, F-014, F-015, F-018 | `titleReflection`を除外する純粋な共有候補抽出境界だけ先行実装済み。実際の共有UI・画像・テキスト・段階代替はQ-007/Q-013待ち |
+| T-008A | 結果・履歴・中断再開UI再整理 | F-001, F-003〜F-006, F-008〜F-010, F-013, F-015, F-018 | `titleReflection`の文面承認、runtime、snapshot、結果画面接続、全体回帰、320／360／960pxのローカル実ブラウザQAまで完了 |
 | T-008 | 全画面統合・レスポンシブ・a11y | F-001〜F-016, F-018 | 主要フローを360px・PC・キーボードで完結 |
 | T-009 | 説明・プライバシー・CSP | F-001, F-002, F-007, F-014, F-015 | 限界、非送信、削除、版、CSPを確認可能 |
 | T-010 | ベータ匿名集計API・DB・事前説明 | F-017 | OCIへ匿名集計し、二重送信・通信失敗でも診断結果を維持 |
@@ -211,11 +211,11 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 
 #### Q-006ドメイン実装記録（2026-07-26）
 
-- 状態: DONE_WITH_CONCERNS。T-005のうちF-002/F-005/F-006/F-016に対応する結果文ドメインは`result-text-v1 initial reviewed copy`として実装・独立レビュー済みで、全18 gateはapproved、Q-006のContent Approvalは2026-07-28に完了した。approved release未選択、Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`が残るため、T-005全体は未完了。
-- schema: `ResultEvidenceDefinition`固定6件、10 section＋`claimKind`を持つ`ResultTextDefinition`。
-- 定義: title 102件＋factor 135件＝237件の`result-text-v1` literal定義。
-- 合成: `composeResultTexts`がdefinitionの条件選択、欠落・重複・件数、`version`、section-first・固定factor順を検証し、preview 7件／detail 42件を5フィールド`RenderedResultText`へ投影してdeep freezeする。
-- snapshot: `createResultSnapshot`が各位置のexact production record IDを検証し、9フィールド`VersionTuple`と診断時文章を含む13フィールド`ResultSnapshot`を生成する。生回答、`diagnosisId`、結果定義、DOM・Canvas状態を含めず、`characterAssetVersion`と`characterManifestVersion`を分離する。
+- 状態: DONE_WITH_CONCERNS。T-005のうちF-002/F-005/F-006/F-016に対応する`result-text-v1 initial reviewed copy`の全18 gateはapprovedで、Q-006のContent Approvalは2026-07-28に完了した。`result-text-v2`の文面、承認、domain、snapshot、結果画面接続も実装済みである。approved release未選択、Q-012正式release、Q-013 production data、T-007共有UI、新規部分のブラウザQAと全体回帰修正が残るため、T-005全体は未完了。
+- schema: `ResultEvidenceDefinition`固定6件、`titleReflection`を含む11 section＋`claimKind`を持つ`ResultTextDefinition`。v2の結果文と根拠の対応行267件は、根拠定義数6件と区別する。
+- 定義: `result-text-v1`はtitle 102件＋factor 135件＝237件の不変な履歴互換定義。現行`result-text-v2`は基本237件＋称号別ヒント153件＝390件で、基本文面には承認済み修正27件を含む。
+- 合成: `composeResultTexts`がdefinitionの条件選択、欠落・重複・件数、`version`、section-first・固定factor順を検証し、v2の完全定義をpreview 8件／detail 45件の5フィールド`RenderedResultText`へ投影してdeep freezeする。不完全な称号別ヒント3件組は全件省略し、7件／42件へフォールバックする。
+- snapshot: `createResultSnapshot`が各位置のexact production record IDを検証し、9フィールド`VersionTuple`と診断時文章を含む13フィールド`ResultSnapshot`を生成する。v2は8件／45件またはゼロ-reflection fallback 7件／42件を許可し、部分的なヒント組を拒否する。生回答、`diagnosisId`、結果定義、DOM・Canvas状態を含めず、`characterAssetVersion`と`characterManifestVersion`を分離する。
 - gate: 根拠台帳ではE-0〜E-5がapprovedで、E-1〜E-5の承認日は2026-07-28。F-1〜F-5は各因子の20問観察文と50問8節について2026-07-28にapproved。T-0〜T-4は51称号の中立副題・称号理由・カタログ一致について2026-07-28にapproved。X-1は20問結果のtitle 2件＋5因子観察文＝7件の全体表示について2026-07-28にapproved。X-2は50問結果のtitle 2件＋5因子×8節＝42件の全体表示について2026-07-28にapproved。
 - 解決状態: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の全18 gateがapprovedとなり、Q-006は2026-07-28に解決済み。
 - 画面: live／保存済みS-003/S-004、5軸レーダー、境界・僅差補足、Canvas代替、Q-012の該当猫1体のviewport遅延読込と画像失敗時altを実装済み。共有と代替色・香りは後続T-007/Q-013統合。
@@ -241,7 +241,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 #### 保存済み結果画面統合記録（2026-07-26）
 
 - `#/result?resultId=...`で保存履歴を再検証し、exact `resultId`のS-003/S-004を独立表示する。ID不足・削除済み・破損時は保存値を書き換えず履歴へ戻して通知する。
-- preview 7件／detail 42件の診断時文面を保存順に表示し、全5因子の表示整数、HTMLの「説明を見る」、根拠参照、境界・僅差補足、20問版の限界と50問で変わり得る旨を表示する。
+- v1またはv2のゼロ-reflection fallbackではpreview 7件／detail 42件、v2の完全結果ではpreview 8件／detail 45件の診断時文面を保存順に表示し、全5因子の表示整数、HTMLの「説明を見る」、根拠参照、境界・僅差補足、20問版の限界と50問で変わり得る旨を表示する。
 - レーダーは5軸・25/50/75補助線を描き、Canvas未対応・描画例外時も5因子と全結果文を維持する。Q-012確定後はmanifestの該当画像だけを遅延読込し、失敗時は承認済みaltを表示する。
 - `delegate-development`でpresentationとQ-012 loader統合を委譲し、Spec/Standards独立レビューを実施した。Specの境界補足・20問注意文P2は1回差し戻して解消した。character loaderと実ブラウザsmokeは完了し、継続・共有callbackはS-002／T-007／T-008の後続範囲として保持する。
 - 検証: 結果画面・route・履歴・app-shell・文書契約集中36件、全349件、`npm.cmd run check`、`git diff --check`成功。
@@ -299,6 +299,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - Canvas `toBlob`失敗、フォント未準備、ユーザーキャンセル。
   - PNG内のモード、称号、数値、注意、版、選択色を目視・自動確認。
   - 共有モデルの禁止フィールド検査。
+- 先行実装（2026-07-30）: `selectShareableResultTexts`はResultSnapshot由来の結果文から`section === "titleReflection"`を除外し、順序を維持したdeep-freeze済み候補を返す。これは将来の共有合成に対する純粋境界であり、S-005、共有画像、共有テキスト、Web Share、Download、Clipboardの実装完了を意味しない。
 
 ### T-008A 結果・履歴・中断再開UI再整理
 
@@ -312,7 +313,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 履歴・比較計画: `docs/superpowers/plans/2026-07-27-history-compact-comparison.md`
 - フロントエンドトーン正典: `docs/superpowers/specs/2026-07-29-frontend-tone-and-shared-header-design.md`
 - フロントエンドトーン計画: `docs/superpowers/plans/2026-07-29-frontend-tone-and-shared-header.md`
-- 状態: DONE_WITH_CONCERNS。T-008Aの画面接続と実ブラウザ検証は完了したが、`result-text-v2`の51称号分`titleReflection`は作成・Content Approval pendingのため、T-008A全体を完全完了とはしない
+- 状態: DONE。既存Q-014画面の実ブラウザ検証に加え、`result-text-v2`の51称号×3件の文面承認、domain、snapshot、結果画面接続、全体回帰、320／360／960pxのローカル実ブラウザQAまで完了した。Pages上の再確認はT-011のQA一時プレビュー運用として別管理する
 - 作業:
   - `Big Five 自己理解チェック`／`BIG FIVE SELF UNDERSTANDING`の共通ヘッダーと、緑のkicker／進捗＋`h1`の共通見出しを開始・回答・20問分岐・結果・履歴・比較へ適用する。
   - 全画面の控えめなアプリ名、設問のbalanced wrapping、回答画面固有の20〜22px設問文・16px選択肢・行間1.5・最低高56px、中断導線を実装する。
@@ -339,7 +340,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - presentation単体: questionnaire、start、result、history。
   - app-shell結合: 1〜19問、20問選択前、preview表示後、21〜49問、50問完答、新規開始取消／確定。
   - storage異常: 保存不可、preview snapshot未保存、progress削除失敗。
-  - Q-006 snapshot 7件／42件、Q-012該当画像1件、通常外部送信0件の回帰。
+  - Q-006 snapshot v1 7件／42件、v2 8件／45件、v2ゼロ-reflection fallback 7件／42件、部分組拒否、Q-012該当画像1件、通常外部送信0件の回帰。
   - `npm.cmd test`、`npm.cmd run check`、`git diff --check`、実ブラウザsmoke。
 - 実装記録（2026-07-27、第1バッチ）:
   - `app-header`を開始・回答へ接続し、設問中／20問分岐の`中断してトップへ`と破棄を分離した。開始画面は直近進捗の状態に応じて`途中から再開する`／`残り30問を再開する`を切り替え、新規開始は取消時無変更・確定時だけ進捗を置換する。
@@ -348,7 +349,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - `createQuestionComposition`と`createResultDisclosureModel`を追加し、設問本文・回答を出さない正逆方向件数と、section-first snapshotからfactor-first表示モデルへの不変投影を実装した。レーダーの5因子名描画とアクセシブルなボトムシート基盤も追加した。
   - 全444テスト、静的検証44 JavaScript、`git diff --check`に成功した。残作業は結果hero、因子一覧・二段階展開、設問構成／方法情報の画面接続、50問トップ導線、履歴管理モーダル、称号別ヒント、最終全体responsive・keyboard browser smokeである。
   - Q-013素材例仕様（2026-07-28）: 香り素材を版付き独立マスタ、香調との関連を素材ID 1〜3件として管理し、通常結果だけに表示して共有から除外する設計を承認した。色はパレット単位マスタを維持する。ユーザー共有の評価コメント・象徴色・香り資料は51称号を網羅する候補検討資料としてハッシュを記録したが、直接移植・自動採用・承認済み扱いを禁止する。実装とproduction data作成はQ-013 release gate内の後続作業である。
-  - Q-014追補（2026-07-28）: `result-text-v2`で称号別の振り返りヒント1〜3件を追加し、20問は1件、50問は1件＋追加最大2件とする。50問結果のトップ導線、履歴管理モーダルの閉じる・背景タップ・Esc・フォーカス復帰も承認した。実装は後続計画で行う。
+  - Q-014追補（2026-07-28）: `result-text-v2`で称号別の振り返りヒント1〜3件を追加し、20問は1件、50問は1件＋追加最大2件とする。50問結果のトップ導線、履歴管理モーダルの閉じる・背景タップ・Esc・フォーカス復帰も承認した。
   - Q-014回答文字追補（2026-07-28）: 外部のリリース済みアプリ画面は配色を移植せず、文字階層と余白だけの参考資料として扱う。回答画面固有で設問20px／広幅22px、選択肢16px、行間1.5、選択肢最低高56pxを採用し、結果・履歴へ一律適用しない。実装結果は次項へ記録する。
   - Q-014回答文字実装（2026-07-28）: 回答画面だけを設問20〜22px、行間1.5、選択肢16px・最低高56pxへ変更し、20問分岐を含む他画面の見出し規則から分離した。CSS契約テスト、360×800、960×900、320px・200%相当、キーボード、回答・中断・再開の実ブラウザ確認に成功した。配色、正式設問文、5件法ラベル、回答状態、保存処理は変更していない。
   - 結果・履歴UI実装（2026-07-28）: 結果heroと「この称号になった理由」を分離し、名前付きレーダーの下へ固定順5因子のコンパクトな行・棒・数値を表示した。20問7件／50問42件の保存済み結果文は、同時1因子・同一因子内1詳細だけを開く二段階開閉からすべて到達できる。因子別の正逆方向件数sheet、スコアや称号で変化しない4つの方法sheet、50問結果の`トップへ戻る`、履歴カードから保存済み結果を開く導線も画面接続した。保存結果の尺度・設問・採点版が登録済みtupleと完全一致する場合だけ該当方法情報を表示し、未登録版では現行件数・限界・出典を流用しない。
@@ -356,7 +357,9 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 最終検証（2026-07-28）: 実ブラウザで320px、360px、960pxの結果・履歴を確認し、全幅で横overflowなし、360×800で履歴modal全体がviewport内に収まることを確認した。明示close、正確なbackdrop click、Escape、focus入場・復帰も通過し、console error／warningは0件だった。追加の自動回帰検証では、未登録の履歴診断版、ボトムシートのインラインfallback、保存結果を含む履歴fallback、承認済み結果開示ラベルを含む全465件、`npm.cmd run check`、`git diff --check`に成功した。
   - フロントエンドトーン実装・検証（2026-07-29）: 共通表示名を`Big Five 自己理解チェック`、副題を`BIG FIVE SELF UNDERSTANDING`へ統一し、全対象画面へ緑のkicker／進捗＋`h1`を適用した。開始画面は`SELF CHECK`／`自分のことを知る`と承認済みBig Five・IPIP説明、結果画面は`PREVIEW RESULT`／`DETAIL RESULT`、履歴はヘッダーの`トップ画面へ`と`履歴削除`、比較はヘッダーの`履歴へ戻る`を使用する。ブラウザでは20問回答→簡易プレビュー→残り30問→50問詳細結果、履歴、互換な50問結果2件の比較を通過し、320px、360px、960pxで主要画面の横overflowなしを確認した。360px回答画面は`中断してトップへ`がnowrap、設問20px、回答文字16px、回答ボタン高56pxである。`npm.cmd test`は511件成功・失敗0件、`npm.cmd run check`は46 JavaScript files・canonical runtime version 1件で成功、`npm.cmd run qa:preview:build`は100 files・6,631,601 bytesで成功した。
   - Chrome追加検証（2026-07-29）: 320×800、360×800、960×900の開始・回答・履歴・結果・比較で横overflowなしを確認した。共有ヘッダー高は52px、主見出し上端は131px相当で揃い、360pxのkicker／進捗上端は104px相当である。960px回答画面は設問22px、回答文字16px、回答ボタン高56px、他の主見出し24pxである。200%文字拡大は`devicePixelRatio` 2、CSS viewport 960×487で横overflowなし、ヘッダー操作のnowrap、回答文字16px・回答ボタン高56pxを維持した。キーボードでは開始、回答、結果展開、履歴管理dialogを操作でき、`Escape`後のfocus復帰と`:focus-visible`のsolid outlineを確認した。
-  - 残る懸念: `result-text-v1`のContent Approvalは2026-07-28に完了した。`result-text-v2`の51称号分`titleReflection`は作成・Content Approval pending、approved release未選択、Q-012の正式releaseとQ-013 production dataも未完了であり、承認済みとして扱わない。
+  - `result-text-v2`実装（2026-07-30）: TR-0〜TR-4の153文をすべてユーザー承認済みとして版付きCSVとruntime定義へ反映し、基本237件と合わせた390件を現行runtimeにした。v1→v2の承認済み文面修正は27件である。preview 1件、detail 1件＋追加2件、ゼロ-reflection fallback、部分snapshot拒否、共有候補抽出での除外を実装した。domain集中78件、共有境界等の集中41件、result-screen集中18件は成功した。
+  - 追加検証（2026-07-30）: 旧v1件数や版fixtureを前提にした36件を履歴互換契約を弱めず修正し、`npm.cmd test` 530件、最終独立focused review 150件、`npm.cmd run check`、`npm.cmd run content:validate`、`npm.cmd run qa:preview:build`、`git diff --check`に成功した。ローカル実ブラウザで20問previewから50問detailまで通し、preview 1件、detail 1件＋追加2件、称号理由→振り返り→5因子の順、native buttonのfocus／`aria-expanded`、320px・360px・960pxの横overflowなし、console error／warning 0件を確認した。
+  - 残る懸念: approved release未選択、Q-012の正式release、Q-013 production data、T-007共有UIは未完了である。通常runtimeの外部送信0件と`connect-src 'none'`は維持する。Pages上の再確認とpushはT-011のQA一時プレビュー運用として記録する。
 
 ### T-008 全画面統合・レスポンシブ・アクセシビリティ
 
@@ -457,8 +460,8 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 | 項目 | 理由 | 着手条件 |
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
-| Q-014結果・履歴・中断再開UI | 回答中断、preview終了、状態別再開、新規開始確認、結果hero、5因子行・棒、単一開閉の二段階展開、設問構成／4方法sheet、50問トップ導線、簡潔な履歴、固定比較導線、履歴管理dialog、responsive・keyboard browser smokeまで実装済み。`result-text-v2`の51称号分`titleReflection`だけが作成・Content Approval pending | T-008A |
-| 結果・履歴画面統合 | Q-006ドメイン、ResultSnapshot保存、S-001/S-002 live controller、完答caller、追加30問、S-003/S-004 live／保存済み画面、S-006履歴、S-007比較、Q-012猫画像遅延表示、Q-014のtitleReflection以外のUIを実装済み。共有、Q-013代替色・香り、titleReflection制作・承認は未完了 | T-005/T-007/T-008A/T-008 |
+| Q-014結果・履歴・中断再開UI | 回答中断、preview終了、状態別再開、新規開始確認、結果hero、5因子行・棒、単一開閉の二段階展開、設問構成／4方法sheet、50問トップ導線、簡潔な履歴、固定比較導線、履歴管理dialog、`result-text-v2`の称号別ヒントを実装し、全体回帰と320／360／960pxのローカルQAまで完了 | T-008A完了。Pages再確認はT-011で管理 |
+| 結果・履歴画面統合 | Q-006ドメイン、ResultSnapshot保存、S-001/S-002 live controller、完答caller、追加30問、S-003/S-004 live／保存済み画面、S-006履歴、S-007比較、Q-012猫画像遅延表示、Q-014の`titleReflection`を含むUIと追加QAまで実装済み。共有UI、Q-013代替色・香りは未完了 | T-005/T-007/T-008A/T-008 |
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
 | 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを制作・技術確認済み。runtime manifest、整合検査、単一画像遅延loader、live／保存済み結果画面接続まで実装済み | Q-012の正式なapproved release選択は未完了。共有はT-007で接続 |
