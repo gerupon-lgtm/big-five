@@ -124,7 +124,7 @@ test("T-005 S-003 renders the complete saved preview with factor help and the 30
   assert.match(text, /独自のプロフィール表現であり、心理学上の正式なタイプではありません/);
   assert.doesNotMatch(text, /character-balanced/);
   assert.match(text, /画像を利用できない場合も診断結果は有効です/);
-  assert.match(text, /palette-default/);
+  assert.doesNotMatch(text, /palette-default|選択色ID/);
   assert.doesNotMatch(text, /rawMean|answers/);
 
   const factorDetails = collectElements(host)
@@ -423,7 +423,7 @@ test("T-005 F-016 keeps approved alt and the complete result when decode fails",
   const text = collectText(host);
   assert.match(text, /称号.*五つの風を見渡す観測者/);
   assert.match(text, new RegExp(characterEntry.alt));
-  assert.match(text, /診断時の選択色ID：palette-default/);
+  assert.doesNotMatch(text, /診断時の選択色ID|palette-default/);
   assert.equal(
     collectElements(host).filter(({ tagName }) => tagName === "img").length,
     0,
@@ -485,6 +485,10 @@ test("T-008A F-005/F-006 shows one preview reflection between reason and factors
   assert.deepEqual(
     resultTextRecords(reflection).map(({ textContent }) => textContent),
     ["振り返りのヒント1"],
+  );
+  assert.match(
+    collectText(reflection),
+    /20問の簡易結果をもとにした、振り返りの参考情報です。/,
   );
   assert.equal(
     collectElements(reflection).filter(({ className }) =>
@@ -632,8 +636,15 @@ test("T-008A F-005 keeps all detail records in one-factor and one-category discl
   assert.equal(factorTriggers.length, 5);
   assert.equal(categoryTriggers.length, 35);
   assert.deepEqual(
-    factorTriggers.map(({ textContent }) => textContent),
-    Array(5).fill("説明を見る"),
+    factorTriggers.map(({ attributes }) => attributes.get("aria-label")),
+    ["知性・想像力", "勤勉性", "外向性", "協調性", "情緒安定性"]
+      .map((label, index) =>
+        `${label}、スコア${bars[index].attributes.get("aria-valuenow")}点、詳しい結果を見る`
+      ),
+  );
+  assert.deepEqual(
+    factorTriggers.map((trigger) => collectText(trigger).includes("詳しく見る")),
+    Array(5).fill(true),
   );
   assert.deepEqual(
     categoryTriggers.map(({ textContent }) => textContent),
@@ -655,7 +666,7 @@ test("T-008A F-005 keeps all detail records in one-factor and one-category discl
   assert.equal(categorySummaries.length, 35);
   assert.equal(
     collectElements(host).filter(({ textContent }) =>
-      textContent === "※因子名の「説明を見る」から、それぞれの意味を確認できます。").length,
+      textContent === "因子を選ぶと、詳しい結果を確認できます。").length,
     1,
   );
   assert.equal(
@@ -708,10 +719,13 @@ test("T-008A F-005 limits preview disclosure to current observations while retai
   assert.equal(categoryTriggers.length, 5);
   assert.deepEqual(categoryTriggers.map(({ textContent }) => textContent), Array(5).fill("詳しく見る"));
   assert.deepEqual(categoryLabels.map(({ textContent }) => textContent), Array(5).fill("今の傾向"));
-  assert.deepEqual(factorTriggers.map(({ textContent }) => textContent), Array(5).fill("説明を見る"));
+  assert.deepEqual(
+    factorTriggers.map((trigger) => collectText(trigger).includes("詳しく見る")),
+    Array(5).fill(true),
+  );
   assert.equal(
     collectElements(host).filter(({ textContent }) =>
-      textContent === "※因子名の「説明を見る」から、それぞれの意味を確認できます。").length,
+      textContent === "因子を選ぶと、詳しい結果を確認できます。").length,
     0,
   );
   assert.deepEqual(
@@ -754,10 +768,23 @@ test("T-008A F-008 renders count-only composition and fixed method sheets indepe
   renderSavedResultScreen(second.host, secondSnapshot, labels, {}, dependencies);
 
   const launchers = collectElements(first.host)
-    .filter(({ className }) => className === "bottom-sheet-launcher");
+    .filter(({ className }) => className.split(" ").includes("bottom-sheet-launcher"));
   assert.deepEqual(
     launchers.map(({ textContent }) => textContent),
     ["因子ごとの設問構成を見る", "測定の土台", "スコアの計算方法", "この結果の限界", "出典・利用条件"],
+  );
+  assert.match(collectText(first.host), /結果の見方について/);
+  assert.match(
+    collectText(first.host),
+    /測定方法や、今回の結果を読むための補足情報です。/,
+  );
+  const compositionSheet = collectElements(first.host).find(
+    ({ id }) => id === "question-composition",
+  );
+  assert.match(collectText(compositionSheet), /今回の結果：50問/);
+  assert.match(
+    collectText(compositionSheet),
+    /設問本文や回答内容は表示しません。構成上の項目数だけを確認できます。/,
   );
   const compositionRows = collectElements(first.host)
     .filter(({ className }) => className === "question-composition-row");
@@ -771,4 +798,24 @@ test("T-008A F-008 renders count-only composition and fixed method sheets indepe
     .filter(({ className }) => className === "bottom-sheet")
     .map((sheet) => collectText(sheet));
   assert.deepEqual(firstMethodBodies.slice(1), secondMethodBodies.slice(1));
+});
+
+test("T-008A F-008 labels preview composition as the current 20-question result", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000075",
+    questionCount: 20,
+  });
+  renderSavedResultScreen(host, snapshot, labels, {}, {
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+    questionComposition: Object.freeze([
+      Object.freeze({ factorId: "intellectImagination", positiveCount: 2, negativeCount: 2 }),
+    ]),
+    methodInfo: Object.freeze([]),
+  });
+
+  const compositionSheet = collectElements(host).find(
+    ({ id }) => id === "question-composition",
+  );
+  assert.match(collectText(compositionSheet), /今回の結果：20問/);
 });

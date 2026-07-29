@@ -222,7 +222,9 @@ test("canonical documents state the CSV authoring foundation without activation 
     assert.match(text, /content\/source|CSV/);
   }
   const joined = documents.join("\n");
-  assert.match(joined, /Content Approval pending/);
+  assert.match(joined, /Q-006.*Content Approval.*(?:完了|approved)|Content Approval.*(?:完了|approved).*Q-006/);
+  assert.match(joined, /TR-0〜TR-4.*(?:承認|approved)/);
+  assert.match(joined, /approved release.*(?:未選択|ありません)/);
   assert.match(joined, /connect-src 'none'/);
   assert.match(joined, /2026-07-26-csv-content-activation-pages\.md/);
   assert.match(joined, /ES Modules/);

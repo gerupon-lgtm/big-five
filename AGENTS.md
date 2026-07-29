@@ -71,7 +71,7 @@ docs/
 - 通常版とベータ版の機能フラグをテストし、通常版の診断フローで外部送信0件を維持する。
 - コンテンツの人手編集正典はコミット対象の`content/source/`以下のCSVであり、生成JSONの`app/content/`は手編集・コミットしない。詳細な作成手順は`docs/content-authoring.md`を参照する。
 - CSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済み。ただしapproved releaseはなく、通常runtimeは既存ES Modulesを継続し、`connect-src 'none'`を維持する。JSON runtime/Pages activationは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
-- 初期コンテンツの人手gateはE-0のみ`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`である。Q-006、Q-012、Q-013はrelease gateとして未解決であり、承認事実を補完してはならない。
+- Q-006のE-0〜E-5、F-1〜F-5、T-0〜T-4、X-1〜X-2は2026-07-28に承認済みである。現行`result-text-v2`のTR-0〜TR-4（51称号×3件）も2026-07-30までに承認・実装済みである。approved releaseの選択、Q-012の正式release、Q-013 production dataは未完了のrelease gateとして維持し、承認事実を補完してはならない。
 
 ## バージョン管理
 

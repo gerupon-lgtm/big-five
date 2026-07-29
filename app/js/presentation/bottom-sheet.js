@@ -36,17 +36,23 @@ export function appendBottomSheetLauncher(
   sheet.id = safeId;
   sheet.className = "bottom-sheet";
   sheet.setAttribute("aria-labelledby", `${safeId}-title`);
-  const heading = appendTextElement(sheet, "h2", safeTitle);
+  const header = sheet.ownerDocument.createElement("header");
+  header.className = "bottom-sheet-header";
+  const heading = appendTextElement(header, "h2", safeTitle);
   heading.id = `${safeId}-title`;
-  appendTextElement(sheet, "p", safeBody);
-  appendContent?.(sheet);
   const closeButton = appendTextElement(
-    sheet,
+    header,
     "button",
     "閉じる",
     "secondary-button",
   );
   closeButton.setAttribute("type", "button");
+  sheet.append(header);
+  const content = sheet.ownerDocument.createElement("div");
+  content.className = "bottom-sheet-body";
+  appendTextElement(content, "p", safeBody, "bottom-sheet-intro");
+  appendContent?.(content);
+  sheet.append(content);
   let sheetOpen = false;
 
   function openInlineFallback() {
@@ -93,6 +99,9 @@ export function appendBottomSheetLauncher(
 
   button.addEventListener("click", openSheet);
   closeButton.addEventListener("click", closeSheet);
+  sheet.addEventListener("click", (event) => {
+    if (event.target === sheet) closeSheet();
+  });
   sheet.addEventListener("cancel", (event) => {
     event.preventDefault();
     closeSheet();

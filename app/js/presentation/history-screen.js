@@ -241,23 +241,45 @@ function renderHistoryHeader(parent, historyState, actions) {
     "history-management-close",
   );
   closeButton.setAttribute("type", "button");
-  const deleteAll = appendTextElement(
+  appendTextElement(menu, "h2", "履歴を管理する", "history-management-title");
+  appendTextElement(
     menu,
+    "p",
+    "端末内に保存されている診断結果を確認し、必要なものだけ削除できます。",
+    "history-management-intro",
+  );
+  const managementList = menu.ownerDocument.createElement("div");
+  managementList.className = "history-management-list";
+  menu.append(managementList);
+  const deleteAll = appendTextElement(
+    managementList,
     "button",
     "端末内データをすべて削除",
     "danger-button",
   );
   deleteAll.setAttribute("type", "button");
-  deleteAll.addEventListener("click", () => actions.onDeleteAll?.());
 
   for (const snapshot of historyState.results ?? []) {
+    const item = menu.ownerDocument.createElement("article");
+    item.className = "history-management-item";
+    appendTextElement(
+      item,
+      "strong",
+      formatCompletedAt(snapshot.completedAt),
+      "history-management-date",
+    );
+    appendTextElement(
+      item,
+      "p",
+      snapshot.questionCount === 20 ? "20問 簡易プレビュー" : "50問 詳細結果",
+      "history-management-mode",
+    );
     const details = menu.ownerDocument.createElement("details");
+    details.className = "history-information";
     appendTextElement(
       details,
       "summary",
-      `${formatCompletedAt(snapshot.completedAt)} ${
-        snapshot.questionCount === 20 ? "20問" : "50問"
-      } 診断時のバージョン`,
+      "診断時の情報を見る",
     );
     const versions = details.ownerDocument.createElement("dl");
     for (const [name, value] of Object.entries(snapshot.versionTuple)) {
@@ -266,20 +288,112 @@ function renderHistoryHeader(parent, historyState, actions) {
     }
     details.append(versions);
     const deleteOne = appendTextElement(
-      details,
+      item,
       "button",
-      `${formatCompletedAt(snapshot.completedAt)} ${
-        snapshot.questionCount === 20 ? "20問" : "50問"
-      } この結果を削除`,
-      "danger-button",
+      "この履歴を削除",
+      "danger-button history-delete-button",
     );
     deleteOne.setAttribute("type", "button");
-    deleteOne.addEventListener(
-      "click",
-      () => actions.onDeleteResult?.(snapshot.resultId),
+    deleteOne.setAttribute(
+      "aria-label",
+      `${formatCompletedAt(snapshot.completedAt)} ${
+        snapshot.questionCount === 20 ? "20問" : "50問"
+      }の履歴を削除`,
     );
-    menu.append(details);
+    deleteOne.addEventListener("click", () => {
+      showDeleteConfirmation({
+        kind: "one",
+        resultId: snapshot.resultId,
+        source: deleteOne,
+      });
+    });
+    item.insertBefore(details, deleteOne);
+    managementList.insertBefore(item, deleteAll);
   }
+
+  const confirmation = menu.ownerDocument.createElement("section");
+  confirmation.className = "history-delete-confirmation";
+  confirmation.hidden = true;
+  confirmation.setAttribute("aria-labelledby", "history-delete-confirmation-title");
+  const confirmationTitle = appendTextElement(
+    confirmation,
+    "h2",
+    "削除の確認",
+    "history-delete-confirmation-title",
+  );
+  confirmationTitle.id = "history-delete-confirmation-title";
+  const confirmationMessage = appendTextElement(
+    confirmation,
+    "p",
+    "",
+    "history-delete-confirmation-message",
+  );
+  confirmationMessage.id = "history-delete-confirmation-message";
+  const confirmationActions = confirmation.ownerDocument.createElement("div");
+  confirmationActions.className = "history-delete-confirmation-actions";
+  const cancelDelete = appendTextElement(
+    confirmationActions,
+    "button",
+    "戻る",
+    "secondary-button",
+  );
+  cancelDelete.setAttribute("type", "button");
+  const confirmDelete = appendTextElement(
+    confirmationActions,
+    "button",
+    "削除する",
+    "danger-button",
+  );
+  confirmDelete.setAttribute("type", "button");
+  confirmationActions.append(confirmDelete);
+  confirmation.append(confirmationActions);
+  menu.append(confirmation);
+
+  let pendingDeletion = null;
+
+  function hideDeleteConfirmation({ restoreFocus = true } = {}) {
+    if (!pendingDeletion) return;
+    const source = pendingDeletion.source;
+    pendingDeletion = null;
+    confirmation.hidden = true;
+    managementList.hidden = false;
+    dialog.setAttribute("aria-label", "履歴の管理");
+    dialog.removeAttribute("aria-describedby");
+    if (restoreFocus) source.focus?.();
+  }
+
+  function showDeleteConfirmation({ kind, resultId = null, source }) {
+    pendingDeletion = { kind, resultId, source };
+    managementList.hidden = true;
+    confirmation.hidden = false;
+    dialog.setAttribute("aria-label", "削除の確認");
+    dialog.setAttribute("aria-describedby", confirmationMessage.id);
+    if (kind === "all") {
+      confirmationMessage.textContent =
+        "途中回答と診断結果をすべて削除します。削除後は復元できません。";
+      confirmDelete.textContent = "すべて削除する";
+    } else {
+      confirmationMessage.textContent =
+        "この診断結果1件を削除します。削除後は復元できません。";
+      confirmDelete.textContent = "削除する";
+    }
+    cancelDelete.focus?.();
+  }
+
+  deleteAll.addEventListener("click", () => {
+    showDeleteConfirmation({ kind: "all", source: deleteAll });
+  });
+  cancelDelete.addEventListener("click", () => hideDeleteConfirmation());
+  confirmDelete.addEventListener("click", () => {
+    const deletion = pendingDeletion;
+    if (!deletion) return;
+    hideDeleteConfirmation({ restoreFocus: false });
+    if (deletion.kind === "all") {
+      actions.onDeleteAll?.();
+    } else if (deletion.resultId) {
+      actions.onDeleteResult?.(deletion.resultId);
+    }
+  });
 
   let modalOpen = false;
   let fallbackMode = false;
@@ -358,6 +472,7 @@ function renderHistoryHeader(parent, historyState, actions) {
 
   function closeManagement() {
     if (!modalOpen) return;
+    hideDeleteConfirmation({ restoreFocus: false });
     const wasFallback = fallbackMode;
     modalOpen = false;
     fallbackMode = false;
@@ -402,12 +517,20 @@ function renderHistoryHeader(parent, historyState, actions) {
   });
   dialog.addEventListener("cancel", (event) => {
     event.preventDefault();
+    if (pendingDeletion) {
+      hideDeleteConfirmation();
+      return;
+    }
     closeManagement();
   });
   dialog.addEventListener("close", closeManagement);
   dialog.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       event.preventDefault();
+      if (pendingDeletion) {
+        hideDeleteConfirmation();
+        return;
+      }
       closeManagement();
       return;
     }

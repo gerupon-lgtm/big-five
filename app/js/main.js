@@ -283,7 +283,6 @@ export function startApp({
     }, {
       operationNotice,
       onDeleteResult(resultId) {
-        if (!requestConfirmation("この診断結果1件を削除します。削除後は復元できません。")) return;
         const outcome = deleteResultSnapshot({
           storage: effectiveStorage,
           resultId,
@@ -296,7 +295,6 @@ export function startApp({
         renderCurrentRoute();
       },
       onDeleteAll() {
-        if (!requestConfirmation("途中回答と診断結果をすべて削除します。削除後は復元できません。")) return;
         const outcome = deleteAllData({
           storage: effectiveStorage,
           confirmed: true,

@@ -91,7 +91,7 @@ test("T-006 S-006 startApp renders the empty history state from browser storage"
   assert.match(renderedText, /診断を始める/);
 });
 
-test("T-006 S-006 confirms and deletes one exact history result through startApp", () => {
+test("T-006 S-006 confirms in-app and deletes one exact history result through startApp", () => {
   const documentObject = {
     createElement(tagName) {
       return new FakeElement(tagName, documentObject);
@@ -125,18 +125,12 @@ test("T-006 S-006 confirms and deletes one exact history result through startApp
       raw = value;
     },
   };
-  const confirmations = [];
-
   startApp({
     documentObject,
     historyObject,
     windowObject,
     storage,
     nowProvider: () => "2026-07-26T12:05:00.000Z",
-    confirmProvider: (message) => {
-      confirmations.push(message);
-      return true;
-    },
   });
 
   collectElements(host)
@@ -144,11 +138,13 @@ test("T-006 S-006 confirms and deletes one exact history result through startApp
     .dispatch("click");
   collectElements(host)
     .find(({ tagName, textContent }) =>
-      tagName === "button" && textContent.endsWith("この結果を削除"))
+      tagName === "button" && textContent.endsWith("この履歴を削除"))
+    .dispatch("click");
+  collectElements(host)
+    .find(({ tagName, textContent }) =>
+      tagName === "button" && textContent === "削除する")
     .dispatch("click");
 
-  assert.equal(confirmations.length, 1);
-  assert.match(confirmations[0], /1件/);
   assert.deepEqual(JSON.parse(raw).results, []);
   assert.deepEqual(JSON.parse(raw).progressByDiagnosis, { retained: { bad: true } });
   assert.match(collectText(host), /まだ結果がありません/);
@@ -197,6 +193,10 @@ test("T-006 S-006 confirms and clears progress and history through startApp", ()
   collectElements(host)
     .find(({ tagName, textContent }) =>
       tagName === "button" && textContent === "端末内データをすべて削除")
+    .dispatch("click");
+  collectElements(host)
+    .find(({ tagName, textContent }) =>
+      tagName === "button" && textContent === "すべて削除する")
     .dispatch("click");
 
   assert.deepEqual(JSON.parse(raw).progressByDiagnosis, {});
@@ -550,7 +550,7 @@ test("T-005 F-016 preserves a saved result when its character ID is absent from 
   const text = collectText(host);
   assert.match(text, /50問詳細結果/);
   assert.match(text, /称号：五つの風を見渡す観測者/);
-  assert.match(text, /診断時の選択色ID：palette-default/);
+  assert.doesNotMatch(text, /診断時の選択色ID|palette-default/);
   assert.match(text, /画像を利用できない場合も診断結果は有効です/);
   assert.equal(
     collectElements(host).filter(({ className }) => className === "factor-score-row").length,

@@ -119,6 +119,14 @@ function renderTitleReflection(parent, snapshot) {
   const heading = appendTextElement(section, "h2", "振り返りのヒント");
   heading.id = "title-reflection-heading";
   section.setAttribute("aria-labelledby", heading.id);
+  if (snapshot.mode === "preview20") {
+    appendTextElement(
+      section,
+      "p",
+      "20問の簡易結果をもとにした、振り返りの参考情報です。",
+      "title-reflection-preview-note",
+    );
+  }
   appendRenderedText(section, disclosure.records[0]);
 
   if (disclosure.mode === "detail50") {
@@ -191,6 +199,11 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
   function closeFactor() {
     if (!openFactor) return;
     openFactor.trigger.setAttribute("aria-expanded", "false");
+    openFactor.trigger.setAttribute(
+      "aria-label",
+      `${openFactor.label}、スコア${openFactor.displayScore}点、詳しい結果を見る`,
+    );
+    openFactor.hint.textContent = "詳しく見る";
     openFactor.panel.hidden = true;
     openFactor = null;
     closeCategory();
@@ -199,8 +212,16 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
   for (const factor of disclosure) {
     const row = section.ownerDocument.createElement("section");
     row.className = "factor-score-row";
-    const heading = appendTextElement(row, "h3", factor.label, "factor-score-name");
-    const bar = row.ownerDocument.createElement("div");
+    const trigger = row.ownerDocument.createElement("button");
+    trigger.className = "factor-disclosure-trigger";
+    trigger.setAttribute("type", "button");
+    trigger.setAttribute(
+      "aria-label",
+      `${factor.label}、スコア${factor.displayScore}点、詳しい結果を見る`,
+    );
+    trigger.setAttribute("aria-expanded", "false");
+    appendTextElement(trigger, "span", factor.label, "factor-score-name");
+    const bar = row.ownerDocument.createElement("span");
     bar.className = "factor-score-bar";
     bar.setAttribute("role", "progressbar");
     bar.setAttribute("aria-label", `${factor.label}のスコア`);
@@ -211,11 +232,11 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
     fill.className = "factor-score-bar-fill";
     fill.setAttribute("style", `width: ${factor.displayScore}%`);
     bar.append(fill);
-    row.append(bar);
-    appendTextElement(row, "p", `${factor.displayScore}`, "factor-score-value");
-    const trigger = appendTextElement(row, "button", "説明を見る", "factor-disclosure-trigger");
-    trigger.setAttribute("type", "button");
-    trigger.setAttribute("aria-expanded", "false");
+    trigger.append(bar);
+    appendTextElement(trigger, "span", `${factor.displayScore}`, "factor-score-value");
+    appendTextElement(trigger, "span", "⌄", "factor-disclosure-chevron").setAttribute("aria-hidden", "true");
+    const hint = appendTextElement(trigger, "span", "詳しく見る", "factor-disclosure-hint");
+    row.append(trigger);
     const panel = row.ownerDocument.createElement("div");
     panel.className = "factor-disclosure-panel";
     panel.id = `factor-disclosure-${factor.factorId}`;
@@ -271,9 +292,25 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
       closeFactor();
       if (!isOpen) {
         trigger.setAttribute("aria-expanded", "true");
+        trigger.setAttribute(
+          "aria-label",
+          `${factor.label}、スコア${factor.displayScore}点、詳しい結果を閉じる`,
+        );
+        hint.textContent = "閉じる";
         panel.hidden = false;
-        openFactor = { trigger, panel };
+        openFactor = {
+          trigger,
+          panel,
+          label: factor.label,
+          displayScore: factor.displayScore,
+          hint,
+        };
         trigger.scrollIntoView?.({ block: "nearest" });
+      } else {
+        trigger.setAttribute(
+          "aria-label",
+          `${factor.label}、スコア${factor.displayScore}点、詳しい結果を見る`,
+        );
       }
     });
     row.append(panel);
@@ -284,7 +321,7 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
     appendTextElement(
       section,
       "p",
-      "※因子名の「説明を見る」から、それぞれの意味を確認できます。",
+      "因子を選ぶと、詳しい結果を確認できます。",
       "factor-help-note",
     );
   }
@@ -295,7 +332,7 @@ function renderBoundaryNotices(parent, boundaryFlags, labels) {
   if (boundaryFlags.length === 0) return;
   const section = parent.ownerDocument.createElement("section");
   section.className = "boundary-notices";
-  appendTextElement(section, "h2", "結果の見方について");
+  appendTextElement(section, "h2", "今回の結果について");
   const list = section.ownerDocument.createElement("ul");
   for (const flag of boundaryFlags) {
     const item = section.ownerDocument.createElement("li");
@@ -312,7 +349,7 @@ function renderBoundaryNotices(parent, boundaryFlags, labels) {
   parent.append(section);
 }
 
-function renderMethodInformation(parent, labels, dependencies) {
+function renderMethodInformation(parent, snapshot, labels, dependencies) {
   const {
     questionComposition,
     methodInfo,
@@ -336,28 +373,52 @@ function renderMethodInformation(parent, labels, dependencies) {
   if (!Array.isArray(questionComposition) || !Array.isArray(methodInfo)) return;
   const section = parent.ownerDocument.createElement("section");
   section.className = "result-method-information";
-  appendBottomSheetLauncher(section, {
+  appendTextElement(section, "h2", "結果の見方について");
+  appendTextElement(
+    section,
+    "p",
+    "測定方法や、今回の結果を読むための補足情報です。",
+    "result-method-lead",
+  );
+  const compositionLauncher = appendBottomSheetLauncher(section, {
     id: "question-composition",
     label: "因子ごとの設問構成を見る",
     title: "因子ごとの設問構成",
     body: "各因子に含まれる正方向・逆方向の設問数です。",
-    appendContent(sheet) {
-      const table = sheet.ownerDocument.createElement("table");
+    appendContent(sheetBody) {
+      appendTextElement(
+        sheetBody,
+        "p",
+        `今回の結果：${snapshot.questionCount}問`,
+        "question-composition-mode",
+      );
+      const table = sheetBody.ownerDocument.createElement("table");
       table.className = "question-composition-table";
-      const header = sheet.ownerDocument.createElement("tr");
+      const header = sheetBody.ownerDocument.createElement("tr");
       for (const label of ["因子", "正方向", "逆方向"]) appendTextElement(header, "th", label);
       table.append(header);
       for (const row of questionComposition) {
-        const tableRow = sheet.ownerDocument.createElement("tr");
+        const tableRow = sheetBody.ownerDocument.createElement("tr");
         tableRow.className = "question-composition-row";
         appendTextElement(tableRow, "th", labels.factorLabels[row.factorId] ?? row.factorId);
         appendTextElement(tableRow, "td", String(row.positiveCount));
         appendTextElement(tableRow, "td", String(row.negativeCount));
         table.append(tableRow);
       }
-      sheet.append(table);
+      sheetBody.append(table);
+      appendTextElement(
+        sheetBody,
+        "p",
+        "設問本文や回答内容は表示しません。構成上の項目数だけを確認できます。",
+        "question-composition-privacy",
+      );
     },
   });
+  compositionLauncher.className += " bottom-sheet-launcher--primary";
+  compositionLauncher.setAttribute(
+    "data-description",
+    "正方向・逆方向の項目数を確認できます",
+  );
   for (const method of methodInfo) {
     appendBottomSheetLauncher(section, {
       id: `method-${method.id}`,
@@ -441,9 +502,8 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
     appendTextElement(main, "p", "20問だけでは捉えきれない面があります。あと30問に回答すると、より詳しい結果を確認できます。", "notice preview-limit");
     appendTextElement(main, "p", "20項目版は、独立した日本語版としての妥当性検証を受けていません。50問では、スコア・仮称号・仮キャラクターが変わり得ます。", "notice preview-validation-notice").setAttribute("role", "note");
   }
-  appendTextElement(main, "p", `診断時の選択色ID：${savedSnapshot.selectedPaletteId}`, "result-palette-metadata");
   renderBoundaryNotices(main, savedSnapshot.boundaryFlags, labels);
-  renderMethodInformation(main, labels, dependencies);
+  renderMethodInformation(main, savedSnapshot, labels, dependencies);
   renderActions(main, savedSnapshot, actions);
   host.replaceChildren(main);
 }
