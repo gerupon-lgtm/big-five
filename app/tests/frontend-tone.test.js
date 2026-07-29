@@ -23,9 +23,9 @@ test("T-008A keeps sticky header behavior without redefining brand geometry", as
   assert.match(stickyHeader, /position:\s*sticky/);
   assert.match(stickyHeader, /top:\s*0/);
   assert.doesNotMatch(stickyHeader, /font-size:/);
-  assert.doesNotMatch(stickyHeader, /\.app-mark/);
-  assert.doesNotMatch(stickyHeader, /\.app-brand-name/);
-  assert.doesNotMatch(stickyHeader, /\.app-brand-subtitle/);
+  assert.doesNotMatch(styles, /\.app-header\.is-sticky\s+\.app-mark\s*\{/);
+  assert.doesNotMatch(styles, /\.app-header\.is-sticky\s+\.app-brand-name\s*\{/);
+  assert.doesNotMatch(styles, /\.app-header\.is-sticky\s+\.app-brand-subtitle\s*\{/);
 });
 
 test("T-008A preserves the approved 380px header contract", async () => {
