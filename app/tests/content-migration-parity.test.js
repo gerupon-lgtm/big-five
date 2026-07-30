@@ -10,9 +10,11 @@ import { FactorResultTextDefinitions } from "../js/data/factor-result-text-defin
 import { ResultEvidenceDefinitions } from "../js/data/result-evidence-definitions.js";
 import { TitleProfileDefinitions } from "../js/data/title-profile-definitions.js";
 import { TitleResultTextDefinitions } from "../js/data/title-result-text-definitions.js";
+import { appMeta } from "../js/config/app-meta.js";
 import { compileDiagnosisContent } from "../../scripts/content/compile-diagnosis.mjs";
 import { compileResultContent } from "../../scripts/content/compile-result-content.mjs";
 import { compileRelease, validateAuthoringTree } from "../../scripts/content/content-compiler.mjs";
+import { loadPresentationReviewModel } from "../../scripts/content/render-presentation-review.mjs";
 import { loadTableSchema } from "../../scripts/content/schema-loader.mjs";
 import { loadCsvTable } from "../../scripts/content/table-loader.mjs";
 import { exportCurrentContent } from "../../scripts/content/export-current-content.mjs";
@@ -136,7 +138,33 @@ test("T-007 migrated CSV deep-equals the current formal definitions through load
   });
 
   const result = await loadAndCompileResultContent(SOURCE);
-  assert.deepEqual(result.titleProfiles, TitleProfileDefinitions);
+  const withoutDefaultPalette = (profiles) => profiles.map(({
+    defaultPaletteId: _defaultPaletteId,
+    ...profile
+  }) => profile);
+  assert.deepEqual(
+    withoutDefaultPalette(result.titleProfiles),
+    withoutDefaultPalette(TitleProfileDefinitions),
+  );
+  const presentationDraft = await loadPresentationReviewModel({ sourceDir: SOURCE });
+  assert.deepEqual(presentationDraft.titleProfiles, result.titleProfiles);
+  const paletteIds = new Set(
+    presentationDraft.definitionSet.palettes.map(({ paletteId }) => paletteId),
+  );
+  result.titleProfiles.forEach((profile, index) => {
+    assert.notEqual(profile.defaultPaletteId, TitleProfileDefinitions[index].defaultPaletteId);
+    assert.ok(paletteIds.has(profile.defaultPaletteId));
+    assert.equal(
+      presentationDraft.definitionSet.titleSelectors[index].titleId,
+      profile.titleId,
+    );
+    assert.equal(
+      presentationDraft.definitionSet.titleSelectors[index]
+        .alternativePaletteIds.includes(profile.defaultPaletteId),
+      false,
+    );
+  });
+  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v1");
   assert.deepEqual(result.textDefinitions, LEGACY_RESULT_TEXT_DEFINITIONS);
   assert.deepEqual(result.evidenceDefinitions, ResultEvidenceDefinitions);
 });
@@ -244,7 +272,36 @@ test("T-007 production source records exact statuses and remains authorable with
   }
   const authoring = await validateAuthoringTree({ sourceDir: SOURCE });
   assert.ok(authoring.warnings.some(({ code }) => code === "RELEASE_NOT_SELECTED"));
-  assert.ok(authoring.warnings.some(({ code }) => code === "PRESENTATION_CATALOG_PENDING"));
+  assert.equal(
+    authoring.warnings.some(({ code }) => code === "PRESENTATION_CATALOG_PENDING"),
+    false,
+  );
+  const presentationApprovals = await table(
+    SOURCE,
+    "approvals/presentation-content-approvals.csv",
+  );
+  assert.deepEqual(
+    presentationApprovals.rows.map((row) => [
+      row.gate_id,
+      row.status,
+      row.approved_by,
+      row.approved_on,
+    ]),
+    Array.from({ length: 7 }, (_, index) => [
+      `P-${index}`,
+      "draft",
+      "",
+      "",
+    ]),
+  );
+  assert.equal(
+    authoring.warnings.filter(({ code, sourceName }) =>
+      code === "CONTENT_NOT_APPROVED" &&
+      path.basename(sourceName) === "presentation-content-approvals.csv")
+      .length,
+    7,
+  );
+  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v1");
   assert.ok(authoring.warnings.some(({ code }) => code === "CHARACTER_CATALOG_PENDING"));
   await assert.rejects(() => compileRelease({ sourceDir: SOURCE }), (error) => error.code === "RELEASE_NOT_SELECTED");
 });
