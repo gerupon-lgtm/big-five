@@ -246,7 +246,7 @@ test("QA artifact rejects symlinks without following them", async (t) => {
   );
 });
 
-test("generated QA artifact serves the shell, module, CSS, and one character only", async (t) => {
+test("generated QA artifact serves the shell, brand resources, and one character", async (t) => {
   const parent = await tempDirectory(t, "big-five-qa-smoke-");
   const output = join(parent, "site");
   await assembleQaPreview({
@@ -277,7 +277,11 @@ test("generated QA artifact serves the shell, module, CSS, and one character onl
     "/",
     "/css/styles.css",
     "/js/main.js",
+    "/assets/brand/kokoro-parea-mark.svg",
+    "/assets/brand/kokoro-parea-icon-192.png",
+    "/assets/brand/kokoro-parea-icon-512.png",
     "/assets/characters/character-balanced.webp",
+    "/manifest/app.webmanifest",
   ]) {
     assert.equal((await fetch(`http://127.0.0.1:${port}${path}`)).status, 200);
   }

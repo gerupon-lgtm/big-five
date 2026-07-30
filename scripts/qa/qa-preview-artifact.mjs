@@ -11,7 +11,15 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 
-const STATIC_FILES = new Set(["index.html", "robots.txt", ".nojekyll"]);
+const REQUIRED_FILES = new Set([
+  ".nojekyll",
+  "assets/brand/kokoro-parea-icon-192.png",
+  "assets/brand/kokoro-parea-icon-512.png",
+  "assets/brand/kokoro-parea-mark.svg",
+  "index.html",
+  "manifest/app.webmanifest",
+  "robots.txt",
+]);
 const ALLOWED_PATTERNS = [
   /^css\/.+\.css$/,
   /^js\/.+\.js$/,
@@ -27,7 +35,7 @@ function normalizeRelative(filePath) {
 }
 
 function isAllowedArtifactPath(relativePath) {
-  return STATIC_FILES.has(relativePath) ||
+  return REQUIRED_FILES.has(relativePath) ||
     ALLOWED_PATTERNS.some((pattern) => pattern.test(relativePath));
 }
 
@@ -142,6 +150,16 @@ async function copyTree({ source, destination, extension }) {
   }
 }
 
+async function copyRequiredFile({ source, destination }) {
+  const info = await lstat(source)
+    .catch(() => { throw qaError("QA_PREVIEW_SOURCE_INVALID"); });
+  if (!info.isFile() || info.isSymbolicLink()) {
+    throw qaError("QA_PREVIEW_SOURCE_INVALID");
+  }
+  await mkdir(path.dirname(destination), { recursive: true });
+  await cp(source, destination, { force: false });
+}
+
 export async function auditQaPreviewArtifact(outputDir) {
   try {
     const root = path.resolve(outputDir);
@@ -152,9 +170,7 @@ export async function auditQaPreviewArtifact(outputDir) {
     const files = await collectFiles(root);
     if (files.length === 0 ||
         files.some((file) => !isAllowedArtifactPath(file)) ||
-        !files.includes("index.html") ||
-        !files.includes("robots.txt") ||
-        !files.includes(".nojekyll") ||
+        [...REQUIRED_FILES].some((file) => !files.includes(file)) ||
         !files.some((file) => file.startsWith("css/")) ||
         !files.some((file) => file.startsWith("js/")) ||
         !files.some((file) => file.startsWith("assets/characters/"))) {
@@ -229,6 +245,17 @@ export async function assembleQaPreview({ appDir, outputDir, allowedParentDir })
     destination: path.join(output, "assets", "characters"),
     extension: ".webp",
   });
+  for (const relativePath of [
+    "assets/brand/kokoro-parea-icon-192.png",
+    "assets/brand/kokoro-parea-icon-512.png",
+    "assets/brand/kokoro-parea-mark.svg",
+    "manifest/app.webmanifest",
+  ]) {
+    await copyRequiredFile({
+      source: path.join(app, ...relativePath.split("/")),
+      destination: path.join(output, ...relativePath.split("/")),
+    });
+  }
   await writeFile(path.join(output, ".nojekyll"), "", "utf8");
   await writeFile(
     path.join(output, "robots.txt"),
