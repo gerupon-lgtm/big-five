@@ -53,7 +53,11 @@ test("T-005 F-005 preview completion produces the all-middle snapshot without re
       .map(({ id }) => id),
     ["title-reflection-balanced-1"],
   );
-  assert.equal(snapshot.selectedPaletteId, "palette-default");
+  assert.equal(
+    snapshot.selectedPaletteId,
+    TitleProfileDefinitions.find(({ titleId }) =>
+      titleId === snapshot.titleId).defaultPaletteId,
+  );
   assert.equal(snapshot.characterAssetVersion, "character-balanced-v1");
   assert.equal(containsAnswers(snapshot), false);
 });

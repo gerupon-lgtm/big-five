@@ -202,6 +202,34 @@ test("T-005 S-004 renders all 42 saved detail texts exactly once", () => {
   assert.equal(retryCalls, 1);
 });
 
+test("T-006 S-004 history detail returns to the history list without fresh-result actions", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000053",
+  });
+
+  renderSavedResultScreen(host, snapshot, labels, {
+    onReturnToStart() {},
+    onRetry() {},
+  }, {
+    historyDetail: true,
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+  });
+
+  const elements = collectElements(host);
+  const historyLinks = elements.filter(({ tagName, attributes, textContent }) =>
+    tagName === "a"
+    && attributes.get("href") === "#/history"
+    && textContent === "履歴一覧に戻る");
+  assert.equal(historyLinks.length, 2);
+  assert.ok(historyLinks.some(({ className }) => className === "app-header-action"));
+  assert.equal(elements.some(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "トップへ戻る"), false);
+  assert.equal(elements.some(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "もう一度診断する"), false);
+  assert.doesNotMatch(collectText(host), /結果履歴を見る/);
+});
+
 test("T-005 F-006 keeps every text and factor reachable when radar drawing fails", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({

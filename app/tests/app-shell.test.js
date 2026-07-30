@@ -338,6 +338,15 @@ test("T-005/T-006 S-004 opens one saved detail result by resultId", () => {
   assert.doesNotMatch(text, /根拠を確認/);
   assert.match(text, /結果の根拠と見方/);
   assert.doesNotMatch(text, /answers/);
+  const elements = collectElements(host);
+  assert.equal(elements.filter(({ tagName, attributes, textContent }) =>
+    tagName === "a"
+    && attributes.get("href") === "#/history"
+    && textContent === "履歴一覧に戻る").length, 2);
+  assert.equal(elements.some(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "トップへ戻る"), false);
+  assert.equal(elements.some(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "もう一度診断する"), false);
 });
 
 test("T-008A F-008 does not fabricate current method facts for an unregistered historical definition", () => {
@@ -1125,7 +1134,7 @@ test("T-005 F-016 opens a saved history result without duplicating its observer 
   assert.equal(disconnected, 1);
 });
 
-test("T-008A F-005 returns a saved detail result directly to the top without creating progress", () => {
+test("T-006 S-004 returns a saved detail result to history without creating progress", () => {
   const snapshot = createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000096",
   });
@@ -1149,12 +1158,15 @@ test("T-008A F-005 returns a saved detail result directly to the top without cre
     },
   });
 
-  clickButton(host, "トップへ戻る");
-
-  assert.equal(windowObject.location.hash, "#/start");
+  assert.ok(collectElements(host).some(({ tagName, attributes, textContent, className }) =>
+    tagName === "a"
+    && attributes.get("href") === "#/history"
+    && textContent === "履歴一覧に戻る"
+    && className === "app-header-action"));
+  assert.equal(windowObject.location.hash, `#/result?resultId=${snapshot.resultId}`);
   assert.equal(confirmations, 0);
   assert.equal(writes, 0);
-  assert.match(collectText(host), /診断を始める/);
+  assert.doesNotMatch(collectText(host), /トップへ戻る|もう一度診断する/);
 });
 
 test("T-008A F-015 confirms before leaving an unsaved live detail result and preserves it on cancel", () => {

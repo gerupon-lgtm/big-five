@@ -412,7 +412,7 @@ function renderMethodInformation(parent, snapshot, labels, dependencies) {
   parent.append(section);
 }
 
-function renderActions(parent, snapshot, actions) {
+function renderActions(parent, snapshot, actions, { historyDetail = false } = {}) {
   const controls = parent.ownerDocument.createElement("nav");
   controls.className = "result-actions";
   controls.setAttribute("aria-label", "診断結果の操作");
@@ -431,17 +431,30 @@ function renderActions(parent, snapshot, actions) {
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onFinishPreview?.());
   }
-  if (snapshot.mode === "detail50" && typeof actions.onReturnToStart === "function") {
+  if (
+    !historyDetail
+    && snapshot.mode === "detail50"
+    && typeof actions.onReturnToStart === "function"
+  ) {
     const button = appendTextElement(controls, "button", "トップへ戻る", "text-button");
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onReturnToStart?.());
   }
-  if (snapshot.mode === "detail50" && typeof actions.onRetry === "function") {
+  if (
+    !historyDetail
+    && snapshot.mode === "detail50"
+    && typeof actions.onRetry === "function"
+  ) {
     const button = appendTextElement(controls, "button", "もう一度診断する", "secondary-button");
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onRetry?.());
   }
-  const historyLink = appendTextElement(controls, "a", "結果履歴を見る", "text-link");
+  const historyLink = appendTextElement(
+    controls,
+    "a",
+    historyDetail ? "履歴一覧に戻る" : "結果履歴を見る",
+    "text-link",
+  );
   historyLink.setAttribute("href", "#/history");
   if (typeof actions.onShare === "function") {
     const button = appendTextElement(controls, "button", "結果を共有する", "secondary-button");
@@ -461,7 +474,13 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
   const documentObject = host.ownerDocument ?? document;
   const main = documentObject.createElement("main");
   main.className = `app-shell result-screen ${savedSnapshot.mode}`;
-  appendAppHeader(main);
+  const historyDetail = dependencies.historyDetail === true;
+  appendAppHeader(main, historyDetail ? {
+    action: {
+      label: "履歴一覧に戻る",
+      href: "#/history",
+    },
+  } : {});
   appendScreenHeading(main, {
     kicker: savedSnapshot.mode === "preview20" ? "PREVIEW RESULT" : "DETAIL RESULT",
     title: savedSnapshot.mode === "preview20" ? "20問簡易プレビュー" : "50問詳細結果",
@@ -486,6 +505,6 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
   }
   renderBoundaryNotices(main, savedSnapshot.boundaryFlags, labels);
   renderMethodInformation(main, savedSnapshot, labels, dependencies);
-  renderActions(main, savedSnapshot, actions);
+  renderActions(main, savedSnapshot, actions, { historyDetail });
   host.replaceChildren(main);
 }

@@ -496,10 +496,15 @@ export function startApp({
       returnMissingResultToHistory();
       return;
     }
-    renderResult(snapshot, false, loadPreviewContinuation(snapshot));
+    renderResult(snapshot, false, loadPreviewContinuation(snapshot), true);
   }
 
-  function renderResult(snapshot, persistenceFailed, previewProgress = null) {
+  function renderResult(
+    snapshot,
+    persistenceFailed,
+    previewProgress = null,
+    historyDetail = false,
+  ) {
     const definitionRegistration = resolveRegisteredDiagnosticDefinition(
       snapshot.versionTuple,
       diagnosticDefinitionRegistry,
@@ -543,7 +548,7 @@ export function startApp({
             || storedPreview.progressId !== previewProgress.progressId
           ) {
             resultActionNotice = "対応する途中回答を確認できないため、簡易プレビューを終了できません。";
-            renderResult(snapshot, false, null);
+            renderResult(snapshot, false, null, historyDetail);
             return;
           }
           const outcome = discardProgress({
@@ -554,7 +559,7 @@ export function startApp({
           });
           if (outcome.status !== "ok") {
             resultActionNotice = "簡易プレビューを終了できませんでした。もう一度お試しください。";
-            renderResult(snapshot, false, previewProgress);
+            renderResult(snapshot, false, previewProgress, historyDetail);
             return;
           }
           currentProgress = null;
@@ -602,6 +607,7 @@ export function startApp({
       decodeImage: effectiveDecodeImage,
       loadCharacterImage,
       observeViewport: effectiveObserveViewport,
+      historyDetail,
       definitionSupported: definitionRegistration !== null,
       ...(definitionRegistration ? {
         questionComposition:
