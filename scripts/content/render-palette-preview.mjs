@@ -1,10 +1,16 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { appMeta } from "../../app/js/config/app-meta.js";
 import { selectPresentation } from "../../app/js/domain/presentation-selector.js";
 import { loadPresentationReviewModel } from "./render-presentation-review.mjs";
+import {
+  shareCardPreviewDefinition,
+  validateShareCardPreviewDefinition,
+} from "./share-card-preview-definition.mjs";
 
+const PROJECT_ROOT = path.resolve(import.meta.dirname, "../..");
 const SELECTION_ROLES = Object.freeze([
   Object.freeze({ id: "standard", label: "標準" }),
   Object.freeze({ id: "alternative-1", label: "代替1" }),
@@ -51,8 +57,24 @@ function projectMapping(mapping) {
   };
 }
 
-export async function loadPalettePreviewModel({ sourceDir }) {
+export async function loadPalettePreviewModel({
+  sourceDir,
+  representativeCatPath = path.join(
+    PROJECT_ROOT,
+    shareCardPreviewDefinition.representativeCatSource,
+  ),
+} = {}) {
   if (typeof sourceDir !== "string" || sourceDir === "") invalidPreview();
+  validateShareCardPreviewDefinition(shareCardPreviewDefinition);
+
+  let representativeCat;
+  try {
+    representativeCat = await readFile(representativeCatPath);
+  } catch {
+    invalidPreview();
+  }
+  if (representativeCat.length === 0) invalidPreview();
+
   const review = await loadPresentationReviewModel({ sourceDir });
   const mappingById = new Map(
     review.definitionSet.paletteUsageMappings.map((mapping) => [
@@ -114,6 +136,14 @@ export async function loadPalettePreviewModel({ sourceDir }) {
     titleCount: review.titleProfiles.length,
     paletteCount: palettes.length,
     palettes: Object.freeze(palettes),
+    shareCardPreview: Object.freeze({
+      definition: shareCardPreviewDefinition,
+      representativeCatDataUrl:
+        `data:image/png;base64,${representativeCat.toString("base64")}`,
+      brandName: appMeta.brand.name,
+      cardSubtitle: appMeta.brand.cardSubtitle,
+      appVersion: appMeta.appVersion,
+    }),
   });
 }
 
@@ -139,7 +169,54 @@ function resolvedSwatch(role, label, color) {
                 </span>`;
 }
 
-function paletteCard(entry) {
+function factorRow(factor) {
+  return `
+    <div class="preview-factor-row"
+      data-factor-id="${factor.factorId}"
+      style="--factor-fill:${factor.fill};--factor-tone:${factor.tone}">
+      <span class="preview-factor-label">${factor.label}</span>
+      <span class="preview-factor-track">
+        <span class="preview-factor-value"
+          style="width:${factor.value}%"></span>
+      </span>
+      <strong>${factor.value}</strong>
+    </div>`;
+}
+
+function shareCardPreview(entry, preview) {
+  return `
+    <section class="share-card-preview"
+      aria-label="${escapeHtml(`${entry.titleLabel} ${entry.paletteLabel}の配色確認用簡略プレビュー`)}">
+      <p class="preview-only-label">配色確認用の簡略プレビュー</p>
+      <div class="preview-brand">
+        <svg aria-hidden="true"><use href="#kokoro-parea-preview-mark"></use></svg>
+        <div><strong>${escapeHtml(preview.brandName)}</strong>
+        <small>${escapeHtml(preview.cardSubtitle)}</small></div>
+      </div>
+      <p class="preview-title-kicker">あなたの称号</p>
+      <h3>${escapeHtml(entry.titleLabel)}</h3>
+      <p class="preview-description">${escapeHtml(entry.description)}</p>
+      <div class="preview-cat" role="img"
+        aria-label="色と配置を確認するための代表猫"></div>
+      <p class="preview-cat-notice">
+        ${escapeHtml(preview.definition.representativeCatNotice)}
+      </p>
+      <div class="preview-factors">
+        ${preview.definition.factors.map(factorRow).join("")}
+      </div>
+      <div class="preview-fragrances" aria-label="香り欄の配置見本">
+        ${preview.definition.fragrancePlaceholders.map((label) =>
+          `<div class="preview-fragrance-row"><span>${escapeHtml(label)}</span><i></i></div>`).join("")}
+      </div>
+      <p class="preview-disclaimer">
+        これは性格の優劣や心理学上の正式なタイプを示すものではありません。
+      </p>
+      <p class="preview-mode">${escapeHtml(preview.definition.modeLabel)}</p>
+      <p class="preview-version">${escapeHtml(preview.appVersion)}</p>
+    </section>`;
+}
+
+function paletteCard(entry, preview) {
   const role = SELECTION_ROLES.find(({ id }) => id === entry.selectionRole);
   if (!role) invalidPreview();
   const resolved = entry.resolved;
@@ -147,7 +224,6 @@ function paletteCard(entry) {
     ? "確認事項なし"
     : entry.contentReviewNote;
   const noteClass = entry.contentReviewNote === "" ? "" : " has-review-note";
-  const chartHeights = [62, 42, 78, 54, 69];
 
   return `
         <article class="palette-preview-card${noteClass}" data-palette-id="${escapeHtml(entry.paletteId)}" data-title-order="${entry.titleOrder}" data-selection-role="${entry.selectionRole}" style="--preview-bg:${resolved.background};--preview-surface:${resolved.surface};--preview-accent:${resolved.accent};--preview-chart:${resolved.chart};--preview-text:${resolved.text};">
@@ -159,26 +235,7 @@ function paletteCard(entry) {
             <span class="selection-badge">${role.label}</span>
           </header>
 
-          <div class="mini-result" aria-label="${escapeHtml(`${entry.titleLabel} ${entry.paletteLabel}の完成イメージ`)}">
-            <div class="mini-brand">
-              <span>ココロパレア</span>
-              <small>Big Five 自己理解支援ツール</small>
-            </div>
-            <section class="mini-surface">
-              <span class="mini-accent-line"></span>
-              <p class="mini-kicker">あなたのココロパレア</p>
-              <h3>${escapeHtml(entry.titleLabel)}</h3>
-              <p class="mini-copy">${escapeHtml(entry.description)}</p>
-              <div class="mini-chart" aria-label="グラフ色の見本">
-                ${chartHeights.map((height) =>
-                  `<span style="height:${height}%"></span>`).join("")}
-              </div>
-              <div class="mini-footer">
-                <span class="mini-chip">結果の色</span>
-                <span class="mini-version">mvp-0.1.0</span>
-              </div>
-            </section>
-          </div>
+          ${shareCardPreview(entry, preview)}
 
           <details class="palette-editor">
             <summary>基調色を試しに変更</summary>
@@ -195,7 +252,7 @@ function paletteCard(entry) {
             ${resolvedSwatch("background", "背景", resolved.background)}
             ${resolvedSwatch("surface", "表面", resolved.surface)}
             ${resolvedSwatch("accent", "差し色", resolved.accent)}
-            ${resolvedSwatch("chart", "グラフ", resolved.chart)}
+            ${resolvedSwatch("chart", "パレット由来のグラフ用途色", resolved.chart)}
             ${resolvedSwatch("text", "文字", resolved.text)}
           </div>
 
@@ -207,9 +264,13 @@ function paletteCard(entry) {
         </article>`;
 }
 
-function previewStyles() {
+function previewStyles(preview) {
+  const representativeCatCss = preview.representativeCatDataUrl
+    .replaceAll("\\", "\\\\")
+    .replaceAll('"', '\\"');
   return `
     :root {
+      --representative-cat: url("${representativeCatCss}");
       color-scheme: light;
       font-family: "Yu Gothic UI", "Hiragino Sans", system-ui, sans-serif;
       color: #18372f;
@@ -217,6 +278,7 @@ function previewStyles() {
     }
     * { box-sizing: border-box; }
     body { margin: 0; min-width: 0; }
+    .svg-definitions { position: absolute; width: 0; height: 0; overflow: hidden; }
     button, input, textarea { font: inherit; }
     .page-header {
       padding: 28px clamp(18px, 4vw, 56px);
@@ -318,37 +380,68 @@ function previewStyles() {
       font-size: .74rem;
       font-weight: 800;
     }
-    .mini-result {
-      padding: 14px;
+    .share-card-preview {
+      aspect-ratio: 3 / 5;
+      width: min(100%, 18rem);
+      margin-inline: auto;
+      padding: 0.75rem;
+      overflow: hidden;
       color: var(--preview-text);
       background: var(--preview-bg);
-      border-block: 1px solid rgba(31, 36, 48, .12);
+      border: 1px solid var(--preview-accent);
+      border-radius: 1.25rem;
+      box-shadow: 0 0.5rem 1.2rem rgba(31, 36, 48, 0.12);
     }
-    .mini-brand { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 10px; }
-    .mini-brand span { font-weight: 900; letter-spacing: .03em; }
-    .mini-brand small { font-size: .62rem; }
-    .mini-surface {
-      position: relative;
+    .preview-only-label, .preview-title-kicker, .preview-mode, .preview-version { margin: 0; font-weight: 800; }
+    .preview-only-label { color: var(--preview-accent); font-size: .58rem; letter-spacing: .06em; }
+    .preview-brand { display: flex; gap: .45rem; align-items: center; margin: .28rem 0 .42rem; }
+    .preview-brand svg { width: 1.6rem; height: 1.6rem; flex: none; }
+    .preview-brand strong, .preview-brand small { display: block; }
+    .preview-brand strong { font-size: .75rem; }
+    .preview-brand small { font-size: .5rem; line-height: 1.25; }
+    .preview-title-kicker { font-size: .56rem; color: var(--preview-accent); }
+    .share-card-preview h3 { margin: .08rem 0 .2rem; font-size: 1rem; line-height: 1.15; }
+    .preview-description { min-height: 2.7em; margin: 0; font-size: .58rem; line-height: 1.45; }
+    .preview-cat {
+      width: 62%;
+      aspect-ratio: 1;
+      margin-inline: auto;
+      background-image: var(--representative-cat);
+      background-position: center;
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+    .preview-cat-notice { margin: 0; font-size: .48rem; line-height: 1.35; text-align: center; }
+    .preview-factors { display: grid; gap: .2rem; margin-top: .34rem; }
+    .preview-factor-row {
+      display: grid;
+      grid-template-columns: 4.9rem 1fr 1.6rem;
+      gap: 0.35rem;
+      align-items: center;
+      color: var(--factor-tone);
+      font-size: .5rem;
+    }
+    .preview-factor-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .preview-factor-row strong { text-align: right; font-size: .55rem; }
+    .preview-factor-track {
+      height: 0.55rem;
       overflow: hidden;
-      padding: 14px;
-      border: 1px solid rgba(31, 36, 48, .15);
-      border-radius: 13px;
-      background: var(--preview-surface);
-      box-shadow: 0 7px 16px rgba(31, 36, 48, .1);
+      border: 1px solid var(--factor-tone);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.6);
     }
-    .mini-accent-line {
-      position: absolute;
-      inset: 0 auto 0 0;
-      width: 7px;
-      background: var(--preview-accent);
+    .preview-factor-value {
+      display: block;
+      height: 100%;
+      background: var(--factor-fill);
     }
-    .mini-kicker { margin: 0 0 4px 6px; font-size: .64rem; font-weight: 800; letter-spacing: .06em; }
-    .mini-surface h3 { margin: 0 0 5px 6px; font-size: 1.12rem; }
-    .mini-copy { min-height: 2.7em; margin: 0 0 11px 6px; font-size: .72rem; line-height: 1.5; }
-    .mini-chart { display: flex; align-items: end; gap: 7px; height: 64px; padding: 8px 12px 0; border-bottom: 1px solid currentColor; }
-    .mini-chart span { flex: 1; min-height: 6px; border-radius: 5px 5px 0 0; background: var(--preview-chart); }
-    .mini-footer { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 0 6px; font-size: .64rem; }
-    .mini-chip { width: 72px; height: 9px; overflow: hidden; border-radius: 999px; color: transparent; background: var(--preview-accent); }
+    .preview-fragrances { display: grid; gap: .17rem; margin-top: .36rem; }
+    .preview-fragrance-row { display: flex; align-items: center; gap: .35rem; font-size: .5rem; }
+    .preview-fragrance-row span { white-space: nowrap; }
+    .preview-fragrance-row i { flex: 1; height: .28rem; border-radius: 999px; background: var(--preview-surface); border: 1px solid var(--preview-accent); }
+    .preview-disclaimer { margin: .38rem 0 .14rem; font-size: .45rem; line-height: 1.3; }
+    .preview-mode { color: var(--preview-accent); font-size: .5rem; }
+    .preview-version { margin-top: .08rem; font-size: .45rem; text-align: right; }
     .palette-editor { padding: 11px 15px; border-bottom: 1px solid #d7e2de; }
     .palette-editor summary { cursor: pointer; font-weight: 800; }
     .editor-note { margin: 8px 0; color: #55756a; font-size: .78rem; }
@@ -510,7 +603,6 @@ function previewScript() {
         card.style.setProperty("--preview-bg", resolved.background);
         card.style.setProperty("--preview-surface", resolved.surface);
         card.style.setProperty("--preview-accent", resolved.accent);
-        card.style.setProperty("--preview-chart", resolved.chart);
         card.style.setProperty("--preview-text", resolved.text);
         for (const role of ["background", "surface", "accent", "chart", "text"]) {
           card.querySelector('[data-role="' + role + '-hex"]').textContent =
@@ -618,6 +710,20 @@ export function renderPalettePreview(model) {
     !Array.isArray(model.palettes) || model.palettes.length !== 153) {
     invalidPreview();
   }
+  const preview = model.shareCardPreview;
+  if (!preview || typeof preview !== "object" ||
+    typeof preview.representativeCatDataUrl !== "string" ||
+    !preview.representativeCatDataUrl.startsWith("data:image/png;base64,") ||
+    typeof preview.brandName !== "string" || preview.brandName === "" ||
+    typeof preview.cardSubtitle !== "string" || preview.cardSubtitle === "" ||
+    typeof preview.appVersion !== "string" || preview.appVersion === "") {
+    invalidPreview();
+  }
+  try {
+    validateShareCardPreviewDefinition(preview.definition);
+  } catch {
+    invalidPreview();
+  }
   const reviewCount = model.palettes
     .filter(({ contentReviewNote }) => contentReviewNote !== "")
     .length;
@@ -631,10 +737,21 @@ export function renderPalettePreview(model) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ココロパレア P-0 実使用プレビュー</title>
-  <style>${previewStyles()}
+  <style>${previewStyles(preview)}
   </style>
 </head>
 <body>
+  <svg class="svg-definitions" aria-hidden="true">
+    <symbol id="kokoro-parea-preview-mark" viewBox="0 0 120 120">
+      <rect x="2" y="2" width="116" height="116" rx="28" fill="#26705C"></rect>
+      <path d="M60 17 C48 17 43 29 47 39 C50 47 60 54 60 54 C60 54 70 47 73 39 C77 29 72 17 60 17Z" fill="#F0B06C"></path>
+      <path d="M60 17 C48 17 43 29 47 39 C50 47 60 54 60 54 C60 54 70 47 73 39 C77 29 72 17 60 17Z" fill="#DF7F68" transform="rotate(72 60 60)"></path>
+      <path d="M60 17 C48 17 43 29 47 39 C50 47 60 54 60 54 C60 54 70 47 73 39 C77 29 72 17 60 17Z" fill="#A98DB5" transform="rotate(144 60 60)"></path>
+      <path d="M60 17 C48 17 43 29 47 39 C50 47 60 54 60 54 C60 54 70 47 73 39 C77 29 72 17 60 17Z" fill="#6B98AB" transform="rotate(216 60 60)"></path>
+      <path d="M60 17 C48 17 43 29 47 39 C50 47 60 54 60 54 C60 54 70 47 73 39 C77 29 72 17 60 17Z" fill="#82AD90" transform="rotate(288 60 60)"></path>
+      <circle cx="60" cy="60" r="10.5" fill="#FFF9ED"></circle>
+    </symbol>
+  </svg>
   <header class="page-header">
     <p class="eyebrow">ココロパレア／Q-013 P-0</p>
     <h1>パレット実使用プレビュー</h1>
@@ -660,7 +777,7 @@ export function renderPalettePreview(model) {
     <textarea id="changes-output" readonly aria-label="試した配色の変更一覧">変更はありません。</textarea>
   </details>
   <main class="palette-grid">
-    ${model.palettes.map(paletteCard).join("\n")}
+    ${model.palettes.map((entry) => paletteCard(entry, preview)).join("\n")}
   </main>
   <script type="application/json" id="palette-data">${scriptJson(model.palettes)}</script>
   <script>${previewCalculatorScript()}

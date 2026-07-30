@@ -163,12 +163,44 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
     153,
   );
   assert.equal((html.match(/<input type="color"/g) ?? []).length, 459);
+  assert.equal(
+    (html.match(/class="share-card-preview"/g) ?? []).length,
+    153,
+  );
+  assert.equal(
+    (html.match(/class="preview-factor-row"/g) ?? []).length,
+    153 * 5,
+  );
+  assert.equal(
+    (html.match(/class="preview-fragrance-row"/g) ?? []).length,
+    153 * 3,
+  );
+  assert.equal(
+    (html.match(/data:image\/png;base64,/g) ?? []).length,
+    1,
+  );
+  assert.equal(
+    (html.match(/href="#kokoro-parea-preview-mark"/g) ?? []).length,
+    153,
+  );
+  assert.match(html, /aspect-ratio:\s*3\s*\/\s*5/);
+  assert.match(html, /配色確認用の簡略プレビュー/);
+  assert.match(
+    html,
+    /色・配置確認用の代表猫です。称号ごとの正式な猫ではありません。/,
+  );
+  assert.match(html, /data-factor-id="intellectImagination"/);
+  assert.match(html, /--factor-fill:#ADA1C0;--factor-tone:#6F677B/);
+  assert.match(html, /パレット由来のグラフ用途色/);
   assert.match(html, /標準のみ/);
   assert.match(html, /要確認のみ/);
   assert.match(html, /変更一覧/);
   assert.match(html, /すべて初期値に戻す/);
   assert.match(html, /この画面で色を変更しても正典CSVは変更されません。/);
-  assert.match(html, /aria-label="五つの風を見渡す観測者 澄み切った空色の完成イメージ"/);
+  assert.match(
+    html,
+    /aria-label="五つの風を見渡す観測者 澄み切った空色の配色確認用簡略プレビュー"/,
+  );
   assert.match(html, /data-role="background-hex">#F5F5F6</);
   assert.doesNotMatch(html, /https?:\/\//);
   assert.doesNotMatch(html, /<script[^>]+\bsrc=/i);
@@ -188,6 +220,16 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
   for (const browserScript of browserScripts) {
     assert.doesNotThrow(() => new Script(browserScript));
   }
+});
+
+test("P-0 preview model normalizes a missing representative cat image", async () => {
+  await assert.rejects(
+    () => loadPalettePreviewModel({
+      sourceDir: SOURCE_DIR,
+      representativeCatPath: path.join(ROOT, "missing-cat.png"),
+    }),
+    { name: "TypeError", message: "PALETTE_PREVIEW_INVALID" },
+  );
 });
 
 test("P-0 preview CLI is deterministic and matches the committed HTML", async (t) => {
