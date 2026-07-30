@@ -608,7 +608,7 @@ test("T-008A F-006 rejects a persisted snapshot with a partial reflection group"
   );
 });
 
-test("T-008A F-005 reveals all detail category text after one factor disclosure", () => {
+test("T-008A F-005 keeps detail text behind factor then category disclosure", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000071",
@@ -630,6 +630,8 @@ test("T-008A F-005 reveals all detail category text after one factor disclosure"
     .filter(({ className }) => className === "result-evidence");
   const factorPanels = collectElements(host)
     .filter(({ className }) => className === "factor-disclosure-panel");
+  const categoryPanels = collectElements(host)
+    .filter(({ className }) => className === "category-disclosure-panel");
   const scoreRows = collectElements(host)
     .filter(({ className }) => className === "factor-score-row");
   const bars = collectElements(host)
@@ -638,7 +640,7 @@ test("T-008A F-005 reveals all detail category text after one factor disclosure"
   assert.equal(scoreRows.length, 5);
   assert.equal(bars.length, 5);
   assert.equal(factorTriggers.length, 5);
-  assert.equal(categoryTriggers.length, 0);
+  assert.equal(categoryTriggers.length, 35);
   assert.equal(evidenceDisclosures.length, 0);
   assert.deepEqual(
     factorTriggers.map(({ attributes }) => attributes.get("aria-label")),
@@ -652,7 +654,7 @@ test("T-008A F-005 reveals all detail category text after one factor disclosure"
     Array(5).fill(true),
   );
   assert.deepEqual(
-    categoryLabels.slice(0, 7).map(({ textContent }) => textContent),
+    categoryLabels.slice(0, 7).map(({ children }) => children[0].textContent),
     [
       "今の傾向",
       "活かしやすい強み",
@@ -664,7 +666,21 @@ test("T-008A F-005 reveals all detail category text after one factor disclosure"
     ],
   );
   assert.equal(categoryLabels.length, 35);
+  assert.equal(categoryPanels.length, 35);
   assert.equal(categorySummaries.length, 0);
+  assert.deepEqual(
+    categoryTriggers.slice(0, 7).map(({ textContent }) => textContent),
+    [
+      "今の傾向",
+      "活かしやすい強み",
+      "強みの裏返り",
+      "仕事での現れ方",
+      "人間関係での現れ方",
+      "ストレス時の傾向",
+      "振り返りと行動ヒント",
+    ],
+  );
+  assert.ok(categoryPanels.every(({ hidden }) => hidden));
   assert.equal(
     collectElements(host).filter(({ textContent }) =>
       textContent === "因子を選ぶと、詳しい結果を確認できます。").length,
@@ -698,19 +714,32 @@ test("T-008A F-005 reveals all detail category text after one factor disclosure"
   factorTriggers[0].dispatch("click");
   assert.equal(factorTriggers[0].attributes.get("aria-expanded"), "true");
   assert.equal(factorPanels[0].hidden, false);
+  assert.ok(categoryPanels.slice(0, 7).every(({ hidden }) => hidden));
+  assert.ok(categoryTriggers.slice(0, 7).every(({ attributes }) =>
+    attributes.get("aria-expanded") === "false"));
+  categoryTriggers[0].dispatch("click");
+  assert.equal(categoryTriggers[0].attributes.get("aria-expanded"), "true");
+  assert.equal(categoryPanels[0].hidden, false);
   assert.equal(
-    collectElements(factorPanels[0]).filter(({ className }) =>
+    collectElements(categoryPanels[0]).filter(({ className }) =>
       className === "result-text-record").length,
-    8,
+    1,
   );
+  categoryTriggers[1].dispatch("click");
+  assert.equal(categoryTriggers[0].attributes.get("aria-expanded"), "false");
+  assert.equal(categoryPanels[0].hidden, true);
+  assert.equal(categoryTriggers[1].attributes.get("aria-expanded"), "true");
+  assert.equal(categoryPanels[1].hidden, false);
   assert.equal(scrolled, 1);
   factorTriggers[1].dispatch("click");
   assert.equal(factorTriggers[0].attributes.get("aria-expanded"), "false");
   assert.equal(factorPanels[0].hidden, true);
   assert.equal(factorTriggers[1].attributes.get("aria-expanded"), "true");
+  assert.equal(categoryTriggers[1].attributes.get("aria-expanded"), "false");
+  assert.equal(categoryPanels[1].hidden, true);
 });
 
-test("T-008A F-005 reveals each preview observation after one factor disclosure", () => {
+test("T-008A F-005 keeps preview observation behind factor then current-trend disclosure", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000072",
@@ -731,9 +760,12 @@ test("T-008A F-005 reveals each preview observation after one factor disclosure"
     .filter(({ className }) => className === "factor-category-summary");
   const factorPanels = collectElements(host)
     .filter(({ className }) => className === "factor-disclosure-panel");
-  assert.equal(categoryTriggers.length, 0);
+  const categoryPanels = collectElements(host)
+    .filter(({ className }) => className === "category-disclosure-panel");
+  assert.equal(categoryTriggers.length, 5);
   assert.equal(categorySummaries.length, 0);
-  assert.deepEqual(categoryLabels.map(({ textContent }) => textContent), Array(5).fill("今の傾向"));
+  assert.deepEqual(categoryTriggers.map(({ textContent }) => textContent), Array(5).fill("今の傾向"));
+  assert.deepEqual(categoryLabels.map(({ children }) => children[0].textContent), Array(5).fill("今の傾向"));
   assert.deepEqual(
     factorTriggers.map((trigger) => collectText(trigger).includes("詳しく見る")),
     Array(5).fill(true),
@@ -749,8 +781,12 @@ test("T-008A F-005 reveals each preview observation after one factor disclosure"
   );
   factorTriggers[0].dispatch("click");
   assert.equal(factorPanels[0].hidden, false);
+  assert.equal(categoryPanels[0].hidden, true);
+  categoryTriggers[0].dispatch("click");
+  assert.equal(categoryTriggers[0].attributes.get("aria-expanded"), "true");
+  assert.equal(categoryPanels[0].hidden, false);
   assert.equal(
-    collectElements(factorPanels[0]).filter(({ className }) =>
+    collectElements(categoryPanels[0]).filter(({ className }) =>
       className === "result-text-record").length,
     1,
   );

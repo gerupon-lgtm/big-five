@@ -174,9 +174,18 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
   factorList.className = "factor-result-list";
   const disclosure = createResultDisclosureModel(snapshot, labels);
   let openFactor = null;
+  let openCategory = null;
+
+  function closeCategory() {
+    if (!openCategory) return;
+    openCategory.trigger.setAttribute("aria-expanded", "false");
+    openCategory.panel.hidden = true;
+    openCategory = null;
+  }
 
   function closeFactor() {
     if (!openFactor) return;
+    closeCategory();
     openFactor.trigger.setAttribute("aria-expanded", "false");
     openFactor.trigger.setAttribute(
       "aria-label",
@@ -222,13 +231,42 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
     for (const category of factor.categories) {
       const categorySection = panel.ownerDocument.createElement("section");
       categorySection.className = "factor-category";
-      appendTextElement(
-        categorySection,
-        "h4",
+      const categoryHeading = categorySection.ownerDocument.createElement("h4");
+      categoryHeading.className = "factor-category-label";
+      const categoryTrigger = appendTextElement(
+        categoryHeading,
+        "button",
         category.label,
-        "factor-category-label",
+        "category-disclosure-trigger",
       );
-      for (const record of category.records) appendRenderedText(categorySection, record);
+      categoryTrigger.setAttribute("type", "button");
+      categoryTrigger.setAttribute("aria-expanded", "false");
+      appendTextElement(
+        categoryTrigger,
+        "span",
+        "⌄",
+        "category-disclosure-chevron",
+      ).setAttribute("aria-hidden", "true");
+      categorySection.append(categoryHeading);
+      const categoryPanel = categorySection.ownerDocument.createElement("div");
+      categoryPanel.className = "category-disclosure-panel";
+      categoryPanel.id = `category-disclosure-${factor.factorId}-${category.categoryId}`;
+      categoryPanel.hidden = true;
+      categoryTrigger.setAttribute("aria-controls", categoryPanel.id);
+      for (const record of category.records) appendRenderedText(categoryPanel, record);
+      categorySection.append(categoryPanel);
+      categoryTrigger.addEventListener("click", () => {
+        const isOpen = openCategory?.trigger === categoryTrigger;
+        closeCategory();
+        if (!isOpen) {
+          categoryTrigger.setAttribute("aria-expanded", "true");
+          categoryPanel.hidden = false;
+          openCategory = {
+            trigger: categoryTrigger,
+            panel: categoryPanel,
+          };
+        }
+      });
       panel.append(categorySection);
     }
     trigger.addEventListener("click", () => {

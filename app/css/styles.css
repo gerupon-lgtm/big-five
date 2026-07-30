@@ -904,15 +904,58 @@ dd {
 
 .factor-category {
   margin-top: 12px;
-  padding: 12px;
+  padding: 0;
   border: 1px solid #d6e4df;
   border-radius: 12px;
   background: #fff;
+  overflow: hidden;
 }
 
 .factor-category-label {
   margin: 0;
   font-size: 1rem;
+}
+
+.category-disclosure-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #1f6955;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+}
+
+.category-disclosure-trigger:hover,
+.category-disclosure-trigger:focus-visible,
+.category-disclosure-trigger[aria-expanded="true"] {
+  background: #f3f8f6;
+}
+
+.category-disclosure-trigger:focus-visible {
+  outline-offset: -3px;
+}
+
+.category-disclosure-trigger[aria-expanded="true"] .category-disclosure-chevron {
+  transform: rotate(180deg);
+}
+
+.category-disclosure-chevron {
+  transition: transform 160ms ease;
+}
+
+.category-disclosure-panel {
+  padding: 0 12px 12px;
+}
+
+.category-disclosure-panel .result-text-item {
+  margin-top: 0;
 }
 
 .factor-result {
