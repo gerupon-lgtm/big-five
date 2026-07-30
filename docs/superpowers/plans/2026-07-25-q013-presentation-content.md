@@ -744,7 +744,7 @@ node --test app/tests/presentation-review-report.test.js
 
 Expected: tests PASS; P-6 remains non-approved with blank metadata.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```powershell
 git add content/source/titles/title-rule-v1/title-profiles.csv content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
@@ -765,15 +765,15 @@ git commit -m "content: record q013 p5 approval"
 
 **Interfaces:** P-6 title scope is `title-profiles.csv` display order 42〜51.
 
-- [ ] **Step 1: Pause and present all ten title rows**
+- [x] **Step 1: Pause and present all ten title rows**
 
 For every title, show standard palette, two alternatives, three scenes×two fragrance candidates, and three share representatives. Do not edit status while awaiting an explicit user decision.
 
-- [ ] **Step 2: Record only the actual decision**
+- [x] **Step 2: Record only the actual decision**
 
 Approve exactly the standard `default_palette_id`, selector/relation rows belonging to display order 42〜51, and P-6 only after full-batch approval. Requested edits keep P-6 non-approved until the revised complete ten-title batch is accepted.
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 ```powershell
 npm.cmd run content:validate
@@ -782,7 +782,7 @@ node --test app/tests/presentation-review-report.test.js
 
 Expected after approval: all presentation source rows and P-0〜P-6 are approved with real metadata; no formal release row exists.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```powershell
 git add content/source/titles/title-rule-v1/title-profiles.csv content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md

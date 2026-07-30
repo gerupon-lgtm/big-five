@@ -373,7 +373,7 @@ test("T-005 F-018 Q-013 approval ledger has the exact schema and current gate st
       ["P-3", 4, "approved", "user", "2026-07-31"],
       ["P-4", 5, "approved", "user", "2026-07-31"],
       ["P-5", 6, "approved", "user", "2026-07-31"],
-      ["P-6", 7, "draft", "", ""],
+      ["P-6", 7, "approved", "user", "2026-07-31"],
     ],
   );
 });

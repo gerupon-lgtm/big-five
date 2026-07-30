@@ -2,7 +2,7 @@
 
 ## 目的と範囲
 
-このURLは現行のES Modules実装をブラウザ確認するためのQA一時公開である。approved releaseの選択、JSON runtime、Q-012正式release、Q-013 production data、T-011本番デプロイの完了を意味しない。
+このURLは現行のES Modules実装をブラウザ確認するためのQA一時公開である。Q-013のP-0〜P-6人手承認は完了しているが、approved releaseの選択、JSON runtime、Q-012正式release、Q-013の正式runtime生成・接続、T-011本番デプロイの完了を意味しない。
 
 ## URL
 
@@ -44,7 +44,7 @@ https://gerupon-lgtm.github.io/big-five/
 - DevTools Networkで通常版の診断フローの外部通信0件
 - console error・warning 0件
 
-共有カード、共有テキスト、香り、approved release選択、Q-012正式release、Q-013 production dataは対象外とする。`titleReflection`は共有候補抽出の純粋境界で除外済みだが、実際の共有UIはT-007未実装のため、このQAでは共有物への非混入をブラウザ確認できない。
+共有カード、共有テキスト、香り、approved release選択、Q-012正式release、Q-013の正式runtime生成・接続は対象外とする。`titleReflection`は共有候補抽出の純粋境界で除外済みだが、実際の共有UIはT-007未実装のため、このQAでは共有物への非混入をブラウザ確認できない。
 
 ## `result-text-v2`追加QAの状態
 

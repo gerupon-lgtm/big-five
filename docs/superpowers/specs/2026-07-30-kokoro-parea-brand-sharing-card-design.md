@@ -317,7 +317,7 @@ S-005は次へ到達できるようにする。
 - `docs/data-model.md`
 - `docs/tasks.md`
 
-Q-007は本設計で解決済みへ移す。Q-013 production data、approved release選択、JSON runtime activationは別ゲートとして残す。
+Q-007は本設計で解決済みへ移す。Q-013のP-0〜P-6人手承認は完了している。Q-013の正式runtime生成・接続、approved release選択、JSON runtime activationは別ゲートとして残す。
 
 ## 12. 非対象
 

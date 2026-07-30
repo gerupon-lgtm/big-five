@@ -50,7 +50,8 @@ test("T-005/T-007 F-018 review covers every aroma master and title", async () =>
   assert.match(report, /\| P-3 \| [^|]+ \| approved \|/);
   assert.match(report, /\| P-4 \| [^|]+ \| approved \|/);
   assert.match(report, /\| P-5 \| [^|]+ \| approved \|/);
-  assert.match(report, /\| P-6 \| [^|]+ \| draft \|/);
+  assert.match(report, /\| P-6 \| [^|]+ \| approved \|/);
+  assert.doesNotMatch(report, /\| P-[1-6] \| [^|]+ \| draft \|/);
 });
 
 test("T-005/T-007 F-018 aroma review CLI is byte deterministic", async (t) => {
