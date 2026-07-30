@@ -291,7 +291,8 @@ test("T-005 F-018 Q-013 presentation v2 schemas require the exact authoring colu
   const expected = {
     palettes: [
       "palette_id", "presentation_definition_version", "display_order", "label",
-      "primary_color", "secondary_color", "accent_color", "description", "status",
+      "primary_color", "secondary_color", "accent_color", "description",
+      "content_review_note", "status",
     ],
     "palette-usage-mappings": [
       "palette_id", "presentation_definition_version", "display_order",

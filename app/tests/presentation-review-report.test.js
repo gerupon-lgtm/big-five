@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import os from "node:os";
@@ -14,6 +15,29 @@ import {
 const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const SOURCE_DIR = path.join(ROOT, "content/source");
+const PRE_REVIEW_NOTE_PALETTE_SHA256 =
+  "71CBDC93F20B10AB2B6B3683AFDAD7CEF9001F0877157D9A73CE80834768F089";
+
+test("adding content_review_note preserves every prior palette CSV byte and row order", async () => {
+  const source = await readFile(
+    path.join(SOURCE_DIR, "presentation/presentation-v2/palettes.csv"),
+    "utf8",
+  );
+  const priorProjection = source
+    .trimEnd()
+    .split(/\r?\n/)
+    .map((line) => {
+      const fields = line.split(",");
+      assert.equal(fields.length, 10);
+      return fields.toSpliced(8, 1).join(",");
+    })
+    .join("\n")
+    .concat("\n");
+  assert.equal(
+    createHash("sha256").update(priorProjection).digest("hex").toUpperCase(),
+    PRE_REVIEW_NOTE_PALETTE_SHA256,
+  );
+});
 
 test("review model preserves the complete current Q-013 structure", async () => {
   const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
@@ -25,6 +49,34 @@ test("review model preserves the complete current Q-013 structure", async () => 
   assert.equal(model.definitionSet.fragrances.length, 32);
   assert.equal(model.definitionSet.fragranceMaterials.length, 26);
   assert.equal(model.definitionSet.titleSelectors.length, 51);
+  assert.equal(model.paletteContentReviews.length, 153);
+  assert.equal(
+    model.paletteContentReviews.filter(({ contentReviewNote }) =>
+      contentReviewNote !== "").length,
+    10,
+  );
+  assert.deepEqual(
+    model.paletteContentReviews
+      .filter(({ contentReviewNote }) => contentReviewNote !== "")
+      .slice(0, 3),
+    [
+      {
+        paletteId: "palette-balanced-2",
+        contentReviewNote:
+          "要確認: ラベル「静謐な白」とHEX #8FAFC1は見た目の色相が一致しないため、元候補の意図を確認。",
+      },
+      {
+        paletteId: "palette-single-intellectimagination-high-2",
+        contentReviewNote:
+          "要確認: ラベル「閃きを象徴する金黄色」とHEX #7567A8は見た目の色相が一致しないため、元候補の意図を確認。",
+      },
+      {
+        paletteId: "palette-single-intellectimagination-high-3",
+        contentReviewNote:
+          "要確認: ラベル「未知への好奇心を誘う紫」とHEX #4FA8B8は見た目の色相が一致しないため、元候補の意図を確認。",
+      },
+    ],
+  );
   assert.deepEqual(
     model.approvals.map(({ gate_id, display_order }) => [gate_id, display_order]),
     Array.from({ length: 7 }, (_, index) => [`P-${index}`, index + 1]),
@@ -40,6 +92,56 @@ test("review model preserves the complete current Q-013 structure", async () => 
     assert.ok(report.ratios.accentSurface >= 3, report.paletteId);
     assert.ok(report.ratios.chartBackground >= 3, report.paletteId);
   }
+});
+
+test("P-0 content review follows only the source CSV row after label and HEX changes", async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "presentation-review-source-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const sourceDir = path.join(directory, "source");
+  for (const [source, destination] of [
+    ["titles/title-rule-v1", "titles/title-rule-v1"],
+    ["presentation/presentation-v2", "presentation/presentation-v2"],
+    [
+      "approvals/presentation-content-approvals.csv",
+      "approvals/presentation-content-approvals.csv",
+    ],
+  ]) {
+    await cp(path.join(SOURCE_DIR, source), path.join(sourceDir, destination), {
+      recursive: true,
+    });
+  }
+  const palettePath = path.join(
+    sourceDir,
+    "presentation/presentation-v2/palettes.csv",
+  );
+  const rows = (await readFile(palettePath, "utf8")).trimEnd().split(/\r?\n/);
+  const columns = rows[0].split(",");
+  const targetIndex = rows.findIndex((row) =>
+    row.startsWith("palette-single-intellectimagination-high-2,"));
+  assert.ok(targetIndex > 0);
+  const fields = rows[targetIndex].split(",");
+  fields[columns.indexOf("label")] = "検証用の青";
+  fields[columns.indexOf("primary_color")] = "#123456";
+  fields[columns.indexOf("content_review_note")] = "";
+  rows[targetIndex] = fields.join(",");
+  await writeFile(palettePath, `${rows.join("\r\n")}\r\n`, "utf8");
+
+  const model = await loadPresentationReviewModel({ sourceDir });
+  const report = renderPresentationReview(model);
+  const targetReview = model.paletteContentReviews.find(({ paletteId }) =>
+    paletteId === "palette-single-intellectimagination-high-2");
+  assert.deepEqual(targetReview, {
+    paletteId: "palette-single-intellectimagination-high-2",
+    contentReviewNote: "",
+  });
+  assert.match(
+    report,
+    /palette-single-intellectimagination-high-2[\s\S]*?検証用の青[\s\S]*?#123456[\s\S]*?\| 確認事項なし \|/,
+  );
+  assert.doesNotMatch(
+    report,
+    /要確認: ラベル「閃きを象徴する金黄色」とHEX #7567A8/,
+  );
 });
 
 test("review projection contains P-0 through P-6 and fixed 51-title detail", async () => {

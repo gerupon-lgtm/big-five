@@ -35,6 +35,7 @@ function validPresentationRows() {
       secondary_color: baseColors.secondary,
       accent_color: baseColors.accent,
       description,
+      content_review_note: index === 0 ? "承認レビュー専用注記" : "",
       status: "draft",
     })),
     paletteUsageRows: definition.paletteUsageMappings.map(({ paletteId, roles, textCandidates }, index) => ({
@@ -109,6 +110,21 @@ function validPresentationRows() {
     titleProfiles: TitleProfileDefinitions,
   };
 }
+
+test("T-005 F-018 keeps palette authoring review notes outside the runtime definition", () => {
+  const rows = validPresentationRows();
+  const compiled = compilePresentationContent(rows, PRESENTATION_VERSION);
+
+  assert.equal(Object.hasOwn(compiled.palettes[0], "contentReviewNote"), false);
+  assert.equal(Object.hasOwn(compiled.palettes[0], "content_review_note"), false);
+  assert.deepEqual(Object.keys(compiled.palettes[0]), [
+    "paletteId",
+    "version",
+    "label",
+    "baseColors",
+    "description",
+  ]);
+});
 
 function validCharacterRows() {
   return TitleProfileDefinitions.map((profile, index) => ({

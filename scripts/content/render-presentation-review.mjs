@@ -76,29 +76,6 @@ const APPROVAL_STATUSES = Object.freeze([
 ]);
 const HEX_COLOR = /^#[0-9A-F]{6}$/;
 
-export const PALETTE_CONTENT_REVIEW_NOTES = Object.freeze({
-  "palette-balanced-2":
-    "要確認: ラベル「静謐な白」とHEX #8FAFC1は見た目の色相が一致しないため、元候補の意図を確認。",
-  "palette-single-intellectimagination-high-2":
-    "要確認: ラベル「閃きを象徴する金黄色」とHEX #7567A8は見た目の色相が一致しないため、元候補の意図を確認。",
-  "palette-single-intellectimagination-high-3":
-    "要確認: ラベル「未知への好奇心を誘う紫」とHEX #4FA8B8は見た目の色相が一致しないため、元候補の意図を確認。",
-  "palette-single-conscientiousness-low-2":
-    "要確認: ラベル「移ろいゆく雲の白」とHEX #7FA36Bは見た目の色相が一致しないため、元候補の意図を確認。",
-  "palette-single-conscientiousness-low-3":
-    "要確認: ラベル「軽やかな若草色」とHEX #C2AA84は見た目の色相が一致しないため、元候補の意図を確認。",
-  "palette-single-extraversion-high-1":
-    "要確認: ラベル「陽気なサンフラワーイエロー」とHEX #E07868は見た目の色相が一致しないため、元候補の意図を確認。",
-  "palette-single-extraversion-high-2":
-    "要確認: ラベル「情熱的なコーラルピンク」とHEX #E69A4Bは見た目の色相が一致しないため、元候補の意図を確認。",
-  "palette-single-extraversion-high-3":
-    "要確認: ラベル「活気に満ちたオレンジ」とHEX #38A8A0は見た目の色相が一致しないため、元候補の意図を確認。",
-  "palette-single-agreeableness-low-2":
-    "要確認: ラベル「独立心を示す深い緑」とHEX #495A72は見た目の色相が一致しないため、元候補の意図を確認。",
-  "palette-single-agreeableness-low-3":
-    "要確認: ラベル「揺るがない鉄灰色」とHEX #B58A4Cは見た目の色相が一致しないため、元候補の意図を確認。",
-});
-
 function invalidReview() {
   throw new TypeError("PRESENTATION_REVIEW_INVALID");
 }
@@ -177,6 +154,24 @@ function projectTitleProfiles(profileRows, profileFactorRows) {
   return validateTitleProfileDefinitions(profiles);
 }
 
+function projectPaletteContentReviews(paletteRows, palettes) {
+  if (!Array.isArray(paletteRows) || paletteRows.length !== palettes.length) {
+    invalidReview();
+  }
+  return [...paletteRows]
+    .sort((left, right) => left.display_order - right.display_order)
+    .map((row, index) => {
+      if (row.palette_id !== palettes[index].paletteId ||
+        typeof row.content_review_note !== "string") {
+        invalidReview();
+      }
+      return {
+        paletteId: row.palette_id,
+        contentReviewNote: row.content_review_note,
+      };
+    });
+}
+
 function makeContrastReports(definitionSet) {
   return definitionSet.palettes.map((palette, index) => {
     const mapping = definitionSet.paletteUsageMappings[index];
@@ -247,6 +242,10 @@ export async function loadPresentationReviewModel({ sourceDir }) {
     definitionSet,
     titleProfiles,
     contrastReports: makeContrastReports(definitionSet),
+    paletteContentReviews: projectPaletteContentReviews(
+      palettes.rows,
+      definitionSet.palettes,
+    ),
     approvals: approvals.rows,
   });
 }
@@ -306,6 +305,15 @@ function renderPaletteSection(lines, model) {
   const reportById = new Map(
     model.contrastReports.map((report) => [report.paletteId, report]),
   );
+  const contentReviewById = new Map(
+    model.paletteContentReviews.map(({ paletteId, contentReviewNote }) => [
+      paletteId,
+      contentReviewNote,
+    ]),
+  );
+  if (contentReviewById.size !== model.definitionSet.palettes.length) {
+    invalidReview();
+  }
   for (const palette of model.definitionSet.palettes) {
     const report = reportById.get(palette.paletteId);
     if (!report) invalidReview();
@@ -324,8 +332,9 @@ function renderPaletteSection(lines, model) {
       ["chart", resolved.chart],
       ["text", resolved.text],
     ]);
+    if (!contentReviewById.has(palette.paletteId)) invalidReview();
     const contentReview =
-      PALETTE_CONTENT_REVIEW_NOTES[palette.paletteId] ?? "確認事項なし";
+      contentReviewById.get(palette.paletteId) || "確認事項なし";
     lines.push(
       `| \`${palette.paletteId}\` | ${palette.label} | ${baseColors} | ${recipe(report.mapping)} | ${resolvedColors} | ${ratio(ratios.textBackground)} / ${ratio(ratios.textSurface)} / ${ratio(ratios.accentSurface)} / ${ratio(ratios.chartBackground)} | ${report.valid ? "適合" : `要修正: ${report.failures.join(", ")}`} | ${contentReview} | ${palette.description} |`,
     );
@@ -411,10 +420,12 @@ export function renderPresentationReview({
   definitionSet,
   titleProfiles,
   contrastReports,
+  paletteContentReviews,
   approvals,
 }) {
   if (!definitionSet || !Array.isArray(titleProfiles) ||
-    !Array.isArray(contrastReports) || !Array.isArray(approvals)) {
+    !Array.isArray(contrastReports) || !Array.isArray(paletteContentReviews) ||
+    !Array.isArray(approvals)) {
     invalidReview();
   }
   validateApprovals(approvals);
@@ -434,12 +445,14 @@ export function renderPresentationReview({
     definitionSet,
     titleProfiles,
     contrastReports,
+    paletteContentReviews,
     approvals,
   });
   renderFragranceSection(lines, {
     definitionSet,
     titleProfiles,
     contrastReports,
+    paletteContentReviews,
     approvals,
   });
   for (const gate of GATES.slice(2)) {
@@ -447,6 +460,7 @@ export function renderPresentationReview({
       definitionSet,
       titleProfiles,
       contrastReports,
+      paletteContentReviews,
       approvals,
     }, gate);
   }
