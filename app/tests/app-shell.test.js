@@ -32,18 +32,19 @@ test("startApp renders the start heading and canonical version from a hash route
   startApp({ documentObject, historyObject, windowObject });
 
   const renderedText = collectText(host);
-  assert.match(renderedText, /Big Five 自己理解チェック/);
+  assert.match(renderedText, /ココロパレア/);
+  assert.match(renderedText, /Big Five 自己理解支援ツール/);
   assert.equal(
     collectElements(host)
       .find(({ className }) => className === "app-brand-name")
       .textContent,
-    "Big Five 自己理解チェック",
+    "ココロパレア",
   );
   assert.equal(
     collectElements(host)
       .find(({ className }) => className === "app-brand-subtitle")
       .textContent,
-    "BIG FIVE SELF UNDERSTANDING",
+    "Big Five 自己理解支援ツール",
   );
   assert.match(renderedText, /バージョン mvp-0\.1\.0/);
   assert.match(renderedText, /ipip-ja-50-v1/);
@@ -501,7 +502,7 @@ test("T-005 F-016 startApp observes once before decoding the selected manifest i
   ]);
   assert.equal(observers[0].disconnectCalls, 1);
   const images = collectElements(host)
-    .filter(({ tagName }) => tagName === "img");
+    .filter(({ className }) => className === "result-character-image");
   assert.equal(images.length, 1);
   assert.equal(
     images[0].attributes.get("alt"),

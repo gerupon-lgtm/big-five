@@ -7,7 +7,7 @@ test("T-008A S-001 applies the approved shared frontend tone", async () => {
 
   assert.match(styles, /--font-sans:\s*"Sawarabi Gothic",\s*"Hiragino Kaku Gothic ProN",\s*"Yu Gothic",\s*"Meiryo",\s*system-ui,\s*sans-serif/);
   assert.match(styles, /\.app-header\s*\{[^}]*gap:\s*12px[^}]*margin-bottom:\s*26px[^}]*padding-bottom:\s*18px[^}]*border-bottom:\s*1px solid #d6e4df/s);
-  assert.match(styles, /\.app-mark\s*\{[^}]*flex:\s*0 0 38px[^}]*width:\s*38px[^}]*height:\s*38px[^}]*border-radius:\s*10px/s);
+  assert.match(styles, /\.app-mark\s*\{[^}]*display:\s*block[^}]*flex:\s*0 0 auto[^}]*width:\s*38px[^}]*height:\s*38px[^}]*object-fit:\s*contain/s);
   assert.match(styles, /\.app-brand-name\s*\{[^}]*font-size:\s*1\.02rem[^}]*font-weight:\s*700[^}]*letter-spacing:\s*0\.04em/s);
   assert.match(styles, /\.app-brand-subtitle\s*\{[^}]*font-size:\s*0\.68rem[^}]*letter-spacing:\s*0\.18em/s);
   assert.match(styles, /\.app-brand-copy\s*\{[^}]*min-width:\s*0/s);

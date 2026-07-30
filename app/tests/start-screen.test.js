@@ -25,7 +25,8 @@ test("T-005 S-001 offers a new diagnosis action and accurate available-flow copy
   assert.equal(starts, 1);
   assert.match(collectText(host), /20問の簡易プレビューから始め、希望に応じて50問の詳しい結果まで進められます/);
   assert.doesNotMatch(collectText(host), /診断本体を構築中/);
-  assert.match(collectText(host), /Big Five 自己理解チェック/);
+  assert.match(collectText(host), /ココロパレア/);
+  assert.match(collectText(host), /Big Five 自己理解支援ツール/);
   assert.match(collectText(host), /SELF CHECK/);
   assert.match(collectText(host), /自分のことを知る/);
   assert.match(collectText(host), /Big Fiveは、性格傾向を5つの因子から捉える考え方です/);
@@ -60,7 +61,7 @@ test("T-008A S-001 renders the shared official app header, start heading, and se
     collectElements(host)
       .find(({ className }) => className === "app-brand-name")
       .textContent,
-    "Big Five 自己理解チェック",
+    "ココロパレア",
   );
   assert.equal(
     collectElements(host)

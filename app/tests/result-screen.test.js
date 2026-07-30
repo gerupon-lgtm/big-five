@@ -331,7 +331,7 @@ test("T-005 F-016 keeps the approved alt visible without decoding before viewpor
   assert.equal(typeof enterViewport, "function");
   assert.match(collectText(host), new RegExp(characterEntry.alt));
   assert.equal(
-    collectElements(host).filter(({ tagName }) => tagName === "img").length,
+    collectElements(host).filter(({ className }) => className === "result-character-image").length,
     0,
   );
 });
@@ -356,7 +356,7 @@ test("T-005 F-016 does not substitute a current character asset for an older sna
 
   assert.equal(observed, 0);
   assert.equal(
-    collectElements(host).filter(({ tagName }) => tagName === "img").length,
+    collectElements(host).filter(({ className }) => className === "result-character-image").length,
     0,
   );
   assert.match(collectText(host), /画像を利用できない場合も診断結果は有効です/);
@@ -389,7 +389,7 @@ test("T-005 F-016 decodes the selected path once and renders one contained image
 
   assert.deepEqual(requested, [characterEntry.imagePath]);
   const images = collectElements(host)
-    .filter(({ tagName }) => tagName === "img");
+    .filter(({ className }) => className === "result-character-image");
   assert.equal(images.length, 1);
   assert.equal(images[0].attributes.get("alt"), characterEntry.alt);
   assert.equal(images[0].className, "result-character-image");
@@ -425,7 +425,7 @@ test("T-005 F-016 keeps approved alt and the complete result when decode fails",
   assert.match(text, new RegExp(characterEntry.alt));
   assert.doesNotMatch(text, /診断時の選択色ID|palette-default/);
   assert.equal(
-    collectElements(host).filter(({ tagName }) => tagName === "img").length,
+    collectElements(host).filter(({ className }) => className === "result-character-image").length,
     0,
   );
   assert.equal(

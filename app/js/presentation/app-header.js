@@ -1,3 +1,4 @@
+import { appMeta } from "../config/app-meta.js";
 import { appendTextElement } from "./screen-helpers.js";
 
 export function appendAppHeader(parent, {
@@ -10,12 +11,17 @@ export function appendAppHeader(parent, {
 
   const brand = documentObject.createElement("div");
   brand.className = "app-brand";
-  const mark = appendTextElement(brand, "span", "5", "app-mark");
-  mark.setAttribute("aria-hidden", "true");
+  const mark = documentObject.createElement("img");
+  mark.className = "app-mark";
+  mark.setAttribute("src", appMeta.brand.iconPath);
+  mark.setAttribute("alt", "");
+  mark.setAttribute("width", "120");
+  mark.setAttribute("height", "120");
+  brand.append(mark);
   const brandCopy = documentObject.createElement("span");
   brandCopy.className = "app-brand-copy";
-  appendTextElement(brandCopy, "span", "Big Five 自己理解チェック", "app-brand-name");
-  appendTextElement(brandCopy, "span", "BIG FIVE SELF UNDERSTANDING", "app-brand-subtitle");
+  appendTextElement(brandCopy, "span", appMeta.brand.name, "app-brand-name");
+  appendTextElement(brandCopy, "span", appMeta.brand.subtitle, "app-brand-subtitle");
   brand.append(brandCopy);
   header.append(brand);
 

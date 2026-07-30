@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { appendAppHeader } from "../js/presentation/app-header.js";
-import { collectElements, createFakeScreen } from "./helpers/fake-dom.js";
+import { collectElements, collectText, createFakeScreen } from "./helpers/fake-dom.js";
 
-test("T-008A S-001 renders the shared brand without a screen label", () => {
+test("T-007 F-001 renders the canonical decorative brand mark and screen copy", () => {
   const { host } = createFakeScreen();
 
   const header = appendAppHeader(host, {
@@ -16,13 +16,18 @@ test("T-008A S-001 renders the shared brand without a screen label", () => {
     collectElements(header)
       .filter(({ className }) => className === "app-brand-name" || className === "app-brand-subtitle")
       .map(({ textContent }) => textContent),
-    ["Big Five 自己理解チェック", "BIG FIVE SELF UNDERSTANDING"],
+    ["ココロパレア", "Big Five 自己理解支援ツール"],
   );
-  assert.equal(
-    collectElements(header)
-      .find(({ className }) => className === "app-mark")
-      .attributes.get("aria-hidden"),
-    "true",
+  const mark = collectElements(header)
+    .find(({ className }) => className === "app-mark");
+  assert.equal(mark.tagName, "img");
+  assert.equal(mark.getAttribute("src"), "./assets/brand/kokoro-parea-mark.svg");
+  assert.equal(mark.getAttribute("alt"), "");
+  assert.equal(mark.getAttribute("width"), "120");
+  assert.equal(mark.getAttribute("height"), "120");
+  assert.doesNotMatch(
+    collectText(header),
+    /Big Five 自己理解チェック|BIG FIVE SELF UNDERSTANDING|^5$/,
   );
   assert.equal(
     collectElements(header)

@@ -97,16 +97,11 @@ button:disabled {
 }
 
 .app-mark {
-  display: grid;
-  flex: 0 0 38px;
+  display: block;
+  flex: 0 0 auto;
   width: 38px;
   height: 38px;
-  place-items: center;
-  border-radius: 10px;
-  background: #26705c;
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 800;
+  object-fit: contain;
 }
 
 .app-brand-copy {
@@ -1251,7 +1246,6 @@ noscript {
     flex-basis: 34px;
     width: 34px;
     height: 34px;
-    border-radius: 9px;
   }
 
   .app-brand-name {
