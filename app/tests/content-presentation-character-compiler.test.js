@@ -183,7 +183,7 @@ test("T-005 F-018 Q-013 normalized CSVs compile to the exact presentation defini
   ]);
   assert.equal(compiled.schemaVersion, 2);
   assert.equal(compiled.fragrances[0].materialIds.length >= 1, true);
-  assert.equal(compiled.fragrances[0].materialIds.length <= 3, true);
+  assert.equal(compiled.fragrances[0].materialIds.length <= 2, true);
   assert.deepEqual(compiled.scenes.map(({ iconId }) => iconId), [
     "aroma-pause", "aroma-reset", "aroma-quiet-focus",
   ]);
@@ -330,9 +330,8 @@ test("T-005 F-018 rejects relation cardinality violations without changing globa
     }],
     ["two fragrance candidates", (rows) => { rows.selectorFragranceRows[0].title_id = rows.selectorFragranceRows[6].title_id; }],
     ["one shared fragrance", (rows) => { rows.selectorFragranceRows[0].share_selected = "false"; }],
-    ["one to three materials", (rows) => {
+    ["one to two materials", (rows) => {
       rows.fragranceMaterialExampleRows[0].fragrance_id = rows.fragranceMaterialExampleRows[2].fragrance_id;
-      rows.fragranceMaterialExampleRows[1].fragrance_id = rows.fragranceMaterialExampleRows[2].fragrance_id;
     }],
   ];
   for (const [, mutate] of cases) assertPresentationRejected(mutate);

@@ -72,7 +72,7 @@ export const invalidPresentationSchema2Cases = [
   { name: "duplicate material IDs", mutate: (value) => { value.fragranceMaterials[1].materialId = value.fragranceMaterials[0].materialId; }, error: definitionError },
   { name: "orphan material IDs", mutate: (value) => { value.fragranceMaterials.push({ ...value.fragranceMaterials[0], materialId: "material-orphan" }); }, error: definitionError },
   { name: "zero material IDs", mutate: (value) => { value.fragrances[0].materialIds = []; }, error: definitionError },
-  { name: "four material IDs", mutate: (value) => { value.fragrances[0].materialIds = value.fragranceMaterials.slice(0, 4).map(({ materialId }) => materialId); }, error: definitionError },
+  { name: "three material IDs", mutate: (value) => { value.fragrances[0].materialIds = value.fragranceMaterials.slice(0, 3).map(({ materialId }) => materialId); }, error: definitionError },
   { name: "duplicate material ID references", mutate: (value) => { value.fragrances[0].materialIds[1] = value.fragrances[0].materialIds[0]; }, error: definitionError },
   { name: "mismatched material version", mutate: (value) => { value.fragranceMaterials[0].version = "presentation-v1"; }, error: definitionError },
   { name: "unknown material ID reference", mutate: (value) => { value.fragrances[0].materialIds[0] = "material-missing"; }, error: definitionError },

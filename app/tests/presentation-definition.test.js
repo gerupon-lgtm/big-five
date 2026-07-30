@@ -49,7 +49,7 @@ test("T-005 F-018 validates schema 2 usage mappings, materials, and ordered refe
     "aroma-pause", "aroma-reset", "aroma-quiet-focus",
   ]);
   assert.ok(validated.fragrances.every(({ familyId }) => familyId === "floral"));
-  assert.ok(validated.fragrances.every(({ materialIds }) => materialIds.length >= 1 && materialIds.length <= 3));
+  assert.ok(validated.fragrances.every(({ materialIds }) => materialIds.length >= 1 && materialIds.length <= 2));
   assert.equal(Object.isFrozen(validated.fragranceMaterials[0]), true);
   assert.equal(lintPresentationCopy(validated).length, 0);
 });

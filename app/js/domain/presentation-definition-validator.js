@@ -135,7 +135,7 @@ function validateFragrances(fragrances, expectedVersion, fragranceMaterials) {
     const materialIds = new Set(fragranceMaterials.map(({ materialId }) => materialId));
     const referencedMaterialIds = new Set();
     for (const { materialIds: fragranceMaterialIds } of fragrances) {
-      if (!isDenseArray(fragranceMaterialIds) || fragranceMaterialIds.length < 1 || fragranceMaterialIds.length > 3 ||
+      if (!isDenseArray(fragranceMaterialIds) || fragranceMaterialIds.length < 1 || fragranceMaterialIds.length > 2 ||
         !fragranceMaterialIds.every(isNonEmptyString) || !hasUniqueValues(fragranceMaterialIds) ||
         !fragranceMaterialIds.every((materialId) => materialIds.has(materialId))) failDefinition();
       fragranceMaterialIds.forEach((materialId) => referencedMaterialIds.add(materialId));

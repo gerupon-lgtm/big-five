@@ -115,7 +115,7 @@ function compileFragrances(fragranceRows, materialRows, materialExampleRows, sce
   const referencedMaterialIds = new Set();
   const fragrances = ordered(fragranceRows).map((row) => {
     const examples = examplesByFragrance.get(row.fragrance_id);
-    if (!examples || examples.length < 1 || examples.length > 3 ||
+    if (!examples || examples.length < 1 || examples.length > 2 ||
       new Set(examples.map(({ material_id }) => material_id)).size !== examples.length) invalid();
     const fragranceMaterialIds = examples.map(({ material_id }) => material_id);
     fragranceMaterialIds.forEach((materialId) => referencedMaterialIds.add(materialId));

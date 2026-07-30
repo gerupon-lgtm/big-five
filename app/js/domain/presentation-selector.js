@@ -201,7 +201,7 @@ function validateDefinitionSet(definitionSet) {
       isNonEmptyString(fragrance.description) &&
       isDenseArray(fragrance.materialIds) &&
       fragrance.materialIds.length >= 1 &&
-      fragrance.materialIds.length <= 3 &&
+      fragrance.materialIds.length <= 2 &&
       fragrance.materialIds.every((materialId) =>
         isNonEmptyString(materialId) && materialIds.has(materialId)) &&
       hasUniqueValues(fragrance.materialIds) &&
