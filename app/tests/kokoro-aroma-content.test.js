@@ -57,7 +57,7 @@ test("T-002 Q-013 香調・素材の廃止と置換後の定義をコンパイ�
   );
 });
 
-test("T-002 Q-013 香調・素材CSVは暫定置換後も順序・状態・選択契約を保つ", async () => {
+test("T-002 Q-013 香調・素材CSVはP-1承認後も順序・選択契約を保つ", async () => {
   const [fragrances, materials, examples, selectors] = await Promise.all([
     loadTable("fragrances"),
     loadTable("fragrance-materials"),
@@ -66,7 +66,7 @@ test("T-002 Q-013 香調・素材CSVは暫定置換後も順序・状態・選�
   ]);
   for (const table of [fragrances, materials, examples]) {
     assert.ok(table.rows.every(({ presentation_definition_version, status }) =>
-      presentation_definition_version === "presentation-v2" && status === "draft"));
+      presentation_definition_version === "presentation-v2" && status === "approved"));
   }
   assert.ok(selectors.rows.every(({ status }) => status === "draft"));
   assertOneBasedOrder(fragrances.rows, "fragrances");

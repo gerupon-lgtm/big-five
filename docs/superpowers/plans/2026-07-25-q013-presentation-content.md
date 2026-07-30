@@ -574,15 +574,15 @@ git commit -m "content: record q013 p0 approval"
 **Interfaces:**
 - P-1 scope: fixed scene vocabulary, complete shared fragrance library, complete shared material library, and ordered material relations.
 
-- [ ] **Step 1: Pause and present P-1**
+- [x] **Step 1: Pause and present P-1**
 
 Show each scene, accord label, neutral description, disclaimer, ordered 1〜3 material examples, and the material-excluded share projection. Include prohibited-copy lint results. Do not edit statuses while awaiting an explicit user decision.
 
-- [ ] **Step 2: Record only the actual decision**
+- [x] **Step 2: Record only the actual decision**
 
 On full approval, approve the four source tables and P-1 with the real approver/date. On requested changes, retain non-approved status, update draft rows, regenerate and re-present all P-1 records.
 
-- [ ] **Step 3: Verify and commit P-1**
+- [x] **Step 3: Verify and commit P-1**
 
 Run:
 

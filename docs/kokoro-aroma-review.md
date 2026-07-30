@@ -1258,7 +1258,7 @@
 
 | gate | scope | status |
 | --- | --- | --- |
-| P-1 | fragrance-vocabulary-materials | draft |
+| P-1 | fragrance-vocabulary-materials | approved |
 | P-2 | titles-balanced-and-single-01-11 | draft |
 | P-3 | titles-pair-01-10 | draft |
 | P-4 | titles-pair-11-20 | draft |

@@ -77,14 +77,14 @@ test("review model preserves the complete current Q-013 structure", async () => 
   }
 });
 
-test("P-0 approves B as the canonical usage intensity while later gates remain draft", async () => {
+test("P-0 and P-1 are approved while later gates remain draft", async () => {
   const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
 
   assert.deepEqual(
     model.approvals.map(({ gate_id, status }) => [gate_id, status]),
     [
       ["P-0", "approved"],
-      ["P-1", "draft"],
+      ["P-1", "approved"],
       ["P-2", "draft"],
       ["P-3", "draft"],
       ["P-4", "draft"],
@@ -221,66 +221,21 @@ test("approval metadata consistency is required by both model and renderer", asy
   );
 
   const draftWithMetadata = structuredClone(model.approvals);
-  draftWithMetadata[1].approved_by = "user";
-  draftWithMetadata[1].approved_on = "2026-07-31";
+  draftWithMetadata[2].approved_by = "user";
+  draftWithMetadata[2].approved_on = "2026-07-31";
   assert.throws(
     () => renderPresentationReview({ ...model, approvals: draftWithMetadata }),
     { name: "TypeError", message: "PRESENTATION_REVIEW_INVALID" },
   );
 });
 
-test("P-0 approval renders truthfully while later gates remain draft", async (t) => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "presentation-approved-"));
-  t.after(() => rm(directory, { recursive: true, force: true }));
-  const sourceDir = path.join(directory, "source");
-  await cp(
-    path.join(SOURCE_DIR, "titles/title-rule-v1"),
-    path.join(sourceDir, "titles/title-rule-v1"),
-    { recursive: true },
-  );
-  await cp(
-    path.join(SOURCE_DIR, "presentation/presentation-v2"),
-    path.join(sourceDir, "presentation/presentation-v2"),
-    { recursive: true },
-  );
-  await cp(
-    path.join(SOURCE_DIR, "approvals/presentation-content-approvals.csv"),
-    path.join(sourceDir, "approvals/presentation-content-approvals.csv"),
-    { recursive: true },
-  );
-
-  const approvalPath = path.join(
-    sourceDir,
-    "approvals/presentation-content-approvals.csv",
-  );
-  const approvalText = await readFile(approvalPath, "utf8");
-  await writeFile(
-    approvalPath,
-    approvalText.replace(
-      "P-0,1,palette-mapping-wcag,draft,,,",
-      "P-0,1,palette-mapping-wcag,approved,user,2026-07-30,P-0 fixture approval",
-    ),
-    "utf8",
-  );
-  for (const fileName of ["palettes.csv", "palette-usage-mappings.csv"]) {
-    const filePath = path.join(
-      sourceDir,
-      "presentation/presentation-v2",
-      fileName,
-    );
-    await writeFile(
-      filePath,
-      (await readFile(filePath, "utf8")).replaceAll(",draft\r\n", ",approved\r\n"),
-      "utf8",
-    );
-  }
-
-  const model = await loadPresentationReviewModel({ sourceDir });
+test("P-0 and P-1 approvals render truthfully while later gates remain draft", async () => {
+  const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
   const report = renderPresentationReview(model);
-  assert.match(report, /承認状況: approved=P-0; draft=P-1, P-2, P-3, P-4, P-5, P-6/);
+  assert.match(report, /承認状況: approved=P-0, P-1; draft=P-2, P-3, P-4, P-5, P-6/);
   assert.doesNotMatch(report, /すべての行とP-0〜P-6は未承認/);
   assert.match(report, /## P-0 パレットと用途色（approved）/);
-  assert.match(report, /## P-1 香調語彙と素材（draft）/);
+  assert.match(report, /## P-1 香調語彙と素材（approved）/);
 });
 
 test("ordinary and share-card review show one to two concrete materials", async () => {
