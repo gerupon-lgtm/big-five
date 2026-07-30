@@ -71,7 +71,7 @@ export const invalidPresentationSchema2Cases = [
   { name: "four material IDs", mutate: (value) => { value.fragrances[0].materialIds = value.fragranceMaterials.slice(0, 4).map(({ materialId }) => materialId); }, error: definitionError },
   { name: "duplicate material ID references", mutate: (value) => { value.fragrances[0].materialIds[1] = value.fragrances[0].materialIds[0]; }, error: definitionError },
   { name: "mismatched material version", mutate: (value) => { value.fragranceMaterials[0].version = "presentation-v1"; }, error: definitionError },
-  { name: "unordered material IDs", mutate: (value) => { value.fragrances[0].materialIds.reverse(); }, error: definitionError },
+  { name: "unknown material ID reference", mutate: (value) => { value.fragrances[0].materialIds[0] = "material-missing"; }, error: definitionError },
   { name: "absent palette usage mapping", mutate: (value) => { value.paletteUsageMappings.pop(); }, error: definitionError },
   { name: "orphan palette usage mapping", mutate: (value) => { value.paletteUsageMappings[0].paletteId = "palette-orphan"; }, error: definitionError },
   { name: "malformed palette usage recipe", mutate: (value) => { value.paletteUsageMappings[0].roles.background.mixPercent = 101; }, error: definitionError },

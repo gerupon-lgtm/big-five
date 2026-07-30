@@ -169,6 +169,37 @@ test("T-005 F-018 Q-013 normalized CSVs compile to the exact presentation defini
   assert.equal(Object.isFrozen(compiled), true);
 });
 
+test("T-005 F-018 Q-013 schema 2 compiler rejects presentation-v1 as its expected version", () => {
+  const rows = validPresentationRows();
+  for (const rowSetName of [
+    "sceneRows",
+    "paletteRows",
+    "paletteUsageRows",
+    "fragranceRows",
+    "fragranceMaterialRows",
+    "fragranceMaterialExampleRows",
+    "selectorRows",
+  ]) {
+    rows[rowSetName].forEach((row) => {
+      row.presentation_definition_version = "presentation-v1";
+    });
+  }
+  assert.throws(
+    () => compilePresentationContent(rows, "presentation-v1"),
+    expectContentError("PRESENTATION_CONTENT_INVALID"),
+  );
+});
+
+test("T-005 F-018 Q-013 fragrance material relation order is canonical and independent of library order", () => {
+  const rows = validPresentationRows();
+  const first = rows.fragranceMaterialExampleRows[0];
+  const second = rows.fragranceMaterialExampleRows[1];
+  [first.material_id, second.material_id] = [second.material_id, first.material_id];
+
+  const compiled = compilePresentationContent(rows, PRESENTATION_VERSION);
+  assert.deepEqual(compiled.fragrances[0].materialIds, [first.material_id, second.material_id]);
+});
+
 test("T-005 F-018 Q-013 graph invariants allow shared palette, fragrance, and material records", () => {
   const rows = validPresentationRows();
   const sharedPaletteIds = ["palette-shared-a", "palette-shared-b"];
@@ -254,6 +285,12 @@ test("T-005 F-018 rejects duplicate relation-group orders and selector-fragrance
     ["selector fragrance order", (rows) => { rows.selectorFragranceRows[1].display_order = 1; }],
     ["selector fragrance parent", (rows) => { rows.selectorFragranceRows[0].title_id = "title-missing"; }],
     ["selector fragrance child", (rows) => { rows.selectorFragranceRows[0].fragrance_id = "fragrance-pause-missing"; }],
+    ["selector fragrance unknown scene", (rows) => {
+      rows.selectorFragranceRows.push({
+        ...rows.selectorFragranceRows[0],
+        scene_id: "unknown-scene",
+      });
+    }],
     ["fragrance material order", (rows) => { rows.fragranceMaterialExampleRows[1].display_order = 1; }],
   ];
   for (const [, mutate] of cases) assertPresentationRejected(mutate);

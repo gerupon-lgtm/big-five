@@ -4,6 +4,7 @@ import { validateTitleProfileDefinitions } from "../../app/js/domain/title-profi
 
 const STATUSES = new Set(["draft", "reviewed", "approved", "rejected"]);
 const SCENE_IDS = ["pause", "reset", "quiet-focus"];
+const PRESENTATION_SCHEMA_2_VERSION = "presentation-v2";
 const HEX_COLOR_PATTERN = /^#[0-9A-F]{6}$/;
 const PALETTE_SOURCES = new Set(["primary", "secondary", "accent"]);
 const MIX_TARGETS = new Set(["none", "white", "black"]);
@@ -107,30 +108,28 @@ function compileFragrances(fragranceRows, materialRows, materialExampleRows, sce
     !materialExampleRows.every((row) => row.presentation_definition_version === expectedVersion)) invalid();
   const fragranceIds = new Set(fragranceRows.map(({ fragrance_id }) => fragrance_id));
   const orderedMaterials = ordered(materialRows);
-  const materialOrderById = new Map(orderedMaterials.map(({ material_id }, index) => [material_id, index]));
+  const materialIds = new Set(orderedMaterials.map(({ material_id }) => material_id));
   const examplesByFragrance = groupOrdered(materialExampleRows, ({ fragrance_id }) => fragrance_id);
   if ([...examplesByFragrance.keys()].some((fragranceId) => !fragranceIds.has(fragranceId)) ||
-    materialExampleRows.some(({ material_id }) => !materialOrderById.has(material_id))) invalid();
+    materialExampleRows.some(({ material_id }) => !materialIds.has(material_id))) invalid();
   const referencedMaterialIds = new Set();
   const fragrances = ordered(fragranceRows).map((row) => {
     const examples = examplesByFragrance.get(row.fragrance_id);
     if (!examples || examples.length < 1 || examples.length > 3 ||
-      new Set(examples.map(({ material_id }) => material_id)).size !== examples.length ||
-      !examples.every(({ material_id }, index) =>
-        index === 0 || materialOrderById.get(examples[index - 1].material_id) < materialOrderById.get(material_id))) invalid();
-    const materialIds = examples.map(({ material_id }) => material_id);
-    materialIds.forEach((materialId) => referencedMaterialIds.add(materialId));
+      new Set(examples.map(({ material_id }) => material_id)).size !== examples.length) invalid();
+    const fragranceMaterialIds = examples.map(({ material_id }) => material_id);
+    fragranceMaterialIds.forEach((materialId) => referencedMaterialIds.add(materialId));
     return {
       fragranceId: row.fragrance_id,
       version: row.presentation_definition_version,
       sceneId: row.scene_id,
       accordLabel: row.accord_label,
       description: row.description,
-      materialIds,
+      materialIds: fragranceMaterialIds,
       disclaimerId: row.disclaimer_id,
     };
   });
-  if (referencedMaterialIds.size !== materialOrderById.size) invalid();
+  if (referencedMaterialIds.size !== materialIds.size) invalid();
   const fragranceMaterials = orderedMaterials.map((row) => ({
     materialId: row.material_id,
     version: row.presentation_definition_version,
@@ -152,7 +151,10 @@ function compileSelectors(selectorRows, selectorPaletteRows, selectorFragranceRo
   const palettesByTitle = groupOrdered(selectorPaletteRows, ({ title_id }) => title_id);
   const fragrancesByTitleScene = groupOrdered(selectorFragranceRows, ({ title_id, scene_id }) => `${title_id}\u0000${scene_id}`);
   if ([...palettesByTitle.keys()].some((titleId) => !profileIds.has(titleId)) ||
-    [...fragrancesByTitleScene.keys()].some((key) => !profileIds.has(key.split("\u0000")[0]))) invalid();
+    [...fragrancesByTitleScene.keys()].some((key) => {
+      const [titleId, sceneId] = key.split("\u0000");
+      return !profileIds.has(titleId) || !SCENE_IDS.includes(sceneId);
+    })) invalid();
   return selectors.map((selector, index) => {
     const profile = titleProfiles[index];
     const paletteRows = palettesByTitle.get(selector.title_id);
@@ -192,7 +194,7 @@ export function compilePresentationContent(input, expectedVersion) {
       selectorFragranceRows,
       titleProfiles,
     } = input;
-    if (typeof expectedVersion !== "string" || expectedVersion === "") invalid();
+    if (expectedVersion !== PRESENTATION_SCHEMA_2_VERSION) invalid();
     validateTitleProfileDefinitions(titleProfiles);
     assertRows(sceneRows, 3);
     assertStatuses(

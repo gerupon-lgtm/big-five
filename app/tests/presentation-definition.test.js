@@ -50,6 +50,19 @@ test("T-005 F-018 validates schema 2 usage mappings, materials, and ordered refe
   assert.equal(lintPresentationCopy(validated).length, 0);
 });
 
+test("T-005 F-018 schema 2 preserves per-fragrance material order independently of the material catalog", () => {
+  const value = makeValidPresentationDefinitionSet(TitleProfileDefinitions, {
+    schemaVersion: 2,
+    version: "presentation-v2",
+  });
+  value.fragrances[0].materialIds.reverse();
+  const validated = validatePresentationDefinitionSet(value, {
+    titleProfiles: TitleProfileDefinitions,
+    expectedVersion: "presentation-v2",
+  });
+  assert.deepEqual(validated.fragrances[0].materialIds, value.fragrances[0].materialIds);
+});
+
 test("T-005 F-018 keeps schema 1 valid without schema 2 fields", () => {
   assert.doesNotThrow(() => validatePresentationDefinitionSet(
     makeValidPresentationDefinitionSet(TitleProfileDefinitions),

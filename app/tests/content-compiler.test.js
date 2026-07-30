@@ -32,6 +32,7 @@ test("T-006 compiler exports the deterministic release interfaces", () => {
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const APPROVAL_IDS = ["E-0", "E-1", "E-2", "E-3", "E-4", "E-5", "T-0", "T-1", "T-2", "T-3", "T-4", "F-1", "F-2", "F-3", "F-4", "F-5", "X-1", "X-2"];
 const diagnosticVersion = "diagnostic-definition-v1";
+const presentationVersion = "presentation-v2";
 const releaseId = "release-test-v1";
 const execFileAsync = promisify(execFile);
 const BASE_RESULT_TEXT_DEFINITIONS = ResultTextDefinitions.filter(
@@ -116,16 +117,16 @@ function resultRows() {
 function presentationRows() {
   const definition = makeValidPresentationDefinitionSet(TitleProfileDefinitions, {
     schemaVersion: 2,
-    version: appMeta.presentationDefinitionVersion,
+    version: presentationVersion,
   });
   return {
-    scenes: definition.scenes.map(({ sceneId, label }, index) => ({ scene_id: sceneId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, label, status: "approved" })),
-    palettes: definition.palettes.map(({ paletteId, label, baseColors, description }, index) => ({ palette_id: paletteId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, label, primary_color: baseColors.primary, secondary_color: baseColors.secondary, accent_color: baseColors.accent, description, status: "approved" })),
-    paletteUsage: definition.paletteUsageMappings.map(({ paletteId, roles, textCandidates }, index) => ({ palette_id: paletteId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, background_source: roles.background.source, background_mix_with: roles.background.mixWith, background_mix_percent: roles.background.mixPercent, surface_source: roles.surface.source, surface_mix_with: roles.surface.mixWith, surface_mix_percent: roles.surface.mixPercent, accent_source: roles.accent.source, accent_mix_with: roles.accent.mixWith, accent_mix_percent: roles.accent.mixPercent, chart_source: roles.chart.source, chart_mix_with: roles.chart.mixWith, chart_mix_percent: roles.chart.mixPercent, text_candidate_1: textCandidates[0], text_candidate_2: textCandidates[1], status: "approved" })),
-    fragrances: definition.fragrances.map(({ fragranceId, sceneId, accordLabel, description, disclaimerId }, index) => ({ fragrance_id: fragranceId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, scene_id: sceneId, accord_label: accordLabel, description, disclaimer_id: disclaimerId, status: "approved" })),
-    fragranceMaterials: definition.fragranceMaterials.map(({ materialId, displayName, materialKind }, index) => ({ material_id: materialId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, display_name: displayName, material_kind: materialKind, status: "approved" })),
-    fragranceMaterialExamples: definition.fragrances.flatMap(({ fragranceId, materialIds }) => materialIds.map((material_id, index) => ({ fragrance_id: fragranceId, material_id, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, status: "approved" }))),
-    selectors: definition.titleSelectors.map(({ titleId }, index) => ({ title_id: titleId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, status: "approved" })),
+    scenes: definition.scenes.map(({ sceneId, label }, index) => ({ scene_id: sceneId, presentation_definition_version: presentationVersion, display_order: index + 1, label, status: "approved" })),
+    palettes: definition.palettes.map(({ paletteId, label, baseColors, description }, index) => ({ palette_id: paletteId, presentation_definition_version: presentationVersion, display_order: index + 1, label, primary_color: baseColors.primary, secondary_color: baseColors.secondary, accent_color: baseColors.accent, description, status: "approved" })),
+    paletteUsage: definition.paletteUsageMappings.map(({ paletteId, roles, textCandidates }, index) => ({ palette_id: paletteId, presentation_definition_version: presentationVersion, display_order: index + 1, background_source: roles.background.source, background_mix_with: roles.background.mixWith, background_mix_percent: roles.background.mixPercent, surface_source: roles.surface.source, surface_mix_with: roles.surface.mixWith, surface_mix_percent: roles.surface.mixPercent, accent_source: roles.accent.source, accent_mix_with: roles.accent.mixWith, accent_mix_percent: roles.accent.mixPercent, chart_source: roles.chart.source, chart_mix_with: roles.chart.mixWith, chart_mix_percent: roles.chart.mixPercent, text_candidate_1: textCandidates[0], text_candidate_2: textCandidates[1], status: "approved" })),
+    fragrances: definition.fragrances.map(({ fragranceId, sceneId, accordLabel, description, disclaimerId }, index) => ({ fragrance_id: fragranceId, presentation_definition_version: presentationVersion, display_order: index + 1, scene_id: sceneId, accord_label: accordLabel, description, disclaimer_id: disclaimerId, status: "approved" })),
+    fragranceMaterials: definition.fragranceMaterials.map(({ materialId, displayName, materialKind }, index) => ({ material_id: materialId, presentation_definition_version: presentationVersion, display_order: index + 1, display_name: displayName, material_kind: materialKind, status: "approved" })),
+    fragranceMaterialExamples: definition.fragrances.flatMap(({ fragranceId, materialIds }) => materialIds.map((material_id, index) => ({ fragrance_id: fragranceId, material_id, presentation_definition_version: presentationVersion, display_order: index + 1, status: "approved" }))),
+    selectors: definition.titleSelectors.map(({ titleId }, index) => ({ title_id: titleId, presentation_definition_version: presentationVersion, display_order: index + 1, status: "approved" })),
     selectorPalettes: definition.titleSelectors.flatMap(({ titleId, alternativePaletteIds }) => alternativePaletteIds.map((palette_id, index) => ({ title_id: titleId, display_order: index + 1, palette_id, status: "approved" }))),
     selectorFragrances: definition.titleSelectors.flatMap(({ titleId, fragranceScenes }) => fragranceScenes.flatMap(({ sceneId, candidateFragranceIds, shareFragranceId }) => candidateFragranceIds.map((fragrance_id, index) => ({ title_id: titleId, scene_id: sceneId, display_order: index + 1, fragrance_id, share_selected: String(fragrance_id === shareFragranceId), status: "approved" })))),
   };
@@ -138,7 +139,7 @@ async function createApprovedSourceTree(t, { manifestStatus = "approved" } = {})
     release_id: releaseId, app_version: appMeta.appVersion, diagnosis_id: "big-five-ipip-ja", diagnostic_definition_version: diagnosticVersion,
     scale_version: appMeta.diagnosticVersions.scaleVersion, question_version: appMeta.diagnosticVersions.questionVersion, scoring_version: appMeta.diagnosticVersions.scoringVersion,
     result_evidence_version: ResultEvidenceDefinitions[0].version, result_text_version: appMeta.diagnosticVersions.resultTextVersion, title_rule_version: appMeta.diagnosticVersions.titleRuleVersion,
-    character_manifest_version: appMeta.characterManifestVersion, presentation_definition_version: appMeta.presentationDefinitionVersion, card_template_version: appMeta.cardTemplateVersion, status: manifestStatus,
+    character_manifest_version: appMeta.characterManifestVersion, presentation_definition_version: presentationVersion, card_template_version: appMeta.cardTemplateVersion, status: manifestStatus,
   };
   await writeTable(sourceDir, "releases/release-manifest.csv", [release]);
   await writeTable(sourceDir, "releases/release-history.csv", [{ release_sequence: 1, ...release, status: "approved" }]);
@@ -337,6 +338,7 @@ test("T-006 approved fixture compiles seven byte-identical resources and hashes"
   for (const resource of first.manifest.resources) assert.equal(resource.sha256, createHash("sha256").update(first.resources.get(resource.kind)).digest("hex"));
   const presentation = JSON.parse(first.resources.get("presentation"));
   assert.equal(presentation.schemaVersion, 2);
+  assert.equal(first.manifest.versions.presentationDefinitionVersion, presentationVersion);
   assert.deepEqual(Object.keys(presentation), [
     "fragranceMaterials",
     "fragrances",

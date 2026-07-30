@@ -123,17 +123,16 @@ function validateFragrances(fragrances, expectedVersion, fragranceMaterials) {
   })) failDefinition();
   if (!hasUniqueValues(fragrances.map(({ fragranceId }) => fragranceId))) failDefinition();
   if (schemaVersion === 2) {
-    const materialOrderById = new Map(fragranceMaterials.map(({ materialId }, index) => [materialId, index]));
+    const materialIds = new Set(fragranceMaterials.map(({ materialId }) => materialId));
     const referencedMaterialIds = new Set();
-    for (const { materialIds } of fragrances) {
-      if (!isDenseArray(materialIds) || materialIds.length < 1 || materialIds.length > 3 ||
-        !materialIds.every(isNonEmptyString) || !hasUniqueValues(materialIds) ||
-        !materialIds.every((materialId) => materialOrderById.has(materialId)) ||
-        !materialIds.every((materialId, index) => index === 0 || materialOrderById.get(materialIds[index - 1]) < materialOrderById.get(materialId))) failDefinition();
-      materialIds.forEach((materialId) => referencedMaterialIds.add(materialId));
+    for (const { materialIds: fragranceMaterialIds } of fragrances) {
+      if (!isDenseArray(fragranceMaterialIds) || fragranceMaterialIds.length < 1 || fragranceMaterialIds.length > 3 ||
+        !fragranceMaterialIds.every(isNonEmptyString) || !hasUniqueValues(fragranceMaterialIds) ||
+        !fragranceMaterialIds.every((materialId) => materialIds.has(materialId))) failDefinition();
+      fragranceMaterialIds.forEach((materialId) => referencedMaterialIds.add(materialId));
     }
-    if (referencedMaterialIds.size !== materialOrderById.size ||
-      ![...materialOrderById.keys()].every((materialId) => referencedMaterialIds.has(materialId))) failDefinition();
+    if (referencedMaterialIds.size !== materialIds.size ||
+      ![...materialIds].every((materialId) => referencedMaterialIds.has(materialId))) failDefinition();
   }
 }
 
