@@ -290,8 +290,9 @@ test("T-007 production source records exact statuses and remains authorable with
     [
       ["P-0", "approved", "user", "2026-07-31"],
       ["P-1", "approved", "user", "2026-07-31"],
-      ...Array.from({ length: 5 }, (_, index) => [
-        `P-${index + 2}`,
+      ["P-2", "approved", "user", "2026-07-31"],
+      ...Array.from({ length: 4 }, (_, index) => [
+        `P-${index + 3}`,
         "draft",
         "",
         "",
@@ -303,7 +304,7 @@ test("T-007 production source records exact statuses and remains authorable with
       code === "CONTENT_NOT_APPROVED" &&
       path.basename(sourceName) === "presentation-content-approvals.csv")
       .length,
-    5,
+    4,
   );
   assert.equal(appMeta.presentationDefinitionVersion, "presentation-v1");
   assert.ok(authoring.warnings.some(({ code }) => code === "CHARACTER_CATALOG_PENDING"));

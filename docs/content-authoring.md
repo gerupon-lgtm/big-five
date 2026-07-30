@@ -15,7 +15,7 @@ Excelでは「CSV UTF-8」で保存することを推奨します。日本語版
 | 称号と因子関係 | `content/source/titles/<title-rule-version>/` | `title-rule-v1` |
 | 結果文、結果文根拠の対応、称号別振り返りヒント | `content/source/result-texts/<result-text-version>/` | `result-text-v2`（現行runtime）／`result-text-v1`（履歴互換） |
 | 根拠と主張の対応 | `content/source/evidence/<result-evidence-version>/` | `result-evidence-v1` |
-| 色・香り・用途色・称号別選択 | `content/source/presentation/<presentation-definition-version>/` | `presentation-v2`（P-0・P-1承認済み、P-2〜P-6承認待ち） |
+| 色・香り・用途色・称号別選択 | `content/source/presentation/<presentation-definition-version>/` | `presentation-v2`（P-0〜P-2承認済み、P-3〜P-6承認待ち） |
 | Q-006の人手承認台帳 | `content/source/approvals/result-content-approvals.csv` | 版横断の18行 gate |
 | Q-013の人手承認台帳 | `content/source/approvals/presentation-content-approvals.csv` | P-0〜P-6の7行 gate |
 | 公開候補と公開履歴 | `content/source/releases/release-manifest.csv`、`release-history.csv` | 現在は両方ヘッダーのみ |
@@ -30,13 +30,13 @@ Excelでは「CSV UTF-8」で保存することを推奨します。日本語版
 
 - E-0は`approved`、E-1〜E-5は`draft`です。
 - T-0〜T-4、F-1〜F-5、X-1〜X-2は`reviewed`ですが、人手approval metadataはありません。
-- Q-013の`presentation-v2`候補CSVは作成済みです。P-0の153パレット・用途色BとWCAG、P-1の固定3場面・29香調・25素材・29素材関連・安全表現は2026-07-31に`approved`となりました。P-2〜P-6は`draft`で、承認者・承認日は空欄です。
+- Q-013の`presentation-v2`候補CSVは作成済みです。P-0の153パレット・用途色BとWCAG、P-1の固定3場面・29香調・25素材・29素材関連・安全表現、P-2の表示順1〜11に属する称号別選択は2026-07-31に`approved`となりました。P-3〜P-6は`draft`で、承認者・承認日は空欄です。
 - Q-012の正式releaseと、Q-013の承認済みproduction演出データは未完成です。
 - release CSVはヘッダーだけで、approved releaseはありません。
 
 現在はQ-006のE-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の全18 gateがapprovedとなり、2026-07-28に`result-text-v1`のContent Approvalを完了しています。`result-text-v2`は、この不変な237件を履歴互換の基準として残しながら、ユーザー承認済みの文面修正27件を版内へ反映し、TR-0〜TR-4で承認済みの称号別`titleReflection`を51称号×3件＝153件追加した現行runtime版です。結果文は基本237件＋振り返り153件＝390件、結果文と根拠の対応行は267件です。実行時の`ResultEvidenceDefinition`自体は引き続き固定6件であり、267件は根拠定義数ではありません。
 
-ただし、行statusと別gateは引き続き別契約であり、approved releaseは未選択です。Q-012正式releaseと、Q-013のP-2〜P-6承認・正式runtime接続も未完了のままです。`result-text-v2`を現行ES Modules runtimeで利用できることを、CSV/JSONの正式release選択と同一視しません。
+ただし、行statusと別gateは引き続き別契約であり、approved releaseは未選択です。Q-012正式releaseと、Q-013のP-3〜P-6承認・正式runtime接続も未完了のままです。`result-text-v2`を現行ES Modules runtimeで利用できることを、CSV/JSONの正式release選択と同一視しません。
 
 releaseを選択するには、参照される全行と別gateが`approved`であり、Q-006、Q-012、Q-013の承認条件をすべて満たす必要があります。Q-013はP-0〜P-6の7 gateと、選択された`presentation-v2`全行の両方が`approved`でなければ`PRESENTATION_APPROVAL_PENDING`になります。authoring validationは未承認を警告として表示しますが、承認状態や承認者を自動補完しません。履歴は追記専用です。差し替えも切り戻しも新しい不変version/release行で行い、過去のapproved history/sourceを書き換えません。
 
@@ -66,7 +66,7 @@ npm.cmd run content:review:aroma
 npm.cmd run content:preview:palettes
 ```
 
-香り専用レビューの出力先は`docs/kokoro-aroma-review.md`です。29香調、25素材、固定3場面、51称号×3場面×2候補、共有代表、多様性監査、P-1〜P-6の現状を決定的な順序で確認できます。生成は承認やruntime接続を意味せず、各gateと各行statusを変更しません。P-1は語彙・素材の共通マスタだけを承認し、称号別割り当てはP-2〜P-6で別途承認します。
+香り専用レビューの出力先は`docs/kokoro-aroma-review.md`です。29香調、25素材、固定3場面、51称号×3場面×2候補、共有代表、多様性監査、P-1〜P-6の現状を決定的な順序で確認できます。生成は承認やruntime接続を意味せず、各gateと各行statusを変更しません。P-1は語彙・素材の共通マスタ、P-2は表示順1〜11の称号別割り当てを承認済みで、表示順12〜51はP-3〜P-6で別途承認します。
 
 共有カード確認HTMLの出力先は`docs/palette-preview.html`です。ブラウザで直接開くと、51称号×3候補＝153配色を、共有カードの背景色として確認できます。各カードは縦横比3:5の配色・情報量確認用の簡略カードであり、完成共有カードではありません。ブランドアイコン、アプリ名・副題、称号と現行版付き結果副題、代表キャラクター、固定5因子色の棒グラフ、`ココロアロマ`の代表3件（場面名、素材例、短い印象）と共通注記、注意書き、版を含みます。同じ称号の3配色では称号短文と香り3件を共通にし、パレット説明はカード外の編集メタ情報に表示します。固定5因子色はココロパレアのアイコンと同じ系統の色を使う表示確認用で、P-0のパレット由来の`chart`用途色ではありません。キャラクターは1体の代表画像を全カードで共用し、称号ごとの最終画像・トリミング・配置を決めるものではありません。代表画像を読み込めない場合も、明示的なplaceholderで153カードと配色確認を維持します。
 

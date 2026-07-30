@@ -20,7 +20,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は実装済みで、人は`content/source/`のCSVだけを編集する。3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testがあるが、画面はまだ既存ES Modulesをruntime compatibility authorityとして使い、`app/content/` JSONをfetchしない。
 
-`result-text-v1`は237件の不変な履歴互換版で、別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなっている。現行ES Modules runtimeの`result-text-v2`は基本237件に、TR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済み修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の根拠定義は引き続き固定6件である。Q-013はP-0の正式用途色B（背景84%・表面90%）とP-1の香調語彙・素材マスタを承認済みで、正式共有カードのココロアロマ3件は縦積みとする。簡略プレビューの横並びは配色・情報量確認専用である。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013のP-2〜P-6承認・正式runtime接続未完了はrelease readinessを妨げる別条件として維持する。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
+`result-text-v1`は237件の不変な履歴互換版で、別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなっている。現行ES Modules runtimeの`result-text-v2`は基本237件に、TR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済み修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の根拠定義は引き続き固定6件である。Q-013はP-0の正式用途色B（背景84%・表面90%）、P-1の香調語彙・素材マスタ、P-2の表示順1〜11に属する称号別選択を承認済みで、正式共有カードのココロアロマ3件は縦積みとする。簡略プレビューの横並びは配色・情報量確認専用である。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013のP-3〜P-6承認・正式runtime接続未完了はrelease readinessを妨げる別条件として維持する。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
 
 ## 2. 画面一覧
 

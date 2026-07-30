@@ -48,11 +48,16 @@ test("T-005 F-018 proposal preserves 306 structural rows and passes every audit"
   assert.equal(csv.trimEnd().split(/\r?\n/).length, 307);
   assert.equal((csv.match(/,true,draft\r\n/g) ?? []).length, 153);
   assert.equal((csv.match(/,false,draft\r\n/g) ?? []).length, 153);
+  const sourceCsv = await readFile(path.join(
+    SOURCE_DIR,
+    "presentation/presentation-v2/selector-fragrances.csv",
+  ), "utf8");
+  assert.equal((sourceCsv.match(/,true,approved\r\n/g) ?? []).length, 33);
+  assert.equal((sourceCsv.match(/,false,approved\r\n/g) ?? []).length, 33);
+  assert.equal((sourceCsv.match(/,true,draft\r\n/g) ?? []).length, 120);
+  assert.equal((sourceCsv.match(/,false,draft\r\n/g) ?? []).length, 120);
   assert.equal(
-    await readFile(path.join(
-      SOURCE_DIR,
-      "presentation/presentation-v2/selector-fragrances.csv",
-    ), "utf8"),
+    sourceCsv.replace(/,approved\r\n/g, ",draft\r\n"),
     csv,
   );
 });

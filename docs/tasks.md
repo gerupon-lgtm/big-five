@@ -29,7 +29,7 @@
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A | 保存失敗時の中断・preview終了、live結果維持、履歴dialogのnative／fallback代替動作を実装済み。共有系fallbackはT-007 |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面接続を実装。共有接続待ち |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
-| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013 P-0配色・P-1香調語彙素材を承認済み。P-2〜P-6と正式runtime接続待ち |
+| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013 P-0配色・P-1香調語彙素材・P-2表示順1〜11を承認済み。P-3〜P-6と正式runtime接続待ち |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -40,7 +40,7 @@
 ### CSVコンテンツ作成基盤の実装記録（2026-07-26）
 
 - 対応: Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤。`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。
-- 初期状態: 50問、固定20問、51称号、`result-text-v1` 237結果文、6根拠。E-0は`approved`、E-1〜E-5は`draft`、T-0〜T-4/F-1〜F-5/X-1〜X-2は人手approval metadataなしの`reviewed`。現在の`result-text-v2`は基本237件＋TR-0〜TR-4承認済み`titleReflection`153件＝390件、結果文と根拠の対応行267件で、実行時根拠定義は引き続き6件である。v2基本文面には承認済み修正27件を含む。CSV上のQ-012/Q-013とrelease manifest/historyはヘッダーのみで開始した。その後Q-012画像は別の版付き制作台帳・runtime manifestで制作・技術実装済みとなり、Q-013は`presentation-v2`の候補CSV、compiler、監査、確認資料まで作成済みとなった。P-0・P-1は承認済みで、正式なapproved release選択とP-2〜P-6承認は未完了である。
+- 初期状態: 50問、固定20問、51称号、`result-text-v1` 237結果文、6根拠。E-0は`approved`、E-1〜E-5は`draft`、T-0〜T-4/F-1〜F-5/X-1〜X-2は人手approval metadataなしの`reviewed`。現在の`result-text-v2`は基本237件＋TR-0〜TR-4承認済み`titleReflection`153件＝390件、結果文と根拠の対応行267件で、実行時根拠定義は引き続き6件である。v2基本文面には承認済み修正27件を含む。CSV上のQ-012/Q-013とrelease manifest/historyはヘッダーのみで開始した。その後Q-012画像は別の版付き制作台帳・runtime manifestで制作・技術実装済みとなり、Q-013は`presentation-v2`の候補CSV、compiler、監査、確認資料まで作成済みとなった。P-0〜P-2は承認済みで、正式なapproved release選択とP-3〜P-6承認は未完了である。
 - 運用: 人はコミット対象のCSVだけを編集し、`app/content/`の生成JSONを手編集・コミットしない。`npm.cmd run content:validate`で検証し、`npm.cmd run content:build`はapproved complete releaseがない現在`RELEASE_NOT_SELECTED`となる。
 - 移行状態: ES Modulesがruntime compatibility authorityで、runtime JSON fetchとPages deploymentは未実装。通常モードの外部通信は0件、CSPは`connect-src 'none'`を維持する。activation後のActions validate/build/deployは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 - 検証: `node --test app/tests/content-artifact-contract.test.js`、`npm.cmd run content:validate`、`npm.cmd test`、`npm.cmd run check`。Task 6のwarning-order minorは非ブロッキングとして記録し、完了済みfoundationを再開しない。
@@ -182,7 +182,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 保存契約: schema 1、破損JSON、将来schema、壊れた進捗、版不一致、読込不能、容量不足、削除失敗を安定コードへ変換し、既存値を不意に上書きしない。save/discard時は無関係な壊れた進捗・結果だけを除去し、保存失敗時もメモリ上の状態と50問終端回答を維持する。完答結果成立後のResultSnapshot保存とProgressRecord削除はT-005 live controllerへ接続済みである。
 - 検証: 公開seam 14件成功（開始・固定順、入力汚染拒否、戻る置換、両20問出口、showPreview後の継続、hidden非露出、50問終端、自動保存、保存再開、破損/将来/版不一致、無関係データsanitize、保存/削除失敗）。詳細は `.superpowers/sdd/task-t004-report.md` を参照。
 - S-002表示層（2026-07-26）: `renderQuestionnaireScreen`に設問、自然言語の5件法、現在位置、選択済み状態、戻る、破棄、20問分岐の二択を実装した。保存失敗は設問画面と20問分岐画面の両方でだけ`role="alert"`通知し、回答は継続できる。`preview-choice`は因子、スコア、称号、猫、色、共有データを入力にもDOMにも含めない。focused 10件、Spec/Standards独立レビュー、全359件、静的検証に成功した。router・state・storageとのlive接続は2026-07-27に完了した。
-- 次タスク: T-005の残ゲート。承認済みQ-006文面とQ-013 P-0配色・P-1香調語彙素材を維持し、P-2〜P-6人手承認後に候補を代替色・香りUIへ接続する。共有はT-007で進め、説明・注意事項を含むT-008Aの画面接続は実装済みである。
+- 次タスク: T-005の残ゲート。承認済みQ-006文面とQ-013 P-0配色・P-1香調語彙素材・P-2表示順1〜11を維持し、P-3〜P-6人手承認後に候補を代替色・香りUIへ接続する。共有はT-007で進め、説明・注意事項を含むT-008Aの画面接続は実装済みである。
 
 ### T-005 結果画面・猫・レーダー・色香り
 
@@ -191,7 +191,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 開始ゲート:
   - Q-006: `result-text-v1 initial reviewed copy`、根拠、合成、snapshotは実装済み。E-0〜E-5／F-1〜F-5／T-0〜T-4／X-1〜X-2はすべてapprovedとなり、Content Approvalを2026-07-28に完了
   - Q-012: 制作・技術実装済み。51体すべてについてproject-ownerの制作確認を経て、共通encoder設定、1024px正方形、透明余白、ハッシュ整合、runtime manifest、単一画像遅延loaderを固定済み。ただし正式なapproved release選択は未完了
-  - Q-013: 構造と選択規則は確定。`presentation-v2`のP-0（153パレット、用途色B、WCAG）とP-1（固定3場面、29香調、25素材、29素材関連、安全表現）は承認済み。P-2〜P-6の称号別割り当て承認とruntime接続は未完了
+  - Q-013: 構造と選択規則は確定。`presentation-v2`のP-0（153パレット、用途色B、WCAG）、P-1（固定3場面、29香調、25素材、29素材関連、安全表現）、P-2（表示順1〜11の標準1＋代替2パレット、3場面×各2香調、共有代表）は承認済み。P-3〜P-6の称号別割り当て承認とruntime接続は未完了
 - 作業:
   - S-003/S-004の結果モデルと画面を実装。
   - `result-text-v2`の称号別振り返りヒントを20問1件、50問1〜3件で表示し、診断時snapshotへ保持する。
@@ -220,7 +220,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 解決状態: E-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の全18 gateがapprovedとなり、Q-006は2026-07-28に解決済み。
 - 画面: live／保存済みS-003/S-004、5軸レーダー、境界・僅差補足、Canvas代替、Q-012の該当猫1体のviewport遅延読込と画像失敗時altを実装済み。共有と代替色・香りは後続T-007/Q-013統合。
 - 永続化: 13フィールドproduction ResultSnapshot validatorと`saveResultSnapshot`に加え、回答完答からの本番callerをS-001/S-002へ接続済み。previewは進捗を保持し、detailは保存成否にかかわらずcaller-held回答参照を破棄する。
-- live結果接続（2026-07-27完了）: `ResultSnapshot.characterAssetVersion`へ選択されたQ-012 manifest entryの`assetVersion`を、初期`selectedPaletteId`へ該当TitleProfileの`defaultPaletteId`を保存する。`VersionTuple.characterManifestVersion`の流用や仮値を禁止する。Q-013の代替色・香りUIはP-2〜P-6の人手承認まで保留する。
+- live結果接続（2026-07-27完了）: `ResultSnapshot.characterAssetVersion`へ選択されたQ-012 manifest entryの`assetVersion`を、初期`selectedPaletteId`へ該当TitleProfileの`defaultPaletteId`を保存する。`VersionTuple.characterManifestVersion`の流用や仮値を禁止する。Q-013の代替色・香りUIはP-3〜P-6を含む全称号別割り当ての人手承認まで保留する。
 - T-005 live flow（2026-07-27）: `createDiagnosticResultSnapshot`が既存の採点・分類・文面合成・manifest解決・snapshot生成を純粋に合成する。`#/answer`のcontrollerは新規開始、互換再開、回答、戻る、破棄、20問分岐、preview継続、50問完答を既存state/storage APIへ接続した。`continueHidden`はresultIdを割り当てず21問目へ進む。保存済みpreviewはProgressRecordとVersionTupleが一致する場合だけ追加30問導線を表示する。結果保存失敗でもlive結果を維持し、詳細完答後は回答参照を破棄する。独立レビューは保存済みpreview無反応とhashchange二重描画を差し戻し、2回の修正後APPROVED。集中41件、全413件、静的検証に成功した。
 - T-005 browser flow（2026-07-27）: 360pxで新規開始から20問preview、選択猫1体の遅延読込、追加30問、50問detailまで通過し、320pxの200%相当狭幅でも横overflowなし・42文面維持を確認した。強制storage失敗でも回答と7文面のpreviewを維持して指定通知を表示した。通常previewのasset inventoryは同一originだけで外部資産0件だった。
 - Q-012制作台帳Task 1（2026-07-26）: 31フィールドexact schema、51称号とのtitleId・characterId・順序一致、1〜2小物、stage別production/review state、canonical source/delivery path、SHA-256、UTC approval timeを検証する制作台帳契約を実装した。seedは`docs/title-character-catalog.md`の2つの番号表をTitleProfileへjoinし、既存ledgerを`--replace`なしで上書きしない。初回reviewのImportant 1件をfix round 1で解消し、brief行の将来証跡はnull、到達stageの必須証跡は非空かつshape一致を双方向に保証した。Task 1完了時点の実台帳51行は全件`brief`で、hash・承認者・承認時刻・画像版を仮置きしていない。
@@ -235,8 +235,9 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - Q-012制作台帳Task 10（2026-07-27）: released 51行だけから`character-manifest-v1`をTitleProfile固定順で生成し、exact 7フィールドentry、1024×1024、承認済みalt、`sha256-<Base64>` integrityを固定した。`npm.cmd run character:check`はruntimeディレクトリの非WebP項目を含む孤児、欠落、integrity不一致を検出し、manifest validatorはencoded pathを拒否する。51件、孤児0、integrity不一致0で独立レビューPASS。
 - Q-012制作台帳Task 11（2026-07-27）: 保存済み結果画面はneutral frameへ承認済みaltを先に表示し、viewport進入後に選択済みWebP 1件だけをdecodeする。成功時は`contain`で全体表示し、404・decode失敗・未知characterIdでは画像なしへフォールバックして称号、5因子、結果文、palette metadata、actionを維持する。単体・presentation・app-shellの集中31件に成功し、独立レビューPASS。
 - Q-012制作台帳Task 12（2026-07-27）: 実ブラウザで遅延前request 0件、viewport進入後の選択画像1件、1024×1024・`contain`、強制decode失敗時のaltと結果全体維持を確認した。360px・200%相当では`body min-width`により横スクロールが出る問題を検出し、`min-width: 0`と回帰テストで解消した。neutral frame・outline・shadowは猫を再配色しない。palette別カード合成・最終共有はQ-013/T-007/T-008へ残すため、T-005全体は未完了である。
-- Q-013 P-0共有カード配色確認（2026-07-30〜31、T-005／F-008・F-018、T-007／F-011・F-018）: `docs/palette-preview.html`を、51称号×3候補＝153件の縦横比3:5簡略カードとして再生成した。各パレットの解決済み`background`を主背景、`surface`を淡い装飾・香り欄・猫画像 unavailable plate、`accent`を香り欄の輪郭、`text`をカード内文字と外枠へ使用し、`chart`はP-0参照値としてカード外に表示する。5因子の棒は`chart`ではなくココロパレアのアイコンと共通する固定5色、キャラクターは全カード共通の代表画像であり、欠落時も明示placeholderで配色確認を維持する。香りプレースホルダーを廃止し、同じ称号の3配色へ同一の`ココロアロマ`代表3件（場面名、素材例、短い印象）と共通注記を表示した。称号の短文は現行版付きTitleProfile結果副題をtitleIdで結合し、3配色で共通とする。これは共有カードの配色・情報量を人手確認する単一HTMLであり、香り3件の横並びは正式レイアウトではない。正式共有カードでは3件を縦に積む。2026-07-31にP-0の153パレット、正式用途色B（背景84%・表面90%）、WCAGをユーザー承認した。P-1の共通香調語彙・素材も同日承認済みである。P-2〜P-6、S-003/S-004の正式結果DOM、正式共有Canvas、称号別Q-012画像、runtimeの色・香り選択は未完了である。
-- Q-013 ココロアロマ再整理（2026-07-31、T-005／F-018、T-007／F-011・F-018）: 固定3場面の`iconId`、8系統の`familyId`、香調ごとの素材例1〜2件、29香調・25素材、51称号×3場面×2候補＝306関連行を正典へ反映した。同一称号内の素材・family・6候補集合、代表3件、使用回数、文言、カード内文字量を9安定コードで監査し、finding 0を確認した。`docs/kokoro-aroma-review.md`と`docs/palette-preview.html`まで生成済み。同日にP-1として固定3場面・29香調・25素材・29素材関連・安全表現をユーザー承認した。称号別割り当てのP-2〜P-6、S-003/S-004の正式結果DOM、T-007の正式共有Canvas、runtime JSON activationは未完了である。
+- Q-013 P-0共有カード配色確認（2026-07-30〜31、T-005／F-008・F-018、T-007／F-011・F-018）: `docs/palette-preview.html`を、51称号×3候補＝153件の縦横比3:5簡略カードとして再生成した。各パレットの解決済み`background`を主背景、`surface`を淡い装飾・香り欄・猫画像 unavailable plate、`accent`を香り欄の輪郭、`text`をカード内文字と外枠へ使用し、`chart`はP-0参照値としてカード外に表示する。5因子の棒は`chart`ではなくココロパレアのアイコンと共通する固定5色、キャラクターは全カード共通の代表画像であり、欠落時も明示placeholderで配色確認を維持する。香りプレースホルダーを廃止し、同じ称号の3配色へ同一の`ココロアロマ`代表3件（場面名、素材例、短い印象）と共通注記を表示した。称号の短文は現行版付きTitleProfile結果副題をtitleIdで結合し、3配色で共通とする。これは共有カードの配色・情報量を人手確認する単一HTMLであり、香り3件の横並びは正式レイアウトではない。正式共有カードでは3件を縦に積む。2026-07-31にP-0の153パレット、正式用途色B（背景84%・表面90%）、WCAGをユーザー承認した。P-1の共通香調語彙・素材、P-2の表示順1〜11に属する称号別選択も同日承認済みである。P-3〜P-6、S-003/S-004の正式結果DOM、正式共有Canvas、称号別Q-012画像、runtimeの色・香り選択は未完了である。
+- Q-013 ココロアロマ再整理（2026-07-31、T-005／F-018、T-007／F-011・F-018）: 固定3場面の`iconId`、8系統の`familyId`、香調ごとの素材例1〜2件、29香調・25素材、51称号×3場面×2候補＝306関連行を正典へ反映した。同一称号内の素材・family・6候補集合、代表3件、使用回数、文言、カード内文字量を9安定コードで監査し、finding 0を確認した。`docs/kokoro-aroma-review.md`と`docs/palette-preview.html`まで生成済み。同日にP-1として固定3場面・29香調・25素材・29素材関連・安全表現、P-2として表示順1〜11の称号別割り当てをユーザー承認した。残るP-3〜P-6、S-003/S-004の正式結果DOM、T-007の正式共有Canvas、runtime JSON activationは未完了である。
+- Q-013 P-2称号別承認（2026-07-31、T-005／F-018）: 表示順1〜11のバランス型・単独因子型について、既定の標準パレットIDを変更せず、選択行11件、代替パレット関係22件、3場面×各2候補の香り関係66件と共有代表をユーザー承認した。表示順12〜51の選択・関係行とP-3〜P-6は`draft`のまま維持する。
 - 永続化契約解消（2026-07-26）: `resultId`はRFC 4122 UUID形状へ統一する。`preview20`保存では追加回答用ProgressRecordを保持し、`detail50`完答では履歴保存の成否にかかわらず生回答を破棄する。保存成功時はsnapshot追加と進捗削除を同一StorageEnvelope書込みで行い、保存失敗時も進捗削除をbest-effortで試みる。
 - 検証: `app/tests/result-evidence-definitions.test.js`、`app/tests/result-content-definitions.test.js`、`app/tests/result-composer.test.js`、`app/tests/result-snapshot.test.js`。リポジトリ同期は`app/tests/project-contract.test.js`で検証する。
 
@@ -480,7 +481,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 | 共有画像の最終仕様 | 寸法・文字量未決 | Q-007 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
 | 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを制作・技術確認済み。runtime manifest、整合検査、単一画像遅延loader、live／保存済み結果画面接続まで実装済み | Q-012の正式なapproved release選択は未完了。共有はT-007で接続 |
-| 色・香り実データ | `presentation-v2`の153パレットと用途色BはP-0、3場面・29香調・25素材・29素材関連はP-1で承認済み。称号別関連はdraftで、P-2〜P-6の人手承認とruntime接続は未完了 | P-2から順に称号別割り当てを人手承認 |
+| 色・香り実データ | `presentation-v2`の153パレットと用途色BはP-0、3場面・29香調・25素材・29素材関連はP-1、表示順1〜11の称号別関連はP-2で承認済み。表示順12〜51はdraftで、P-3〜P-6の人手承認とruntime接続は未完了 | P-3から順に称号別割り当てを人手承認 |
 
 これは要件漏れではなく、要件書19章に期限付きで残る後続決定である。
 ### Palette preview intensity note (2026-07-30)

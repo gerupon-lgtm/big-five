@@ -613,15 +613,15 @@ git commit -m "content: record q013 p1 approval"
 **Interfaces:**
 - P-2 title scope: `title-profiles.csv` display order 1〜11.
 
-- [ ] **Step 1: Pause and present all 11 title rows**
+- [x] **Step 1: Pause and present all 11 title rows**
 
 For every title, show standard palette, two alternatives, three scenes×two fragrance candidates, and the three declared share representatives. Do not edit status while awaiting an explicit user decision.
 
-- [ ] **Step 2: Record only the actual decision**
+- [x] **Step 2: Record only the actual decision**
 
 Approve exactly the standard `default_palette_id`, selector/relation rows belonging to display order 1〜11, and P-2 only after full-batch approval. Requested edits keep the whole P-2 gate non-approved until the revised complete batch is accepted.
 
-- [ ] **Step 3: Verify and commit**
+- [x] **Step 3: Verify and commit**
 
 Run:
 

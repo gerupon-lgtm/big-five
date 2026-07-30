@@ -71,7 +71,7 @@ docs/
 - 通常版とベータ版の機能フラグをテストし、通常版の診断フローで外部送信0件を維持する。
 - コンテンツの人手編集正典はコミット対象の`content/source/`以下のCSVであり、生成JSONの`app/content/`は手編集・コミットしない。詳細な作成手順は`docs/content-authoring.md`を参照する。
 - CSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済み。ただしapproved releaseはなく、通常runtimeは既存ES Modulesを継続し、`connect-src 'none'`を維持する。JSON runtime/Pages activationは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
-- Q-006のE-0〜E-5、F-1〜F-5、T-0〜T-4、X-1〜X-2は2026-07-28に承認済みである。現行`result-text-v2`のTR-0〜TR-4（51称号×3件）も2026-07-30までに承認・実装済みである。Q-013は2026-07-31にP-0（153パレット、正式用途色Bの背景84%・表面90%、WCAG）とP-1（固定3場面、29香調、25素材、29素材関連、安全表現）を承認済みで、P-2〜P-6は未承認である。approved releaseの選択、Q-012の正式release、Q-013の残りのproduction dataは未完了のrelease gateとして維持し、承認事実を補完してはならない。
+- Q-006のE-0〜E-5、F-1〜F-5、T-0〜T-4、X-1〜X-2は2026-07-28に承認済みである。現行`result-text-v2`のTR-0〜TR-4（51称号×3件）も2026-07-30までに承認・実装済みである。Q-013は2026-07-31にP-0（153パレット、正式用途色Bの背景84%・表面90%、WCAG）、P-1（固定3場面、29香調、25素材、29素材関連、安全表現）、P-2（表示順1〜11の標準1＋代替2パレット、3場面×各2香調、共有代表）を承認済みで、P-3〜P-6は未承認である。approved releaseの選択、Q-012の正式release、Q-013の残りのproduction dataは未完了のrelease gateとして維持し、承認事実を補完してはならない。
 
 ## バージョン管理
 

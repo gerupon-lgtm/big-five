@@ -46,7 +46,8 @@ test("T-005/T-007 F-018 review covers every aroma master and title", async () =>
     assert.equal((block.match(/^- 共有カード:/gm) ?? []).length, 3);
   }
   assert.match(report, /\| P-1 \| [^|]+ \| approved \|/);
-  for (const gate of ["P-2", "P-3", "P-4", "P-5", "P-6"]) {
+  assert.match(report, /\| P-2 \| [^|]+ \| approved \|/);
+  for (const gate of ["P-3", "P-4", "P-5", "P-6"]) {
     assert.match(report, new RegExp(`\\| ${gate} \\| [^|]+ \\| draft \\|`));
   }
 });

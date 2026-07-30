@@ -58,17 +58,22 @@ test("T-002 Q-013 香調・素材の廃止と置換後の定義をコンパイ�
 });
 
 test("T-002 Q-013 香調・素材CSVはP-1承認後も順序・選択契約を保つ", async () => {
-  const [fragrances, materials, examples, selectors] = await Promise.all([
+  const [fragrances, materials, examples, selectors, model] = await Promise.all([
     loadTable("fragrances"),
     loadTable("fragrance-materials"),
     loadTable("fragrance-material-examples"),
     loadTable("selector-fragrances"),
+    loadPresentationReviewModel({ sourceDir: SOURCE_DIR }),
   ]);
   for (const table of [fragrances, materials, examples]) {
     assert.ok(table.rows.every(({ presentation_definition_version, status }) =>
       presentation_definition_version === "presentation-v2" && status === "approved"));
   }
-  assert.ok(selectors.rows.every(({ status }) => status === "draft"));
+  const approvedTitleIds = new Set(
+    model.definitionSet.titleSelectors.slice(0, 11).map(({ titleId }) => titleId),
+  );
+  assert.ok(selectors.rows.every(({ title_id, status }) =>
+    status === (approvedTitleIds.has(title_id) ? "approved" : "draft")));
   assertOneBasedOrder(fragrances.rows, "fragrances");
   assertOneBasedOrder(materials.rows, "materials");
   const examplesByFragrance = Map.groupBy(examples.rows, ({ fragrance_id }) => fragrance_id);

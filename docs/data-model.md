@@ -22,7 +22,7 @@
 
 人手編集正典は`content/source/`の用途別・版付きCSVである。診断は`diagnoses/ipip-ja-50-definition-v1`、設問は`questions/ipip-ja-50-question-set-v1`、称号は`titles/title-rule-v1`、現行結果文は`result-texts/result-text-v2`、履歴互換用の旧結果文は`result-texts/result-text-v1`、根拠定義は`evidence/result-evidence-v1`に置く。release manifest/historyは`releases/`、Q-006の別承認台帳は`approvals/result-content-approvals.csv`である。
 
-Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。`result-text-v1`は237件の不変な履歴互換版である。現行`result-text-v2`は基本237件にTR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済みのv1→v2修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の`ResultEvidenceDefinition`は固定6件であり、両者を同じ件数として扱わない。Q-013は`presentation-v2`の候補、compiler、監査、確認資料まで作成済みで、P-0の153パレットと用途色B（背景84%・表面90%）、P-1の3場面・29香調・25素材・29素材関連は承認済み、P-2〜P-6はdraftである。用途色濃度は`palette-usage-mappings.csv`の2列で版管理し、基調色とruntimeロジックから分離する。approved production release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
+Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。`result-text-v1`は237件の不変な履歴互換版である。現行`result-text-v2`は基本237件にTR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済みのv1→v2修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の`ResultEvidenceDefinition`は固定6件であり、両者を同じ件数として扱わない。Q-013は`presentation-v2`の候補、compiler、監査、確認資料まで作成済みで、P-0の153パレットと用途色B（背景84%・表面90%）、P-1の3場面・29香調・25素材・29素材関連、P-2の表示順1〜11に属する称号別選択は承認済み、P-3〜P-6はdraftである。用途色濃度は`palette-usage-mappings.csv`の2列で版管理し、基調色とruntimeロジックから分離する。approved production release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
 
 現在は既存ES Modulesがruntime compatibility authorityで、`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
 
@@ -145,7 +145,7 @@ exact schemaとして未知フィールド、空文字、空の`supportedClaims`
 
 `claimKind`は節ごとに固定する。`titleSubtitle`と`titleReason`は`entertainmentReason`、`titleReflection`と`strength`から`question`までは`reflectionPrompt`、`observation`は`scaleObservation`、`action`は`actionHint`とする。20問で許可する節は`titleSubtitle`、`titleReason`、`titleReflection`の固定順1件目、`observation`である。
 
-`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件の不変なliteral定義として履歴互換のため保持する。根拠台帳の全18 gateはapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。現行`result-text-v2`は基本237件＋`titleReflection`153件＝390件であり、基本文面には承認済み修正27件を含む。approved release未選択、Q-012正式release、Q-013のP-2〜P-6承認と正式runtime接続は引き続き別の未完了条件である。
+`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件の不変なliteral定義として履歴互換のため保持する。根拠台帳の全18 gateはapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。現行`result-text-v2`は基本237件＋`titleReflection`153件＝390件であり、基本文面には承認済み修正27件を含む。approved release未選択、Q-012正式release、Q-013のP-3〜P-6承認と正式runtime接続は引き続き別の未完了条件である。
 
 ### 2.7 TitleProfileDefinition
 

@@ -4,7 +4,7 @@
 
 本書は承認用の生成ビューであり、手編集しない。
 
-承認状況: approved=P-0, P-1; draft=P-2, P-3, P-4, P-5, P-6
+承認状況: approved=P-0, P-1, P-2; draft=P-3, P-4, P-5, P-6
 
 各セクションのstatusは承認台帳の現在値を表示する。本書の生成は承認またはruntime有効化を意味しない。
 
@@ -431,7 +431,7 @@
 - 共有投影: ユーカリ・ラディアータ｜透明感のある葉の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-## P-2 バランス・単一因子称号（draft）
+## P-2 バランス・単一因子称号（approved）
 
 ### 1. 五つの風を見渡す観測者 (`title-balanced`)
 

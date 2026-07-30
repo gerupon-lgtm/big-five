@@ -1,7 +1,7 @@
 gate_id,display_order,scope,status,approved_by,approved_on,note
 P-0,1,palette-mapping-wcag,approved,user,2026-07-31,51称号153配色のパレット名・基調色と正式用途色B（背景84%・表面90%）およびWCAG適合をユーザー承認。将来の濃度変更は版付きpalette-usage-mappings.csvの背景・表面mix値だけを更新する。
 P-1,2,fragrance-vocabulary-materials,approved,user,2026-07-31,固定3場面・29香調・25素材・29件の順序付き素材関連と安全表現をユーザー承認。称号別の香り割り当てはP-2〜P-6で別途承認する。
-P-2,3,titles-balanced-and-single-01-11,draft,,,
+P-2,3,titles-balanced-and-single-01-11,approved,user,2026-07-31,表示順1〜11のバランス型・単独因子型について標準1＋代替2パレットと3場面×各2香調・共有代表をユーザー承認。
 P-3,4,titles-pair-01-10,draft,,,
 P-4,5,titles-pair-11-20,draft,,,
 P-5,6,titles-pair-21-30,draft,,,
