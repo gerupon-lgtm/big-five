@@ -167,15 +167,16 @@ test("T-005 F-018 fragrance audit classifies the nine stable finding codes", () 
   assert.ok(codes(overflow).includes("FRAGRANCE_SHARE_COPY_OVERFLOW"));
 });
 
-test("T-005 F-018 current draft produces deterministic actionable findings before rebalance", async () => {
+test("T-005 F-018 current draft passes every deterministic variation rule after rebalance", async () => {
   const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
   const first = auditFragranceVariation(model.definitionSet);
   const second = auditFragranceVariation(model.definitionSet);
   assert.deepEqual(first, second);
-  assert.equal(first.findings.length > 0, true);
-  assert.equal(first.valid, false);
-  assert.ok(first.findings.every((item) =>
-    FRAGRANCE_VARIATION_CODES.includes(item.code)));
+  assert.deepEqual(first.findings, []);
+  assert.equal(first.valid, true);
   assert.ok(first.usage.fragrances.every(({ candidateTitleCount, shareTitleCount }) =>
-    Number.isInteger(candidateTitleCount) && Number.isInteger(shareTitleCount)));
+    Number.isInteger(candidateTitleCount) &&
+    candidateTitleCount <= FRAGRANCE_VARIATION_LIMITS.candidateTitlesPerFragrance &&
+    Number.isInteger(shareTitleCount) &&
+    shareTitleCount <= FRAGRANCE_VARIATION_LIMITS.shareTitlesPerFragrance));
 });
