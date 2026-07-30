@@ -235,6 +235,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - Q-012制作台帳Task 10（2026-07-27）: released 51行だけから`character-manifest-v1`をTitleProfile固定順で生成し、exact 7フィールドentry、1024×1024、承認済みalt、`sha256-<Base64>` integrityを固定した。`npm.cmd run character:check`はruntimeディレクトリの非WebP項目を含む孤児、欠落、integrity不一致を検出し、manifest validatorはencoded pathを拒否する。51件、孤児0、integrity不一致0で独立レビューPASS。
 - Q-012制作台帳Task 11（2026-07-27）: 保存済み結果画面はneutral frameへ承認済みaltを先に表示し、viewport進入後に選択済みWebP 1件だけをdecodeする。成功時は`contain`で全体表示し、404・decode失敗・未知characterIdでは画像なしへフォールバックして称号、5因子、結果文、palette metadata、actionを維持する。単体・presentation・app-shellの集中31件に成功し、独立レビューPASS。
 - Q-012制作台帳Task 12（2026-07-27）: 実ブラウザで遅延前request 0件、viewport進入後の選択画像1件、1024×1024・`contain`、強制decode失敗時のaltと結果全体維持を確認した。360px・200%相当では`body min-width`により横スクロールが出る問題を検出し、`min-width: 0`と回帰テストで解消した。neutral frame・outline・shadowは猫を再配色しない。palette別カード合成・最終共有はQ-013/T-007/T-008へ残すため、T-005全体は未完了である。
+- Q-013 P-0共有カード配色確認（2026-07-30、T-005／F-008・F-018、T-007／F-011・F-018）: `docs/palette-preview.html`を、51称号×3候補＝153件の縦横比3:5簡略カードとして再生成した。各draftパレットの解決済み`background`を主背景、`surface`を淡い装飾・香り欄・猫画像 unavailable plate、`accent`を香り欄の輪郭、`text`をカード内文字と外枠へ使用し、`chart`はP-0参照値としてカード外に表示する。5因子の棒は`chart`ではなくココロパレアのアイコンと共通する固定5色、香りはプレースホルダー、キャラクターは全カード共通の代表画像であり、欠落時も明示placeholderで配色確認を維持する。称号の短文は現行版付きTitleProfile結果副題をtitleIdで結合し、3配色で共通とする。これは共有カードの配色・情報量を人手確認する単一HTMLであり、S-003/S-004の結果グラフ、正式共有Canvas、称号別Q-012画像、runtimeの色・香り選択を変更しない。P-0〜P-6、`presentation-v2`の行status、承認metadataはすべて未承認のままである。
 - 永続化契約解消（2026-07-26）: `resultId`はRFC 4122 UUID形状へ統一する。`preview20`保存では追加回答用ProgressRecordを保持し、`detail50`完答では履歴保存の成否にかかわらず生回答を破棄する。保存成功時はsnapshot追加と進捗削除を同一StorageEnvelope書込みで行い、保存失敗時も進捗削除をbest-effortで試みる。
 - 検証: `app/tests/result-evidence-definitions.test.js`、`app/tests/result-content-definitions.test.js`、`app/tests/result-composer.test.js`、`app/tests/result-snapshot.test.js`。リポジトリ同期は`app/tests/project-contract.test.js`で検証する。
 
@@ -300,6 +301,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - PNG内のモード、称号、数値、注意、版、選択色を目視・自動確認。
   - 共有モデルの禁止フィールド検査。
 - 先行実装（2026-07-30）: `selectShareableResultTexts`はResultSnapshot由来の結果文から`section === "titleReflection"`を除外し、順序を維持したdeep-freeze済み候補を返す。これは将来の共有合成に対する純粋境界であり、S-005、共有画像、共有テキスト、Web Share、Download、Clipboardの実装完了を意味しない。
+- 確認用先行物（2026-07-30、F-011・F-018）: T-005のQ-013 P-0記録にある`docs/palette-preview.html`は、正式共有Canvas実装前に共有カードの配色・情報量を確認するための簡略カードである。正式共有画像との一致、共有操作、保存・コピーの完了を意味せず、T-007の完了条件は未達のままである。
 
 ### T-008A 結果・履歴・中断再開UI再整理
 
@@ -354,7 +356,6 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - `createQuestionComposition`と`createResultDisclosureModel`を追加し、設問本文・回答を出さない正逆方向件数と、section-first snapshotからfactor-first表示モデルへの不変投影を実装した。レーダーの5因子名描画とアクセシブルなボトムシート基盤も追加した。
   - 全444テスト、静的検証44 JavaScript、`git diff --check`に成功した。残作業は結果hero、因子一覧・二段階展開、設問構成／方法情報の画面接続、50問トップ導線、履歴管理モーダル、称号別ヒント、最終全体responsive・keyboard browser smokeである。
   - Q-013素材例仕様（2026-07-28）: 香り素材を版付き独立マスタ、香調との関連を素材ID 1〜3件として管理し、通常結果だけに表示して共有から除外する設計を承認した。色はパレット単位マスタを維持する。ユーザー共有の評価コメント・象徴色・香り資料は51称号を網羅する候補検討資料としてハッシュを記録したが、直接移植・自動採用・承認済み扱いを禁止する。実装とproduction data作成はQ-013 release gate内の後続作業である。
-  - Q-013 P-0共有カード配色確認（2026-07-30）: `docs/palette-preview.html`を、51称号×3候補＝153件の縦横比3:5簡易共有カードとして再生成した。カード背景だけを各draftパレットの解決済み背景色とし、5因子の棒グラフはココロパレアのアイコンと共通する固定表示色、香りはプレースホルダー、キャラクターは全カード共通の代表画像として表示する。これは共有カードの色・視認性を人手確認するためだけの単一HTMLであり、S-003/S-004の結果グラフ、正式共有Canvas、称号別Q-012画像、runtimeの色・香り選択を変更しない。P-0〜P-6、`presentation-v2`の行status、承認metadataはすべて未承認のままである。
   - Q-014追補（2026-07-28、2026-07-30同期）: `result-text-v2`で称号別の振り返りヒントを各3件追加し、20問は1件、50問は1件＋追加2件とする。50問結果のトップ導線、履歴管理モーダルの閉じる・背景タップ・Esc・フォーカス復帰も承認した。
   - Q-014回答文字追補（2026-07-28）: 外部のリリース済みアプリ画面は配色を移植せず、文字階層と余白だけの参考資料として扱う。回答画面固有で設問20px／広幅22px、選択肢16px、行間1.5、選択肢最低高56pxを採用し、結果・履歴へ一律適用しない。実装結果は次項へ記録する。
   - Q-014回答文字実装（2026-07-28）: 回答画面だけを設問20〜22px、行間1.5、選択肢16px・最低高56pxへ変更し、20問分岐を含む他画面の見出し規則から分離した。CSS契約テスト、360×800、960×900、320px・200%相当、キーボード、回答・中断・再開の実ブラウザ確認に成功した。配色、正式設問文、5件法ラベル、回答状態、保存処理は変更していない。

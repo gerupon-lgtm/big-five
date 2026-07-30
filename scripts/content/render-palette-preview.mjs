@@ -3,6 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { appMeta } from "../../app/js/config/app-meta.js";
+import { ResultTextDefinitions } from "../../app/js/data/result-text-definitions.js";
 import { selectPresentation } from "../../app/js/domain/presentation-selector.js";
 import { loadPresentationReviewModel } from "./render-presentation-review.mjs";
 import {
@@ -17,8 +18,11 @@ const SELECTION_ROLES = Object.freeze([
   Object.freeze({ id: "alternative-2", label: "代替2" }),
 ]);
 
-function invalidPreview() {
-  throw new TypeError("PALETTE_PREVIEW_INVALID");
+function invalidPreview(cause) {
+  if (cause === undefined) {
+    throw new TypeError("PALETTE_PREVIEW_INVALID");
+  }
+  throw new TypeError("PALETTE_PREVIEW_INVALID", { cause });
 }
 
 function escapeHtml(value) {
@@ -57,6 +61,27 @@ function projectMapping(mapping) {
   };
 }
 
+function titleDescriptionsById(titleProfiles) {
+  const descriptions = ResultTextDefinitions.filter((definition) =>
+    definition.version === appMeta.diagnosticVersions.resultTextVersion &&
+    definition.section === "titleSubtitle");
+  const byTitleId = new Map();
+  for (const definition of descriptions) {
+    const titleId = definition.appliesTo?.titleId;
+    if (typeof titleId !== "string" || titleId === "" ||
+      typeof definition.text !== "string" || definition.text === "" ||
+      byTitleId.has(titleId)) {
+      invalidPreview(new TypeError("TITLE_DESCRIPTION_INVALID"));
+    }
+    byTitleId.set(titleId, definition.text);
+  }
+  if (byTitleId.size !== titleProfiles.length ||
+    titleProfiles.some(({ titleId }) => !byTitleId.has(titleId))) {
+    invalidPreview(new TypeError("TITLE_DESCRIPTION_INVALID"));
+  }
+  return byTitleId;
+}
+
 export async function loadPalettePreviewModel({
   sourceDir,
   representativeCatPath = path.join(
@@ -65,17 +90,38 @@ export async function loadPalettePreviewModel({
   ),
 } = {}) {
   if (typeof sourceDir !== "string" || sourceDir === "") invalidPreview();
-  validateShareCardPreviewDefinition(shareCardPreviewDefinition);
-
-  let representativeCat;
   try {
-    representativeCat = await readFile(representativeCatPath);
-  } catch {
-    invalidPreview();
+    validateShareCardPreviewDefinition(shareCardPreviewDefinition);
+  } catch (error) {
+    invalidPreview(error);
   }
-  if (representativeCat.length === 0) invalidPreview();
 
-  const review = await loadPresentationReviewModel({ sourceDir });
+  let representativeCat = null;
+  let representativeCatError = null;
+  try {
+    const image = await readFile(representativeCatPath);
+    if (image.length > 0) {
+      representativeCat = image;
+    } else {
+      representativeCatError = new TypeError(
+        "REPRESENTATIVE_CAT_UNAVAILABLE",
+        { cause: new TypeError("REPRESENTATIVE_CAT_EMPTY") },
+      );
+    }
+  } catch (error) {
+    representativeCatError = new TypeError(
+      "REPRESENTATIVE_CAT_UNAVAILABLE",
+      { cause: error },
+    );
+  }
+
+  let review;
+  try {
+    review = await loadPresentationReviewModel({ sourceDir });
+  } catch (error) {
+    invalidPreview(error);
+  }
+  const titleDescriptionById = titleDescriptionsById(review.titleProfiles);
   const mappingById = new Map(
     review.definitionSet.paletteUsageMappings.map((mapping) => [
       mapping.paletteId,
@@ -112,6 +158,7 @@ export async function loadPalettePreviewModel({
         selectionRole: SELECTION_ROLES[paletteIndex].id,
         paletteId: palette.paletteId,
         paletteLabel: palette.label,
+        titleDescription: titleDescriptionById.get(title.titleId),
         description: palette.description,
         contentReviewNote: contentReviewById.get(palette.paletteId),
         baseColors: palette.baseColors,
@@ -138,8 +185,11 @@ export async function loadPalettePreviewModel({
     palettes: Object.freeze(palettes),
     shareCardPreview: Object.freeze({
       definition: shareCardPreviewDefinition,
-      representativeCatDataUrl:
-        `data:image/png;base64,${representativeCat.toString("base64")}`,
+      representativeCatAvailable: representativeCat !== null,
+      representativeCatError,
+      representativeCatDataUrl: representativeCat === null
+        ? null
+        : `data:image/png;base64,${representativeCat.toString("base64")}`,
       brandName: appMeta.brand.name,
       cardSubtitle: appMeta.brand.cardSubtitle,
       appVersion: appMeta.appVersion,
@@ -173,17 +223,25 @@ function factorRow(factor) {
   return `
     <div class="preview-factor-row"
       data-factor-id="${factor.factorId}"
-      style="--factor-fill:${factor.fill};--factor-tone:${factor.tone}">
+      data-sample-display-score="${factor.sampleDisplayScore}" data-bar-fill-color="${factor.barFillColor}" data-text-outline-color="${factor.textOutlineColor}"
+      style="--factor-bar-fill:${factor.barFillColor};--factor-text-outline:${factor.textOutlineColor}">
       <span class="preview-factor-label">${factor.label}</span>
       <span class="preview-factor-track">
         <span class="preview-factor-value"
-          style="width:${factor.value}%"></span>
+          style="width:${factor.sampleDisplayScore}%"></span>
       </span>
-      <strong>${factor.value}</strong>
+      <strong>${factor.sampleDisplayScore}</strong>
     </div>`;
 }
 
 function shareCardPreview(entry, preview) {
+  const cat = preview.representativeCatAvailable
+    ? `<div class="preview-cat available" role="img"
+        aria-label="色と配置を確認するための代表猫"></div>`
+    : `<div class="preview-cat unavailable" role="img"
+        aria-label="代表猫画像を読み込めない場合の配置見本">
+        <span>${escapeHtml(preview.definition.representativeCatUnavailableMessage)}</span>
+      </div>`;
   return `
     <section class="share-card-preview"
       aria-label="${escapeHtml(`${entry.titleLabel} ${entry.paletteLabel}の配色確認用簡略プレビュー`)}">
@@ -195,9 +253,8 @@ function shareCardPreview(entry, preview) {
       </div>
       <p class="preview-title-kicker">あなたの称号</p>
       <h3>${escapeHtml(entry.titleLabel)}</h3>
-      <p class="preview-description">${escapeHtml(entry.description)}</p>
-      <div class="preview-cat" role="img"
-        aria-label="色と配置を確認するための代表猫"></div>
+      <p class="preview-description">${escapeHtml(entry.titleDescription)}</p>
+      ${cat}
       <p class="preview-cat-notice">
         ${escapeHtml(preview.definition.representativeCatNotice)}
       </p>
@@ -240,6 +297,7 @@ function paletteCard(entry, preview) {
           <details class="palette-editor">
             <summary>基調色を試しに変更</summary>
             <p class="editor-note">このカードだけ一時的に変わります。正典CSVには保存されません。</p>
+            <p class="palette-description">配色メモ：${escapeHtml(entry.description)}</p>
             <div class="color-fields">
               ${colorControl(entry, "primary", "Primary")}
               ${colorControl(entry, "secondary", "Secondary")}
@@ -265,12 +323,14 @@ function paletteCard(entry, preview) {
 }
 
 function previewStyles(preview) {
-  const representativeCatCss = preview.representativeCatDataUrl
-    .replaceAll("\\", "\\\\")
-    .replaceAll('"', '\\"');
+  const representativeCatCss = preview.representativeCatAvailable
+    ? `url("${preview.representativeCatDataUrl
+      .replaceAll("\\", "\\\\")
+      .replaceAll('"', '\\"')}")`
+    : "none";
   return `
     :root {
-      --representative-cat: url("${representativeCatCss}");
+      --representative-cat: ${representativeCatCss};
       color-scheme: light;
       font-family: "Yu Gothic UI", "Hiragino Sans", system-ui, sans-serif;
       color: #18372f;
@@ -387,19 +447,21 @@ function previewStyles(preview) {
       padding: 0.75rem;
       overflow: hidden;
       color: var(--preview-text);
-      background: var(--preview-bg);
-      border: 1px solid var(--preview-accent);
+      background:
+        radial-gradient(circle at 92% 5%, var(--preview-surface) 0 8%, transparent 28%),
+        var(--preview-bg);
+      border: 1px solid var(--preview-text);
       border-radius: 1.25rem;
       box-shadow: 0 0.5rem 1.2rem rgba(31, 36, 48, 0.12);
     }
     .preview-only-label, .preview-title-kicker, .preview-mode, .preview-version { margin: 0; font-weight: 800; }
-    .preview-only-label { color: var(--preview-accent); font-size: .58rem; letter-spacing: .06em; }
+    .preview-only-label { color: var(--preview-text); font-size: .58rem; letter-spacing: .06em; }
     .preview-brand { display: flex; gap: .45rem; align-items: center; margin: .28rem 0 .42rem; }
     .preview-brand svg { width: 1.6rem; height: 1.6rem; flex: none; }
     .preview-brand strong, .preview-brand small { display: block; }
     .preview-brand strong { font-size: .75rem; }
     .preview-brand small { font-size: .5rem; line-height: 1.25; }
-    .preview-title-kicker { font-size: .56rem; color: var(--preview-accent); }
+    .preview-title-kicker { font-size: .56rem; color: var(--preview-text); }
     .share-card-preview h3 { margin: .08rem 0 .2rem; font-size: 1rem; line-height: 1.15; }
     .preview-description { min-height: 2.7em; margin: 0; font-size: .58rem; line-height: 1.45; }
     .preview-cat {
@@ -411,6 +473,17 @@ function previewStyles(preview) {
       background-size: contain;
       background-repeat: no-repeat;
     }
+    .preview-cat.unavailable {
+      display: grid;
+      place-items: center;
+      width: 62%;
+      padding: .6rem;
+      border: 1px dashed var(--preview-text);
+      border-radius: .8rem;
+      background: var(--preview-surface);
+      text-align: center;
+    }
+    .preview-cat.unavailable span { font-size: .5rem; line-height: 1.45; }
     .preview-cat-notice { margin: 0; font-size: .48rem; line-height: 1.35; text-align: center; }
     .preview-factors { display: grid; gap: .2rem; margin-top: .34rem; }
     .preview-factor-row {
@@ -418,7 +491,10 @@ function previewStyles(preview) {
       grid-template-columns: 4.9rem 1fr 1.6rem;
       gap: 0.35rem;
       align-items: center;
-      color: var(--factor-tone);
+      padding: .08rem .12rem;
+      color: var(--factor-text-outline);
+      background: #EBEBEB;
+      border-radius: .25rem;
       font-size: .5rem;
     }
     .preview-factor-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -426,25 +502,26 @@ function previewStyles(preview) {
     .preview-factor-track {
       height: 0.55rem;
       overflow: hidden;
-      border: 1px solid var(--factor-tone);
+      border: 1px solid var(--factor-text-outline);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.6);
+      background: #EBEBEB;
     }
     .preview-factor-value {
       display: block;
       height: 100%;
-      background: var(--factor-fill);
+      background: var(--factor-bar-fill);
     }
     .preview-fragrances { display: grid; gap: .17rem; margin-top: .36rem; }
     .preview-fragrance-row { display: flex; align-items: center; gap: .35rem; font-size: .5rem; }
     .preview-fragrance-row span { white-space: nowrap; }
     .preview-fragrance-row i { flex: 1; height: .28rem; border-radius: 999px; background: var(--preview-surface); border: 1px solid var(--preview-accent); }
     .preview-disclaimer { margin: .38rem 0 .14rem; font-size: .45rem; line-height: 1.3; }
-    .preview-mode { color: var(--preview-accent); font-size: .5rem; }
+    .preview-mode { color: var(--preview-text); font-size: .5rem; }
     .preview-version { margin-top: .08rem; font-size: .45rem; text-align: right; }
     .palette-editor { padding: 11px 15px; border-bottom: 1px solid #d7e2de; }
     .palette-editor summary { cursor: pointer; font-weight: 800; }
     .editor-note { margin: 8px 0; color: #55756a; font-size: .78rem; }
+    .palette-description { margin: 8px 0; color: #425e55; font-size: .78rem; line-height: 1.5; }
     .color-fields { display: grid; gap: 8px; }
     .color-field { display: flex; justify-content: space-between; gap: 12px; align-items: center; font-size: .8rem; font-weight: 800; }
     .color-inputs { display: flex; gap: 6px; align-items: center; }
@@ -712,8 +789,16 @@ export function renderPalettePreview(model) {
   }
   const preview = model.shareCardPreview;
   if (!preview || typeof preview !== "object" ||
-    typeof preview.representativeCatDataUrl !== "string" ||
-    !preview.representativeCatDataUrl.startsWith("data:image/png;base64,") ||
+    typeof preview.representativeCatAvailable !== "boolean" ||
+    (preview.representativeCatAvailable
+      ? typeof preview.representativeCatDataUrl !== "string" ||
+        !preview.representativeCatDataUrl.startsWith("data:image/png;base64,") ||
+        preview.representativeCatError !== null
+      : preview.representativeCatDataUrl !== null ||
+        !(preview.representativeCatError instanceof TypeError) ||
+        preview.representativeCatError.message !==
+          "REPRESENTATIVE_CAT_UNAVAILABLE" ||
+        !(preview.representativeCatError.cause instanceof Error)) ||
     typeof preview.brandName !== "string" || preview.brandName === "" ||
     typeof preview.cardSubtitle !== "string" || preview.cardSubtitle === "" ||
     typeof preview.appVersion !== "string" || preview.appVersion === "") {
@@ -721,8 +806,8 @@ export function renderPalettePreview(model) {
   }
   try {
     validateShareCardPreviewDefinition(preview.definition);
-  } catch {
-    invalidPreview();
+  } catch (error) {
+    invalidPreview(error);
   }
   const reviewCount = model.palettes
     .filter(({ contentReviewNote }) => contentReviewNote !== "")
@@ -755,7 +840,7 @@ export function renderPalettePreview(model) {
   <header class="page-header">
     <p class="eyebrow">ココロパレア／Q-013 P-0</p>
     <h1>パレット実使用プレビュー</h1>
-    <p>${model.titleCount}称号・${model.paletteCount}配色を、背景・表面・差し色・グラフ・文字へ展開した完成イメージです。現在のP-0状態は「${escapeHtml(model.approvalStatus)}」、WCAG適合は${validCount}件、内容要確認は${reviewCount}件です。</p>
+    <p>${model.titleCount}称号・${model.paletteCount}配色を、背景・表面・差し色・グラフ・文字へ展開した、配色・情報量確認用の簡略イメージです。完成共有カードではありません。現在のP-0状態は「${escapeHtml(model.approvalStatus)}」、WCAG適合は${validCount}件、内容要確認は${reviewCount}件です。</p>
   </header>
   <p class="notice">この画面で色を変更しても正典CSVは変更されません。試した変更は「変更一覧」へ表示されます。</p>
   <section class="toolbar" aria-label="プレビュー絞り込み">
