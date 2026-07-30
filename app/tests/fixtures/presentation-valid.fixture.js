@@ -52,7 +52,8 @@ function fragranceMaterial(materialId, version, displayName, materialKind) {
 }
 
 export function makeValidPresentationDefinitionSet(titleProfiles, { schemaVersion = 1, version = "presentation-v1" } = {}) {
-  const palettes = [palette("palette-default", version)];
+  const palettes = [...new Set(titleProfiles.map(({ defaultPaletteId }) => defaultPaletteId))]
+    .map((paletteId) => palette(paletteId, version));
   const fragrances = [];
   const fragranceMaterials = [];
   const titleSelectors = titleProfiles.map((profile, titleIndex) => {

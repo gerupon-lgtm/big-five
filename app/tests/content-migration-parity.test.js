@@ -8,6 +8,14 @@ import { fileURLToPath } from "node:url";
 import { DiagnosticDefinition, FactorDefinitions, QuestionDefinitions } from "../js/data/diagnostic-definition.js";
 import { FactorResultTextDefinitions } from "../js/data/factor-result-text-definitions.js";
 import { ResultEvidenceDefinitions } from "../js/data/result-evidence-definitions.js";
+import { ResultTextDefinitions } from "../js/data/result-text-definitions.js";
+import {
+  FragranceMaterialDefinitions,
+  FragranceSuggestions,
+  PaletteDefinitions,
+  PaletteUsageMappingDefinitions,
+  PresentationDefinitionSet,
+} from "../js/data/presentation-definitions.js";
 import { TitleProfileDefinitions } from "../js/data/title-profile-definitions.js";
 import { TitleResultTextDefinitions } from "../js/data/title-result-text-definitions.js";
 import { appMeta } from "../js/config/app-meta.js";
@@ -61,9 +69,11 @@ async function loadAndCompileDiagnosis(sourceDir) {
   });
 }
 
-async function loadAndCompileResultContent(sourceDir) {
+async function loadAndCompileResultContent(
+  sourceDir,
+  resultTextVersion = "result-text-v1",
+) {
   const titleVersion = "title-rule-v1";
-  const resultTextVersion = "result-text-v1";
   const evidenceVersion = "result-evidence-v1";
   const [profileRows, profileFactorRows, textRows, textEvidenceRows, evidenceRows, evidenceClaimRows] = await Promise.all([
     table(sourceDir, `titles/${titleVersion}/title-profiles.csv`),
@@ -80,6 +90,12 @@ async function loadAndCompileResultContent(sourceDir) {
     textEvidenceRows: textEvidenceRows.rows,
     evidenceRows: evidenceRows.rows,
     evidenceClaimRows: evidenceClaimRows.rows,
+    titleReflectionRows: resultTextVersion === "result-text-v2"
+      ? (await table(
+        sourceDir,
+        `result-texts/${resultTextVersion}/title-reflection-comments.csv`,
+      )).rows
+      : [],
     titleRuleVersion: titleVersion,
     resultTextVersion,
   });
@@ -137,35 +153,23 @@ test("T-007 migrated CSV deep-equals the current formal definitions through load
     resultTextVersion: "result-text-v1",
   });
 
-  const result = await loadAndCompileResultContent(SOURCE);
-  const withoutDefaultPalette = (profiles) => profiles.map(({
-    defaultPaletteId: _defaultPaletteId,
-    ...profile
-  }) => profile);
+  const result = await loadAndCompileResultContent(SOURCE, "result-text-v2");
+  assert.deepEqual(result.titleProfiles, TitleProfileDefinitions);
+  const presentation = await loadPresentationReviewModel({ sourceDir: SOURCE });
+  assert.deepEqual(presentation.titleProfiles, TitleProfileDefinitions);
+  assert.deepEqual(presentation.definitionSet, PresentationDefinitionSet);
+  assert.deepEqual(PaletteDefinitions, PresentationDefinitionSet.palettes);
   assert.deepEqual(
-    withoutDefaultPalette(result.titleProfiles),
-    withoutDefaultPalette(TitleProfileDefinitions),
+    PaletteUsageMappingDefinitions,
+    PresentationDefinitionSet.paletteUsageMappings,
   );
-  const presentationDraft = await loadPresentationReviewModel({ sourceDir: SOURCE });
-  assert.deepEqual(presentationDraft.titleProfiles, result.titleProfiles);
-  const paletteIds = new Set(
-    presentationDraft.definitionSet.palettes.map(({ paletteId }) => paletteId),
+  assert.deepEqual(FragranceSuggestions, PresentationDefinitionSet.fragrances);
+  assert.deepEqual(
+    FragranceMaterialDefinitions,
+    PresentationDefinitionSet.fragranceMaterials,
   );
-  result.titleProfiles.forEach((profile, index) => {
-    assert.notEqual(profile.defaultPaletteId, TitleProfileDefinitions[index].defaultPaletteId);
-    assert.ok(paletteIds.has(profile.defaultPaletteId));
-    assert.equal(
-      presentationDraft.definitionSet.titleSelectors[index].titleId,
-      profile.titleId,
-    );
-    assert.equal(
-      presentationDraft.definitionSet.titleSelectors[index]
-        .alternativePaletteIds.includes(profile.defaultPaletteId),
-      false,
-    );
-  });
-  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v1");
-  assert.deepEqual(result.textDefinitions, LEGACY_RESULT_TEXT_DEFINITIONS);
+  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v2");
+  assert.deepEqual(result.textDefinitions, ResultTextDefinitions);
   assert.deepEqual(result.evidenceDefinitions, ResultEvidenceDefinitions);
 });
 
@@ -304,7 +308,7 @@ test("T-007 production source records exact statuses and remains authorable with
       .length,
     0,
   );
-  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v1");
+  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v2");
   assert.ok(authoring.warnings.some(({ code }) => code === "CHARACTER_CATALOG_PENDING"));
   await assert.rejects(() => compileRelease({ sourceDir: SOURCE }), (error) => error.code === "RELEASE_NOT_SELECTED");
 });

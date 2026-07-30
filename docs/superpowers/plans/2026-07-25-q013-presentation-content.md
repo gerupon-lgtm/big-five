@@ -816,7 +816,7 @@ git commit -m "content: record q013 p6 approval"
 - Generated title-profile module remains the source-compatible `TitleProfileDefinitions` export.
 - Formal JSON release remains unselected.
 
-- [ ] **Step 1: Write generation/parity RED tests**
+- [x] **Step 1: Write generation/parity RED tests**
 
 ```js
 test("approved CSV generates byte-identical ES Modules twice", async (t) => {
@@ -835,9 +835,9 @@ test("generated runtime exposes the sharing-card gate", async () => {
 });
 ```
 
-Also assert generation refuses any draft gate/row, unknown field, non-canonical order, material leak into `summarizeFragrances`, and an output path outside the exact two approved module paths.
+Also assert generation refuses any draft gate/row, unknown field, non-canonical order, material ID leak into `summarizeFragrances`, and an output path outside the exact two approved module paths. `materialNames`は共有カード画像用に保持し、共有テキスト生成境界で除外する。
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -847,15 +847,15 @@ node --test app/tests/presentation-runtime-generation.test.js app/tests/content-
 
 Expected: FAIL because the generator and generated presentation module do not exist and AppMeta is still `presentation-v1`.
 
-- [ ] **Step 3: Verify approved standard palette IDs**
+- [x] **Step 3: Verify approved standard palette IDs**
 
 Verify the 51 authoritative `title-profiles.csv.default_palette_id` values are already the exact standard IDs shown in the approved P-2〜P-6 review projection, in fixed order. They were authored in Task 5 and could only be revised inside their unapproved P-2〜P-6 gate. Abort generation on any mismatch; Task 13 must not introduce or silently rewrite a standard palette decision.
 
-- [ ] **Step 4: Implement the deterministic generator**
+- [x] **Step 4: Implement the deterministic generator**
 
 Load CSV through the existing schemas/loaders, compile through `compileResultContent` and `compilePresentationContent`, require P-0〜P-6 plus all selected rows approved, serialize payloads with existing `canonicalJson`, and emit fixed module templates. Deep-freeze generated exports at module load. Write both outputs to sibling temp files, verify both generated hashes, then rename both; failure must leave both previous modules unchanged.
 
-- [ ] **Step 5: Generate modules and switch AppMeta**
+- [x] **Step 5: Generate modules and switch AppMeta**
 
 Run:
 
@@ -871,15 +871,15 @@ presentationDefinitionVersion: "presentation-v2",
 
 Do not add a release row and do not write `app/content/`.
 
-- [ ] **Step 6: Prove CSV-to-runtime parity and sharing exclusion**
+- [x] **Step 6: Prove CSV-to-runtime parity and sharing exclusion**
 
-`content-migration-parity.test.js` must compile `result-text-v2`, `title-rule-v1`, and `presentation-v2`, then deep-equal the generated ES Module exports. It must assert all five library/selector exports, 51 selectors, schema 2, version equality, deterministic order, and that `summarizeFragrances` contains no material IDs or names.
+`content-migration-parity.test.js` must compile `result-text-v2`, `title-rule-v1`, and `presentation-v2`, then deep-equal the generated ES Module exports. It must assert all five library/selector exports, 51 selectors, schema 2, version equality, deterministic order, and that `summarizeFragrances` contains no material IDs. Material names remain available for the share-card image; share text excludes them at its own boundary.
 
-- [ ] **Step 7: Synchronize current-state documentation**
+- [x] **Step 7: Synchronize current-state documentation**
 
 Record that Q-013 ES Modules runtime is active only after P-0〜P-6; `app/content/` remains generated/ignored; `release-manifest.csv` and `release-history.csv` remain header-only; JSON runtime, Q-012 formal release, DNS, HTTPS, and production Pages remain separate gates.
 
-- [ ] **Step 8: Run the final Q-013 verification**
+- [x] **Step 8: Run the final Q-013 verification**
 
 Run:
 
@@ -893,7 +893,7 @@ git diff --check
 
 Expected: all tests/checks PASS; `content:validate` has 0 errors and no Q-013 approval warning, while `RELEASE_NOT_SELECTED` and independent formal release/Q-012 warnings remain accurate. `npm.cmd run content:build` still fails with `RELEASE_NOT_SELECTED`.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```powershell
 git add scripts/content/generate-presentation-runtime.mjs app/js/data/presentation-definitions.js app/js/data/title-profile-definitions.js app/js/config/app-meta.js app/tests/presentation-runtime-generation.test.js app/tests/content-migration-parity.test.js app/tests/version-contract.test.js docs/content-authoring.md docs/data-model.md docs/processing-design.md docs/screens.md docs/tasks.md

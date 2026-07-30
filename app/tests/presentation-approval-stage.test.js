@@ -95,5 +95,5 @@ test("current presentation rows follow their gate stage without pinning every ga
     }
   }
 
-  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v1");
+  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v2");
 });

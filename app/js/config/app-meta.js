@@ -21,7 +21,7 @@ export const appMeta = Object.freeze({
   storageSchemaVersion: 1,
   cardTemplateVersion: "card-template-v1",
   characterManifestVersion: "character-manifest-v1",
-  presentationDefinitionVersion: "presentation-v1",
+  presentationDefinitionVersion: "presentation-v2",
   diagnosticVersions,
   brand,
   releasedAt: "2026-07-20T00:00:00+09:00",

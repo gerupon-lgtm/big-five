@@ -78,7 +78,9 @@ for (const { name, mutate, error, finding } of invalidPresentationCases) {
   test(`T-005 F-018 rejects ${name}`, () => {
     const value = structuredClone(makeValidPresentationDefinitionSet(TitleProfileDefinitions));
     mutate(value);
-    if (finding) assert.deepEqual(lintPresentationCopy(value), [finding]);
+    if (finding) assert.deepEqual(lintPresentationCopy(value), [
+      typeof finding === "function" ? finding(value) : finding,
+    ]);
     assert.throws(
       () => validatePresentationDefinitionSet(value, {
         titleProfiles: TitleProfileDefinitions,
@@ -96,7 +98,9 @@ for (const { name, schemaVersion = 2, mutate, error, finding } of invalidPresent
       version: schemaVersion === 2 ? "presentation-v2" : "presentation-v1",
     }));
     mutate(value);
-    if (finding) assert.deepEqual(lintPresentationCopy(value), [finding]);
+    if (finding) assert.deepEqual(lintPresentationCopy(value), [
+      typeof finding === "function" ? finding(value) : finding,
+    ]);
     assert.throws(
       () => validatePresentationDefinitionSet(value, {
         titleProfiles: TitleProfileDefinitions,

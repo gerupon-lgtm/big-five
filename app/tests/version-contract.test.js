@@ -14,6 +14,7 @@ test("AppMeta is the canonical mvp-0.1.0 normal-build metadata", () => {
   assert.equal(appMeta.deploymentMode, "normal");
   assert.equal(appMeta.betaAggregationEnabled, false);
   assert.equal(appMeta.betaApiBaseUrl, null);
+  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v2");
   assert.equal(Object.isFrozen(appMeta), true);
   assert.equal(Object.isFrozen(appMeta.diagnosticVersions), true);
   assert.deepEqual(appMeta.brand, {

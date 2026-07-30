@@ -47,7 +47,7 @@
 - 因子一覧後へ「因子を選ぶと、詳しい結果を確認できます。」を小さく控えめな文字で表示する。
 - 履歴には診断時に表示した文章を順序と版ごと保存し、後の文章版から再生成・上書きしない。開閉状態は保存しない。
 
-Q-006の称号ラフに加え、版付き根拠、全因子・全称号の文面、決定的合成、診断時文章を保持するsnapshotは実装・独立レビュー済みである。文面は`result-text-v1 initial reviewed copy`として実装された後、根拠台帳のE-0〜E-5／F-1〜F-5／T-0〜T-4／X-1〜X-2がすべてapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`の`titleReflection`153件も承認・実装済みである。Q-013のP-0〜P-6も全承認済みである。approved release未選択、Q-012正式release、Q-013の正式runtime生成・接続は未完了として維持する。
+Q-006の称号ラフに加え、版付き根拠、全因子・全称号の文面、決定的合成、診断時文章を保持するsnapshotは実装・独立レビュー済みである。文面は`result-text-v1 initial reviewed copy`として実装された後、根拠台帳のE-0〜E-5／F-1〜F-5／T-0〜T-4／X-1〜X-2がすべてapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`の`titleReflection`153件も承認・実装済みである。Q-013のP-0〜P-6も全承認済みで、`presentation-v2` ES Modules runtimeへ生成・接続済みである。approved JSON release未選択、Q-012正式release、Q-013の結果DOM・共有Canvas接続は未完了として維持する。
 
 ### 2.3 Q-006実装済み契約
 
@@ -278,7 +278,7 @@ FragranceSceneSelector<S> = exact {
 
 ## 7. 残作業
 
-1. コンテンツrelease: Q-006の全18 gateと`result-text-v2`の`titleReflection`153件は承認・実装済みであり、Q-013のP-0〜P-6も全承認済みである。approved releaseの選択、Q-012正式release、Q-013の正式runtime生成・接続は未完了として維持する。
+1. コンテンツrelease: Q-006の全18 gateと`result-text-v2`の`titleReflection`153件は承認・実装済みであり、Q-013のP-0〜P-6も全承認済みで、`presentation-v2` ES Modules runtimeへ生成・接続済みである。approved JSON releaseの選択、Q-012正式release、Q-013の結果DOM・共有Canvas接続は未完了として維持する。
 2. Q-006/T-005: `composeResultTexts`／`createResultSnapshot`／`saveResultSnapshot`を完答controllerへ統合する。保存済みsnapshotのS-003/S-004表示は接続済み。
 3. T-006/T-005: S-006/S-007初期画面、変動注意文、履歴カードから独立したS-003/S-004を開く遷移は統合済み。追加30問へのS-002接続とT-007共有は各後続画面実装時に接続する。
 4. Q-012: 3体パイロット制作・承認、encoderと余白値の固定、残り48体の量産。

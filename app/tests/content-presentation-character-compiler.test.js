@@ -234,6 +234,11 @@ test("T-005 F-018 Q-013 graph invariants allow shared palette, fragrance, and ma
   rows.selectorPaletteRows.forEach((row) => {
     row.palette_id = sharedPaletteIds[row.display_order - 1];
   });
+  const sharedDefaultPaletteId = rows.paletteRows[0].palette_id;
+  rows.titleProfiles = rows.titleProfiles.map((profile) => ({
+    ...profile,
+    defaultPaletteId: sharedDefaultPaletteId,
+  }));
 
   const sharedFragranceIdsByScene = new Map();
   for (const row of rows.selectorFragranceRows.slice(0, 6)) {

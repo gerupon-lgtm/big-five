@@ -24,7 +24,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。`result-text-v1`は237件の不変な履歴互換版である。現行`result-text-v2`は基本237件にTR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済みのv1→v2修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の`ResultEvidenceDefinition`は固定6件であり、両者を同じ件数として扱わない。Q-013は`presentation-v2`の候補、compiler、監査、確認資料まで作成済みで、P-0の153パレットと用途色B（背景84%・表面90%）、P-1の3場面・29香調・25素材・29素材関連、P-2〜P-6の全51称号に属する称号別選択は承認済みである。用途色濃度は`palette-usage-mappings.csv`の2列で版管理し、基調色とruntimeロジックから分離する。approved production release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
 
-現在は既存ES Modulesがruntime compatibility authorityで、`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
+現在はES Modulesがruntime compatibility authorityであり、Q-013は承認済みCSVから生成した`presentation-v2`を使用する。`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。JSON runtime activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
 
 ## 2. 静的定義
 
@@ -145,7 +145,7 @@ exact schemaとして未知フィールド、空文字、空の`supportedClaims`
 
 `claimKind`は節ごとに固定する。`titleSubtitle`と`titleReason`は`entertainmentReason`、`titleReflection`と`strength`から`question`までは`reflectionPrompt`、`observation`は`scaleObservation`、`action`は`actionHint`とする。20問で許可する節は`titleSubtitle`、`titleReason`、`titleReflection`の固定順1件目、`observation`である。
 
-`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件の不変なliteral定義として履歴互換のため保持する。根拠台帳の全18 gateはapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。現行`result-text-v2`は基本237件＋`titleReflection`153件＝390件であり、基本文面には承認済み修正27件を含む。approved release未選択、Q-012正式release、Q-013の正式runtime生成・接続は引き続き別の未完了条件である。
+`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件の不変なliteral定義として履歴互換のため保持する。根拠台帳の全18 gateはapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。現行`result-text-v2`は基本237件＋`titleReflection`153件＝390件であり、基本文面には承認済み修正27件を含む。Q-013の`presentation-v2` ES Modules runtimeは生成・接続済みである。approved JSON release未選択とQ-012正式releaseは引き続き別の未完了条件である。
 
 ### 2.7 TitleProfileDefinition
 
@@ -245,7 +245,7 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
-| schemaVersion | `1` \| `2` | ○ | 現行runtimeは1。素材例を有効化する`presentation-v2`は2 |
+| schemaVersion | `1` \| `2` | ○ | 現行runtimeは素材例を有効化した`presentation-v2`の2。1は履歴互換 |
 | presentationDefinitionVersion | string | ○ | 色・香り定義版 |
 | scenes | SceneDefinition[3] | ○ | pause/reset/quiet-focus固定順 |
 | palettes | PaletteDefinition[] | ○ | 版付きパレットライブラリ |
@@ -257,7 +257,7 @@ sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを�
 
 各`SceneDefinition`は`sceneId`、`label`、`iconId`を持つ。`iconId`は固定順に`aroma-pause`、`aroma-reset`、`aroma-quiet-focus`とし、scene IDとの1対1対応を検証する。
 
-schema 1の`presentation-v1`は素材例を持たない現行互換契約とし、schema 2の`presentation-v2`は`fragranceMaterials`と全`FragranceSuggestion.materialIds`を必須とする。Q-013のapproved release選択前に現行runtimeへschema 2を混在させない。
+schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし、schema 2の`presentation-v2`は`fragranceMaterials`と全`FragranceSuggestion.materialIds`を必須とする。`presentation-v2`はP-0〜P-6と対象行の承認後にCSVから決定的生成したES Modules runtimeとして有効化済みである。正式JSON releaseは引き続き未選択であり、両者を同一視しない。
 
 #### TitlePresentationSelector
 

@@ -18,9 +18,9 @@
 
 ### 1.1 コンテンツ読込の現在地
 
-Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は実装済みで、人は`content/source/`のCSVだけを編集する。3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testがあるが、画面はまだ既存ES Modulesをruntime compatibility authorityとして使い、`app/content/` JSONをfetchしない。
+Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は実装済みで、人は`content/source/`のCSVだけを編集する。3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testがあり、画面はES Modulesをruntime compatibility authorityとして使う。Q-013は承認済みCSVから生成した`presentation-v2`へ接続済みで、`app/content/` JSONはfetchしない。
 
-`result-text-v1`は237件の不変な履歴互換版で、別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなっている。現行ES Modules runtimeの`result-text-v2`は基本237件に、TR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済み修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の根拠定義は引き続き固定6件である。Q-013はP-0〜P-6を承認済みで、全51称号の標準1＋代替2パレット、3場面×各2香調、共有代表が確定している。正式共有カードのココロアロマ3件は縦積みとし、簡略プレビューの横並びは配色・情報量確認専用である。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013の正式runtime生成・接続未完了はrelease readinessを妨げる別条件として維持する。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
+`result-text-v1`は237件の不変な履歴互換版で、別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなっている。現行ES Modules runtimeの`result-text-v2`は基本237件に、TR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済み修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の根拠定義は引き続き固定6件である。Q-013はP-0〜P-6を承認済みで、全51称号の標準1＋代替2パレット、3場面×各2香調、共有代表が確定し、`presentation-v2` ES Modules runtimeへ生成・接続済みである。正式共有カードのココロアロマ3件は縦積みとし、簡略プレビューの横並びは配色・情報量確認専用である。approved JSON release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013の結果DOM・共有Canvas接続未完了はrelease readinessを妨げる別条件として維持する。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
 
 ## 2. 画面一覧
 
@@ -162,7 +162,7 @@ flowchart TD
 
 ## 7. S-003 基本結果
 
-Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。結果画面は称号・猫hero、称号理由、称号別`titleReflection`を独立sectionにし、名前付きレーダー、固定順5因子のコンパクトな行・実スコアを反映する棒・数値、同時1因子／1カテゴリの二段階開閉、設問構成sheet、4つの固定方法sheetまで接続済みである。初期状態では本文を閉じ、因子を開くとカテゴリ名、カテゴリ名を開くと診断時の本文を表示する。保存済みsnapshotの`scaleVersion`、`questionVersion`、`scoringVersion`が登録済み診断定義と完全一致する場合だけ、その定義の設問構成・方法説明を表示する。未登録の履歴版では現行版の件数・限界・出典を流用せず、説明を利用できない旨と、保存済みの称号・スコア・結果文は確認できる旨を表示する。`result-text-v1`の237件は全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`の153件の`titleReflection`はTR-0〜TR-4ですべて承認済みで、現行runtimeへ実装済みである。Q-013のP-0〜P-6も全承認済みである。approved release未選択、Q-012正式release、Q-013の正式runtime生成・接続、実際のT-007共有UIは未完了として維持する。
+Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。結果画面は称号・猫hero、称号理由、称号別`titleReflection`を独立sectionにし、名前付きレーダー、固定順5因子のコンパクトな行・実スコアを反映する棒・数値、同時1因子／1カテゴリの二段階開閉、設問構成sheet、4つの固定方法sheetまで接続済みである。初期状態では本文を閉じ、因子を開くとカテゴリ名、カテゴリ名を開くと診断時の本文を表示する。保存済みsnapshotの`scaleVersion`、`questionVersion`、`scoringVersion`が登録済み診断定義と完全一致する場合だけ、その定義の設問構成・方法説明を表示する。未登録の履歴版では現行版の件数・限界・出典を流用せず、説明を利用できない旨と、保存済みの称号・スコア・結果文は確認できる旨を表示する。`result-text-v1`の237件は全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`の153件の`titleReflection`はTR-0〜TR-4ですべて承認済みで、現行runtimeへ実装済みである。Q-013のP-0〜P-6も全承認済みで、`presentation-v2` ES Modules runtimeへ生成・接続済みである。approved JSON release未選択、Q-012正式release、Q-013の結果DOM、実際のT-007共有UIは未完了として維持する。
 
 ### ファーストビュー
 
