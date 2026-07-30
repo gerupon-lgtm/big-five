@@ -4,7 +4,7 @@
 
 本書は承認用の生成ビューであり、手編集しない。
 
-承認状況: approved=P-0, P-1, P-2, P-3; draft=P-4, P-5, P-6
+承認状況: approved=P-0, P-1, P-2, P-3, P-4; draft=P-5, P-6
 
 各セクションのstatusは承認台帳の現在値を表示する。本書の生成は承認またはruntime有効化を意味しない。
 
@@ -1065,7 +1065,7 @@
 - 素材例: サイプレス
 - 共有サマリ: サイプレス｜端正で清涼な木質の香調
 
-## P-4 ペア称号 11〜20（draft）
+## P-4 ペア称号 11〜20（approved）
 
 ### 22. 分かち合う同席者 (`title-pair-intellectImagination-low--agreeableness-high`)
 

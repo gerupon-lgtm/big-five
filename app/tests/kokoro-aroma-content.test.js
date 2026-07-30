@@ -70,7 +70,7 @@ test("T-002 Q-013 香調・素材CSVはP-1承認後も順序・選択契約を�
       presentation_definition_version === "presentation-v2" && status === "approved"));
   }
   const approvedTitleIds = new Set(
-    model.definitionSet.titleSelectors.slice(0, 21).map(({ titleId }) => titleId),
+    model.definitionSet.titleSelectors.slice(0, 31).map(({ titleId }) => titleId),
   );
   assert.ok(selectors.rows.every(({ title_id, status }) =>
     status === (approvedTitleIds.has(title_id) ? "approved" : "draft")));

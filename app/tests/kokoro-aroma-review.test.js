@@ -48,7 +48,8 @@ test("T-005/T-007 F-018 review covers every aroma master and title", async () =>
   assert.match(report, /\| P-1 \| [^|]+ \| approved \|/);
   assert.match(report, /\| P-2 \| [^|]+ \| approved \|/);
   assert.match(report, /\| P-3 \| [^|]+ \| approved \|/);
-  for (const gate of ["P-4", "P-5", "P-6"]) {
+  assert.match(report, /\| P-4 \| [^|]+ \| approved \|/);
+  for (const gate of ["P-5", "P-6"]) {
     assert.match(report, new RegExp(`\\| ${gate} \\| [^|]+ \\| draft \\|`));
   }
 });
