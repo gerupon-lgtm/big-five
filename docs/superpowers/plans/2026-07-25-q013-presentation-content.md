@@ -651,15 +651,15 @@ git commit -m "content: record q013 p2 approval"
 
 **Interfaces:** P-3 title scope is `title-profiles.csv` display order 12〜21.
 
-- [ ] **Step 1: Pause and present all ten title rows**
+- [x] **Step 1: Pause and present all ten title rows**
 
 For every title, show standard palette, two alternatives, three scenes×two fragrance candidates, and three share representatives. Do not edit status while awaiting an explicit user decision.
 
-- [ ] **Step 2: Record only the actual decision**
+- [x] **Step 2: Record only the actual decision**
 
 Approve exactly the standard `default_palette_id`, selector/relation rows belonging to display order 12〜21, and P-3 only after full-batch approval. Requested edits keep P-3 non-approved until the revised complete ten-title batch is accepted.
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 ```powershell
 npm.cmd run content:validate
