@@ -106,7 +106,7 @@
 - [ ] **Step 1: Write schema 2 RED tests while preserving schema 1**
 
 ```js
-test("schema 2 requires usage mappings, material library, and ordered material references", () => {
+test("schema 2 requires usage mappings, material library, and relation-ordered material references", () => {
   const value = makeValidPresentationDefinitionSet(TitleProfileDefinitions, {
     schemaVersion: 2,
     version: "presentation-v2",
@@ -129,7 +129,7 @@ test("schema 1 remains valid without schema 2 fields", () => {
 });
 ```
 
-Add named invalid mutations for a missing/extra root field, duplicate/orphan material, 0 or 4 material IDs, duplicate material ID, mismatched version, unordered material IDs, absent mapping, orphan mapping, malformed recipe, and a material field leaking into schema 1.
+Add named invalid mutations for a missing/extra root field, duplicate/orphan material, 0 or 4 material IDs, duplicate material ID, mismatched version, absent mapping, orphan mapping, malformed recipe, and a material field leaking into schema 1.
 
 - [ ] **Step 2: Run RED**
 
@@ -143,7 +143,7 @@ Expected: FAIL because the existing validator accepts only schema 1 and has no m
 
 - [ ] **Step 3: Implement the version-discriminated exact validator**
 
-Use separate exact-field arrays for schema 1 and schema 2. In schema 2, validate one mapping per palette, unique material IDs, every material referenced at least once, every fragrance referencing 1〜3 unique material IDs, version equality, and fixed relation order as emitted by the compiler. Permit plant/essential-oil names only when lint visits `FragranceMaterialDefinition.displayName`; keep every other palette/fragrance field under the existing copy prohibitions.
+Use separate exact-field arrays for schema 1 and schema 2. In schema 2, validate one mapping per palette, unique material IDs, every material referenced at least once, every fragrance referencing 1〜3 unique material IDs, version equality, and preserve the per-fragrance relation order emitted by the compiler without coupling it to global material-library order. Permit plant/essential-oil names only when lint visits `FragranceMaterialDefinition.displayName`; keep every other palette/fragrance field under the existing copy prohibitions.
 
 - [ ] **Step 4: Run GREEN and regression**
 
@@ -330,11 +330,11 @@ Read `baseColors` directly from `palettes.csv`. Compile each wide usage row into
 
 - [ ] **Step 4: Join fragrance materials into schema 2**
 
-Register both material tables in the existing `TABLES`/`PRESENTATION_TABLES`, pass both row sets through `compilePresentationCatalog`, compile an ordered shared material library, and replace each fragrance relation group with a fixed `materialIds` array. Do not emit the relation table itself.
+Register both material tables in the existing `TABLES`/`PRESENTATION_TABLES`, pass both row sets through `compilePresentationCatalog`, compile an ordered shared material library, and replace each fragrance relation group with a fixed `materialIds` array that preserves that fragrance's relation `display_order`. Do not emit the relation table itself and do not force relation order to match global material-library order.
 
 - [ ] **Step 5: Replace obsolete global cardinalities with graph invariants**
 
-Keep exactly 3 scenes and 51 selectors. Require 2 alternative palettes per title, 2 fragrance candidates per title/scene, 1 share representative per title/scene, 1 mapping per palette, 1〜3 material relations per fragrance, contiguous `display_order`, matching versions, and no orphan palette/fragrance/material library row. Remove the hardcoded 103 palettes, 309 color rows, and 306 fragrances.
+Keep exactly 3 scenes and 51 selectors. Require 2 alternative palettes per title, 2 fragrance candidates per title/scene, 1 share representative per title/scene, 1 mapping per palette, 1〜3 material relations per fragrance, contiguous per-group `display_order`, matching versions, and no orphan palette/fragrance/material library or unknown-scene relation row. Require schema 2 compilation to use `presentation-v2`; schema 1/v1 remains the existing runtime-only compatibility path. Remove the hardcoded 103 palettes, 309 color rows, and 306 fragrances.
 
 - [ ] **Step 6: Prove the seven-resource writer is unchanged**
 
