@@ -521,6 +521,12 @@ git commit -m "content: add q013 presentation v2 draft"
 - Modify: `content/source/presentation/presentation-v2/palettes.csv`
 - Modify: `content/source/presentation/presentation-v2/palette-usage-mappings.csv`
 - Modify: `content/source/approvals/presentation-content-approvals.csv`
+- Create: `scripts/content/render-palette-preview.mjs`
+- Create: `app/tests/palette-preview-tool.test.js`
+- Create/Regenerate: `docs/palette-preview.html`
+- Modify: `package.json`
+- Modify: `docs/content-authoring.md`
+- Modify: `docs/tasks.md`
 - Regenerate: `docs/presentation-content-catalog.md`
 
 **Interfaces:**
@@ -528,7 +534,7 @@ git commit -m "content: add q013 presentation v2 draft"
 
 - [ ] **Step 1: Pause and present P-0**
 
-Show the generated P-0 table with base HEX, resolved background/surface/accent/chart/text, all tested contrast pairs, and palette descriptions. Do not edit statuses while awaiting an explicit user decision.
+Show the generated P-0 table with base HEX, resolved background/surface/accent/chart/text, all tested contrast pairs, and palette descriptions. Also generate the standalone `docs/palette-preview.html`, which shows all 153 palettes as mini result cards using the exact resolved colors. It may support temporary browser-side base-color edits and a change list, but it must never write to the authority CSV. Do not edit statuses while awaiting an explicit user decision.
 
 - [ ] **Step 2: Record only the actual decision**
 
@@ -539,14 +545,15 @@ If the user approves the complete batch, set its palette and mapping rows to`app
 Run:
 
 ```powershell
-node --test app/tests/palette-usage.test.js app/tests/presentation-review-report.test.js
+node --test app/tests/palette-usage.test.js app/tests/presentation-review-report.test.js app/tests/palette-preview-tool.test.js
+npm.cmd run content:preview:palettes
 npm.cmd run content:validate
 ```
 
 Expected after approval: tests PASS; P-0 is the only approved Q-013 gate and P-1〜P-6 retain blank approval metadata.
 
 ```powershell
-git add content/source/presentation/presentation-v2/palettes.csv content/source/presentation/presentation-v2/palette-usage-mappings.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
+git add content/source/presentation/presentation-v2/palettes.csv content/source/presentation/presentation-v2/palette-usage-mappings.csv content/source/approvals/presentation-content-approvals.csv scripts/content/render-palette-preview.mjs app/tests/palette-preview-tool.test.js docs/palette-preview.html docs/presentation-content-catalog.md package.json docs/content-authoring.md docs/tasks.md
 git commit -m "content: record q013 p0 approval"
 ```
 

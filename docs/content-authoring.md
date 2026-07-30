@@ -15,6 +15,7 @@ Excelでは「CSV UTF-8」で保存することを推奨します。日本語版
 | 称号と因子関係 | `content/source/titles/<title-rule-version>/` | `title-rule-v1` |
 | 結果文、結果文根拠の対応、称号別振り返りヒント | `content/source/result-texts/<result-text-version>/` | `result-text-v2`（現行runtime）／`result-text-v1`（履歴互換） |
 | 根拠と主張の対応 | `content/source/evidence/<result-evidence-version>/` | `result-evidence-v1` |
+| 色・香り・用途色・称号別選択 | `content/source/presentation/<presentation-definition-version>/` | `presentation-v2`（P-0〜P-6承認待ち） |
 | Q-006の人手承認台帳 | `content/source/approvals/result-content-approvals.csv` | 版横断の18行 gate |
 | Q-013の人手承認台帳 | `content/source/approvals/presentation-content-approvals.csv` | P-0〜P-6の7行 gate |
 | 公開候補と公開履歴 | `content/source/releases/release-manifest.csv`、`release-history.csv` | 現在は両方ヘッダーのみ |
@@ -29,8 +30,8 @@ Excelでは「CSV UTF-8」で保存することを推奨します。日本語版
 
 - E-0は`approved`、E-1〜E-5は`draft`です。
 - T-0〜T-4、F-1〜F-5、X-1〜X-2は`reviewed`ですが、人手approval metadataはありません。
-- Q-013のP-0〜P-6はすべて`draft`で、承認者・承認日は空欄です。各gateはパレット/WCAG、香調語彙・素材、および51称号を5範囲に分けた演出候補を別々に承認します。
-- Q-012のキャラクターカタログとQ-013のproduction演出データは未作成です。
+- Q-013の`presentation-v2`候補CSVは作成済みですが、P-0〜P-6はすべて`draft`で、承認者・承認日は空欄です。各gateはパレット/WCAG、香調語彙・素材、および51称号を5範囲に分けた演出候補を別々に承認します。
+- Q-012の正式releaseと、Q-013の承認済みproduction演出データは未完成です。
 - release CSVはヘッダーだけで、approved releaseはありません。
 
 現在はQ-006のE-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2の全18 gateがapprovedとなり、2026-07-28に`result-text-v1`のContent Approvalを完了しています。`result-text-v2`は、この不変な237件を履歴互換の基準として残しながら、ユーザー承認済みの文面修正27件を版内へ反映し、TR-0〜TR-4で承認済みの称号別`titleReflection`を51称号×3件＝153件追加した現行runtime版です。結果文は基本237件＋振り返り153件＝390件、結果文と根拠の対応行は267件です。実行時の`ResultEvidenceDefinition`自体は引き続き固定6件であり、267件は根拠定義数ではありません。
@@ -54,6 +55,18 @@ npm.cmd run content:validate
 | エラー | `questions.csv` | 18 | `factor_id` | `CSV_VALUE_INVALID` | 当該セルをschemaで許可された因子IDへ直し、再検証する。 |
 
 生成は`npm.cmd run content:build`です。releaseが未選択の間は`RELEASE_NOT_SELECTED`で失敗します。承認済みreleaseでは全7 JSONをall-or-nothingで出力しますが、`app/content/`はignore済みであり、編集対象ではありません。
+
+### P-0の色を目視確認する
+
+`palettes.csv`または`palette-usage-mappings.csv`を変更したら、次のコマンドで単一HTMLのプレビューを再生成します。
+
+```powershell
+npm.cmd run content:preview:palettes
+```
+
+出力先は`docs/palette-preview.html`です。ブラウザで直接開くと、51称号×3候補＝153配色を、背景・表面・差し色・グラフ・文字へ展開したミニ結果カードとして確認できます。検索、「標準のみ」「要確認のみ」の絞り込みが使えます。
+
+各カードの基調色はブラウザ上で一時変更でき、完成色とWCAG比率がその場で再計算されます。試した値は画面上の「変更一覧」に表示されますが、正典CSVへは書き戻しません。正式に採用する変更は`content/source/`のCSVへ反映し、検証・レビューMarkdown・本HTMLを再生成してください。
 
 ## 5. activation後の運用
 
