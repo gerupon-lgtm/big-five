@@ -524,16 +524,16 @@ function previewStyles(preview) {
     }
     .preview-only-label, .preview-title-kicker, .preview-mode, .preview-version { margin: 0; font-weight: 800; }
     .preview-only-label { color: var(--preview-text); font-size: .58rem; letter-spacing: .06em; }
-    .preview-brand { display: flex; gap: .45rem; align-items: center; margin: .28rem 0 .42rem; }
+    .preview-brand { display: flex; gap: .4rem; align-items: center; margin: .18rem 0 .24rem; }
     .preview-brand svg { width: 1.6rem; height: 1.6rem; flex: none; }
     .preview-brand strong, .preview-brand small { display: block; }
     .preview-brand strong { font-size: .75rem; }
     .preview-brand small { font-size: .5rem; line-height: 1.25; }
     .preview-title-kicker { font-size: .56rem; color: var(--preview-text); }
     .share-card-preview h3 { margin: .08rem 0 .2rem; font-size: 1rem; line-height: 1.15; }
-    .preview-description { min-height: 2.7em; margin: 0; font-size: .58rem; line-height: 1.45; }
+    .preview-description { min-height: 2.5em; margin: 0; font-size: .55rem; line-height: 1.35; }
     .preview-cat {
-      width: 62%;
+      width: 46%;
       aspect-ratio: 1;
       margin-inline: auto;
       background-image: var(--representative-cat);
@@ -552,23 +552,23 @@ function previewStyles(preview) {
       text-align: center;
     }
     .preview-cat.unavailable span { font-size: .5rem; line-height: 1.45; }
-    .preview-cat-notice { margin: 0; font-size: .48rem; line-height: 1.35; text-align: center; }
-    .preview-factors { display: grid; gap: .2rem; margin-top: .34rem; }
+    .preview-cat-notice { margin: 0; font-size: .42rem; line-height: 1.25; text-align: center; }
+    .preview-factors { display: grid; gap: .12rem; margin-top: .2rem; }
     .preview-factor-row {
       display: grid;
       grid-template-columns: 4.9rem 1fr 1.6rem;
       gap: 0.35rem;
       align-items: center;
-      padding: .08rem .12rem;
+      padding: .04rem .1rem;
       color: var(--factor-text-outline);
       background: #EBEBEB;
       border-radius: .25rem;
-      font-size: .5rem;
+      font-size: .46rem;
     }
     .preview-factor-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .preview-factor-row strong { text-align: right; font-size: .55rem; }
+    .preview-factor-row strong { text-align: right; font-size: .5rem; }
     .preview-factor-track {
-      height: 0.55rem;
+      height: 0.48rem;
       overflow: hidden;
       border: 1px solid var(--factor-text-outline);
       border-radius: 999px;
@@ -579,7 +579,7 @@ function previewStyles(preview) {
       height: 100%;
       background: var(--factor-bar-fill);
     }
-    .preview-aroma { margin-top: .34rem; padding: .28rem .34rem; border-radius: .5rem; background: var(--preview-surface); }
+    .preview-aroma { margin-top: .2rem; padding: .22rem .28rem; border-radius: .5rem; background: var(--preview-surface); }
     .preview-aroma-heading { margin: 0 0 .2rem; text-align: center; }
     .preview-aroma-heading strong, .preview-aroma-heading small { display: block; }
     .preview-aroma-heading strong { font-size: .58rem; letter-spacing: .04em; }
@@ -594,9 +594,9 @@ function previewStyles(preview) {
     .preview-aroma-copy strong { margin-top: .06rem; overflow-wrap: anywhere; font-size: .43rem; }
     .preview-aroma-copy small { margin-top: .05rem; font-size: .34rem; }
     .preview-aroma-note { margin: .16rem 0 0; font-size: .34rem; text-align: center; }
-    .preview-disclaimer { margin: .38rem 0 .14rem; font-size: .45rem; line-height: 1.3; }
-    .preview-mode { color: var(--preview-text); font-size: .5rem; }
-    .preview-version { margin-top: .08rem; font-size: .45rem; text-align: right; }
+    .preview-disclaimer { margin: .16rem 0 .05rem; font-size: .39rem; line-height: 1.2; }
+    .preview-mode { display: inline; color: var(--preview-text); font-size: .42rem; }
+    .preview-version { float: right; margin: 0; font-size: .4rem; text-align: right; }
     .palette-editor { padding: 11px 15px; border-bottom: 1px solid #d7e2de; }
     .palette-editor summary { cursor: pointer; font-weight: 800; }
     .editor-note { margin: 8px 0; color: #55756a; font-size: .78rem; }

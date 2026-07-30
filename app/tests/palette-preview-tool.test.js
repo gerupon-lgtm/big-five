@@ -248,6 +248,7 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
     153,
   );
   assert.match(html, /aspect-ratio:\s*3\s*\/\s*5/);
+  assert.match(html, /\.preview-cat\s*\{[^}]*width:\s*46%/);
   assert.match(html, /ココロアロマ/);
   assert.match(html, /～あなたらしさから着想した香り～/);
   assert.match(html, /香りをイメージするための素材例です/);
@@ -297,7 +298,7 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
   );
   assert.match(
     html,
-    /\.preview-mode\s*\{\s*color:\s*var\(--preview-text\)/,
+    /\.preview-mode\s*\{[^}]*color:\s*var\(--preview-text\)/,
   );
   assert.doesNotMatch(
     html,
