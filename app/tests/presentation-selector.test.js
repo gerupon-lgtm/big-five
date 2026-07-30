@@ -35,6 +35,7 @@ test("T-005 F-018 selects the standard palette, ordered alternatives, and ordere
     ["pause", "reset", "quiet-focus"],
   );
   for (const [index, scene] of selection.fragranceScenes.entries()) {
+    assert.equal(scene.iconId, definitionSet.scenes[index].iconId);
     assert.equal(scene.label, definitionSet.scenes[index].label);
     assert.deepEqual(
       scene.candidates.map(({ fragranceId }) => fragranceId),
@@ -44,6 +45,19 @@ test("T-005 F-018 selects the standard palette, ordered alternatives, and ordere
       scene.shareRepresentative.fragranceId,
       selector.fragranceScenes[index].shareFragranceId,
     );
+    assert.strictEqual(
+      scene.shareRepresentative,
+      scene.candidates.find(({ fragranceId }) =>
+        fragranceId === scene.shareRepresentative.fragranceId),
+    );
+    for (const candidate of scene.candidates) {
+      assert.deepEqual(
+        candidate.materialNames,
+        candidate.materialIds.map((materialId) =>
+          definitionSet.fragranceMaterials.find((material) =>
+            material.materialId === materialId).displayName),
+      );
+    }
     assert.equal(scene.candidates[0].familyId, "floral");
   }
   assert.equal(Object.isFrozen(selection), true);
@@ -51,23 +65,34 @@ test("T-005 F-018 selects the standard palette, ordered alternatives, and ordere
   assert.equal(Object.isFrozen(selection.fragranceScenes[0].candidates), true);
 });
 
-test("T-005 F-018 share summary exposes three accord labels and no material data", () => {
+test("T-007 F-011/F-018 share card summary exposes icons, materials, and accord labels", () => {
   const definitionSet = validatedSchema2DefinitionSet();
   const selection = selectPresentation(TitleProfileDefinitions[0], definitionSet);
   const summary = summarizeFragrances(selection.fragranceScenes);
 
   assert.equal(summary.length, 3);
-  assert.deepEqual(Object.keys(summary[0]), ["sceneId", "label", "accordLabel"]);
+  assert.deepEqual(Object.keys(summary[0]), [
+    "sceneId",
+    "iconId",
+    "label",
+    "materialNames",
+    "accordLabel",
+  ]);
   assert.deepEqual(
-    summary.map(({ sceneId, accordLabel }) => ({ sceneId, accordLabel })),
-    selection.fragranceScenes.map(({ sceneId, shareRepresentative }) => ({
+    summary,
+    selection.fragranceScenes.map(({ sceneId, iconId, label, shareRepresentative }) => ({
       sceneId,
+      iconId,
+      label,
+      materialNames: [...shareRepresentative.materialNames],
       accordLabel: shareRepresentative.accordLabel,
     })),
   );
-  assert.doesNotMatch(JSON.stringify(summary), /materialId|displayName|Lavender/);
+  assert.doesNotMatch(JSON.stringify(summary), /materialId|displayName/);
+  assert.match(JSON.stringify(summary), /Lavender/);
   assert.equal(Object.isFrozen(summary), true);
   assert.ok(summary.every(Object.isFrozen));
+  assert.ok(summary.every(({ materialNames }) => Object.isFrozen(materialNames)));
 });
 
 test("T-005 F-018 rejects version mismatch, duplicate palettes, and missing representatives", () => {
@@ -188,6 +213,14 @@ test("T-005 F-018 rejects malformed fragrance summaries", () => {
       ...scene,
       shareRepresentative: { ...scene.shareRepresentative, accordLabel: "" },
     })),
+    selection.fragranceScenes.map((scene) => ({
+      ...scene,
+      shareRepresentative: {
+        ...scene.shareRepresentative,
+        materialNames: [],
+      },
+    })),
+    selection.fragranceScenes.map((scene) => ({ ...scene, iconId: "" })),
   ];
 
   for (const value of cases) {

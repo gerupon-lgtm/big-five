@@ -263,8 +263,21 @@ export function selectPresentation(titleProfile, definitionSet) {
     paletteById.get(paletteId));
   if (!standard || alternatives.some((palette) => !palette)) invalidSelection();
 
-  const fragranceById = new Map(
-    definitionSet.fragrances.map((fragrance) => [fragrance.fragranceId, fragrance]),
+  const materialNameById = new Map(
+    definitionSet.fragranceMaterials.map(({ materialId, displayName }) => [
+      materialId,
+      displayName,
+    ]),
+  );
+  const resolvedFragranceById = new Map(
+    definitionSet.fragrances.map((fragrance) => [
+      fragrance.fragranceId,
+      {
+        ...fragrance,
+        materialNames: fragrance.materialIds.map((materialId) =>
+          materialNameById.get(materialId)),
+      },
+    ]),
   );
   const fragranceScenes = selector.fragranceScenes.map((sceneSelector, index) => {
     if (!hasExactFields(sceneSelector, SCENE_SELECTOR_FIELDS) ||
@@ -277,8 +290,9 @@ export function selectPresentation(titleProfile, definitionSet) {
       invalidSelection();
     }
     const candidates = sceneSelector.candidateFragranceIds.map((fragranceId) =>
-      fragranceById.get(fragranceId));
-    const shareRepresentative = fragranceById.get(sceneSelector.shareFragranceId);
+      resolvedFragranceById.get(fragranceId));
+    const shareRepresentative =
+      resolvedFragranceById.get(sceneSelector.shareFragranceId);
     if (candidates.some((candidate) => !candidate ||
       candidate.sceneId !== sceneSelector.sceneId) ||
       !shareRepresentative ||
@@ -287,6 +301,7 @@ export function selectPresentation(titleProfile, definitionSet) {
     }
     return {
       sceneId: sceneSelector.sceneId,
+      iconId: definitionSet.scenes[index].iconId,
       label: definitionSet.scenes[index].label,
       candidates,
       shareRepresentative,
