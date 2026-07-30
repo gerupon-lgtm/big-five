@@ -492,3 +492,7 @@ The standalone `docs/palette-preview.html` now uses comparison preset B (backgro
 ### Q-013 同一称号内の色相差調整（2026-07-31）
 
 利用者が近接して見えると確認した9称号について、B表示後の背景色を比較し、各称号で1つの循環色トークンを名称に沿う別色相へ調整する。同一称号の3候補はB表示後のRGB距離7以上を維持し、色トークンのprimary／secondary／accent循環をテストする。`palette-usage-mappings.csv`、B濃度、ID、表示名、説明、selector、`draft`およびP-0〜P-6は変更しない。
+
+### Q-013 全51称号の独立パレット再検査（2026-07-31）
+
+全51称号・153候補を機械監査し、各称号で同じ3色をprimary／secondary／accentへ循環させていた構造を廃止する。名称に対応するprimaryを基準に、標準・代替1・代替2ごとの独立したsurface／accentアンカーからsecondary／accentを決定する。B表示後の背景は同一称号内の最小OKLab距離1.0以上、右上のsurfaceは相対輝度0.90以上、3候補の色組はすべて一意であることをテストする。右上は副色を白90%で混ぜた淡い装飾とし、正式共有カードでも暗色の面にしない。`palette-usage-mappings.csv`、B濃度、ID、表示名、説明、selector、`draft`およびP-0〜P-6は変更しない。

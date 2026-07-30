@@ -87,3 +87,7 @@ The committed standalone preview currently uses comparison preset B: background 
 ### 同一称号内の色相差レビュー（2026-07-31）
 
 利用者の目視確認で近く見えた9称号について、B表示後の背景RGBを比較し、各称号で近接ペアの片方に当たる色トークンを別の色相へ調整しました。1色の変更は同じ称号内の`primary_color`、`secondary_color`、`accent_color`へ循環して反映しています。ID、表示名、説明、行順、`palette-usage-mappings.csv`、B濃度、全行の`draft`およびP-0〜P-6は変更していません。
+
+### 独立パレット再検査（2026-07-31）
+
+全51称号・153候補を機械的に再検査し、同じ3色のprimary／secondary／accentを循環させる構成を廃止しました。各候補は名称に対応するprimaryを維持しつつ、標準・代替1・代替2で異なるsurface／accentアンカーからsecondary／accentを決定します。B表示後の背景は同一称号内の最小OKLab距離1.0以上、右上のsurfaceは相対輝度0.90以上を必須とします。右上は副色を白90%で混ぜる淡い装飾であり、正式共有カードでも暗色の面にしません。行status、P-0〜P-6、承認metadataは変更していません。

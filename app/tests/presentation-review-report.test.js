@@ -16,7 +16,7 @@ const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const SOURCE_DIR = path.join(ROOT, "content/source");
 const REVIEWED_PALETTE_PROJECTION_SHA256 =
-  "DED4A93D03F4CE7BFD29122BA3601710CBFB07B6195AFF0E124B49DB9AD20CE7";
+  "B00D3C71ECCA43D6372C65EF4794EB6A390BF3042FBAAE8662B3DEDADEAF8605";
 
 test("reviewed palette projection stays byte-stable outside review notes", async () => {
   const source = await readFile(

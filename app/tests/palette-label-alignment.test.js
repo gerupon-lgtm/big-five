@@ -11,39 +11,10 @@ const PALETTES_PATH = path.join(
   "content/source/presentation/presentation-v2/palettes.csv",
 );
 
-const REVIEWED_VARIATION_TRIPLETS = {
-  "palette-balanced-1": ["#7C8791", "#8FAFC1", "#4F9B58"],
-  "palette-single-conscientiousness-high-1": ["#40566F", "#6986A3", "#B5A786"],
-  "palette-single-extraversion-low-1": ["#394A63", "#596F86", "#8B58A6"],
-  "palette-single-emotionalstability-high-1": ["#5F86A3", "#405D73", "#41966E"],
-  "palette-pair-intellectimagination-low-and-conscientiousness-high-1":
-    ["#7C875A", "#A5684F", "#94928A"],
-  "palette-pair-intellectimagination-low-and-emotionalstability-high-1":
-    ["#D0B58D", "#92A083", "#C08A3E"],
-  "palette-pair-intellectimagination-low-and-emotionalstability-low-1":
-    ["#708EA3", "#3F704A", "#748C78"],
-  "palette-pair-extraversion-low-and-agreeableness-low-1":
-    ["#465469", "#777C7E", "#9A644A"],
-  "palette-pair-agreeableness-low-and-emotionalstability-low-1":
-    ["#854E5E", "#44556A", "#765792"],
-};
-
 async function loadPalettes() {
   const table = parseCsv(await readFile(PALETTES_PATH, "utf8"), PALETTES_PATH);
   return table.rows.map(({ values }) =>
     Object.fromEntries(table.headers.map((header, index) => [header, values[index]])));
-}
-
-function mixWithWhite(hex, whitePercent = 84) {
-  const sourcePercent = 100 - whitePercent;
-  return [1, 3, 5].map((offset) => {
-    const source = Number.parseInt(hex.slice(offset, offset + 2), 16);
-    return Math.round((source * sourcePercent + 255 * whitePercent) / 100);
-  });
-}
-
-function rgbDistance(first, second) {
-  return Math.hypot(...first.map((channel, index) => channel - second[index]));
 }
 
 test("reviewed palette labels match their preserved primary colors", async () => {
@@ -102,42 +73,4 @@ test("every title keeps three distinct labels and primary colors", async () => {
 
   assert.ok(rows.every(({ content_review_note }) => content_review_note === ""));
   assert.ok(rows.every(({ status }) => status === "draft"));
-});
-
-test("reviewed title palettes keep one varied cyclic color triplet", async () => {
-  const rows = await loadPalettes();
-  const indexById = new Map(rows.map((row, index) => [row.palette_id, index]));
-
-  for (const [firstPaletteId, colors] of Object.entries(REVIEWED_VARIATION_TRIPLETS)) {
-    const start = indexById.get(firstPaletteId);
-    assert.notEqual(start, undefined, firstPaletteId);
-    const group = rows.slice(start, start + 3);
-
-    assert.deepEqual(
-      group.map(({ primary_color }) => primary_color),
-      colors,
-      `${firstPaletteId}: primary colors`,
-    );
-    assert.deepEqual(
-      group.map(({ secondary_color }) => secondary_color),
-      [colors[1], colors[2], colors[0]],
-      `${firstPaletteId}: secondary colors`,
-    );
-    assert.deepEqual(
-      group.map(({ accent_color }) => accent_color),
-      [colors[2], colors[0], colors[1]],
-      `${firstPaletteId}: accent colors`,
-    );
-
-    const previewColors = colors.map((color) => mixWithWhite(color));
-    const distances = [
-      rgbDistance(previewColors[0], previewColors[1]),
-      rgbDistance(previewColors[0], previewColors[2]),
-      rgbDistance(previewColors[1], previewColors[2]),
-    ];
-    assert.ok(
-      Math.min(...distances) >= 7,
-      `${firstPaletteId}: B preview colors are too close (${distances.join(", ")})`,
-    );
-  }
 });

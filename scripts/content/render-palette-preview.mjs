@@ -897,6 +897,7 @@ export function renderPalettePreview(model) {
     <h1>パレット実使用プレビュー</h1>
     <p>${model.titleCount}称号・${model.paletteCount}配色を、背景・表面・差し色・グラフ・文字へ展開した、配色・情報量確認用の簡略イメージです。完成共有カードではありません。現在のP-0状態は「${escapeHtml(model.approvalStatus)}」、WCAG適合は${validCount}件、内容要確認は${reviewCount}件です。</p>
     <p data-preview-intensity="${escapeHtml(preview.intensityId)}">Preview intensity: ${escapeHtml(preview.intensityLabel)}</p>
+    <p>右上の淡色は副色を白90%で混ぜた確認表示です。完成カードでも淡い装飾として引き継ぎ、暗色の面にはしません。</p>
   </header>
   <p class="notice">この画面で色を変更しても正典CSVは変更されません。試した変更は「変更一覧」へ表示されます。</p>
   <section class="toolbar" aria-label="プレビュー絞り込み">

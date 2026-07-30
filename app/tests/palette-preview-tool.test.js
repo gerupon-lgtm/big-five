@@ -128,8 +128,8 @@ test("P-0 preview model maps 51 titles to exactly three palettes", async () => {
     contentReviewNote: "",
     baseColors: {
       primary: "#7C8791",
-      secondary: "#8FAFC1",
-      accent: "#4F9B58",
+      secondary: "#98B0AA",
+      accent: "#667B7A",
     },
     mapping: {
       background: {
@@ -156,15 +156,15 @@ test("P-0 preview model maps 51 titles to exactly three palettes", async () => {
     },
     resolved: {
       background: "#EAECED",
-      surface: "#F4F7F9",
-      accent: "#2B5530",
+      surface: "#F5F7F7",
+      accent: "#384443",
       text: "#1F2430",
       chart: "#444A50",
     },
     contrast: {
       textBackground: 13.094,
-      textSurface: 14.423,
-      accentSurface: 7.984,
+      textSurface: 14.431,
+      accentSurface: 9.407,
       chartBackground: 7.569,
       valid: true,
     },
@@ -238,6 +238,10 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
   assert.match(html, /data-role="background-hex">#EAECED</);
   assert.match(html, /data-preview-intensity="b"/);
   assert.match(html, /B（背景84%／表面90%）/);
+  assert.match(
+    html,
+    /右上の淡色は副色を白90%で混ぜた確認表示です。完成カードでも淡い装飾として引き継ぎ、暗色の面にはしません。/,
+  );
   assert.doesNotMatch(html, /https?:\/\//);
   assert.doesNotMatch(html, /<script[^>]+\bsrc=/i);
   assert.doesNotMatch(html, /<link[^>]+\bhref=/i);
@@ -490,9 +494,6 @@ test("P-0 validity matches the colors used for visible card text", async () => {
   );
   assert.ok(entry);
   assert.equal(entry.contrast.valid, true);
-  assert.ok(
-    contrastRatio(entry.resolved.accent, entry.resolved.background) < 4.5,
-  );
   assert.ok(
     contrastRatio(entry.resolved.text, entry.resolved.background) >= 4.5,
   );
