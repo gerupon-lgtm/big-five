@@ -534,7 +534,7 @@ git commit -m "content: add q013 presentation v2 draft"
 
 - [ ] **Step 1: Pause and present P-0**
 
-Show the generated P-0 table with base HEX, resolved background/surface/accent/chart/text, all tested contrast pairs, and palette descriptions. Also generate the standalone `docs/palette-preview.html`, which shows all 153 palettes as mini result cards using the exact resolved colors. It may support temporary browser-side base-color edits and a change list, but it must never write to the authority CSV. Do not edit statuses while awaiting an explicit user decision.
+Show the generated P-0 table with base HEX, resolved background/surface/accent/chart/text, all tested contrast pairs, and palette descriptions. Also generate the standalone `docs/palette-preview.html`, which shows all 153 palettes as 3:5 simplified shared-card previews. Each preview uses the resolved palette as its card background, plus the fixed five-factor display colors selected for the ココロパレア icon family; the factor bars are not the palette `chart` role. Use one representative character only for layout and color-visibility review, not as a title-specific Q-012 decision. The standalone file must have no runtime network dependency. It may support temporary browser-side base-color edits and a change list, but it must never write to the authority CSV or imply P-0 approval. Do not edit statuses while awaiting an explicit user decision.
 
 - [ ] **Step 2: Record only the actual decision**
 
