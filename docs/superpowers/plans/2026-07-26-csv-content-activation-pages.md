@@ -1,450 +1,169 @@
-# CSV Runtime Activation and GitHub Pages Implementation Plan
+# CSV Runtime Activation and Production Pages Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 承認済みCSV releaseから生成したJSONを正式アプリの実行時正典へ切り替え、検証成功時だけ完全な成果物をGitHub Pagesへ配布できるようにする。
+**Goal:** 承認済みCSVから既存の7 JSON releaseを生成し、ココロパレア正式runtimeを同一origin JSON loadingへ切り替え、`https://kokoroparea.gerupon.uk`へ検証済みのproduction Pages artifactとして公開する。
 
-**Architecture:** GitHub Actionsとローカル`predev`が同じrelease compilerを使い、`content-manifest.json`と版別JSONを生成する。ブラウザはmanifestと全resourceを同一オリジンから読み、SHA-256・exact schema・版・参照を検証した後だけアプリを開始する。Pages artifactは`app/`の実行ファイルと生成JSONだけから組み立て、source CSVと未承認データを除外する。
+**Architecture:** 承認前に実装できるloader、hash validation、immutable release audit、artifact assemblerはfixture駆動で先に作る。正式release選択はQ-006、Q-012、Q-013の独立承認を満たすまで停止し、選択後は既存`compileRelease`、`canonicalJson`、7-resource manifest、SHA-256、atomic writerだけをbuild authorityとして使う。現在のbranch限定・noindexなQA Pages workflowはproduction cutoverまで維持し、production workflowとの二重deployを作らない。
 
-**Tech Stack:** Node.js ES Modules、Node標準`node:test`、Web Fetch API、Web Crypto API、GitHub Actions、GitHub Pages
+**Tech Stack:** JavaScript ES Modules、Node.js 24、`node:test`、Web Crypto SHA-256、Fetch、GitHub Actions、GitHub Pages、HTTPS。
 
 ## Global Constraints
 
-- この計画は`docs/superpowers/plans/2026-07-26-csv-content-foundation.md`完了後に実行する。
-- Q-006のE-0〜E-5、T-0〜T-4、F-1〜F-5、X-1〜X-2がすべて人手approvedであることを開始条件とする。
-- Q-012の51キャラクター行・画像・4レビュー状態・承認者・承認日時・hashがapprovedであることを開始条件とする。
-- Q-013の全パレット・固定3場面・各2香り候補・共有代表・51 selectorがapprovedであることを開始条件とする。
-- Q-008とQ-010のGitHub Pages公開設定・既定ブランチ・公開URLが確定していることをproduction deploy開始条件とする。
-- 通常版は外部ホストへ通信せず、同一オリジンの静的JSON取得だけを許可する。
-- 生回答、結果履歴、draft、reviewed、rejected、承認メモ、source CSVをPages artifactへ含めない。
-- 一部resourceだけの公開、旧版と新版の混在、公開済み版の上書きを禁止する。
-- JSON、Canvas、画像、共有APIが失敗しても、既存の利用者向けフォールバック契約を弱めない。
-- `prototype-big-five/`を変更しない。
+- 人が編集する正典は`content/source/**/*.csv`だけである。`app/content/`はignore済み生成物で、手編集・コミットしない。
+- 既存resource順`diagnosis,questions,titles,result-texts,evidence,presentation,characters`を維持し、8番目のresourceや別writerを追加しない。
+- 現行結果文は`result-text-v2`、Q-013はroot schema 2の`presentation-v2`である。activationを`result-text-v1`または`presentation-v1`へ戻さない。
+- `presentation-v2`は`fragrance-materials.csv`と`fragrance-material-examples.csv`を含み、生成presentation JSONは`fragranceMaterials`と各香調の1〜3 `materialIds`を持つ。
+- Q-013の素材名は通常結果だけに表示し、共有summary/card/textへ含めない。
+- Q-013 ES Modules cutoverはP-0〜P-6承認後に別計画で完了していることをTask 4の開始条件とする。
+- `result-content-approvals.csv`、`presentation-content-approvals.csv`、Q-012 character approval、全選択行status、release manifest/historyは別々のgateである。
+- 現在の正式ブランドは`brand-v1`、名称は`ココロパレア`、`appMeta.brand.publicOrigin`は`https://kokoroparea.gerupon.uk`である。`app/index.html`のcanonical/OG URLは同originの末尾`/`である。
+- 公開originのコード設定済みという事実を、DNS、GitHub Pages custom domain、HTTPSのlive完了と同一視しない。
+- 現在の`.github/workflows/qa-preview-pages.yml`は`codex/big-five-q006`向け、`dist/qa-preview`、`noindex,nofollow`のQA専用deploymentである。production workflowが成功するまで削除しない。
+- 通常runtimeの外部API送信は0件を維持する。JSON fetchのため`connect-src 'self'`だけを許可し、外部host、wildcard、`http:`、`https:` scheme allowanceを追加しない。
+- release selector、公開結果URL、アカウント、生回答通信、分析送信を追加しない。
+- PRはbuild/testまで、repository default branch成功または明示的manual dispatchだけがproduction deployできる。
+- rollbackは過去source/historyを書き換えず、承認済みimmutable versionを参照する新releaseと新history行を追加する。
+- 各実装タスクはRED→GREEN→focused regression→commitで完結させる。
 
----
+## Phase Boundaries
+
+1. **Technical groundwork — may run now:** Tasks 1〜2。
+2. **Formal release selection — mandatory pause:** Task 3。Q-012 formal approvalまたは任意の承認が欠ければ停止する。
+3. **JSON runtime cutover:** Tasks 4〜5。承認済みrelease build成功後だけ開始する。
+4. **Production Pages:** Task 6。Q-008 repository/default branch/custom-domain authorityとartifactが揃ってから開始する。
+5. **Live verification and documentation:** Task 7。DNS/HTTPS/Pagesは観測後だけ完了扱いにする。
 
 ## File Map
 
-- `content/source/presentation/presentation-v1/*.csv` — 承認済みQ-013データ。
-- `content/source/characters/character-manifest-v1/characters.csv` — 承認済みQ-012 manifest。
-- `content/source/releases/release-manifest.csv` — approved release 1行。
-- `content/source/releases/release-history.csv` — 追記専用release。
-- `content/source/approvals/result-content-approvals.csv` — Q-006固定18 gateの人手承認記録。
-- `app/js/domain/content-manifest.js` — manifest exact schemaとversion projection。
-- `app/js/domain/content-bundle.js` — 全resourceのcross-reference validationとdeep freeze。
-- `app/js/infrastructure/content-loader.js` — same-origin fetch、hash、all-or-nothing loading。
-- `app/js/config/app-meta.js` — コード所有のapp/storage/deployment値だけを保持。
-- `app/js/main.js` — content load成功後にrouteを開始し、失敗時は安全なエラー画面へ移る。
-- `app/js/presentation/content-load-error-screen.js` — 利用者文言と内部コードを分離。
-- `app/js/data/*.js` — JSON移行完了後に削除する旧静的定義。
-- `scripts/content/assemble-pages.mjs` — 検証済みappとJSONだけを一時artifactへ組み立てる。
-- `scripts/content/audit-release-history.mjs` — 公開済み版と履歴の書換え検出。
-- `.github/workflows/pages.yml` — test/check/build/upload/deploy。
-- `app/tests/content-loader.test.js` — fetch/hash/schema/atomicity。
-- `app/tests/content-runtime-parity.test.js` — JSON版と移行前authority fixtureの一致。
-- `app/tests/pages-artifact.test.js` — artifact allowlist。
-- `app/tests/pages-workflow-contract.test.js` — workflow gate。
+### Technical groundwork
 
----
-
-### Task 1: Import Approved Q-012/Q-013 Data and Select a Release
-
-**Files:**
-- Create: `content/source/presentation/presentation-v1/scenes.csv`
-- Create: `content/source/presentation/presentation-v1/palettes.csv`
-- Create: `content/source/presentation/presentation-v1/palette-usage-mappings.csv`
-- Create: `content/source/presentation/presentation-v1/fragrances.csv`
-- Create: `content/source/presentation/presentation-v1/presentation-selectors.csv`
-- Create: `content/source/presentation/presentation-v1/selector-palettes.csv`
-- Create: `content/source/presentation/presentation-v1/selector-fragrances.csv`
-- Create: `content/source/characters/character-manifest-v1/characters.csv`
-- Modify: `content/source/result-texts/result-text-v1/result-texts.csv`
-- Modify: `content/source/approvals/result-content-approvals.csv`
-- Modify: `content/source/releases/release-manifest.csv`
-- Modify: `content/source/releases/release-history.csv`
-- Create: `app/tests/approved-release-source.test.js`
-
-**Interfaces:**
-- Consumes: human approval ledgers for Q-006/Q-012/Q-013.
-- Produces: one fully approved source release accepted by `compileRelease`.
-
-- [ ] **Step 1: Write the failing approved-release test**
-
-```js
-test("production source has exactly one fully approved release", async () => {
-  const compiled = await compileRelease({
-    sourceDir: path.resolve("content/source"),
-    releaseId: "release-mvp-0.1.0",
-  });
-  assert.equal(compiled.manifest.releaseId, "release-mvp-0.1.0");
-  assert.deepEqual(
-    compiled.manifest.resources.map(({ kind }) => kind),
-    ["diagnosis", "questions", "titles", "result-texts", "evidence", "presentation", "characters"],
-  );
-});
-```
-
-- [ ] **Step 2: Run the test and confirm the approval gate**
-
-Run: `node --test app/tests/approved-release-source.test.js`
-
-Expected before approvals: FAIL with `RELEASE_NOT_SELECTED`, `CONTENT_APPROVAL_PENDING`, or missing Q-012/Q-013 resource. Stop this task if any required human approval record is absent; do not change status to make the test pass.
-
-- [ ] **Step 3: Import only approved source rows**
-
-Copy the approved Q-013 catalog and Q-012 manifest into the normalized CSVs without changing IDs, labels, colors, fragrance text, image paths, hashes, or review dates. Change Q-006 content rows and `result-content-approvals.csv` gate rows to `approved` only when each human approval actually exists. Record the real approving role/name and date; do not invent missing approval metadata.
-
-- [ ] **Step 4: Select and record the release**
-
-Add exactly one approved row to `release-manifest.csv` using:
-
-```csv
-release_id,app_version,diagnosis_id,diagnostic_definition_version,scale_version,question_version,scoring_version,result_evidence_version,result_text_version,title_rule_version,character_manifest_version,presentation_definition_version,card_template_version,status
-release-mvp-0.1.0,mvp-0.1.0,big-five-ipip-ja,ipip-ja-50-definition-v1,ipip-ja-50-v1,ipip-ja-50-question-set-v1,ipip-ja-50-scoring-v1,result-evidence-v1,result-text-v1,title-rule-v1,character-manifest-v1,presentation-v1,card-template-v1,approved
-```
-
-Append the same immutable version tuple to `release-history.csv` with the schema-defined release sequence. Do not edit an existing history row.
-
-- [ ] **Step 5: Run source and compiler verification**
-
-Run: `npm.cmd run content:validate`
-
-Expected: PASS with one approved selected release.
-
-Run: `npm.cmd run content:build`
-
-Expected: creates `app/content/content-manifest.json` and seven resource JSON files under `app/content/release-mvp-0.1.0/`.
-
-- [ ] **Step 6: Commit**
-
-```powershell
-git add content/source app/tests/approved-release-source.test.js
-git commit -m "feat: approve initial CSV content release"
-```
-
----
-
-### Task 2: Runtime Manifest, Hash, and Bundle Validation
-
-**Files:**
-- Create: `app/js/domain/content-manifest.js`
-- Create: `app/js/domain/content-bundle.js`
 - Create: `app/js/infrastructure/content-loader.js`
 - Create: `app/tests/content-loader.test.js`
+- Create: `scripts/content/audit-release-history.mjs`
+- Create: `scripts/content/assemble-pages.mjs`
+- Create: `app/tests/pages-artifact.test.js`
+- Create: `content/fixtures/invalid/release-history-rewrite/`
+- Modify: `package.json`
 
-**Interfaces:**
-- Produces: `validateContentManifest(value, expectedAppVersion) -> ContentManifest`
-- Produces: `validateContentBundle({ manifest, resources }) -> ContentBundle`
-- Produces: `loadContentBundle({ manifestUrl, baseUrl, fetchImpl, cryptoImpl, expectedAppVersion }) -> Promise<ContentBundle>`
+### Formal release gate
 
-- [ ] **Step 1: Write failing all-or-nothing loader tests**
+- Create after Q-012 approval: `content/source/characters/character-manifest-v1/characters.csv`
+- Modify approved row statuses only with evidence:
+  - `content/source/titles/title-rule-v1/title-profiles.csv`
+  - `content/source/titles/title-rule-v1/title-profile-factors.csv`
+  - `content/source/result-texts/result-text-v2/result-texts.csv`
+  - `content/source/result-texts/result-text-v2/result-text-evidence.csv`
+  - `content/source/result-texts/result-text-v2/title-reflection-comments.csv`
+  - `content/source/evidence/result-evidence-v1/result-evidence.csv`
+  - `content/source/evidence/result-evidence-v1/result-evidence-claims.csv`
+- Modify: `content/source/releases/release-manifest.csv`
+- Modify: `content/source/releases/release-history.csv`
+- Modify: `app/tests/content-compiler.test.js`
+- Modify: `app/tests/content-migration-parity.test.js`
 
-```js
-test("loads and validates every same-origin resource before returning", async () => {
-  const fixture = approvedGeneratedFixture();
-  const requests = [];
-  const bundle = await loadContentBundle({
-    manifestUrl: "./content/content-manifest.json",
-    baseUrl: "https://example.test/app/index.html",
-    expectedAppVersion: "mvp-0.1.0",
-    fetchImpl: async (url) => {
-      requests.push(String(url));
-      return fixture.responseFor(url);
-    },
-    cryptoImpl: webcrypto,
-  });
-  assert.equal(bundle.manifest.releaseId, "release-mvp-0.1.0");
-  assert.equal(requests.length, 8);
-  assert.equal(bundle.questions.length, 50);
-});
+### Runtime cutover
 
-test("hash mismatch exposes no partial bundle", async () => {
-  await assert.rejects(
-    loadContentBundle(tamperedFixture()),
-    (error) => error.code === "CONTENT_RESOURCE_HASH_MISMATCH",
-  );
-});
-```
-
-- [ ] **Step 2: Run the focused test and verify it fails**
-
-Run: `node --test app/tests/content-loader.test.js`
-
-Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `content-loader.js`.
-
-- [ ] **Step 3: Implement exact manifest validation**
-
-```js
-const MANIFEST_FIELDS = [
-  "schemaVersion", "releaseId", "appVersion", "diagnosisId", "versions", "resources",
-];
-const VERSION_FIELDS = [
-  "diagnosticDefinitionVersion", "scaleVersion", "questionVersion",
-  "scoringVersion", "resultEvidenceVersion", "resultTextVersion",
-  "titleRuleVersion", "characterManifestVersion",
-  "presentationDefinitionVersion", "cardTemplateVersion",
-];
-```
-
-Require `schemaVersion === 1`, exact fields, exact resource kind order, lowercase 64-character SHA-256, unique relative paths below the manifest directory, and `appVersion === expectedAppVersion`.
-
-- [ ] **Step 4: Implement same-origin fetch and Web Crypto verification**
-
-```js
-async function fetchAndVerify(manifestUrl, resource, fetchImpl, cryptoImpl) {
-  const url = new URL(resource.path, manifestUrl);
-  if (url.origin !== manifestUrl.origin) {
-    throw contentLoadError("CONTENT_RESOURCE_ORIGIN_INVALID");
-  }
-  const response = await fetchImpl(url, { credentials: "same-origin", cache: "no-cache" });
-  if (!response.ok) throw contentLoadError("CONTENT_RESOURCE_HTTP_ERROR");
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  const digest = [...new Uint8Array(await cryptoImpl.subtle.digest("SHA-256", bytes))]
-    .map((byte) => byte.toString(16).padStart(2, "0")).join("");
-  if (digest !== resource.sha256) {
-    throw contentLoadError("CONTENT_RESOURCE_HASH_MISMATCH");
-  }
-  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-}
-```
-
-Resolve the manifest URL once with `new URL(manifestUrl, baseUrl)` so a GitHub Pages project subpath is preserved. Use `Promise.all` internally but call `validateContentBundle` only after all fetch/hash/JSON operations succeed. Never return a partially populated object.
-
-- [ ] **Step 5: Validate domain resources and freeze the bundle**
-
-Call `validateDefinitionStructure`, `validateDefinitionAuthority`, `validateResultContentDefinitions`, `validateTitleProfileDefinitions`, `validatePresentationDefinitionSet`, and the character manifest validator with manifest versions. Reject unknown fields, count mismatch, broken cross-resource IDs, mixed versions, and title/character/palette references. Return a recursively frozen bundle.
-
-- [ ] **Step 6: Run focused tests**
-
-Run: `node --test app/tests/content-loader.test.js`
-
-Expected: PASS for valid load, 404, invalid JSON, external URL, hash mismatch, version mismatch, missing resource, duplicate resource, and partial failure.
-
-- [ ] **Step 7: Commit**
-
-```powershell
-git add app/js/domain/content-manifest.js app/js/domain/content-bundle.js app/js/infrastructure/content-loader.js app/tests/content-loader.test.js
-git commit -m "feat: load validated content JSON"
-```
-
----
-
-### Task 3: Switch the Formal Runtime from Static Data Modules to JSON
-
-**Files:**
-- Modify: `app/js/config/app-meta.js`
 - Modify: `app/js/main.js`
-- Create: `app/js/presentation/content-load-error-screen.js`
+- Modify: `app/js/config/app-meta.js`
+- Modify: `app/js/infrastructure/router.js`
 - Modify: `app/js/domain/title-classifier.js`
 - Modify: `app/js/domain/result-model.js`
 - Modify: `app/js/domain/result-snapshot.js`
-- Modify: `app/tests/scoring-title-contract.test.js`
-- Modify: `app/tests/result-composer.test.js`
-- Modify: `app/tests/result-snapshot.test.js`
-- Delete after parity passes: `app/js/data/diagnostic-definition.js`
-- Delete after parity passes: `app/js/data/title-profile-definitions.js`
-- Delete after parity passes: `app/js/data/title-result-text-definitions.js`
-- Delete after parity passes: `app/js/data/factor-result-text-definitions.js`
-- Delete after parity passes: `app/js/data/result-text-definitions.js`
-- Delete after parity passes: `app/js/data/result-evidence-definitions.js`
+- Modify: `app/tests/app-shell.test.js`
 - Create: `app/tests/content-runtime-parity.test.js`
-- Modify: tests that import deleted data modules to use the generated test bundle.
+- Create: `app/tests/content-network-contract.test.js`
+- Modify: `app/index.html`
+- Modify: `scripts/check-static.mjs`
+- Modify: `app/tests/static-server.test.js`
 
-**Interfaces:**
-- Consumes: `loadContentBundle`.
-- Produces: `createRuntimeMeta(appMeta, contentBundle) -> RuntimeMeta`
-- Produces: `startApp({ documentObject, historyObject, windowObject, loadContent }) -> Promise<void>`
+### Production Pages and operations
 
-- [ ] **Step 1: Write failing startup tests**
-
-```js
-test("app renders only after the complete content bundle loads", async () => {
-  const fixture = createAppDom();
-  let resolved = false;
-  const start = startApp({
-    ...fixture,
-    loadContent: async () => {
-      resolved = true;
-      return validContentBundle();
-    },
-  });
-  assert.equal(fixture.screenHost.textContent, "コンテンツを確認しています…");
-  await start;
-  assert.equal(resolved, true);
-  assert.match(fixture.screenHost.textContent, /Big Five/);
-});
-
-test("content failure renders a retry path without starting diagnosis", async () => {
-  const fixture = createAppDom();
-  await startApp({
-    ...fixture,
-    loadContent: async () => { throw Object.assign(new Error(), { code: "CONTENT_RESOURCE_HASH_MISMATCH" }); },
-  });
-  assert.match(fixture.screenHost.textContent, /読み込めませんでした/);
-  assert.match(fixture.screenHost.textContent, /再読み込み/);
-});
-```
-
-- [ ] **Step 2: Run startup tests and verify they fail**
-
-Run: `node --test app/tests/app-shell.test.js app/tests/content-runtime-parity.test.js`
-
-Expected: FAIL because `startApp` is synchronous and imports static definitions.
-
-- [ ] **Step 3: Separate bootstrap config from content versions**
-
-Keep code-owned values in `appMeta`: `appVersion`, `storageSchemaVersion`, `releasedAt`, `deploymentMode`, `betaAggregationEnabled`, and `betaApiBaseUrl`. Build diagnostic/content versions from the validated manifest:
-
-```js
-export function createRuntimeMeta(appMeta, content) {
-  const { manifest, diagnosis } = content;
-  return Object.freeze({
-    ...appMeta,
-    cardTemplateVersion: manifest.versions.cardTemplateVersion,
-    characterManifestVersion: manifest.versions.characterManifestVersion,
-    presentationDefinitionVersion: manifest.versions.presentationDefinitionVersion,
-    diagnosticVersions: Object.freeze({
-      scaleId: diagnosis.diagnostic.scaleId,
-      scaleVersion: manifest.versions.scaleVersion,
-      questionVersion: manifest.versions.questionVersion,
-      scoringVersion: manifest.versions.scoringVersion,
-      resultTextVersion: manifest.versions.resultTextVersion,
-      titleRuleVersion: manifest.versions.titleRuleVersion,
-    }),
-  });
-}
-```
-
-Require manifest `appVersion` to match the code-owned app version; CSV cannot silently change executable code version.
-
-- [ ] **Step 4: Make startup asynchronous with an explicit error screen**
-
-```js
-export async function startApp({
-  documentObject = document,
-  historyObject = history,
-  windowObject = window,
-  loadContent = () => loadContentBundle({
-    manifestUrl: "./content/content-manifest.json",
-    expectedAppVersion: appMeta.appVersion,
-  }),
-} = {}) {
-  const screenHost = requireScreenHost(documentObject);
-  renderContentLoadingScreen(screenHost);
-  try {
-    const content = await loadContent();
-    const runtimeMeta = createRuntimeMeta(appMeta, content);
-    attachRouter({ screenHost, historyObject, windowObject, runtimeMeta, content });
-  } catch (error) {
-    renderContentLoadErrorScreen(screenHost, {
-      publicMessage: "診断データを読み込めませんでした。通信環境を確認して再読み込みしてください。",
-      internalCode: normalizeContentErrorCode(error),
-    });
-  }
-}
-```
-
-- [ ] **Step 5: Inject definitions and remove old modules**
-
-Change `classifyTitle` to require `{ factorResults, questionCount, titleProfiles, titleRuleVersion }` and copy the supplied validated version into its classification. Change `composeResultModel` to require `{ factors, classification, renderedTexts, expectedTitleRuleVersion }` and validate the classification against that explicit version. Replace `result-snapshot.js`'s `Object.keys(createVersionTuple(appMeta))` with the exact nine VersionTuple fields already enforced by `response-state.js`, removing its `appMeta` import. Update the listed tests to pass manifest-derived versions and to load generated definition fixtures from a temporary directory. Delete each old data module only after the parity test proves its generated JSON equivalent.
-
-- [ ] **Step 6: Run formal tests**
-
-Run: `npm.cmd run test:formal`
-
-Expected: PASS with no imports from deleted `app/js/data/` content modules and no browser global required by domain tests.
-
-- [ ] **Step 7: Commit**
-
-```powershell
-git add app/js app/tests
-git commit -m "refactor: use generated JSON as runtime content"
-```
+- Create: `.github/workflows/pages.yml`
+- Create: `app/tests/pages-workflow-contract.test.js`
+- Delete only at production cutover: `.github/workflows/qa-preview-pages.yml`
+- Delete only at production cutover: `app/tests/qa-preview-workflow-contract.test.js`
+- Modify: `AGENTS.md`
+- Modify: `docs/基本設計サマリ.md`
+- Modify: `docs/data-model.md`
+- Modify: `docs/processing-design.md`
+- Modify: `docs/screens.md`
+- Modify: `docs/tasks.md`
+- Modify: `docs/content-authoring.md`
+- Create: `docs/github-pages-content-release.md`
+- Modify: `app/tests/project-contract.test.js`
 
 ---
 
-### Task 4: Local Build Integration and CSP
+### Task 1: Browser Manifest, Hash, and Bundle Validation
 
 **Files:**
-- Modify: `package.json`
-- Modify: `app/index.html`
-- Modify: `scripts/check-static.mjs`
-- Modify: `app/tests/app-shell.test.js`
-- Modify: `app/tests/static-server.test.js`
-- Create: `app/tests/content-network-contract.test.js`
+- Create: `app/js/infrastructure/content-loader.js`
+- Create: `app/tests/content-loader.test.js`
+- Modify: `app/tests/content-artifact-contract.test.js`
 
 **Interfaces:**
-- Produces: `predev` approved content build.
-- Produces: same-origin-only runtime network contract.
+- Produces: `loadContentBundle({ manifestUrl, expectedAppVersion, fetchImpl, cryptoSubtle }) -> Promise<Readonly<ContentBundle>>`.
+- Produces: `validateContentManifest(value, expectedAppVersion) -> Readonly<ContentManifest>`.
+- Produces stable codes: `CONTENT_MANIFEST_INVALID`, `CONTENT_RESOURCE_FETCH_FAILED`, `CONTENT_RESOURCE_HASH_MISMATCH`, `CONTENT_RESOURCE_INVALID`.
+- Validates exactly seven resources and returns named properties `manifest,diagnosis,questions,titles,resultTexts,evidence,presentation,characters`.
 
-- [ ] **Step 1: Write failing command and CSP tests**
+- [ ] **Step 1: Write loader RED tests**
 
 ```js
-test("formal app builds content before local serving", async () => {
-  const packageJson = JSON.parse(await readFile("package.json", "utf8"));
-  assert.equal(packageJson.scripts.predev, "npm.cmd run content:build");
-});
-
-test("CSP permits same-origin JSON but no external connection", async () => {
-  const html = await readFile("app/index.html", "utf8");
-  assert.match(html, /connect-src 'self'/);
-  assert.doesNotMatch(html, /connect-src[^;]*(?:https:|http:|\*)/);
+test("loads the exact seven-resource bundle and validates presentation schema 2", async () => {
+  const bundle = await loadContentBundle(validLoaderInput());
+  assert.deepEqual(bundle.manifest.resources.map(({ kind }) => kind), [
+    "diagnosis", "questions", "titles", "result-texts",
+    "evidence", "presentation", "characters",
+  ]);
+  assert.equal(bundle.presentation.schemaVersion, 2);
+  assert.equal(bundle.presentation.presentationDefinitionVersion, "presentation-v2");
+  assert.equal(Object.isFrozen(bundle.presentation.fragranceMaterials), true);
 });
 ```
 
-- [ ] **Step 2: Run tests and verify they fail**
+Add rejection tests for unknown/missing/duplicate/reordered resources, external/cross-origin/absolute paths, `..`, query/fragment, non-lowercase SHA, wrong digest, wrong app/version tuple, schema 1 presentation under a v2 manifest, missing materials, partial fetch, JSON parse failure, and extra manifest fields.
 
-Run: `node --test app/tests/app-shell.test.js app/tests/content-network-contract.test.js`
+- [ ] **Step 2: Run RED**
 
-Expected: FAIL because CSP is `connect-src 'none'` and `predev` is absent.
-
-- [ ] **Step 3: Add build-before-dev and same-origin CSP**
-
-Set:
-
-```json
-{
-  "predev": "npm.cmd run content:build",
-  "dev": "node app/dev-server.mjs"
-}
-```
-
-Change only `connect-src 'none'` to `connect-src 'self'`. Keep `default-src`, `script-src`, `style-src`, `img-src`, `base-uri`, and `form-action` restrictions unchanged.
-
-- [ ] **Step 4: Verify local serving**
-
-Run: `npm.cmd run dev`
-
-Expected: content build succeeds, then the server reports `http://localhost:4174/#/start`.
-
-Request:
+Run:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing http://localhost:4174/content/content-manifest.json
+node --test app/tests/content-loader.test.js app/tests/content-artifact-contract.test.js
 ```
 
-Expected: HTTP 200, `Content-Type: application/json; charset=utf-8`, matching release ID and app version.
+Expected: FAIL because the browser loader does not exist.
 
-- [ ] **Step 5: Run focused and static tests**
+- [ ] **Step 3: Implement all-or-nothing loading**
 
-Run: `node --test app/tests/static-server.test.js app/tests/content-network-contract.test.js`
+Resolve resource paths relative to the same-origin manifest URL, reject a different origin before fetch, fetch all seven bytes, hash exact bytes with injected `cryptoSubtle.digest("SHA-256", bytes)`, compare lowercase hex, parse JSON, then validate every resource and cross-reference. Expose no partially validated resource when any request fails.
 
-Expected: PASS, including path traversal rejection and same-origin resource paths.
+- [ ] **Step 4: Reuse current validators**
 
-Run: `npm.cmd run check`
+Call the existing diagnosis/question/result/title/character validators and `validatePresentationDefinitionSet` with manifest `presentationDefinitionVersion`. Require presentation schema 2, `presentation-v2`, usage mappings, material library, 51 selectors, and `result-text-v2` in activation fixtures.
 
-Expected: PASS with `connect-src 'self'` and no external host allowance.
+- [ ] **Step 5: Run GREEN**
+
+Run:
+
+```powershell
+node --test app/tests/content-loader.test.js app/tests/content-artifact-contract.test.js
+npm.cmd run test:formal
+```
+
+Expected: tests PASS without a selected repository release because all loader tests use isolated generated fixtures.
 
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add package.json app/index.html scripts/check-static.mjs app/tests/app-shell.test.js app/tests/static-server.test.js app/tests/content-network-contract.test.js
-git commit -m "feat: build content before local startup"
+git add app/js/infrastructure/content-loader.js app/tests/content-loader.test.js app/tests/content-artifact-contract.test.js
+git commit -m "feat: validate generated content bundles"
 ```
 
 ---
 
-### Task 5: Immutable Release Audit and Pages Artifact
+### Task 2: Immutable Release Audit and Production Artifact Assembler
 
 **Files:**
 - Create: `scripts/content/audit-release-history.mjs`
@@ -454,13 +173,16 @@ git commit -m "feat: build content before local startup"
 - Modify: `package.json`
 
 **Interfaces:**
-- Produces: `auditReleaseHistory({ currentDir, baseRef, readGitBlob }) -> true`
-- Produces: `assemblePages({ appDir, contentDir, outputDir }) -> ArtifactReport`
+- Produces: `auditReleaseHistory({ currentDir, baseRef, readGitBlob }) -> Promise<true>`.
+- Produces: `assemblePages({ appDir, contentDir, outputDir, allowedParentDir, publicOrigin }) -> Promise<ArtifactReport>`.
+- Adds scripts:
+  - `content:audit = node scripts/content/audit-release-history.mjs`
+  - `build:pages = node scripts/content/build-content.mjs --source content/source --output app/content --allowed-parent app && node scripts/content/assemble-pages.mjs --app app --content app/content --out dist --allowed-parent . --public-origin https://kokoroparea.gerupon.uk`
 
-- [ ] **Step 1: Write failing immutability and allowlist tests**
+- [ ] **Step 1: Write immutable-history and allowlist RED tests**
 
 ```js
-test("published source rows and release history are append-only", async () => {
+test("published source and history are append-only", async () => {
   await assert.rejects(
     auditReleaseHistory({
       currentDir: rewrittenCurrent(),
@@ -471,188 +193,414 @@ test("published source rows and release history are append-only", async () => {
   );
 });
 
-test("Pages artifact contains app runtime and approved JSON only", async (t) => {
+test("production artifact contains one release and exact public-origin metadata", async (t) => {
   const report = await assemblePages(validArtifactInput(t));
-  assert.equal(report.csvFiles.length, 0);
-  assert.equal(report.nonApprovedMarkers.length, 0);
   assert.deepEqual(report.releaseIds, ["release-mvp-0.1.0"]);
+  assert.equal(report.resourceCount, 7);
+  assert.equal(await readFile(join(report.outputDir, "CNAME"), "utf8"),
+    "kokoroparea.gerupon.uk\n");
 });
 ```
 
-- [ ] **Step 2: Run tests and verify they fail**
+- [ ] **Step 2: Run RED**
 
-Run: `node --test app/tests/pages-artifact.test.js`
+Run:
 
-Expected: FAIL with `ERR_MODULE_NOT_FOUND` for artifact modules.
+```powershell
+node --test app/tests/pages-artifact.test.js
+```
 
-- [ ] **Step 3: Implement immutable comparison**
+Expected: FAIL with `ERR_MODULE_NOT_FOUND`.
 
-Compare released version directories byte-for-byte against the base commit. Allow new version directories and appended history rows only. Reject deletion, modification, reordering, or duplicate release ID. The CLI accepts explicit `--base-ref` and `--current-dir`, requires `baseRef` to match `/^[0-9a-f]{40}$/`, and reads base blobs with fixed `git show <sha>:<repository-relative-path>` argument arrays. It never constructs shell commands from CSV values.
+- [ ] **Step 3: Implement append-only auditing**
 
-- [ ] **Step 4: Implement artifact allowlist**
+Compare released version directories and release history against an exact 40-character base commit. Permit new version directories and appended history rows only. Reject modification, deletion, reorder, duplicate release ID, symlink/junction traversal, and a shell-constructed Git command. Use `git show` with a fixed argument array and repository-relative paths.
 
-Copy these paths only:
+- [ ] **Step 4: Implement the production allowlist**
+
+Copy only:
 
 - `app/index.html`
 - `app/css/**`
-- `app/js/**`
-- `app/manifest/**` when present
-- approved static assets referenced by generated JSON
+- runtime `app/js/**`
+- `app/manifest/**`
+- `app/assets/brand/**`
+- approved character assets referenced by `characters.json`
 - `app/content/content-manifest.json`
-- the one selected `app/content/<releaseId>/**`
+- the one selected `app/content/release-mvp-0.1.0/**`
+- generated root `CNAME` containing exactly `kokoroparea.gerupon.uk\n`
 
-Reject `.csv`, `.md`, `.map`, source directories, unknown top-level paths, non-approved status literals, local absolute paths, and resource files not listed in the manifest.
+Reject CSV, Markdown, tests, source maps, `dev-server.mjs`, QA robots files, `noindex`/`nofollow`, local absolute paths, unlisted assets/resources, symlinks, non-approved status markers, a canonical/OG origin other than `https://kokoroparea.gerupon.uk/`, or a manifest brand/app version mismatch.
 
-- [ ] **Step 5: Add the Pages build command**
+- [ ] **Step 5: Prove deterministic artifacts with fixtures**
 
-```json
-{
-  "content:audit": "node scripts/content/audit-release-history.mjs",
-  "build:pages": "node scripts/content/build-content.mjs --source content/source --output app/content --allowed-parent app && node scripts/content/assemble-pages.mjs --app app --content app/content --out dist"
-}
+Run:
+
+```powershell
+node --test app/tests/pages-artifact.test.js
 ```
 
-- [ ] **Step 6: Run artifact verification**
+Expected: PASS for byte-identical repeated builds, seven resources, custom-domain metadata, and every rejection fixture. Do not run repository `build:pages` yet; without a selected release it must still fail.
 
-Run: `npm.cmd run build:pages`
-
-Expected: `dist/` contains the formal app, one manifest, and exactly the seven resources for `release-mvp-0.1.0`; it contains no CSV or non-approved data.
-
-Run: `node --test app/tests/pages-artifact.test.js`
-
-Expected: PASS for allowlist and all rejection fixtures.
-
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```powershell
 git add scripts/content/audit-release-history.mjs scripts/content/assemble-pages.mjs app/tests/pages-artifact.test.js content/fixtures/invalid/release-history-rewrite package.json
-git commit -m "feat: assemble immutable Pages artifacts"
+git commit -m "feat: assemble immutable production artifacts"
 ```
 
 ---
 
-### Task 6: GitHub Actions Pages Deployment
+### Task 3: Select the First Formal Release Only After All Human Gates
+
+**Gate:** Pause before file edits. Require Q-006 approvals and selected-row statuses, Q-012 formal character CSV approval, Q-013 P-0〜P-6 and row approvals, Q-013 deterministic ES Modules parity, and exact production asset hashes. A missing record stops this Task.
+
+**Files:**
+- Create after evidence review: `content/source/characters/character-manifest-v1/characters.csv`
+- Modify the seven core CSV files listed in the File Map only where existing human approval supports status promotion.
+- Modify: `content/source/releases/release-manifest.csv`
+- Modify: `content/source/releases/release-history.csv`
+- Modify: `app/tests/content-compiler.test.js`
+- Modify: `app/tests/content-migration-parity.test.js`
+
+**Interfaces:**
+- Selects exactly `release-mvp-0.1.0`.
+- Version tuple:
+  - app `mvp-0.1.0`
+  - diagnosis `ipip-ja-50-definition-v1`
+  - scale `ipip-ja-50-v1`
+  - questions `ipip-ja-50-question-set-v1`
+  - scoring `ipip-ja-50-scoring-v1`
+  - evidence `result-evidence-v1`
+  - results `result-text-v2`
+  - titles `title-rule-v1`
+  - characters `character-manifest-v1`
+  - presentation `presentation-v2`
+  - card `card-template-v1`
+
+- [ ] **Step 1: Write the release-eligibility RED test**
+
+```js
+await assert.rejects(
+  () => compileRelease({ sourceDir: SOURCE }),
+  (error) => [
+    "RELEASE_NOT_SELECTED",
+    "RELEASE_CONTENT_NOT_APPROVED",
+    "CHARACTER_APPROVAL_PENDING",
+    "PRESENTATION_APPROVAL_PENDING",
+  ].includes(error.code),
+);
+```
+
+Run:
+
+```powershell
+node --test app/tests/content-compiler.test.js app/tests/content-migration-parity.test.js
+npm.cmd run content:build
+```
+
+Expected before formal approval: focused tests preserve the pending contract; build fails with the first truthful pending code. Do not change status merely to satisfy the test.
+
+- [ ] **Step 2: Import only the approved Q-012 character release rows**
+
+Generate `characters.csv` from the approved 51-entry production ledger/manifest without changing title IDs, character IDs, asset versions, paths, SHA-256, dimensions, byte lengths, alpha facts, alt text, reviewer identity, or dates. `assertCharacterReleaseEligible` must pass every row.
+
+- [ ] **Step 3: Promote only evidence-backed core rows**
+
+Set selected Q-006/Q-014 result/title/evidence rows to`approved` only where the existing E/F/T/X/TR user approval evidence covers the exact bytes. If any CSV byte differs from the approved review projection, return it to human review instead of promoting it.
+
+- [ ] **Step 4: Add the exact manifest and append-only history rows**
+
+`release-manifest.csv` receives:
+
+```csv
+release-mvp-0.1.0,mvp-0.1.0,big-five-ipip-ja,ipip-ja-50-definition-v1,ipip-ja-50-v1,ipip-ja-50-question-set-v1,ipip-ja-50-scoring-v1,result-evidence-v1,result-text-v2,title-rule-v1,character-manifest-v1,presentation-v2,card-template-v1,approved
+```
+
+`release-history.csv` receives the same values prefixed with `1,`. Do not rewrite either row after publication; correction requires a new immutable release ID and appended sequence.
+
+- [ ] **Step 5: Compile twice and verify exact seven-resource output**
+
+Run:
+
+```powershell
+npm.cmd run content:validate
+npm.cmd run content:build
+node --test app/tests/content-compiler.test.js app/tests/content-artifact-contract.test.js app/tests/content-migration-parity.test.js
+```
+
+Expected: validation has 0 errors and one approved selected release; build creates one manifest and exactly seven canonical JSON resources; a second build is byte-identical; presentation is root schema 2/result text version is v2; no material data appears in share-summary fixtures.
+
+- [ ] **Step 6: Commit**
+
+```powershell
+git add content/source/characters/character-manifest-v1/characters.csv content/source/titles/title-rule-v1/title-profiles.csv content/source/titles/title-rule-v1/title-profile-factors.csv content/source/result-texts/result-text-v2/result-texts.csv content/source/result-texts/result-text-v2/result-text-evidence.csv content/source/result-texts/result-text-v2/title-reflection-comments.csv content/source/evidence/result-evidence-v1/result-evidence.csv content/source/evidence/result-evidence-v1/result-evidence-claims.csv content/source/releases/release-manifest.csv content/source/releases/release-history.csv app/tests/content-compiler.test.js app/tests/content-migration-parity.test.js
+git commit -m "content: select first approved release"
+```
+
+---
+
+### Task 4: Switch the Formal Runtime from ES Module Data to Generated JSON
+
+**Gate:** `npm.cmd run content:build` passes for `release-mvp-0.1.0`, Q-013 Task 13 passed, and the current ES Modules/JSON parity test is green.
+
+**Files:**
+- Modify: `app/js/main.js`
+- Modify: `app/js/config/app-meta.js`
+- Modify: `app/js/infrastructure/router.js`
+- Modify: `app/js/domain/title-classifier.js`
+- Modify: `app/js/domain/result-model.js`
+- Modify: `app/js/domain/result-snapshot.js`
+- Modify: `app/tests/app-shell.test.js`
+- Modify: `app/tests/scoring-title-contract.test.js`
+- Modify: `app/tests/result-composer.test.js`
+- Modify: `app/tests/result-snapshot.test.js`
+- Create: `app/tests/content-runtime-parity.test.js`
+- Delete only after parity passes:
+  - `app/js/data/diagnostic-definition.js`
+  - `app/js/data/title-profile-definitions.js`
+  - `app/js/data/title-result-text-definitions.js`
+  - `app/js/data/factor-result-text-definitions.js`
+  - `app/js/data/result-text-definitions.js`
+  - `app/js/data/result-evidence-definitions.js`
+  - `app/js/data/presentation-definitions.js`
+
+**Interfaces:**
+- Consumes: `loadContentBundle`.
+- Produces: `createRuntimeMeta(appMeta, contentBundle) -> Readonly<RuntimeMeta>`.
+- Produces: `startApp({ documentObject, historyObject, windowObject, loadContent }) -> Promise<void>`.
+- Keeps `appMeta.brand` code-owned and byte-equivalent.
+
+- [ ] **Step 1: Write startup and parity RED tests**
+
+```js
+test("app renders only after the complete bundle loads", async () => {
+  const fixture = createAppDom();
+  const start = startApp({ ...fixture, loadContent: async () => validContentBundle() });
+  assert.equal(fixture.screenHost.textContent, "コンテンツを確認しています…");
+  await start;
+  assert.match(fixture.screenHost.textContent, /ココロパレア/);
+});
+
+test("manifest failure renders retry without starting diagnosis", async () => {
+  const fixture = createAppDom();
+  await startApp({
+    ...fixture,
+    loadContent: async () => {
+      throw Object.assign(new Error(), { code: "CONTENT_RESOURCE_HASH_MISMATCH" });
+    },
+  });
+  assert.match(fixture.screenHost.textContent, /読み込めませんでした/);
+  assert.match(fixture.screenHost.textContent, /再読み込み/);
+});
+```
+
+- [ ] **Step 2: Run RED**
+
+Run:
+
+```powershell
+node --test app/tests/app-shell.test.js app/tests/content-runtime-parity.test.js
+```
+
+Expected: FAIL because startup is synchronous and imports static data modules.
+
+- [ ] **Step 3: Separate bootstrap metadata from release metadata**
+
+Keep code-owned `appVersion`, storage/deployment flags, release timestamp, and the complete `brand-v1` object in `appMeta`. Build diagnostic/content/character/presentation/card versions from the validated manifest and require manifest app version to equal code app version. Preserve `appMeta.brand.publicOrigin === "https://kokoroparea.gerupon.uk"`.
+
+- [ ] **Step 4: Make startup asynchronous and inject content**
+
+Render a loading state, await the complete validated bundle, construct runtime meta, and attach the router only after success. Error UI exposes a public retry and a stable internal code but no URL, response body, answer, result, title, color, material, request ID, or user-agent detail.
+
+- [ ] **Step 5: Replace static imports without changing domain outcomes**
+
+Inject generated definitions into classification, result composition, Q-013 selection, Q-012 character loading, snapshot version creation, history, comparison, and share-card consumers. Do not add a release selector. Preserve every saved VersionTuple field and keep `result-text-v2`/`presentation-v2` exact.
+
+- [ ] **Step 6: Delete ES Module data only after semantic parity**
+
+`content-runtime-parity.test.js` compares each old module export to the selected release JSON, including 51 title profiles, 390 result-text-v2 definitions, six evidence definitions, 51 characters, root schema 2 presentation, usage mappings, fragrances, materials, selectors, and material-free share summaries. Delete the listed data modules only after this test passes against the pre-deletion snapshot fixture.
+
+- [ ] **Step 7: Run GREEN and commit**
+
+Run:
+
+```powershell
+node --test app/tests/app-shell.test.js app/tests/content-loader.test.js app/tests/content-runtime-parity.test.js app/tests/scoring-title-contract.test.js app/tests/result-composer.test.js app/tests/result-snapshot.test.js
+npm.cmd run test:formal
+```
+
+Expected: all tests PASS; no deleted content module is imported by runtime code.
+
+```powershell
+git add app/js app/tests
+git commit -m "refactor: load approved JSON content at runtime"
+```
+
+---
+
+### Task 5: Build-Before-Serve and Same-Origin CSP
+
+**Files:**
+- Modify: `package.json`
+- Modify: `app/index.html`
+- Modify: `scripts/check-static.mjs`
+- Modify: `app/tests/app-shell.test.js`
+- Modify: `app/tests/static-server.test.js`
+- Create: `app/tests/content-network-contract.test.js`
+
+**Interfaces:**
+- Adds `predev = npm.cmd run content:build`.
+- Changes only the connection policy from `connect-src 'none'` to `connect-src 'self'`.
+- Keeps canonical/OG URL `https://kokoroparea.gerupon.uk/`.
+
+- [ ] **Step 1: Write command, CSP, and origin RED tests**
+
+```js
+test("formal dev builds selected content before serving", async () => {
+  const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+  assert.equal(packageJson.scripts.predev, "npm.cmd run content:build");
+});
+
+test("CSP allows same-origin JSON and no external connection", async () => {
+  const html = await readFile("app/index.html", "utf8");
+  assert.match(html, /connect-src 'self'/);
+  assert.doesNotMatch(html, /connect-src[^;]*(?:https:|http:|\*)/);
+  assert.match(html, /https:\/\/kokoroparea\.gerupon\.uk\//);
+});
+```
+
+- [ ] **Step 2: Run RED**
+
+Run:
+
+```powershell
+node --test app/tests/app-shell.test.js app/tests/content-network-contract.test.js
+```
+
+Expected: FAIL because `predev` is absent and CSP is still `connect-src 'none'`.
+
+- [ ] **Step 3: Add build-before-serve and exact CSP**
+
+Keep all other CSP directives unchanged. Verify brand SVG, 51 local character assets, manifest, and seven JSON requests are same-origin. Assert normal-mode API/analytics requests remain zero.
+
+- [ ] **Step 4: Verify local runtime**
+
+Run:
+
+```powershell
+npm.cmd run dev
+```
+
+Expected: approved content builds, server reports `http://localhost:4174/#/start`, manifest and seven resources return HTTP 200 with JSON content type, and the diagnosis starts only after validation.
+
+- [ ] **Step 5: Run GREEN and commit**
+
+Run:
+
+```powershell
+node --test app/tests/static-server.test.js app/tests/content-network-contract.test.js app/tests/app-shell.test.js
+npm.cmd run check
+```
+
+Expected: PASS; no external host is allowed.
+
+```powershell
+git add package.json app/index.html scripts/check-static.mjs app/tests/app-shell.test.js app/tests/static-server.test.js app/tests/content-network-contract.test.js
+git commit -m "feat: serve approved same-origin content"
+```
+
+---
+
+### Task 6: Replace QA Pages Deployment with Test-Gated Production Pages
+
+**Gate:** Tasks 3〜5 pass, the repository/default-branch Pages authority is confirmed under Q-008, and `build:pages` produces the production artifact. Keep the QA workflow until this Task.
 
 **Files:**
 - Create: `.github/workflows/pages.yml`
 - Create: `app/tests/pages-workflow-contract.test.js`
+- Delete: `.github/workflows/qa-preview-pages.yml`
+- Delete: `app/tests/qa-preview-workflow-contract.test.js`
+- Modify: `app/tests/pages-artifact.test.js`
 
 **Interfaces:**
-- Consumes: `npm.cmd test`, `npm.cmd run check`, `npm.cmd run content:audit`, `npm.cmd run build:pages`.
-- Produces: test-gated Pages artifact upload and deployment.
+- Uses `actions/checkout@v6`, `actions/setup-node@v7` with Node 24, `actions/configure-pages@v5`, `actions/upload-pages-artifact@v4`, and `actions/deploy-pages@v4`.
+- Uploads only `dist`.
+- Deploys only default-branch push or manual dispatch after the build job.
 
-- [ ] **Step 1: Write the failing workflow contract test**
+- [ ] **Step 1: Write production workflow RED tests**
 
 ```js
-test("Pages deployment depends on validation and uploads only dist", async () => {
+test("production Pages validates, audits, builds, and uploads only dist", async () => {
   const workflow = await readFile(".github/workflows/pages.yml", "utf8");
-  assert.match(workflow, /content:validate/);
-  assert.match(workflow, /content-validation-report\.md/);
-  assert.match(workflow, /actions\/upload-artifact@v4/);
-  assert.match(workflow, /npm\.cmd test/);
-  assert.match(workflow, /npm\.cmd run check/);
-  assert.match(workflow, /npm\.cmd run content:audit/);
-  assert.match(workflow, /npm\.cmd run build:pages/);
+  assert.match(workflow, /npm ci/);
+  assert.match(workflow, /npm test/);
+  assert.match(workflow, /npm run check/);
+  assert.match(workflow, /npm run content:audit/);
+  assert.match(workflow, /npm run build:pages/);
+  assert.match(workflow, /actions\/upload-pages-artifact@v4/);
   assert.match(workflow, /path:\s*dist/);
   assert.match(workflow, /needs:\s*build/);
   assert.doesNotMatch(workflow, /continue-on-error:\s*true/);
 });
 ```
 
-- [ ] **Step 2: Run the test and verify it fails**
+Assert there is exactly one Pages deployment workflow after cutover and that production artifact contains neither QA `noindex` nor `robots.txt` disallow rules.
 
-Run: `node --test app/tests/pages-workflow-contract.test.js`
+- [ ] **Step 2: Run RED**
 
-Expected: FAIL because `.github/workflows/pages.yml` does not exist.
+Run:
+
+```powershell
+node --test app/tests/pages-workflow-contract.test.js app/tests/pages-artifact.test.js
+```
+
+Expected: FAIL because `pages.yml` does not exist and the QA Pages workflow still owns deployment.
 
 - [ ] **Step 3: Create build and deploy jobs**
 
-Use:
+The build job runs on Ubuntu, installs with `npm ci`, writes/uploads a normal Actions validation report, runs tests/check/audit/build, configures Pages, and uploads only `dist`. Determine audit base from PR base SHA, push `before`, or `HEAD^`; validate exact 40 lowercase hex before passing it to the audit script.
+
+The deploy job:
 
 ```yaml
-name: Deploy formal app to Pages
-on:
-  pull_request:
-  push:
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-jobs:
-  build:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - id: content-validation
-        run: npm.cmd run content:validate -- --report content-validation-report.md
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: content-validation-report
-          path: content-validation-report.md
-          if-no-files-found: error
-      - run: npm.cmd test
-      - run: npm.cmd run check
-      - id: audit-base
-        shell: pwsh
-        run: |
-          $sha = '${{ github.event.pull_request.base.sha }}'
-          if ($sha -notmatch '^[0-9a-f]{40}$') { $sha = '${{ github.event.before }}' }
-          if ($sha -notmatch '^[0-9a-f]{40}$' -or $sha -eq ('0' * 40)) {
-            $sha = git rev-parse HEAD^
-          }
-          "sha=$sha" | Add-Content -LiteralPath $env:GITHUB_OUTPUT
-      - run: npm.cmd run content:audit -- --base-ref '${{ steps.audit-base.outputs.sha }}'
-      - run: npm.cmd run build:pages
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-  deploy:
-    if: (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) || github.event_name == 'workflow_dispatch'
-    needs: build
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+if: (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) || github.event_name == 'workflow_dispatch'
+needs: build
+environment:
+  name: github-pages
+  url: ${{ steps.deployment.outputs.page_url }}
 ```
 
-The audit step selects an exact base commit: `${{ github.event.pull_request.base.sha }}` for a pull request, `${{ github.event.before }}` for a normal push, and `git rev-parse HEAD^` when neither is usable. It passes the validated 40-character SHA to `audit-release-history.mjs --base-ref`. The deploy condition reads `github.event.repository.default_branch`, so Q-008 does not require a hard-coded branch name in this workflow.
+No pull request deploys. A failed build leaves the existing deployment unchanged.
 
-- [ ] **Step 4: Verify failure prevents deploy**
+- [ ] **Step 4: Remove the competing QA Pages workflow in the same commit**
 
-Add test fixtures or workflow assertions proving that build has no `continue-on-error`, deploy `needs: build`, PR does not deploy, and only push to the configured default branch or manual dispatch deploys.
+Delete the branch-specific QA deployment workflow and its workflow-contract test only after production workflow tests are green. Keep `qa:preview:build`, QA artifact code, and local QA tests available; they no longer deploy to the `github-pages` environment.
 
-- [ ] **Step 5: Run workflow and full local contracts**
+- [ ] **Step 5: Verify production workflow and artifact**
 
-Run: `node --test app/tests/pages-workflow-contract.test.js`
+Run:
 
-Expected: PASS.
+```powershell
+npm.cmd run build:pages
+node --test app/tests/pages-workflow-contract.test.js app/tests/pages-artifact.test.js
+npm.cmd test
+npm.cmd run check
+```
 
-Run: `npm.cmd test`
-
-Expected: all tests PASS.
+Expected: `dist/` contains the formal shell, exact `CNAME`, brand assets, approved character assets, one manifest, and seven resources; it contains no CSV, draft/reviewed/rejected marker, QA search exclusion, test, local path, approval note, or personal data.
 
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add .github/workflows/pages.yml app/tests/pages-workflow-contract.test.js
-git commit -m "ci: deploy validated content to Pages"
+git add .github/workflows/pages.yml app/tests/pages-workflow-contract.test.js app/tests/pages-artifact.test.js
+git rm .github/workflows/qa-preview-pages.yml app/tests/qa-preview-workflow-contract.test.js
+git commit -m "ci: deploy approved kokoro parea release"
 ```
 
 ---
 
-### Task 7: Canonical Documentation, Rollback, and Final Verification
+### Task 7: Canonical Documentation, Live Origin Verification, and Rollback
 
 **Files:**
 - Modify: `AGENTS.md`
@@ -666,108 +614,112 @@ git commit -m "ci: deploy validated content to Pages"
 - Modify: `app/tests/project-contract.test.js`
 
 **Interfaces:**
-- Produces: operator-visible release and rollback procedure matching the implemented workflow.
+- Produces the exact release, deploy, observation, and rollback runbook.
+- Separates code-configured public origin from observed DNS/HTTPS/Pages status.
 
-- [ ] **Step 1: Write failing canonical-document tests**
+- [ ] **Step 1: Write canonical-document RED tests**
 
 ```js
-test("canonical docs identify CSV source, JSON runtime, and approval gate", async () => {
+test("canonical docs record current release and production origin without collapsing gates", async () => {
   const documents = await readCanonicalDocuments();
   for (const text of documents) {
-    assert.match(text, /content\/source/);
+    assert.match(text, /result-text-v2/);
+    assert.match(text, /presentation-v2/);
+    assert.match(text, /fragrance-materials\.csv/);
+    assert.match(text, /fragrance-material-examples\.csv/);
+    assert.match(text, /https:\/\/kokoroparea\.gerupon\.uk/);
     assert.match(text, /content-manifest\.json/);
-    assert.match(text, /CP932/);
-    assert.match(text, /approved/);
   }
 });
 ```
 
-- [ ] **Step 2: Run project contracts and verify they fail**
+- [ ] **Step 2: Run RED**
 
-Run: `node --test app/tests/project-contract.test.js`
+Run:
 
-Expected: FAIL until all canonical documents describe the implemented pipeline.
+```powershell
+node --test app/tests/project-contract.test.js
+```
 
-- [ ] **Step 3: Synchronize architecture and version ownership**
+Expected: FAIL until every canonical document reflects the implemented pipeline.
 
-Document:
+- [ ] **Step 3: Write the exact operator runbook**
 
-- `app-meta.js` owns executable app/storage/deployment values.
-- approved `release-manifest.csv` owns the active diagnostic/content version tuple.
-- generated `content-manifest.json` is the runtime projection and must match `appVersion`.
-- browser startup is blocked on all-or-nothing manifest/resource validation.
-- CSP permits only same-origin static JSON in normal mode.
-- old JS content definitions were removed after parity verification.
+`docs/github-pages-content-release.md` records:
 
-- [ ] **Step 4: Write exact release and rollback runbook**
+1. CSV UTF-8/CP932 authoring and strict validation.
+2. new immutable version directory creation.
+3. Q-006/Q-012/Q-013 human approval evidence and status promotion.
+4. release manifest selection and append-only history.
+5. seven-resource canonical build and hash verification.
+6. PR build without deploy.
+7. default-branch production deploy and artifact contents.
+8. public manifest/resource/hash/brand/canonical verification.
+9. rollback through a new approved release/history row referencing previous immutable versions.
 
-`docs/github-pages-content-release.md` must give:
+- [ ] **Step 4: Run the full local matrix**
 
-1. Excel CSV edit and encoding choice.
-2. new version directory creation.
-3. human approval record completion.
-4. manifest/history update.
-5. PR validation result and Markdown report location.
-6. merge/deploy success confirmation.
-7. published `content-manifest.json` release ID/hash verification.
-8. rollback by selecting a previous approved immutable release and appending a new release-history action; never edit old source rows.
+Run:
 
-- [ ] **Step 5: Run the full verification matrix**
+```powershell
+npm.cmd run content:validate
+$auditBaseCommit = git rev-parse HEAD^
+if ($auditBaseCommit -notmatch '^[0-9a-f]{40}$') { throw "INVALID_AUDIT_BASE_COMMIT" }
+npm.cmd run content:audit -- --base-ref $auditBaseCommit
+npm.cmd run build:pages
+npm.cmd test
+npm.cmd run check
+git diff --check
+```
 
-Run: `npm.cmd run content:validate`
+Expected: all commands exit 0; the base commit argument is an observed Git SHA selected by the workflow/operator, not a value stored in content CSV.
 
-Expected: PASS with one approved selected release.
+- [ ] **Step 5: Verify the deployed public origin before marking it complete**
 
-Run: `npm.cmd run build:pages`
+After the production workflow succeeds, verify:
 
-Expected: PASS and produce one complete release in `dist/`.
+```powershell
+Resolve-DnsName kokoroparea.gerupon.uk
+Invoke-WebRequest -UseBasicParsing https://kokoroparea.gerupon.uk/
+Invoke-WebRequest -UseBasicParsing https://kokoroparea.gerupon.uk/content/content-manifest.json
+```
 
-Run: `npm.cmd test`
+Expected only after live configuration: DNS resolves to the configured GitHub Pages target, HTTPS succeeds without certificate warning, both requests return HTTP 200, HTML canonical/OG and `appMeta.brand.publicOrigin` match the origin, manifest identifies `release-mvp-0.1.0`, and all seven public resource hashes match downloaded bytes. Until those observations exist, documents say “public origin configured in code; DNS/HTTPS/production Pages not yet verified.”
 
-Expected: all formal and prototype tests PASS.
+- [ ] **Step 6: Browser smoke and failure checks**
 
-Run: `npm.cmd run check`
+At `https://kokoroparea.gerupon.uk/#/start`, verify:
 
-Expected: PASS with no prototype imports, no external connection target, and no source CSV in artifact.
+- loading completes before start interaction;
+- brand name/icon and result flow render;
+- result-text-v2 and presentation-v2 versions are visible where designed;
+- one selected palette and three fragrance share labels work while material examples stay out of share output;
+- no release selector exists;
+- no external API/analytics request occurs;
+- a fixture deployment with one tampered resource shows retry and never starts diagnosis;
+- character/Canvas/share failures retain result text and copy fallback.
 
-Run: `git diff --check`
+- [ ] **Step 7: Synchronize facts and commit**
 
-Expected: no output.
-
-- [ ] **Step 6: Browser smoke**
-
-Start: `npm.cmd run dev`
-
-Verify at `http://localhost:4174/#/start`:
-
-- manifest and seven JSON requests return 200 from the same origin;
-- no external request occurs;
-- the displayed app/diagnostic/content versions match the manifest;
-- tampering one local JSON hash produces the content error screen and no diagnosis start;
-- restoring the generated JSON allows reload and start;
-- end-user UI has no release/set selector.
-
-- [ ] **Step 7: Commit**
+Record actual workflow run, commit, release ID, public checks, test counts, and rollback procedure. Do not claim a check that was not observed.
 
 ```powershell
 git add AGENTS.md docs/基本設計サマリ.md docs/data-model.md docs/processing-design.md docs/screens.md docs/tasks.md docs/content-authoring.md docs/github-pages-content-release.md app/tests/project-contract.test.js
-git commit -m "docs: document CSV content release operations"
+git commit -m "docs: record production content operations"
 ```
-
----
 
 ## Activation Completion Gate
 
-Activation is complete only when:
-
-- every production source row and required external approval gate is approved;
-- one immutable approved release compiles to seven hashed JSON resources;
-- the formal app starts only after same-origin fetch, hash, schema, version, and reference validation;
-- existing static content modules are removed only after runtime parity passes;
-- `connect-src 'self'` permits no external host;
-- local dev automatically builds JSON, while tests use temporary outputs;
-- Pages artifact contains no CSV, draft/reviewed/rejected content, approval notes, local paths, secrets, or personal data;
-- PR validates without deploying, and default-branch success alone can deploy;
-- a failed build leaves the current Pages deployment unchanged;
-- documented rollback selects a previous immutable approved release without overwriting history;
-- all tests, static checks, artifact checks, and browser smoke checks pass.
+- every selected source row and Q-006/Q-012/Q-013 approval gate is genuinely approved;
+- the selected tuple uses `result-text-v2` and root-schema-2 `presentation-v2`;
+- both fragrance material CSVs compile inside the existing `presentation` resource;
+- one immutable release produces exactly seven canonical hashed resources through the existing atomic writer;
+- runtime validates same-origin bytes, hashes, schemas, versions, and references before diagnosis starts;
+- material examples remain absent from share summary/card/text;
+- `brand-v1`, `ココロパレア`, canonical/OG URL, and `appMeta.brand.publicOrigin` agree on `https://kokoroparea.gerupon.uk`;
+- CSP allows only same-origin JSON connections and normal-mode external sending remains zero;
+- only one workflow can deploy to the production Pages environment;
+- production artifact contains no authoring CSV, unapproved content, QA noindex files, local paths, secrets, or personal data;
+- DNS, HTTPS, and Pages are complete only after live verification;
+- rollback appends a new approved immutable release/history row;
+- all local, workflow, artifact, public hash, and browser checks pass.
