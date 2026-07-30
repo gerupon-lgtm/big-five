@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import os from "node:os";
 import { promisify } from "node:util";
@@ -14,32 +14,8 @@ import {
 const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const SOURCE_DIR = path.join(ROOT, "content/source");
-const PRESENTATION_FILES = [
-  "scenes.csv",
-  "palettes.csv",
-  "palette-usage-mappings.csv",
-  "fragrances.csv",
-  "fragrance-materials.csv",
-  "fragrance-material-examples.csv",
-  "presentation-selectors.csv",
-  "selector-palettes.csv",
-  "selector-fragrances.csv",
-];
 
-test("all nine presentation authority tables remain draft with uppercase HEX", async () => {
-  const directory = path.join(SOURCE_DIR, "presentation/presentation-v2");
-  for (const fileName of PRESENTATION_FILES) {
-    const text = await readFile(path.join(directory, fileName), "utf8");
-    const rows = text.trimEnd().split(/\r?\n/).slice(1);
-    assert.ok(rows.length > 0, fileName);
-    assert.ok(rows.every((row) => row.endsWith(",draft")), fileName);
-    for (const color of text.match(/#[0-9A-Fa-f]{6}/g) ?? []) {
-      assert.equal(color, color.toUpperCase(), `${fileName}: ${color}`);
-    }
-  }
-});
-
-test("review model preserves the complete draft Q-013 structure", async () => {
+test("review model preserves the complete current Q-013 structure", async () => {
   const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
 
   assert.equal(model.definitionSet.schemaVersion, 2);
@@ -50,9 +26,11 @@ test("review model preserves the complete draft Q-013 structure", async () => {
   assert.equal(model.definitionSet.fragranceMaterials.length, 26);
   assert.equal(model.definitionSet.titleSelectors.length, 51);
   assert.deepEqual(
-    model.approvals.map(({ gate_id, status }) => [gate_id, status]),
-    Array.from({ length: 7 }, (_, index) => [`P-${index}`, "draft"]),
+    model.approvals.map(({ gate_id, display_order }) => [gate_id, display_order]),
+    Array.from({ length: 7 }, (_, index) => [`P-${index}`, index + 1]),
   );
+  assert.ok(model.approvals.every(({ status }) =>
+    ["draft", "reviewed", "approved", "rejected"].includes(status)));
 
   assert.equal(model.contrastReports.length, 153);
   for (const report of model.contrastReports) {
@@ -93,6 +71,105 @@ test("review projection contains P-0 through P-6 and fixed 51-title detail", asy
   }
 });
 
+test("P-0 review uses visible accessible swatches and separates WCAG from content review", async () => {
+  const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
+  const report = renderPresentationReview(model);
+
+  assert.match(
+    report,
+    /<span role="img" aria-label="primary color #7C8791" style="[^"]*background-color:#7C8791;[^"]*"><\/span> <code>#7C8791<\/code>/,
+  );
+  assert.match(
+    report,
+    /<span role="img" aria-label="background color #F5F5F6" style="[^"]*background-color:#F5F5F6;[^"]*"><\/span> <code>#F5F5F6<\/code>/,
+  );
+  assert.match(report, /\| WCAG判定 \| 内容確認 \|/);
+  assert.match(
+    report,
+    /palette-single-intellectimagination-high-2[\s\S]*?\| 適合 \| 要確認: ラベル「閃きを象徴する金黄色」とHEX #7567A8/,
+  );
+  assert.match(
+    report,
+    /palette-single-intellectimagination-high-3[\s\S]*?\| 適合 \| 要確認: ラベル「未知への好奇心を誘う紫」とHEX #4FA8B8/,
+  );
+  assert.match(
+    report,
+    /palette-single-extraversion-high-1[\s\S]*?\| 適合 \| 要確認: ラベル「陽気なサンフラワーイエロー」とHEX #E07868/,
+  );
+});
+
+test("approval metadata consistency is required by both model and renderer", async () => {
+  const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
+  const approvedWithoutMetadata = structuredClone(model.approvals);
+  approvedWithoutMetadata[0].status = "approved";
+  assert.throws(
+    () => renderPresentationReview({ ...model, approvals: approvedWithoutMetadata }),
+    { name: "TypeError", message: "PRESENTATION_REVIEW_INVALID" },
+  );
+
+  const draftWithMetadata = structuredClone(model.approvals);
+  draftWithMetadata[0].approved_by = "user";
+  draftWithMetadata[0].approved_on = "2026-07-30";
+  assert.throws(
+    () => renderPresentationReview({ ...model, approvals: draftWithMetadata }),
+    { name: "TypeError", message: "PRESENTATION_REVIEW_INVALID" },
+  );
+});
+
+test("P-0 approval renders truthfully while later gates remain draft", async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "presentation-approved-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const sourceDir = path.join(directory, "source");
+  await cp(
+    path.join(SOURCE_DIR, "titles/title-rule-v1"),
+    path.join(sourceDir, "titles/title-rule-v1"),
+    { recursive: true },
+  );
+  await cp(
+    path.join(SOURCE_DIR, "presentation/presentation-v2"),
+    path.join(sourceDir, "presentation/presentation-v2"),
+    { recursive: true },
+  );
+  await cp(
+    path.join(SOURCE_DIR, "approvals/presentation-content-approvals.csv"),
+    path.join(sourceDir, "approvals/presentation-content-approvals.csv"),
+    { recursive: true },
+  );
+
+  const approvalPath = path.join(
+    sourceDir,
+    "approvals/presentation-content-approvals.csv",
+  );
+  const approvalText = await readFile(approvalPath, "utf8");
+  await writeFile(
+    approvalPath,
+    approvalText.replace(
+      "P-0,1,palette-mapping-wcag,draft,,,",
+      "P-0,1,palette-mapping-wcag,approved,user,2026-07-30,P-0 fixture approval",
+    ),
+    "utf8",
+  );
+  for (const fileName of ["palettes.csv", "palette-usage-mappings.csv"]) {
+    const filePath = path.join(
+      sourceDir,
+      "presentation/presentation-v2",
+      fileName,
+    );
+    await writeFile(
+      filePath,
+      (await readFile(filePath, "utf8")).replaceAll(",draft\r\n", ",approved\r\n"),
+      "utf8",
+    );
+  }
+
+  const model = await loadPresentationReviewModel({ sourceDir });
+  const report = renderPresentationReview(model);
+  assert.match(report, /承認状況: approved=P-0; draft=P-1, P-2, P-3, P-4, P-5, P-6/);
+  assert.doesNotMatch(report, /すべての行とP-0〜P-6は未承認/);
+  assert.match(report, /## P-0 パレットと用途色（approved）/);
+  assert.match(report, /## P-1 香調語彙と素材（draft）/);
+});
+
 test("ordinary review shows one to three materials while share projection excludes them", async () => {
   const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
   const report = renderPresentationReview(model);
@@ -130,5 +207,10 @@ test("CLI renderer is byte-identical across two runs", async (t) => {
       outputPath,
     ]);
   }
-  assert.deepEqual(await readFile(firstPath), await readFile(secondPath));
+  const first = await readFile(firstPath);
+  assert.deepEqual(first, await readFile(secondPath));
+  assert.deepEqual(
+    first,
+    await readFile(path.join(ROOT, "docs/presentation-content-catalog.md")),
+  );
 });

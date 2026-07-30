@@ -18,14 +18,86 @@ const ROOT_DIR = path.resolve(import.meta.dirname, "../..");
 const SCHEMA_DIR = path.join(ROOT_DIR, "content/schemas");
 const PRESENTATION_VERSION = "presentation-v2";
 const GATES = Object.freeze([
-  Object.freeze({ gateId: "P-0", label: "パレットと用途色", start: null, end: null }),
-  Object.freeze({ gateId: "P-1", label: "香調語彙と素材", start: null, end: null }),
-  Object.freeze({ gateId: "P-2", label: "バランス・単一因子称号", start: 1, end: 11 }),
-  Object.freeze({ gateId: "P-3", label: "ペア称号 1〜10", start: 12, end: 21 }),
-  Object.freeze({ gateId: "P-4", label: "ペア称号 11〜20", start: 22, end: 31 }),
-  Object.freeze({ gateId: "P-5", label: "ペア称号 21〜30", start: 32, end: 41 }),
-  Object.freeze({ gateId: "P-6", label: "ペア称号 31〜40", start: 42, end: 51 }),
+  Object.freeze({
+    gateId: "P-0",
+    label: "パレットと用途色",
+    scope: "palette-mapping-wcag",
+    start: null,
+    end: null,
+  }),
+  Object.freeze({
+    gateId: "P-1",
+    label: "香調語彙と素材",
+    scope: "fragrance-vocabulary-materials",
+    start: null,
+    end: null,
+  }),
+  Object.freeze({
+    gateId: "P-2",
+    label: "バランス・単一因子称号",
+    scope: "titles-balanced-and-single-01-11",
+    start: 1,
+    end: 11,
+  }),
+  Object.freeze({
+    gateId: "P-3",
+    label: "ペア称号 1〜10",
+    scope: "titles-pair-01-10",
+    start: 12,
+    end: 21,
+  }),
+  Object.freeze({
+    gateId: "P-4",
+    label: "ペア称号 11〜20",
+    scope: "titles-pair-11-20",
+    start: 22,
+    end: 31,
+  }),
+  Object.freeze({
+    gateId: "P-5",
+    label: "ペア称号 21〜30",
+    scope: "titles-pair-21-30",
+    start: 32,
+    end: 41,
+  }),
+  Object.freeze({
+    gateId: "P-6",
+    label: "ペア称号 31〜40",
+    scope: "titles-pair-31-40",
+    start: 42,
+    end: 51,
+  }),
 ]);
+const APPROVAL_STATUSES = Object.freeze([
+  "draft",
+  "reviewed",
+  "approved",
+  "rejected",
+]);
+const HEX_COLOR = /^#[0-9A-F]{6}$/;
+
+export const PALETTE_CONTENT_REVIEW_NOTES = Object.freeze({
+  "palette-balanced-2":
+    "要確認: ラベル「静謐な白」とHEX #8FAFC1は見た目の色相が一致しないため、元候補の意図を確認。",
+  "palette-single-intellectimagination-high-2":
+    "要確認: ラベル「閃きを象徴する金黄色」とHEX #7567A8は見た目の色相が一致しないため、元候補の意図を確認。",
+  "palette-single-intellectimagination-high-3":
+    "要確認: ラベル「未知への好奇心を誘う紫」とHEX #4FA8B8は見た目の色相が一致しないため、元候補の意図を確認。",
+  "palette-single-conscientiousness-low-2":
+    "要確認: ラベル「移ろいゆく雲の白」とHEX #7FA36Bは見た目の色相が一致しないため、元候補の意図を確認。",
+  "palette-single-conscientiousness-low-3":
+    "要確認: ラベル「軽やかな若草色」とHEX #C2AA84は見た目の色相が一致しないため、元候補の意図を確認。",
+  "palette-single-extraversion-high-1":
+    "要確認: ラベル「陽気なサンフラワーイエロー」とHEX #E07868は見た目の色相が一致しないため、元候補の意図を確認。",
+  "palette-single-extraversion-high-2":
+    "要確認: ラベル「情熱的なコーラルピンク」とHEX #E69A4Bは見た目の色相が一致しないため、元候補の意図を確認。",
+  "palette-single-extraversion-high-3":
+    "要確認: ラベル「活気に満ちたオレンジ」とHEX #38A8A0は見た目の色相が一致しないため、元候補の意図を確認。",
+  "palette-single-agreeableness-low-2":
+    "要確認: ラベル「独立心を示す深い緑」とHEX #495A72は見た目の色相が一致しないため、元候補の意図を確認。",
+  "palette-single-agreeableness-low-3":
+    "要確認: ラベル「揺るがない鉄灰色」とHEX #B58A4Cは見た目の色相が一致しないため、元候補の意図を確認。",
+});
 
 function invalidReview() {
   throw new TypeError("PRESENTATION_REVIEW_INVALID");
@@ -37,6 +109,37 @@ function deepFreeze(value) {
     for (const nestedValue of Object.values(value)) deepFreeze(nestedValue);
   }
   return value;
+}
+
+function isIsoDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day;
+}
+
+function validateApprovals(approvals) {
+  if (!Array.isArray(approvals) || approvals.length !== GATES.length) {
+    invalidReview();
+  }
+  for (const [index, gate] of GATES.entries()) {
+    const row = approvals[index];
+    if (!row || row.gate_id !== gate.gateId ||
+      row.display_order !== index + 1 || row.scope !== gate.scope ||
+      !APPROVAL_STATUSES.includes(row.status)) {
+      invalidReview();
+    }
+    const approvedBy = row.approved_by ?? "";
+    const approvedOn = row.approved_on ?? "";
+    if (row.status === "approved") {
+      if (approvedBy.trim() === "" || !isIsoDate(approvedOn)) invalidReview();
+    } else if (approvedBy !== "" || approvedOn !== "") {
+      invalidReview();
+    }
+  }
+  return approvals;
 }
 
 async function loadTable(sourceDir, segments, fileName) {
@@ -138,6 +241,7 @@ export async function loadPresentationReviewModel({ sourceDir }) {
     selectorFragranceRows: selectorFragrances.rows,
     titleProfiles,
   }, PRESENTATION_VERSION);
+  validateApprovals(approvals.rows);
 
   return deepFreeze({
     definitionSet,
@@ -148,9 +252,22 @@ export async function loadPresentationReviewModel({ sourceDir }) {
 }
 
 function approvalStatus(approvals, gateId) {
+  validateApprovals(approvals);
   const matches = approvals.filter(({ gate_id }) => gate_id === gateId);
   if (matches.length !== 1) invalidReview();
   return matches[0].status;
+}
+
+function approvalSummary(approvals) {
+  validateApprovals(approvals);
+  const groups = new Map(
+    APPROVAL_STATUSES.map((status) => [status, []]),
+  );
+  for (const row of approvals) groups.get(row.status).push(row.gate_id);
+  return ["approved", "reviewed", "draft", "rejected"]
+    .filter((status) => status === "approved" || groups.get(status).length > 0)
+    .map((status) => `${status}=${groups.get(status).join(", ") || "なし"}`)
+    .join("; ");
 }
 
 function ratio(value) {
@@ -166,12 +283,25 @@ function recipe(mapping) {
     .join("; ");
 }
 
+function colorSwatch(role, color) {
+  if (!HEX_COLOR.test(color)) invalidReview();
+  return `<span role="img" aria-label="${role} color ${color}" style="display:inline-block;width:1.25rem;height:1.25rem;vertical-align:middle;border:1px solid #1F2430;border-radius:0.2rem;background-color:${color};"></span> <code>${color}</code>`;
+}
+
+function colorSet(entries) {
+  return entries
+    .map(([role, color]) => colorSwatch(role, color))
+    .join("<br>");
+}
+
 function renderPaletteSection(lines, model) {
   lines.push(
     `## P-0 パレットと用途色（${approvalStatus(model.approvals, "P-0")}）`,
     "",
-    "| ID | ラベル | 基調色 primary / secondary / accent | 用途色レシピ | 解決色 background / surface / accent / chart / text | 比率 text-bg / text-surface / accent-surface / chart-bg | 判定 | 説明 |",
-    "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    "色見本はHEXコードを併記し、淡色も判別できるよう外枠を付けている。WCAG判定はコントラスト要件、内容確認はラベルと色の意味対応を、それぞれ独立して確認する。",
+    "",
+    "| ID | ラベル | 基調色 primary / secondary / accent | 用途色レシピ | 解決色 background / surface / accent / chart / text | 比率 text-bg / text-surface / accent-surface / chart-bg | WCAG判定 | 内容確認 | 説明 |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
   );
   const reportById = new Map(
     model.contrastReports.map((report) => [report.paletteId, report]),
@@ -182,8 +312,22 @@ function renderPaletteSection(lines, model) {
     const base = palette.baseColors;
     const resolved = report.resolved;
     const ratios = report.ratios;
+    const baseColors = colorSet([
+      ["primary", base.primary],
+      ["secondary", base.secondary],
+      ["accent", base.accent],
+    ]);
+    const resolvedColors = colorSet([
+      ["background", resolved.background],
+      ["surface", resolved.surface],
+      ["accent", resolved.accent],
+      ["chart", resolved.chart],
+      ["text", resolved.text],
+    ]);
+    const contentReview =
+      PALETTE_CONTENT_REVIEW_NOTES[palette.paletteId] ?? "確認事項なし";
     lines.push(
-      `| \`${palette.paletteId}\` | ${palette.label} | ${base.primary} / ${base.secondary} / ${base.accent} | ${recipe(report.mapping)} | ${resolved.background} / ${resolved.surface} / ${resolved.accent} / ${resolved.chart} / ${resolved.text} | ${ratio(ratios.textBackground)} / ${ratio(ratios.textSurface)} / ${ratio(ratios.accentSurface)} / ${ratio(ratios.chartBackground)} | ${report.valid ? "適合" : `要修正: ${report.failures.join(", ")}`} | ${palette.description} |`,
+      `| \`${palette.paletteId}\` | ${palette.label} | ${baseColors} | ${recipe(report.mapping)} | ${resolvedColors} | ${ratio(ratios.textBackground)} / ${ratio(ratios.textSurface)} / ${ratio(ratios.accentSurface)} / ${ratio(ratios.chartBackground)} | ${report.valid ? "適合" : `要修正: ${report.failures.join(", ")}`} | ${contentReview} | ${palette.description} |`,
     );
   }
   lines.push("");
@@ -273,6 +417,7 @@ export function renderPresentationReview({
     !Array.isArray(contrastReports) || !Array.isArray(approvals)) {
     invalidReview();
   }
+  validateApprovals(approvals);
   const lines = [
     "# Q-013 Presentation v2 承認レビュー",
     "",
@@ -280,7 +425,9 @@ export function renderPresentationReview({
     "",
     "本書は承認用の生成ビューであり、手編集しない。",
     "",
-    "すべての行とP-0〜P-6は未承認のドラフトであり、本書の生成は承認またはruntime有効化を意味しない。",
+    `承認状況: ${approvalSummary(approvals)}`,
+    "",
+    "各セクションのstatusは承認台帳の現在値を表示する。本書の生成は承認またはruntime有効化を意味しない。",
     "",
   ];
   renderPaletteSection(lines, {
