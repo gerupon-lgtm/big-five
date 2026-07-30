@@ -335,7 +335,8 @@ test("T-005/T-006 S-004 opens one saved detail result by resultId", () => {
   assert.match(text, /五つの風を見渡す観測者/);
   assert.match(text, /心理学上の正式なタイプではありません/);
   assert.match(text, /画像を利用できない場合も診断結果は有効です/);
-  assert.match(text, /根拠を確認/);
+  assert.doesNotMatch(text, /根拠を確認/);
+  assert.match(text, /結果の根拠と見方/);
   assert.doesNotMatch(text, /answers/);
 });
 

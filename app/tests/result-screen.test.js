@@ -144,7 +144,7 @@ test("T-005 S-003 renders the complete saved preview with factor help and the 30
   );
   assert.equal(
     collectElements(host).filter(({ className }) => className.includes("result-evidence")).length,
-    7,
+    0,
   );
   assert.equal(
     collectElements(host).filter(({ className }) => className === "boundary-notices").length,
@@ -153,7 +153,7 @@ test("T-005 S-003 renders the complete saved preview with factor help and the 30
   for (const record of snapshot.renderedTexts) {
     assert.equal(resultTextRecords(host).filter(({ textContent }) =>
       textContent === record.text).length, 1);
-    assert.match(text, new RegExp(record.evidenceRefs[0]));
+    assert.doesNotMatch(text, new RegExp(record.evidenceRefs[0]));
   }
 
   const buttons = collectElements(host).filter(({ tagName }) => tagName === "button");
@@ -608,7 +608,7 @@ test("T-008A F-006 rejects a persisted snapshot with a partial reflection group"
   );
 });
 
-test("T-008A F-005 keeps all detail records in one-factor and one-category disclosure panels", () => {
+test("T-008A F-005 reveals all detail category text after one factor disclosure", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000071",
@@ -626,6 +626,10 @@ test("T-008A F-005 keeps all detail records in one-factor and one-category discl
     .filter(({ className }) => className === "factor-category-label");
   const categorySummaries = collectElements(host)
     .filter(({ className }) => className === "factor-category-summary");
+  const evidenceDisclosures = collectElements(host)
+    .filter(({ className }) => className === "result-evidence");
+  const factorPanels = collectElements(host)
+    .filter(({ className }) => className === "factor-disclosure-panel");
   const scoreRows = collectElements(host)
     .filter(({ className }) => className === "factor-score-row");
   const bars = collectElements(host)
@@ -634,7 +638,8 @@ test("T-008A F-005 keeps all detail records in one-factor and one-category discl
   assert.equal(scoreRows.length, 5);
   assert.equal(bars.length, 5);
   assert.equal(factorTriggers.length, 5);
-  assert.equal(categoryTriggers.length, 35);
+  assert.equal(categoryTriggers.length, 0);
+  assert.equal(evidenceDisclosures.length, 0);
   assert.deepEqual(
     factorTriggers.map(({ attributes }) => attributes.get("aria-label")),
     ["知性・想像力", "勤勉性", "外向性", "協調性", "情緒安定性"]
@@ -645,10 +650,6 @@ test("T-008A F-005 keeps all detail records in one-factor and one-category discl
   assert.deepEqual(
     factorTriggers.map((trigger) => collectText(trigger).includes("詳しく見る")),
     Array(5).fill(true),
-  );
-  assert.deepEqual(
-    categoryTriggers.map(({ textContent }) => textContent),
-    Array(35).fill("詳しく見る"),
   );
   assert.deepEqual(
     categoryLabels.slice(0, 7).map(({ textContent }) => textContent),
@@ -663,7 +664,7 @@ test("T-008A F-005 keeps all detail records in one-factor and one-category discl
     ],
   );
   assert.equal(categoryLabels.length, 35);
-  assert.equal(categorySummaries.length, 35);
+  assert.equal(categorySummaries.length, 0);
   assert.equal(
     collectElements(host).filter(({ textContent }) =>
       textContent === "因子を選ぶと、詳しい結果を確認できます。").length,
@@ -677,10 +678,16 @@ test("T-008A F-005 keeps all detail records in one-factor and one-category discl
     resultTextRecords(host).map(({ attributes }) => attributes.get("data-result-text-id")).sort(),
     snapshot.renderedTexts.map(({ id }) => id).sort(),
   );
-  for (const trigger of [...factorTriggers, ...categoryTriggers]) {
+  for (const trigger of factorTriggers) {
     assert.equal(trigger.attributes.get("type"), "button");
     assert.equal(trigger.attributes.get("aria-expanded"), "false");
     assert.ok(trigger.attributes.get("aria-controls"));
+  }
+  for (const bar of bars) {
+    assert.equal(bar.tagName, "progress");
+    assert.equal(bar.attributes.get("max"), "100");
+    assert.equal(bar.attributes.get("value"), bar.attributes.get("aria-valuenow"));
+    assert.equal(bar.attributes.has("style"), false);
   }
 
   let scrolled = 0;
@@ -690,16 +697,20 @@ test("T-008A F-005 keeps all detail records in one-factor and one-category discl
   };
   factorTriggers[0].dispatch("click");
   assert.equal(factorTriggers[0].attributes.get("aria-expanded"), "true");
+  assert.equal(factorPanels[0].hidden, false);
+  assert.equal(
+    collectElements(factorPanels[0]).filter(({ className }) =>
+      className === "result-text-record").length,
+    8,
+  );
   assert.equal(scrolled, 1);
-  categoryTriggers[0].dispatch("click");
-  assert.equal(categoryTriggers[0].attributes.get("aria-expanded"), "true");
   factorTriggers[1].dispatch("click");
   assert.equal(factorTriggers[0].attributes.get("aria-expanded"), "false");
-  assert.equal(categoryTriggers[0].attributes.get("aria-expanded"), "false");
+  assert.equal(factorPanels[0].hidden, true);
   assert.equal(factorTriggers[1].attributes.get("aria-expanded"), "true");
 });
 
-test("T-008A F-005 limits preview disclosure to current observations while retaining every persisted record", () => {
+test("T-008A F-005 reveals each preview observation after one factor disclosure", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000072",
@@ -716,8 +727,12 @@ test("T-008A F-005 limits preview disclosure to current observations while retai
     .filter(({ className }) => className === "factor-category-label");
   const factorTriggers = collectElements(host)
     .filter(({ className }) => className === "factor-disclosure-trigger");
-  assert.equal(categoryTriggers.length, 5);
-  assert.deepEqual(categoryTriggers.map(({ textContent }) => textContent), Array(5).fill("詳しく見る"));
+  const categorySummaries = collectElements(host)
+    .filter(({ className }) => className === "factor-category-summary");
+  const factorPanels = collectElements(host)
+    .filter(({ className }) => className === "factor-disclosure-panel");
+  assert.equal(categoryTriggers.length, 0);
+  assert.equal(categorySummaries.length, 0);
   assert.deepEqual(categoryLabels.map(({ textContent }) => textContent), Array(5).fill("今の傾向"));
   assert.deepEqual(
     factorTriggers.map((trigger) => collectText(trigger).includes("詳しく見る")),
@@ -731,6 +746,13 @@ test("T-008A F-005 limits preview disclosure to current observations while retai
   assert.deepEqual(
     resultTextRecords(host).map(({ attributes }) => attributes.get("data-result-text-id")),
     snapshot.renderedTexts.map(({ id }) => id),
+  );
+  factorTriggers[0].dispatch("click");
+  assert.equal(factorPanels[0].hidden, false);
+  assert.equal(
+    collectElements(factorPanels[0]).filter(({ className }) =>
+      className === "result-text-record").length,
+    1,
   );
 });
 
@@ -773,7 +795,7 @@ test("T-008A F-008 renders count-only composition and fixed method sheets indepe
     launchers.map(({ textContent }) => textContent),
     ["因子ごとの設問構成を見る", "測定の土台", "スコアの計算方法", "この結果の限界", "出典・利用条件"],
   );
-  assert.match(collectText(first.host), /結果の見方について/);
+  assert.match(collectText(first.host), /結果の根拠と見方/);
   assert.match(
     collectText(first.host),
     /測定方法や、今回の結果を読むための補足情報です。/,

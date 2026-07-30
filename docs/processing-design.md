@@ -279,7 +279,7 @@ live controllerは`#/answer`を正規routeとし、ResultSnapshotをメモリ上
 
 称号別`titleReflection`の開閉はpresentation層の一時状態とする。1件目は常時表示し、50問だけ残り2件を1つの`ほかのヒントを見る`で一括開閉する。因子詳細の開閉状態とは独立させ、第三階層を作らない。
 
-ResultSnapshotの因子文（preview 5件／detail 40件）はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。カテゴリ行の短いサマリは内容を代替する固定UI説明であり、スコア別結果文を生成・要約しない。`詳しく見る`で元の`RenderedResultText`と根拠を表示する。
+ResultSnapshotの因子文（preview 5件／detail 40件）はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。因子行を1回展開すると、カテゴリ見出しと元の`RenderedResultText`を直接表示する。カテゴリごとの汎用サマリ、二段目の開閉、文章ごとの内部`evidenceRefs`表示は作らず、尺度・採点・限界・出典は最下部の「結果の根拠と見方」へ集約する。スコア棒はCSPで無効になるインラインstyleへ依存せず、`progress`の`value`へ0〜100の表示整数を渡す。
 
 `因子ごとの設問構成を見る`はDiagnosticDefinitionとQuestionDefinitionから、現在modeの固定questionId集合を因子・`keyedDirection`別に件数集計する純粋モデルを使う。設問本文、回答、スコア、称号を出力へ含めない。測定の土台等の固定説明は診断定義版とmodeだけを入力とし、ResultSnapshotの称号・数値で分岐しない。
 

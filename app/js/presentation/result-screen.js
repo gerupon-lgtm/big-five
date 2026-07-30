@@ -9,25 +9,12 @@ import { appendBottomSheetLauncher } from "./bottom-sheet.js";
 import { appendScreenHeading } from "./screen-heading.js";
 import { appendTextElement, formatCompletedAt } from "./screen-helpers.js";
 
-function appendEvidence(parent, record) {
-  const details = parent.ownerDocument.createElement("details");
-  details.className = "result-evidence";
-  appendTextElement(details, "summary", "根拠を確認");
-  const list = details.ownerDocument.createElement("ul");
-  for (const reference of record.evidenceRefs) {
-    appendTextElement(list, "li", reference);
-  }
-  details.append(list);
-  parent.append(details);
-}
-
 function appendRenderedText(parent, record) {
   const article = parent.ownerDocument.createElement("article");
   article.className = "result-text-item";
   const paragraph = appendTextElement(article, "p", record.text, "result-text-record");
   paragraph.setAttribute("data-result-text-id", record.id);
   paragraph.setAttribute("data-result-text-section", record.section);
-  appendEvidence(article, record);
   parent.append(article);
 }
 
@@ -187,14 +174,6 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
   factorList.className = "factor-result-list";
   const disclosure = createResultDisclosureModel(snapshot, labels);
   let openFactor = null;
-  let openCategory = null;
-
-  function closeCategory() {
-    if (!openCategory) return;
-    openCategory.trigger.setAttribute("aria-expanded", "false");
-    openCategory.panel.hidden = true;
-    openCategory = null;
-  }
 
   function closeFactor() {
     if (!openFactor) return;
@@ -206,7 +185,6 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
     openFactor.hint.textContent = "詳しく見る";
     openFactor.panel.hidden = true;
     openFactor = null;
-    closeCategory();
   }
 
   for (const factor of disclosure) {
@@ -221,17 +199,14 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
     );
     trigger.setAttribute("aria-expanded", "false");
     appendTextElement(trigger, "span", factor.label, "factor-score-name");
-    const bar = row.ownerDocument.createElement("span");
+    const bar = row.ownerDocument.createElement("progress");
     bar.className = "factor-score-bar";
-    bar.setAttribute("role", "progressbar");
     bar.setAttribute("aria-label", `${factor.label}のスコア`);
     bar.setAttribute("aria-valuemin", "0");
     bar.setAttribute("aria-valuemax", "100");
     bar.setAttribute("aria-valuenow", String(factor.displayScore));
-    const fill = row.ownerDocument.createElement("span");
-    fill.className = "factor-score-bar-fill";
-    fill.setAttribute("style", `width: ${factor.displayScore}%`);
-    bar.append(fill);
+    bar.setAttribute("max", "100");
+    bar.setAttribute("value", String(factor.displayScore));
     trigger.append(bar);
     appendTextElement(trigger, "span", `${factor.displayScore}`, "factor-score-value");
     appendTextElement(trigger, "span", "⌄", "factor-disclosure-chevron").setAttribute("aria-hidden", "true");
@@ -253,38 +228,7 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
         category.label,
         "factor-category-label",
       );
-      appendTextElement(
-        categorySection,
-        "p",
-        category.summary,
-        "factor-category-summary",
-      );
-      const categoryTrigger = appendTextElement(
-        categorySection,
-        "button",
-        "詳しく見る",
-        "category-disclosure-trigger",
-      );
-      categoryTrigger.setAttribute("type", "button");
-      categoryTrigger.setAttribute("aria-expanded", "false");
-      const categoryPanel = panel.ownerDocument.createElement("div");
-      categoryPanel.className = "category-disclosure-panel";
-      categoryPanel.id = `category-disclosure-${factor.factorId}-${category.categoryId}`;
-      categoryPanel.hidden = true;
-      categoryTrigger.setAttribute("aria-controls", categoryPanel.id);
-      for (const record of category.records) appendRenderedText(categoryPanel, record);
-      categorySection.append(categoryPanel);
-      categoryTrigger.addEventListener("click", () => {
-        const isOpen = openCategory?.trigger === categoryTrigger;
-        closeCategory();
-        if (!isOpen) {
-          categoryTrigger.setAttribute("aria-expanded", "true");
-          categoryPanel.hidden = false;
-          openCategory = { trigger: categoryTrigger, panel: categoryPanel };
-          categoryTrigger.scrollIntoView?.({ block: "nearest" });
-        }
-      });
-      categoryPanel.hidden = true;
+      for (const record of category.records) appendRenderedText(categorySection, record);
       panel.append(categorySection);
     }
     trigger.addEventListener("click", () => {
@@ -373,7 +317,7 @@ function renderMethodInformation(parent, snapshot, labels, dependencies) {
   if (!Array.isArray(questionComposition) || !Array.isArray(methodInfo)) return;
   const section = parent.ownerDocument.createElement("section");
   section.className = "result-method-information";
-  appendTextElement(section, "h2", "結果の見方について");
+  appendTextElement(section, "h2", "結果の根拠と見方");
   appendTextElement(
     section,
     "p",
