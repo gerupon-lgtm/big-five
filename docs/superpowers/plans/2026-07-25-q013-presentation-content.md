@@ -449,9 +449,14 @@ git commit -m "feat: add q013 approval ledger"
 
 **Files:**
 - Create: all nine CSV files under `content/source/presentation/presentation-v2/` listed in the Phase and File Map.
+- Modify: `content/schemas/palettes.schema.json`
 - Modify only: `default_palette_id` in `content/source/titles/title-rule-v1/title-profiles.csv`; all other title-profile columns remain byte-equivalent.
 - Create: `scripts/content/render-presentation-review.mjs`
 - Create: `app/tests/presentation-review-report.test.js`
+- Create: `app/tests/presentation-approval-stage.test.js`
+- Modify: `app/tests/content-presentation-character-compiler.test.js`
+- Modify: `app/tests/content-table-schema.test.js`
+- Modify: `app/tests/content-migration-parity.test.js`
 - Create: `docs/presentation-content-catalog.md`
 
 **Interfaces:**
@@ -473,11 +478,11 @@ Expected: all three hashes match. If a hash differs, stop authoring and retain t
 
 - [ ] **Step 2: Write the nine CSVs as draft authority**
 
-Manually join candidate rows to the exact 51 `title_id` values and `display_order` in `title-profiles.csv`; never join on the Japanese label alone. Consolidate identical palette, fragrance, and material proposals into one stable shared record and reference it from relations. Write each proposed standard palette directly to the matching authoritative `title-profiles.csv.default_palette_id`; leave title labels, factors, character IDs, result text IDs, title-rule version, and row status byte-equivalent. These IDs are draft Q-013 proposals until their P-2〜P-6 gate is approved and must not activate runtime. Keep all presentation-v2 source rows `draft`, uppercase every HEX, use contiguous ordering, and rewrite unsafe fragrance descriptions before they enter CSV.
+Manually join candidate rows to the exact 51 `title_id` values and `display_order` in `title-profiles.csv`; never join on the Japanese label alone. Consolidate identical palette, fragrance, and material proposals into one stable shared record and reference it from relations. Keep human review notes such as label/HEX mismatches in the schema-backed `palettes.csv.content_review_note` column, never in renderer code; this review-only metadata must not enter the runtime Palette shape. Write each proposed standard palette directly to the matching authoritative `title-profiles.csv.default_palette_id`; leave title labels, factors, character IDs, result text IDs, title-rule version, and row status byte-equivalent. These IDs are draft Q-013 proposals until their P-2〜P-6 gate is approved and must not activate runtime. Keep all presentation-v2 source rows `draft`, uppercase every HEX, use contiguous ordering, and rewrite unsafe fragrance descriptions before they enter CSV.
 
 - [ ] **Step 3: Write report-generator RED tests**
 
-Assert the report has P-0 through P-6 sections, fixed 51-title order, palette recipe and exact contrast ratios, six fragrance candidates/three representatives per title, 1〜3 material display names per fragrance for ordinary-result review, and no material name in its share-summary projection.
+Assert the report has P-0 through P-6 sections, fixed 51-title order, accessible color swatches, separate WCAG/content-review columns, palette recipe and exact contrast ratios, six fragrance candidates/three representatives per title, 1〜3 material display names per fragrance for ordinary-result review, and no material name in its share-summary projection. Assert the renderer accepts valid mixed approval stages, rejects inconsistent approval metadata, and remains byte-equivalent to the committed review projection.
 
 Run:
 
@@ -499,12 +504,12 @@ node --test app/tests/presentation-review-report.test.js
 npm.cmd run content:validate
 ```
 
-Expected: renderer is byte-identical across two runs; tests PASS; validation reports 0 errors, draft-content warnings, seven draft approval gates, and `RELEASE_NOT_SELECTED`.
+Expected: renderer is byte-identical across two runs and the committed review projection; tests PASS; validation reports 0 errors, draft-content warnings, seven draft approval gates, and `RELEASE_NOT_SELECTED`. Runtime-v1 remains active while the draft title-profile palette IDs are validated against the presentation-v2 catalog.
 
 - [ ] **Step 5: Commit the draft without approval claims**
 
 ```powershell
-git add content/source/presentation/presentation-v2 content/source/titles/title-rule-v1/title-profiles.csv scripts/content/render-presentation-review.mjs app/tests/presentation-review-report.test.js docs/presentation-content-catalog.md
+git add content/schemas/palettes.schema.json content/source/presentation/presentation-v2 content/source/titles/title-rule-v1/title-profiles.csv scripts/content/render-presentation-review.mjs app/tests/presentation-review-report.test.js app/tests/presentation-approval-stage.test.js app/tests/content-presentation-character-compiler.test.js app/tests/content-table-schema.test.js app/tests/content-migration-parity.test.js docs/presentation-content-catalog.md
 git commit -m "content: add q013 presentation v2 draft"
 ```
 
