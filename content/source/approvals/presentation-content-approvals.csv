@@ -1,0 +1,8 @@
+gate_id,display_order,scope,status,approved_by,approved_on,note
+P-0,1,palette-mapping-wcag,draft,,,
+P-1,2,fragrance-vocabulary-materials,draft,,,
+P-2,3,titles-balanced-and-single-01-11,draft,,,
+P-3,4,titles-pair-01-10,draft,,,
+P-4,5,titles-pair-11-20,draft,,,
+P-5,6,titles-pair-21-30,draft,,,
+P-6,7,titles-pair-31-40,draft,,,

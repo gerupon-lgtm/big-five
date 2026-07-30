@@ -319,6 +319,57 @@ test("T-005 F-018 Q-013 presentation v2 schemas require the exact authoring colu
   }
 });
 
+test("T-005 F-018 Q-013 approval ledger has the exact schema and initial seven draft gates", async () => {
+  const schema = await loadTableSchema(new URL(
+    "../../content/schemas/presentation-content-approvals.schema.json",
+    import.meta.url,
+  ));
+  assert.deepEqual(schema.columns.map(({ name }) => name), [
+    "gate_id",
+    "display_order",
+    "scope",
+    "status",
+    "approved_by",
+    "approved_on",
+    "note",
+  ]);
+  assert.deepEqual(schema.columns[2], {
+    name: "scope",
+    type: "enum",
+    values: [
+      "palette-mapping-wcag",
+      "fragrance-vocabulary-materials",
+      "titles-balanced-and-single-01-11",
+      "titles-pair-01-10",
+      "titles-pair-11-20",
+      "titles-pair-21-30",
+      "titles-pair-31-40",
+    ],
+    required: true,
+  });
+
+  const approvals = (await loadCsvTable({
+    filePath: new URL(
+      "../../content/source/approvals/presentation-content-approvals.csv",
+      import.meta.url,
+    ),
+    schema,
+  })).rows;
+  assert.deepEqual(
+    approvals.map(({ gate_id, display_order, status, approved_by, approved_on }) =>
+      [gate_id, display_order, status, approved_by, approved_on]),
+    [
+      ["P-0", 1, "draft", "", ""],
+      ["P-1", 2, "draft", "", ""],
+      ["P-2", 3, "draft", "", ""],
+      ["P-3", 4, "draft", "", ""],
+      ["P-4", 5, "draft", "", ""],
+      ["P-5", 6, "draft", "", ""],
+      ["P-6", 7, "draft", "", ""],
+    ],
+  );
+});
+
 test("T-012 report includes source, one-based row, column, code, and Japanese message", () => {
   const report = formatContentErrors([
     new ContentError({

@@ -31,6 +31,15 @@ test("T-006 compiler exports the deterministic release interfaces", () => {
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const APPROVAL_IDS = ["E-0", "E-1", "E-2", "E-3", "E-4", "E-5", "T-0", "T-1", "T-2", "T-3", "T-4", "F-1", "F-2", "F-3", "F-4", "F-5", "X-1", "X-2"];
+const PRESENTATION_APPROVALS = [
+  ["P-0", "palette-mapping-wcag"],
+  ["P-1", "fragrance-vocabulary-materials"],
+  ["P-2", "titles-balanced-and-single-01-11"],
+  ["P-3", "titles-pair-01-10"],
+  ["P-4", "titles-pair-11-20"],
+  ["P-5", "titles-pair-21-30"],
+  ["P-6", "titles-pair-31-40"],
+];
 const diagnosticVersion = "diagnostic-definition-v1";
 const presentationVersion = "presentation-v2";
 const releaseId = "release-test-v1";
@@ -144,6 +153,15 @@ async function createApprovedSourceTree(t, { manifestStatus = "approved" } = {})
   await writeTable(sourceDir, "releases/release-manifest.csv", [release]);
   await writeTable(sourceDir, "releases/release-history.csv", [{ release_sequence: 1, ...release, status: "approved" }]);
   await writeTable(sourceDir, "approvals/result-content-approvals.csv", APPROVAL_IDS.map((gate_id, index) => ({ gate_id, display_order: index + 1, status: "approved", approved_by: "reviewer", approved_on: "2026-07-26", note: "human note" })));
+  await writeTable(sourceDir, "approvals/presentation-content-approvals.csv", PRESENTATION_APPROVALS.map(([gate_id, scope], index) => ({
+    gate_id,
+    display_order: index + 1,
+    scope,
+    status: "approved",
+    approved_by: "reviewer",
+    approved_on: "2026-07-26",
+    note: "human note",
+  })));
   const diagnosis = {
     diagnosis: [{ diagnosis_id: release.diagnosis_id, diagnostic_definition_version: diagnosticVersion, scale_id: appMeta.diagnosticVersions.scaleId, scale_name: "IPIP日本語50項目版", scale_version: release.scale_version, question_version: release.question_version, scoring_version: release.scoring_version, result_text_version: release.result_text_version, title_rule_version: release.title_rule_version, status: "approved" }],
     sources: [["ipip-japanese-markers", "https://ipip.ori.org/JapaneseBig-FiveFactorMarkers.htm", "IPIP Japanese Translation"], ["ipip-50-item-scale", "https://www.ipip.ori.org/New_IPIP-50-item-scale.htm", "IPIP Japanese 50-item scale"], ["donnellan-2006-mini-ipip", "https://doi.org/10.1037/1040-3590.18.2.192", "Donnellan et al. (2006)"], ["ipip-permission", "https://ipip.ori.org/newPermission.htm", "IPIP materials are public domain."]].map(([source_id, url, label], index) => ({ diagnostic_definition_version: diagnosticVersion, display_order: index + 1, source_id, url, label, status: "approved" })),
@@ -164,7 +182,7 @@ async function createApprovedSourceTree(t, { manifestStatus = "approved" } = {})
   return sourceDir;
 }
 
-test("T-006 loads the three exact release schemas", async () => {
+test("T-006 loads the four exact release and approval schemas", async () => {
   const manifestColumns = [
     ["release_id", "version", true], ["app_version", "version", true], ["diagnosis_id", "id", true],
     ["diagnostic_definition_version", "version", true], ["scale_version", "version", true], ["question_version", "version", true],
@@ -181,10 +199,25 @@ test("T-006 loads the three exact release schemas", async () => {
     { name: "approved_on", type: "text", required: false },
     { name: "note", type: "text", required: false },
   ];
+  const presentationApprovalColumns = [
+    { name: "gate_id", type: "reference", required: true },
+    { name: "display_order", type: "integer", required: true, minimum: 1 },
+    {
+      name: "scope",
+      type: "enum",
+      required: true,
+      values: PRESENTATION_APPROVALS.map(([, scope]) => scope),
+    },
+    { name: "status", type: "enum", required: true, values: ["draft", "reviewed", "approved", "rejected"] },
+    { name: "approved_by", type: "text", required: false },
+    { name: "approved_on", type: "text", required: false },
+    { name: "note", type: "text", required: false },
+  ];
   for (const [name, fileName, columns] of [
     ["release-manifest", "release-manifest.csv", manifestColumns],
     ["release-history", "release-history.csv", [sequence, ...manifestColumns]],
     ["result-content-approvals", "result-content-approvals.csv", approvalColumns],
+    ["presentation-content-approvals", "presentation-content-approvals.csv", presentationApprovalColumns],
   ]) {
     assert.deepEqual(await loadTableSchema(path.join(ROOT, "content", "schemas", `${name}.schema.json`)), { schemaVersion: 1, fileName, columns });
   }
@@ -376,6 +409,147 @@ test("T-006 rejects approval order, approval metadata, and history tuple failure
   const sourceDir = await createApprovedSourceTree(t);
   await replaceInFile(path.join(sourceDir, "releases", "release-history.csv"), appMeta.cardTemplateVersion, "card-template-v9");
   await assert.rejects(() => compileRelease({ sourceDir }), (error) => error.code === "RELEASE_HISTORY_MISMATCH");
+});
+
+test("T-005 F-018 Q-013 authoring exposes seven draft presentation approval warnings", async (t) => {
+  const sourceDir = await createApprovedSourceTree(t);
+  await writeTable(sourceDir, "approvals/presentation-content-approvals.csv", PRESENTATION_APPROVALS.map(([gate_id, scope], index) => ({
+    gate_id,
+    display_order: index + 1,
+    scope,
+    status: "draft",
+    approved_by: "",
+    approved_on: "",
+    note: "",
+  })));
+
+  const { catalogs, warnings } = await validateAuthoringTree({ sourceDir });
+
+  assert.deepEqual(catalogs.presentationApprovals.rows.map(({
+    gate_id, display_order, status, approved_by, approved_on,
+  }) => [gate_id, display_order, status, approved_by, approved_on]), [
+    ["P-0", 1, "draft", "", ""],
+    ["P-1", 2, "draft", "", ""],
+    ["P-2", 3, "draft", "", ""],
+    ["P-3", 4, "draft", "", ""],
+    ["P-4", 5, "draft", "", ""],
+    ["P-5", 6, "draft", "", ""],
+    ["P-6", 7, "draft", "", ""],
+  ]);
+  assert.equal(
+    warnings.filter(({ sourceName, code }) =>
+      sourceName === "approvals/presentation-content-approvals.csv" &&
+      code === "CONTENT_NOT_APPROVED").length,
+    7,
+  );
+});
+
+test("T-005 F-018 Q-013 rejects missing, reordered, duplicate, and mismatched presentation gates", async (t) => {
+  const cases = [
+    PRESENTATION_APPROVALS.slice(0, -1),
+    [PRESENTATION_APPROVALS[1], PRESENTATION_APPROVALS[0], ...PRESENTATION_APPROVALS.slice(2)],
+    [PRESENTATION_APPROVALS[0], PRESENTATION_APPROVALS[0], ...PRESENTATION_APPROVALS.slice(2)],
+    PRESENTATION_APPROVALS.map((entry, index) =>
+      index === 0 ? [entry[0], PRESENTATION_APPROVALS[1][1]] : entry),
+  ];
+  for (const entries of cases) {
+    const sourceDir = await createApprovedSourceTree(t);
+    await writeTable(sourceDir, "approvals/presentation-content-approvals.csv", entries.map(([gate_id, scope], index) => ({
+      gate_id,
+      display_order: index + 1,
+      scope,
+      status: "draft",
+      approved_by: "",
+      approved_on: "",
+      note: "",
+    })));
+    await assert.rejects(
+      () => validateAuthoringTree({ sourceDir }),
+      (error) => error.code === "PRESENTATION_APPROVAL_PENDING",
+    );
+  }
+});
+
+test("T-005 F-018 Q-013 rejects an unknown presentation approval scope", async (t) => {
+  const sourceDir = await createApprovedSourceTree(t);
+  await replaceInFile(
+    path.join(sourceDir, "approvals", "presentation-content-approvals.csv"),
+    "palette-mapping-wcag",
+    "unknown-presentation-scope",
+  );
+  await assert.rejects(
+    () => validateAuthoringTree({ sourceDir }),
+    (error) => error.code === "CSV_VALUE_INVALID" && error.columnName === "scope",
+  );
+});
+
+test("T-005 F-018 Q-013 rejects invalid presentation approval metadata", async (t) => {
+  const mutations = [
+    ['"approved","reviewer","2026-07-26"', '"draft","reviewer","2026-07-26"'],
+    ['"approved","reviewer","2026-07-26"', '"approved","","2026-07-26"'],
+    ['"approved","reviewer","2026-07-26"', '"approved","reviewer",""'],
+    ['"approved","reviewer","2026-07-26"', '"approved","reviewer","2026-02-30"'],
+  ];
+  for (const [from, to] of mutations) {
+    const sourceDir = await createApprovedSourceTree(t);
+    await replaceInFile(
+      path.join(sourceDir, "approvals", "presentation-content-approvals.csv"),
+      from,
+      to,
+    );
+    await assert.rejects(
+      () => validateAuthoringTree({ sourceDir }),
+      (error) => error.code === "PRESENTATION_APPROVAL_PENDING",
+    );
+  }
+});
+
+test("T-005 F-018 Q-013 formal release requires presentation gates and selected rows", async (t) => {
+  const pendingGate = await createApprovedSourceTree(t);
+  await replaceInFile(
+    path.join(pendingGate, "approvals", "presentation-content-approvals.csv"),
+    '"approved","reviewer","2026-07-26","human note"',
+    '"draft","","",""',
+  );
+  await assert.rejects(
+    () => compileRelease({ sourceDir: pendingGate }),
+    (error) => error.code === "PRESENTATION_APPROVAL_PENDING",
+  );
+
+  const pendingRow = await createApprovedSourceTree(t);
+  await replaceInFile(
+    path.join(pendingRow, "presentation", presentationVersion, "scenes.csv"),
+    /"approved"\r?\n/,
+    '"draft"\n',
+  );
+  await assert.rejects(
+    () => compileRelease({ sourceDir: pendingRow }),
+    (error) => error.code === "PRESENTATION_APPROVAL_PENDING",
+  );
+});
+
+test("T-005 F-018 Q-013 keeps Q-006 and Q-012 release gates independent", async (t) => {
+  const pendingResultContent = await createApprovedSourceTree(t);
+  await replaceInFile(
+    path.join(pendingResultContent, "approvals", "result-content-approvals.csv"),
+    '"approved","reviewer","2026-07-26","human note"',
+    '"draft","","",""',
+  );
+  await assert.rejects(
+    () => compileRelease({ sourceDir: pendingResultContent }),
+    (error) => error.code === "CONTENT_APPROVAL_PENDING",
+  );
+
+  const pendingCharacter = await createApprovedSourceTree(t);
+  await replaceInFile(
+    path.join(pendingCharacter, "characters", appMeta.characterManifestVersion, "characters.csv"),
+    '"approved","approved","approved","approved","reviewer"',
+    '"pending","approved","approved","approved","reviewer"',
+  );
+  await assert.rejects(
+    () => compileRelease({ sourceDir: pendingCharacter }),
+    (error) => error.code === "CHARACTER_APPROVAL_PENDING",
+  );
 });
 
 test("T-006 rejects every selected diagnostic-definition version mismatch", async (t) => {
