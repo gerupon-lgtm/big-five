@@ -1,5 +1,6 @@
 import { FACTOR_ORDER } from "../config/factor-order.js";
-import { PRESENTATION_SCENE_IDS } from "./presentation-scenes.js";
+import { PRESENTATION_SCENE_ICON_IDS, PRESENTATION_SCENE_IDS } from "./presentation-scenes.js";
+import { FRAGRANCE_FAMILY_IDS } from "./fragrance-taxonomy.js";
 
 const TITLE_PROFILE_FIELDS = [
   "titleId",
@@ -23,7 +24,7 @@ const DEFINITION_SET_FIELDS = [
 const SELECTOR_FIELDS = ["titleId", "alternativePaletteIds", "fragranceScenes"];
 const SCENE_SELECTOR_FIELDS = ["sceneId", "candidateFragranceIds", "shareFragranceId"];
 const FACTOR_FIELDS = ["factorId", "direction"];
-const SCENE_FIELDS = ["sceneId", "label"];
+const SCENE_FIELDS = ["sceneId", "label", "iconId"];
 const PALETTE_FIELDS = ["paletteId", "version", "label", "baseColors", "description"];
 const BASE_COLOR_FIELDS = ["primary", "secondary", "accent"];
 const MAPPING_FIELDS = ["paletteId", "version", "roles", "textCandidates"];
@@ -33,6 +34,7 @@ const FRAGRANCE_FIELDS = [
   "fragranceId",
   "version",
   "sceneId",
+  "familyId",
   "accordLabel",
   "description",
   "materialIds",
@@ -140,6 +142,7 @@ function validateDefinitionSet(definitionSet) {
     !scenes.every((scene, index) =>
       hasExactFields(scene, SCENE_FIELDS) &&
       scene.sceneId === PRESENTATION_SCENE_IDS[index] &&
+      scene.iconId === PRESENTATION_SCENE_ICON_IDS[index] &&
       isNonEmptyString(scene.label)) ||
     !isDenseArray(palettes) ||
     palettes.length === 0 ||
@@ -193,6 +196,7 @@ function validateDefinitionSet(definitionSet) {
       isNonEmptyString(fragrance.fragranceId) &&
       fragrance.version === version &&
       PRESENTATION_SCENE_IDS.includes(fragrance.sceneId) &&
+      FRAGRANCE_FAMILY_IDS.includes(fragrance.familyId) &&
       isNonEmptyString(fragrance.accordLabel) &&
       isNonEmptyString(fragrance.description) &&
       isDenseArray(fragrance.materialIds) &&

@@ -1,10 +1,15 @@
 import { validateTitleProfileDefinitions } from "./title-profile.js";
+import { FRAGRANCE_FAMILY_IDS } from "./fragrance-taxonomy.js";
+import { PRESENTATION_SCENE_ICON_IDS } from "./presentation-scenes.js";
 
 const ROOT_FIELDS_BY_SCHEMA_VERSION = {
   1: ["schemaVersion", "presentationDefinitionVersion", "scenes", "palettes", "fragrances", "titleSelectors"],
   2: ["schemaVersion", "presentationDefinitionVersion", "scenes", "palettes", "paletteUsageMappings", "fragrances", "fragranceMaterials", "titleSelectors"],
 };
-const SCENE_FIELDS = ["sceneId", "label"];
+const SCENE_FIELDS_BY_SCHEMA_VERSION = {
+  1: ["sceneId", "label"],
+  2: ["sceneId", "label", "iconId"],
+};
 const PALETTE_FIELDS = ["paletteId", "version", "label", "baseColors", "description"];
 const BASE_COLOR_FIELDS = ["primary", "secondary", "accent"];
 const PALETTE_USAGE_MAPPING_FIELDS = ["paletteId", "version", "roles", "textCandidates"];
@@ -12,7 +17,7 @@ const PALETTE_USAGE_ROLE_FIELDS = ["background", "surface", "accent", "chart"];
 const PALETTE_USAGE_ROLE_DEFINITION_FIELDS = ["source", "mixWith", "mixPercent"];
 const FRAGRANCE_FIELDS_BY_SCHEMA_VERSION = {
   1: ["fragranceId", "version", "sceneId", "accordLabel", "description", "disclaimerId"],
-  2: ["fragranceId", "version", "sceneId", "accordLabel", "description", "materialIds", "disclaimerId"],
+  2: ["fragranceId", "version", "sceneId", "familyId", "accordLabel", "description", "materialIds", "disclaimerId"],
 };
 const FRAGRANCE_MATERIAL_FIELDS = ["materialId", "version", "displayName", "materialKind"];
 const SELECTOR_FIELDS = ["titleId", "alternativePaletteIds", "fragranceScenes"];
@@ -72,9 +77,12 @@ function deepFreeze(value) {
   return value;
 }
 
-function validateScenes(scenes) {
-  if (!isDenseArray(scenes) || scenes.length !== SCENES.length || !scenes.every((scene) => hasExactFields(scene, SCENE_FIELDS))) failDefinition();
-  if (!scenes.every(({ sceneId, label }, index) => sceneId === SCENES[index].sceneId && label === SCENES[index].label)) failDefinition();
+function validateScenes(scenes, schemaVersion) {
+  const sceneFields = SCENE_FIELDS_BY_SCHEMA_VERSION[schemaVersion];
+  if (!isDenseArray(scenes) || scenes.length !== SCENES.length || !scenes.every((scene) => hasExactFields(scene, sceneFields))) failDefinition();
+  if (!scenes.every(({ sceneId, label, iconId }, index) =>
+    sceneId === SCENES[index].sceneId && label === SCENES[index].label &&
+    (schemaVersion === 1 || iconId === PRESENTATION_SCENE_ICON_IDS[index]))) failDefinition();
 }
 
 function validatePalettes(palettes, expectedVersion) {
@@ -116,10 +124,11 @@ function validateFragrances(fragrances, expectedVersion, fragranceMaterials) {
   const schemaVersion = fragranceMaterials ? 2 : 1;
   const fragranceFields = FRAGRANCE_FIELDS_BY_SCHEMA_VERSION[schemaVersion];
   if (!isDenseArray(fragrances) || !fragrances.every((fragrance) => hasExactFields(fragrance, fragranceFields))) failDefinition();
-  if (!fragrances.every(({ fragranceId, version, sceneId, accordLabel, description, disclaimerId }) => {
+  if (!fragrances.every(({ fragranceId, version, sceneId, familyId, accordLabel, description, disclaimerId }) => {
     const idMatch = FRAGRANCE_ID_PATTERN.exec(fragranceId);
     return idMatch !== null && idMatch[1] === sceneId && version === expectedVersion && SCENE_IDS.has(sceneId) &&
-      [accordLabel, description, disclaimerId].every(isNonEmptyString);
+      [accordLabel, description, disclaimerId].every(isNonEmptyString) &&
+      (schemaVersion === 1 || FRAGRANCE_FAMILY_IDS.includes(familyId));
   })) failDefinition();
   if (!hasUniqueValues(fragrances.map(({ fragranceId }) => fragranceId))) failDefinition();
   if (schemaVersion === 2) {
@@ -209,7 +218,7 @@ export function validatePresentationDefinitionSet(value, { titleProfiles, expect
   const { schemaVersion, presentationDefinitionVersion, scenes, palettes, paletteUsageMappings, fragrances, fragranceMaterials, titleSelectors } = value;
   if (!hasExactFields(value, ROOT_FIELDS_BY_SCHEMA_VERSION[schemaVersion]) || presentationDefinitionVersion !== expectedVersion) failDefinition();
 
-  validateScenes(scenes);
+  validateScenes(scenes, schemaVersion);
   validatePalettes(palettes, expectedVersion);
   if (schemaVersion === 2) {
     validatePaletteUsageMappings(paletteUsageMappings, palettes, expectedVersion);

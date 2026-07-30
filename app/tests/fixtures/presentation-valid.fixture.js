@@ -20,7 +20,7 @@ function palette(paletteId, version) {
   };
 }
 
-function fragrance(fragranceId, version, sceneId, materialIds) {
+function fragrance(fragranceId, version, sceneId, materialIds, familyId) {
   return {
     fragranceId,
     version,
@@ -28,6 +28,7 @@ function fragrance(fragranceId, version, sceneId, materialIds) {
     accordLabel: "Fixture accord",
     description: "An atmospheric suggestion.",
     ...(materialIds ? { materialIds } : {}),
+    ...(familyId ? { familyId } : {}),
     disclaimerId: "fragrance-disclaimer-v1",
   };
 }
@@ -75,7 +76,13 @@ export function makeValidPresentationDefinitionSet(titleProfiles, { schemaVersio
             fragranceMaterial(materialIds[1], version, "Lavender essential oil", "essential-oil-name"),
           );
         }
-        fragrances.push(fragrance(fragranceId, version, sceneId, schemaVersion === 2 ? materialIds : undefined));
+        fragrances.push(fragrance(
+          fragranceId,
+          version,
+          sceneId,
+          schemaVersion === 2 ? materialIds : undefined,
+          schemaVersion === 2 ? "floral" : undefined,
+        ));
       }
       return { sceneId, candidateFragranceIds, shareFragranceId: candidateFragranceIds[0] };
     });
@@ -86,7 +93,12 @@ export function makeValidPresentationDefinitionSet(titleProfiles, { schemaVersio
   return {
     schemaVersion,
     presentationDefinitionVersion: version,
-    scenes: structuredClone(SCENES),
+    scenes: SCENES.map((scene, index) => ({
+      ...scene,
+      ...(schemaVersion === 2 ? {
+        iconId: ["aroma-pause", "aroma-reset", "aroma-quiet-focus"][index],
+      } : {}),
+    })),
     palettes,
     ...(schemaVersion === 2 ? { paletteUsageMappings: palettes.map(({ paletteId }) => paletteUsageMapping(paletteId, version)) } : {}),
     fragrances,

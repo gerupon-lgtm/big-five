@@ -19,11 +19,12 @@ function validPresentationRows() {
     version: PRESENTATION_VERSION,
   });
   return {
-    sceneRows: definition.scenes.map(({ sceneId, label }, index) => ({
+    sceneRows: definition.scenes.map(({ sceneId, label, iconId }, index) => ({
       scene_id: sceneId,
       presentation_definition_version: PRESENTATION_VERSION,
       display_order: index + 1,
       label,
+      icon_id: iconId,
       status: "draft",
     })),
     paletteRows: definition.palettes.map(({ paletteId, label, baseColors, description }, index) => ({
@@ -58,11 +59,12 @@ function validPresentationRows() {
       text_candidate_2: textCandidates[1],
       status: "draft",
     })),
-    fragranceRows: definition.fragrances.map(({ fragranceId, sceneId, accordLabel, description, disclaimerId }, index) => ({
+    fragranceRows: definition.fragrances.map(({ fragranceId, sceneId, familyId, accordLabel, description, disclaimerId }, index) => ({
       fragrance_id: fragranceId,
       presentation_definition_version: PRESENTATION_VERSION,
       display_order: index + 1,
       scene_id: sceneId,
+      family_id: familyId,
       accord_label: accordLabel,
       description,
       disclaimer_id: disclaimerId,
@@ -182,6 +184,10 @@ test("T-005 F-018 Q-013 normalized CSVs compile to the exact presentation defini
   assert.equal(compiled.schemaVersion, 2);
   assert.equal(compiled.fragrances[0].materialIds.length >= 1, true);
   assert.equal(compiled.fragrances[0].materialIds.length <= 3, true);
+  assert.deepEqual(compiled.scenes.map(({ iconId }) => iconId), [
+    "aroma-pause", "aroma-reset", "aroma-quiet-focus",
+  ]);
+  assert.equal(compiled.fragrances[0].familyId, "floral");
   assert.equal(Object.isFrozen(compiled), true);
 });
 
@@ -251,6 +257,8 @@ test("T-005 F-018 Q-013 graph invariants allow shared palette, fragrance, and ma
 test("T-005 F-018 rejects incomplete, unordered, orphaned, and unsafe normalized presentation rows", () => {
   const cases = [
     ["missing scene", (rows) => rows.sceneRows.pop()],
+    ["unknown scene icon", (rows) => { rows.sceneRows[0].icon_id = "aroma-missing"; }],
+    ["unknown fragrance family", (rows) => { rows.fragranceRows[0].family_id = "missing"; }],
     ["duplicate palette usage order", (rows) => { rows.paletteUsageRows[1].display_order = 1; }],
     ["palette mapping order mismatch", (rows) => {
       [rows.paletteUsageRows[0].display_order, rows.paletteUsageRows[1].display_order] =

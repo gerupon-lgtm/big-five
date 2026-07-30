@@ -6,6 +6,7 @@
     { "name": "presentation_definition_version", "type": "version", "required": true },
     { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
     { "name": "scene_id", "type": "id", "required": true },
+    { "name": "family_id", "type": "id", "required": true },
     { "name": "accord_label", "type": "text", "required": true },
     { "name": "description", "type": "text", "required": true },
     { "name": "disclaimer_id", "type": "id", "required": true },

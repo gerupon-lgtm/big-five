@@ -63,6 +63,10 @@ export const invalidPresentationCases = [
 ];
 
 export const invalidPresentationSchema2Cases = [
+  { name: "unknown scene icon", mutate: (value) => { value.scenes[0].iconId = "aroma-missing"; }, error: definitionError },
+  { name: "missing scene icon", mutate: (value) => { delete value.scenes[0].iconId; }, error: definitionError },
+  { name: "unknown fragrance family", mutate: (value) => { value.fragrances[0].familyId = "missing"; }, error: definitionError },
+  { name: "missing fragrance family", mutate: (value) => { delete value.fragrances[0].familyId; }, error: definitionError },
   { name: "missing schema 2 root field", mutate: (value) => { delete value.fragranceMaterials; }, error: definitionError },
   { name: "extra schema 2 root field", mutate: (value) => { value.unexpected = true; }, error: definitionError },
   { name: "duplicate material IDs", mutate: (value) => { value.fragranceMaterials[1].materialId = value.fragranceMaterials[0].materialId; }, error: definitionError },
@@ -76,5 +80,7 @@ export const invalidPresentationSchema2Cases = [
   { name: "orphan palette usage mapping", mutate: (value) => { value.paletteUsageMappings[0].paletteId = "palette-orphan"; }, error: definitionError },
   { name: "malformed palette usage recipe", mutate: (value) => { value.paletteUsageMappings[0].roles.background.mixPercent = 101; }, error: definitionError },
   { name: "material field leaking into schema 1", schemaVersion: 1, mutate: (value) => { value.fragrances[0].materialIds = []; }, error: definitionError },
+  { name: "scene icon leaking into schema 1", schemaVersion: 1, mutate: (value) => { value.scenes[0].iconId = "aroma-pause"; }, error: definitionError },
+  { name: "fragrance family leaking into schema 1", schemaVersion: 1, mutate: (value) => { value.fragrances[0].familyId = "floral"; }, error: definitionError },
   { name: "forbidden material usage copy", mutate: (value) => { value.fragranceMaterials[0].displayName = "Use a diffuser"; }, error: copyError, finding: { definitionId: "material-0001-a", field: "displayName", code: "forbidden-usage" } },
 ];

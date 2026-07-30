@@ -289,6 +289,13 @@ test("T-008A title reflection authoring schema requires the exact six-column con
 
 test("T-005 F-018 Q-013 presentation v2 schemas require the exact authoring columns", async () => {
   const expected = {
+    scenes: [
+      "scene_id", "presentation_definition_version", "display_order", "label", "icon_id", "status",
+    ],
+    fragrances: [
+      "fragrance_id", "presentation_definition_version", "display_order", "scene_id", "family_id",
+      "accord_label", "description", "disclaimer_id", "status",
+    ],
     palettes: [
       "palette_id", "presentation_definition_version", "display_order", "label",
       "primary_color", "secondary_color", "accent_color", "description",

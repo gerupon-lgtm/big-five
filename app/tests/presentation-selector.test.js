@@ -44,6 +44,7 @@ test("T-005 F-018 selects the standard palette, ordered alternatives, and ordere
       scene.shareRepresentative.fragranceId,
       selector.fragranceScenes[index].shareFragranceId,
     );
+    assert.equal(scene.candidates[0].familyId, "floral");
   }
   assert.equal(Object.isFrozen(selection), true);
   assert.equal(Object.isFrozen(selection.palettes.alternatives), true);

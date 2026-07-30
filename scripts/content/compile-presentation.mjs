@@ -123,6 +123,7 @@ function compileFragrances(fragranceRows, materialRows, materialExampleRows, sce
       fragranceId: row.fragrance_id,
       version: row.presentation_definition_version,
       sceneId: row.scene_id,
+      familyId: row.family_id,
       accordLabel: row.accord_label,
       description: row.description,
       materialIds: fragranceMaterialIds,
@@ -209,7 +210,11 @@ export function compilePresentationContent(input, expectedVersion) {
       selectorFragranceRows,
     );
     if (!sceneRows.every((row) => row.presentation_definition_version === expectedVersion)) invalid();
-    const scenes = ordered(sceneRows).map(({ scene_id, label }) => ({ sceneId: scene_id, label }));
+    const scenes = ordered(sceneRows).map(({ scene_id, label, icon_id }) => ({
+      sceneId: scene_id,
+      label,
+      iconId: icon_id,
+    }));
     const { palettes, paletteUsageMappings } = compilePalettes(paletteRows, paletteUsageRows, expectedVersion);
     const { fragrances, fragranceMaterials } = compileFragrances(
       fragranceRows,
