@@ -83,3 +83,7 @@ The committed standalone preview currently uses comparison preset B: background 
 ### パレット色名レビュー（2026-07-30）
 
 利用者レビューで指摘された70候補について、現在の基調色HEXとB表示を維持したまま、結果画面で表示する色名を実際の背景色へ整合しました。同じ称号の3候補は異なる名称とprimary HEXを維持しています。解消済みの確認注記は空へ戻しましたが、全行の`draft`、P-0〜P-6、正式共有カードおよびruntimeの承認状態は変更していません。
+
+### 同一称号内の色相差レビュー（2026-07-31）
+
+利用者の目視確認で近く見えた9称号について、B表示後の背景RGBを比較し、各称号で近接ペアの片方に当たる色トークンを別の色相へ調整しました。1色の変更は同じ称号内の`primary_color`、`secondary_color`、`accent_color`へ循環して反映しています。ID、表示名、説明、行順、`palette-usage-mappings.csv`、B濃度、全行の`draft`およびP-0〜P-6は変更していません。

@@ -488,3 +488,7 @@ The standalone `docs/palette-preview.html` now uses comparison preset B (backgro
 ### Q-013 パレット色名整合（2026-07-30）
 
 利用者が目視確認した不一致をもとに、70候補の表示名を現在のprimary HEXへ合わせた。基調色、B表示（background 84%／surface 90%）、ID、順序、説明、selector、`draft`およびP-0〜P-6は変更していない。同一称号内の3候補について、labelとprimary HEXが重複しないことをテストする。
+
+### Q-013 同一称号内の色相差調整（2026-07-31）
+
+利用者が近接して見えると確認した9称号について、B表示後の背景色を比較し、各称号で1つの循環色トークンを名称に沿う別色相へ調整する。同一称号の3候補はB表示後のRGB距離7以上を維持し、色トークンのprimary／secondary／accent循環をテストする。`palette-usage-mappings.csv`、B濃度、ID、表示名、説明、selector、`draft`およびP-0〜P-6は変更しない。

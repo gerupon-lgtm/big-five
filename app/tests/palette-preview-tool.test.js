@@ -129,7 +129,7 @@ test("P-0 preview model maps 51 titles to exactly three palettes", async () => {
     baseColors: {
       primary: "#7C8791",
       secondary: "#8FAFC1",
-      accent: "#A8B7A1",
+      accent: "#4F9B58",
     },
     mapping: {
       background: {
@@ -157,14 +157,14 @@ test("P-0 preview model maps 51 titles to exactly three palettes", async () => {
     resolved: {
       background: "#EAECED",
       surface: "#F4F7F9",
-      accent: "#5C6559",
+      accent: "#2B5530",
       text: "#1F2430",
       chart: "#444A50",
     },
     contrast: {
       textBackground: 13.094,
       textSurface: 14.423,
-      accentSurface: 5.64,
+      accentSurface: 7.984,
       chartBackground: 7.569,
       valid: true,
     },
