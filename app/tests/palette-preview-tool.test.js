@@ -31,7 +31,7 @@ const SCRIPT_PATH = path.join(
 const COMMITTED_PREVIEW = path.join(ROOT, "docs/palette-preview.html");
 
 test("share-card preview definition fixes factor colors and sample values", () => {
-  assert.equal(shareCardPreviewDefinition.version, "share-card-preview-v2");
+  assert.equal(shareCardPreviewDefinition.version, "share-card-preview-v3");
   assert.equal(
     shareCardPreviewDefinition.representativeCatSource,
     "docs/assets/character-production/source-png/character-balanced.png",
@@ -43,6 +43,15 @@ test("share-card preview definition fixes factor colors and sample values", () =
   assert.equal(
     shareCardPreviewDefinition.representativeCatUnavailableMessage,
     "代表猫画像を表示できません。配色と情報量は引き続き確認できます。",
+  );
+  assert.equal(shareCardPreviewDefinition.aromaHeading, "ココロアロマ");
+  assert.equal(
+    shareCardPreviewDefinition.aromaSubtitle,
+    "～あなたらしさから着想した香り～",
+  );
+  assert.equal(
+    shareCardPreviewDefinition.aromaNote,
+    "香りをイメージするための素材例です",
   );
   assert.deepEqual(
     shareCardPreviewDefinition.factors.map(({ factorId }) => factorId),
@@ -126,6 +135,29 @@ test("P-0 preview model maps 51 titles to exactly three palettes", async () => {
     titleDescription: "五つの傾向が近い範囲に集まるバランス派",
     description: "複数の方向を等しく見渡す中立的な印象。",
     contentReviewNote: "",
+    fragrances: [
+      {
+        sceneId: "pause",
+        iconId: "aroma-pause",
+        label: "ひと息つきたい",
+        materialNames: ["ローマンカモミール"],
+        accordLabel: "まろやかな甘みの草花の香調",
+      },
+      {
+        sceneId: "reset",
+        iconId: "aroma-reset",
+        label: "気持ちを切り替えたい",
+        materialNames: ["グレープフルーツ"],
+        accordLabel: "ほろ苦く明るい柑橘の香調",
+      },
+      {
+        sceneId: "quiet-focus",
+        iconId: "aroma-quiet-focus",
+        label: "静かに取り組みたい",
+        materialNames: ["ベルガモット"],
+        accordLabel: "ほろ苦く端正な柑橘の香調",
+      },
+    ],
     baseColors: {
       primary: "#7C8791",
       secondary: "#98B0AA",
@@ -206,6 +238,7 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
     (html.match(/class="preview-fragrance-row"/g) ?? []).length,
     153 * 3,
   );
+  assert.equal((html.match(/class="preview-aroma"/g) ?? []).length, 153);
   assert.equal(
     (html.match(/data:image\/png;base64,/g) ?? []).length,
     1,
@@ -215,6 +248,13 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
     153,
   );
   assert.match(html, /aspect-ratio:\s*3\s*\/\s*5/);
+  assert.match(html, /ココロアロマ/);
+  assert.match(html, /～あなたらしさから着想した香り～/);
+  assert.match(html, /香りをイメージするための素材例です/);
+  assert.match(html, /ローマンカモミール/);
+  assert.match(html, /data-icon-id="aroma-pause"/);
+  assert.match(html, /data-icon-id="aroma-reset"/);
+  assert.match(html, /data-icon-id="aroma-quiet-focus"/);
   assert.match(html, /配色確認用の簡略プレビュー/);
   assert.match(
     html,
@@ -291,6 +331,7 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
       "preview-cat",
       "preview-cat-notice",
       "preview-factors",
+      "preview-aroma",
       "preview-fragrances",
       "preview-disclaimer",
       "preview-mode",
@@ -311,6 +352,11 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
     assert.deepEqual(factorTuples, expectedFactorTuples);
     assert.equal(
       (card.match(/class="preview-fragrance-row"/g) ?? []).length,
+      3,
+    );
+    assert.equal(
+      (card.match(/data-icon-id="aroma-(?:pause|reset|quiet-focus)"/g) ?? [])
+        .length,
       3,
     );
   }

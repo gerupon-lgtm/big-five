@@ -7,7 +7,9 @@ const EXACT_FIELDS = [
   "representativeCatNotice",
   "representativeCatUnavailableMessage",
   "modeLabel",
-  "fragrancePlaceholders",
+  "aromaHeading",
+  "aromaSubtitle",
+  "aromaNote",
   "factors",
 ];
 const FACTOR_FIELDS = [
@@ -34,17 +36,16 @@ export function validateShareCardPreviewDefinition(definition) {
   if (!definition || typeof definition !== "object" ||
     Object.keys(definition).length !== EXACT_FIELDS.length ||
     !EXACT_FIELDS.every((field) => Object.hasOwn(definition, field)) ||
-    definition.version !== "share-card-preview-v2" ||
+    definition.version !== "share-card-preview-v3" ||
     definition.representativeCatSource !==
       "docs/assets/character-production/source-png/character-balanced.png" ||
     typeof definition.representativeCatNotice !== "string" ||
     typeof definition.representativeCatUnavailableMessage !== "string" ||
     definition.representativeCatUnavailableMessage.length === 0 ||
     definition.modeLabel !== "50問 詳細結果" ||
-    !Array.isArray(definition.fragrancePlaceholders) ||
-    definition.fragrancePlaceholders.length !== 3 ||
-    !definition.fragrancePlaceholders.every((value) =>
-      typeof value === "string" && value.length > 0) ||
+    definition.aromaHeading !== "ココロアロマ" ||
+    definition.aromaSubtitle !== "～あなたらしさから着想した香り～" ||
+    definition.aromaNote !== "香りをイメージするための素材例です" ||
     !Array.isArray(definition.factors) ||
     definition.factors.length !== FACTOR_ORDER.length ||
     definition.factors.some((factor, index) =>
@@ -63,7 +64,7 @@ export function validateShareCardPreviewDefinition(definition) {
 }
 
 export const shareCardPreviewDefinition = deepFreeze({
-  version: "share-card-preview-v2",
+  version: "share-card-preview-v3",
   representativeCatSource:
     "docs/assets/character-production/source-png/character-balanced.png",
   representativeCatNotice:
@@ -71,11 +72,9 @@ export const shareCardPreviewDefinition = deepFreeze({
   representativeCatUnavailableMessage:
     "代表猫画像を表示できません。配色と情報量は引き続き確認できます。",
   modeLabel: "50問 詳細結果",
-  fragrancePlaceholders: [
-    "ひと息つく場面",
-    "気持ちを整える場面",
-    "静かに集中する場面",
-  ],
+  aromaHeading: "ココロアロマ",
+  aromaSubtitle: "～あなたらしさから着想した香り～",
+  aromaNote: "香りをイメージするための素材例です",
   factors: [
     {
       factorId: "intellectImagination",

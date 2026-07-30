@@ -10,6 +10,7 @@ import {
   validatePaletteContrast,
 } from "../../app/js/domain/palette-usage.js";
 import { selectPresentation } from "../../app/js/domain/presentation-selector.js";
+import { summarizeFragrances } from "../../app/js/domain/share-fragrance-summary.js";
 import { loadPresentationReviewModel } from "./render-presentation-review.mjs";
 import {
   shareCardPreviewDefinition,
@@ -186,6 +187,7 @@ export async function loadPalettePreviewModel({
 
   for (const [titleIndex, title] of review.titleProfiles.entries()) {
     const selection = selectPresentation(title, review.definitionSet);
+    const fragrances = summarizeFragrances(selection.fragranceScenes);
     const selectedPalettes = [
       selection.palettes.standard,
       ...selection.palettes.alternatives,
@@ -208,6 +210,7 @@ export async function loadPalettePreviewModel({
         titleDescription: titleDescriptionById.get(title.titleId),
         description: palette.description,
         contentReviewNote: contentReviewById.get(palette.paletteId),
+        fragrances,
         baseColors: palette.baseColors,
         mapping: projectMapping(previewMappingDefinition),
         resolved: previewReport.resolved,
@@ -312,9 +315,23 @@ function shareCardPreview(entry, preview) {
       <div class="preview-factors">
         ${preview.definition.factors.map(factorRow).join("")}
       </div>
-      <div class="preview-fragrances" aria-label="香り欄の配置見本">
-        ${preview.definition.fragrancePlaceholders.map((label) =>
-          `<div class="preview-fragrance-row"><span>${escapeHtml(label)}</span><i></i></div>`).join("")}
+      <div class="preview-aroma" aria-label="ココロアロマ">
+        <p class="preview-aroma-heading">
+          <strong>${escapeHtml(preview.definition.aromaHeading)}</strong>
+          <small>${escapeHtml(preview.definition.aromaSubtitle)}</small>
+        </p>
+        <div class="preview-fragrances">
+          ${entry.fragrances.map((fragrance) => `
+          <div class="preview-fragrance-row" data-icon-id="${escapeHtml(fragrance.iconId)}">
+            <span class="preview-aroma-icon" aria-hidden="true"></span>
+            <span class="preview-aroma-copy">
+              <b>${escapeHtml(fragrance.label)}</b>
+              <strong>${escapeHtml(fragrance.materialNames.join("・"))}</strong>
+              <small>${escapeHtml(fragrance.accordLabel)}</small>
+            </span>
+          </div>`).join("")}
+        </div>
+        <p class="preview-aroma-note">${escapeHtml(preview.definition.aromaNote)}</p>
       </div>
       <p class="preview-disclaimer">
         これは性格の優劣や心理学上の正式なタイプを示すものではありません。
@@ -562,10 +579,21 @@ function previewStyles(preview) {
       height: 100%;
       background: var(--factor-bar-fill);
     }
-    .preview-fragrances { display: grid; gap: .17rem; margin-top: .36rem; }
-    .preview-fragrance-row { display: flex; align-items: center; gap: .35rem; font-size: .5rem; }
-    .preview-fragrance-row span { white-space: nowrap; }
-    .preview-fragrance-row i { flex: 1; height: .28rem; border-radius: 999px; background: var(--preview-surface); border: 1px solid var(--preview-accent); }
+    .preview-aroma { margin-top: .34rem; padding: .28rem .34rem; border-radius: .5rem; background: var(--preview-surface); }
+    .preview-aroma-heading { margin: 0 0 .2rem; text-align: center; }
+    .preview-aroma-heading strong, .preview-aroma-heading small { display: block; }
+    .preview-aroma-heading strong { font-size: .58rem; letter-spacing: .04em; }
+    .preview-aroma-heading small { font-size: .39rem; line-height: 1.25; }
+    .preview-fragrances { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .16rem; }
+    .preview-fragrance-row { min-width: 0; padding: .18rem; border: 1px solid var(--preview-accent); border-radius: .35rem; font-size: .39rem; line-height: 1.2; }
+    .preview-aroma-icon { display: block; width: .52rem; height: .52rem; margin: 0 auto .08rem; border: 1px solid var(--preview-accent); border-radius: 50%; background: var(--preview-bg); }
+    .preview-fragrance-row[data-icon-id="aroma-reset"] .preview-aroma-icon { border-style: dashed; }
+    .preview-fragrance-row[data-icon-id="aroma-quiet-focus"] .preview-aroma-icon { border-radius: .12rem; transform: rotate(45deg); }
+    .preview-aroma-copy, .preview-aroma-copy b, .preview-aroma-copy strong, .preview-aroma-copy small { display: block; min-width: 0; }
+    .preview-aroma-copy b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .38rem; }
+    .preview-aroma-copy strong { margin-top: .06rem; overflow-wrap: anywhere; font-size: .43rem; }
+    .preview-aroma-copy small { margin-top: .05rem; font-size: .34rem; }
+    .preview-aroma-note { margin: .16rem 0 0; font-size: .34rem; text-align: center; }
     .preview-disclaimer { margin: .38rem 0 .14rem; font-size: .45rem; line-height: 1.3; }
     .preview-mode { color: var(--preview-text); font-size: .5rem; }
     .preview-version { margin-top: .08rem; font-size: .45rem; text-align: right; }
