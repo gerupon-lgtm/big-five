@@ -75,3 +75,7 @@ npm.cmd run content:preview:palettes
 JSON runtime loadingとGitHub Pages/Actionsのactivationは、この基盤とは別の[activation plan](superpowers/plans/2026-07-26-csv-content-activation-pages.md)で扱います。activation後はActionsがvalidation、build、deployを自動実行し、人はCSVだけをコミットします。buildが失敗した場合、現在のデプロイは変更されません。
 
 この文書はfoundation時点の手順です。現在の通常モードは外部通信0件、CSPは`connect-src 'none'`のままであり、runtime JSON fetchやPages deploymentはまだ有効化されていません。
+
+### Palette preview intensity note (2026-07-30)
+
+The committed standalone preview currently uses comparison preset B: background white mix 84%, surface white mix 90%. This is a preview-only display override. The canonical `palette-usage-mappings.csv` remains unchanged at its A values (background 92%, surface 95%), and no production share-card or runtime color decision is implied.

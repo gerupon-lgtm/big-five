@@ -481,3 +481,6 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 | 色・香り実データ | `presentation-v2`の153パレット、用途色、香調、香り素材、51称号との関連はdraft作成済み。P-0向け単一HTMLで実使用色を目視確認できる。P-0〜P-6の人手承認とruntime接続は未完了 | Q-013の各gateを順に人手承認 |
 
 これは要件漏れではなく、要件書19章に期限付きで残る後続決定である。
+### Palette preview intensity note (2026-07-30)
+
+The standalone `docs/palette-preview.html` now uses comparison preset B (background white mix 84%, surface white mix 90%) for visual inspection. The canonical `palette-usage-mappings.csv` remains at A values (background 92%, surface 95%); this does not approve or change production share-card colors.

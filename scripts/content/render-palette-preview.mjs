@@ -4,6 +4,11 @@ import { pathToFileURL } from "node:url";
 
 import { appMeta } from "../../app/js/config/app-meta.js";
 import { ResultTextDefinitions } from "../../app/js/data/result-text-definitions.js";
+import {
+  contrastRatio,
+  resolvePaletteUsage,
+  validatePaletteContrast,
+} from "../../app/js/domain/palette-usage.js";
 import { selectPresentation } from "../../app/js/domain/presentation-selector.js";
 import { loadPresentationReviewModel } from "./render-presentation-review.mjs";
 import {
@@ -17,6 +22,15 @@ const SELECTION_ROLES = Object.freeze([
   Object.freeze({ id: "alternative-1", label: "代替1" }),
   Object.freeze({ id: "alternative-2", label: "代替2" }),
 ]);
+const PREVIEW_INTENSITIES = Object.freeze({
+  b: Object.freeze({
+    id: "b",
+    label: "B（背景84%／表面90%）",
+    backgroundMixPercent: 84,
+    surfaceMixPercent: 90,
+  }),
+});
+const DEFAULT_PREVIEW_INTENSITY = "b";
 
 function invalidPreview(cause) {
   if (cause === undefined) {
@@ -61,6 +75,34 @@ function projectMapping(mapping) {
   };
 }
 
+function previewMapping(mapping, intensity) {
+  const roles = Object.fromEntries(
+    Object.entries(mapping.roles).map(([role, definition]) => [
+      role,
+      { ...definition },
+    ]),
+  );
+  roles.background.mixPercent = intensity.backgroundMixPercent;
+  roles.surface.mixPercent = intensity.surfaceMixPercent;
+  return {
+    paletteId: mapping.paletteId,
+    version: mapping.version,
+    roles,
+    textCandidates: [...mapping.textCandidates],
+  };
+}
+
+function previewContrast(palette, mapping) {
+  const resolved = resolvePaletteUsage(palette, mapping);
+  const ratios = {
+    textBackground: contrastRatio(resolved.text, resolved.background),
+    textSurface: contrastRatio(resolved.text, resolved.surface),
+    accentSurface: contrastRatio(resolved.accent, resolved.surface),
+    chartBackground: contrastRatio(resolved.chart, resolved.background),
+  };
+  return { resolved, ratios, valid: validatePaletteContrast(resolved).valid };
+}
+
 function titleDescriptionsById(titleProfiles) {
   const descriptions = ResultTextDefinitions.filter((definition) =>
     definition.version === appMeta.diagnosticVersions.resultTextVersion &&
@@ -84,12 +126,15 @@ function titleDescriptionsById(titleProfiles) {
 
 export async function loadPalettePreviewModel({
   sourceDir,
+  previewIntensity = DEFAULT_PREVIEW_INTENSITY,
   representativeCatPath = path.join(
     PROJECT_ROOT,
     shareCardPreviewDefinition.representativeCatSource,
   ),
 } = {}) {
   if (typeof sourceDir !== "string" || sourceDir === "") invalidPreview();
+  const intensity = PREVIEW_INTENSITIES[previewIntensity];
+  if (!intensity) invalidPreview(new TypeError("PREVIEW_INTENSITY_INVALID"));
   try {
     validateShareCardPreviewDefinition(shareCardPreviewDefinition);
   } catch (error) {
@@ -151,6 +196,8 @@ export async function loadPalettePreviewModel({
       if (!mapping || !report || !contentReviewById.has(palette.paletteId)) {
         invalidPreview();
       }
+      const previewMappingDefinition = previewMapping(mapping, intensity);
+      const previewReport = previewContrast(palette, previewMappingDefinition);
       palettes.push({
         titleId: title.titleId,
         titleLabel: title.label,
@@ -162,9 +209,9 @@ export async function loadPalettePreviewModel({
         description: palette.description,
         contentReviewNote: contentReviewById.get(palette.paletteId),
         baseColors: palette.baseColors,
-        mapping: projectMapping(mapping),
-        resolved: report.resolved,
-        contrast: roundedRatios(report),
+        mapping: projectMapping(previewMappingDefinition),
+        resolved: previewReport.resolved,
+        contrast: roundedRatios(previewReport),
       });
     });
   }
@@ -185,6 +232,10 @@ export async function loadPalettePreviewModel({
     palettes: Object.freeze(palettes),
     shareCardPreview: Object.freeze({
       definition: shareCardPreviewDefinition,
+      intensityId: intensity.id,
+      intensityLabel: intensity.label,
+      backgroundMixPercent: intensity.backgroundMixPercent,
+      surfaceMixPercent: intensity.surfaceMixPercent,
       representativeCatAvailable: representativeCat !== null,
       representativeCatError,
       representativeCatDataUrl: representativeCat === null
@@ -801,7 +852,11 @@ export function renderPalettePreview(model) {
         !(preview.representativeCatError.cause instanceof Error)) ||
     typeof preview.brandName !== "string" || preview.brandName === "" ||
     typeof preview.cardSubtitle !== "string" || preview.cardSubtitle === "" ||
-    typeof preview.appVersion !== "string" || preview.appVersion === "") {
+    typeof preview.appVersion !== "string" || preview.appVersion === "" ||
+    preview.intensityId !== DEFAULT_PREVIEW_INTENSITY ||
+    typeof preview.intensityLabel !== "string" || preview.intensityLabel === "" ||
+    preview.backgroundMixPercent !== 84 ||
+    preview.surfaceMixPercent !== 90) {
     invalidPreview();
   }
   try {
@@ -841,6 +896,7 @@ export function renderPalettePreview(model) {
     <p class="eyebrow">ココロパレア／Q-013 P-0</p>
     <h1>パレット実使用プレビュー</h1>
     <p>${model.titleCount}称号・${model.paletteCount}配色を、背景・表面・差し色・グラフ・文字へ展開した、配色・情報量確認用の簡略イメージです。完成共有カードではありません。現在のP-0状態は「${escapeHtml(model.approvalStatus)}」、WCAG適合は${validCount}件、内容要確認は${reviewCount}件です。</p>
+    <p data-preview-intensity="${escapeHtml(preview.intensityId)}">Preview intensity: ${escapeHtml(preview.intensityLabel)}</p>
   </header>
   <p class="notice">この画面で色を変更しても正典CSVは変更されません。試した変更は「変更一覧」へ表示されます。</p>
   <section class="toolbar" aria-label="プレビュー絞り込み">
@@ -880,14 +936,15 @@ function parseArguments(argv) {
   for (let index = 0; index < argv.length; index += 2) {
     const key = argv[index];
     const value = argv[index + 1];
-    if (!["--source", "--output"].includes(key) ||
+    if (!["--source", "--output", "--intensity"].includes(key) ||
       typeof value !== "string" || value.startsWith("--") ||
       Object.hasOwn(values, key)) {
       invalidPreview();
     }
     values[key] = value;
   }
-  if (argv.length !== 4 || !values["--source"] || !values["--output"]) {
+  if (![4, 6].includes(argv.length) || !values["--source"] || !values["--output"] ||
+    (values["--intensity"] && !PREVIEW_INTENSITIES[values["--intensity"]])) {
     invalidPreview();
   }
   return values;
@@ -897,6 +954,7 @@ async function main() {
   const args = parseArguments(process.argv.slice(2));
   const model = await loadPalettePreviewModel({
     sourceDir: path.resolve(args["--source"]),
+    previewIntensity: args["--intensity"] ?? DEFAULT_PREVIEW_INTENSITY,
   });
   await writeFile(
     path.resolve(args["--output"]),

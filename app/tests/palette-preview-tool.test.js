@@ -95,6 +95,9 @@ test("P-0 preview model maps 51 titles to exactly three palettes", async () => {
 
   assert.equal(model.presentationDefinitionVersion, "presentation-v2");
   assert.equal(model.approvalStatus, "draft");
+  assert.equal(model.shareCardPreview.intensityId, "b");
+  assert.equal(model.shareCardPreview.backgroundMixPercent, 84);
+  assert.equal(model.shareCardPreview.surfaceMixPercent, 90);
   assert.equal(model.titleCount, 51);
   assert.equal(model.paletteCount, 153);
   assert.equal(model.palettes.length, 153);
@@ -132,12 +135,12 @@ test("P-0 preview model maps 51 titles to exactly three palettes", async () => {
       background: {
         source: "primary",
         mixWith: "white",
-        mixPercent: 92,
+        mixPercent: 84,
       },
       surface: {
         source: "secondary",
         mixWith: "white",
-        mixPercent: 95,
+        mixPercent: 90,
       },
       accent: {
         source: "accent",
@@ -152,17 +155,17 @@ test("P-0 preview model maps 51 titles to exactly three palettes", async () => {
       textCandidates: ["#1F2430", "#FFFFFF"],
     },
     resolved: {
-      background: "#F5F5F6",
-      surface: "#F9FBFC",
+      background: "#EAECED",
+      surface: "#F4F7F9",
       accent: "#5C6559",
       text: "#1F2430",
       chart: "#444A50",
     },
     contrast: {
-      textBackground: 14.242,
-      textSurface: 14.951,
-      accentSurface: 5.846,
-      chartBackground: 8.233,
+      textBackground: 13.094,
+      textSurface: 14.423,
+      accentSurface: 5.64,
+      chartBackground: 7.569,
       valid: true,
     },
   });
@@ -232,7 +235,9 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
     html,
     /aria-label="五つの風を見渡す観測者 澄み切った空色の配色確認用簡略プレビュー"/,
   );
-  assert.match(html, /data-role="background-hex">#F5F5F6</);
+  assert.match(html, /data-role="background-hex">#EAECED</);
+  assert.match(html, /data-preview-intensity="b"/);
+  assert.match(html, /B（背景84%／表面90%）/);
   assert.doesNotMatch(html, /https?:\/\//);
   assert.doesNotMatch(html, /<script[^>]+\bsrc=/i);
   assert.doesNotMatch(html, /<link[^>]+\bhref=/i);
