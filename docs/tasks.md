@@ -484,3 +484,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 ### Palette preview intensity note (2026-07-30)
 
 The standalone `docs/palette-preview.html` now uses comparison preset B (background white mix 84%, surface white mix 90%) for visual inspection. The canonical `palette-usage-mappings.csv` remains at A values (background 92%, surface 95%); this does not approve or change production share-card colors.
+
+### Q-013 パレット色名整合（2026-07-30）
+
+利用者が目視確認した不一致をもとに、70候補の表示名を現在のprimary HEXへ合わせた。基調色、B表示（background 84%／surface 90%）、ID、順序、説明、selector、`draft`およびP-0〜P-6は変更していない。同一称号内の3候補について、labelとprimary HEXが重複しないことをテストする。

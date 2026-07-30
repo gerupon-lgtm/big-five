@@ -79,3 +79,7 @@ JSON runtime loadingとGitHub Pages/Actionsのactivationは、この基盤とは
 ### Palette preview intensity note (2026-07-30)
 
 The committed standalone preview currently uses comparison preset B: background white mix 84%, surface white mix 90%. This is a preview-only display override. The canonical `palette-usage-mappings.csv` remains unchanged at its A values (background 92%, surface 95%), and no production share-card or runtime color decision is implied.
+
+### パレット色名レビュー（2026-07-30）
+
+利用者レビューで指摘された70候補について、現在の基調色HEXとB表示を維持したまま、結果画面で表示する色名を実際の背景色へ整合しました。同じ称号の3候補は異なる名称とprimary HEXを維持しています。解消済みの確認注記は空へ戻しましたが、全行の`draft`、P-0〜P-6、正式共有カードおよびruntimeの承認状態は変更していません。

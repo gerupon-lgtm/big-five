@@ -15,10 +15,10 @@ import {
 const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const SOURCE_DIR = path.join(ROOT, "content/source");
-const PRE_REVIEW_NOTE_PALETTE_SHA256 =
-  "71CBDC93F20B10AB2B6B3683AFDAD7CEF9001F0877157D9A73CE80834768F089";
+const REVIEWED_PALETTE_PROJECTION_SHA256 =
+  "C689894C86A20AFDB118C1AF768DC7E1885C484A6B2AC7A0484E4C8533BD4802";
 
-test("adding content_review_note preserves every prior palette CSV byte and row order", async () => {
+test("reviewed palette projection stays byte-stable outside review notes", async () => {
   const source = await readFile(
     path.join(SOURCE_DIR, "presentation/presentation-v2/palettes.csv"),
     "utf8",
@@ -35,7 +35,7 @@ test("adding content_review_note preserves every prior palette CSV byte and row 
     .concat("\n");
   assert.equal(
     createHash("sha256").update(priorProjection).digest("hex").toUpperCase(),
-    PRE_REVIEW_NOTE_PALETTE_SHA256,
+    REVIEWED_PALETTE_PROJECTION_SHA256,
   );
 });
 
@@ -53,29 +53,12 @@ test("review model preserves the complete current Q-013 structure", async () => 
   assert.equal(
     model.paletteContentReviews.filter(({ contentReviewNote }) =>
       contentReviewNote !== "").length,
-    10,
+    0,
   );
   assert.deepEqual(
     model.paletteContentReviews
-      .filter(({ contentReviewNote }) => contentReviewNote !== "")
-      .slice(0, 3),
-    [
-      {
-        paletteId: "palette-balanced-2",
-        contentReviewNote:
-          "要確認: ラベル「静謐な白」とHEX #8FAFC1は見た目の色相が一致しないため、元候補の意図を確認。",
-      },
-      {
-        paletteId: "palette-single-intellectimagination-high-2",
-        contentReviewNote:
-          "要確認: ラベル「閃きを象徴する金黄色」とHEX #7567A8は見た目の色相が一致しないため、元候補の意図を確認。",
-      },
-      {
-        paletteId: "palette-single-intellectimagination-high-3",
-        contentReviewNote:
-          "要確認: ラベル「未知への好奇心を誘う紫」とHEX #4FA8B8は見た目の色相が一致しないため、元候補の意図を確認。",
-      },
-    ],
+      .filter(({ contentReviewNote }) => contentReviewNote !== ""),
+    [],
   );
   assert.deepEqual(
     model.approvals.map(({ gate_id, display_order }) => [gate_id, display_order]),
@@ -188,15 +171,15 @@ test("P-0 review uses visible accessible swatches and separates WCAG from conten
   assert.match(report, /\| WCAG判定 \| 内容確認 \|/);
   assert.match(
     report,
-    /palette-single-intellectimagination-high-2[\s\S]*?\| 適合 \| 要確認: ラベル「閃きを象徴する金黄色」とHEX #7567A8/,
+    /palette-single-intellectimagination-high-2[\s\S]*?閃きを象徴する星影の紫[\s\S]*?#7567A8[\s\S]*?\| 適合 \| 確認事項なし \|/,
   );
   assert.match(
     report,
-    /palette-single-intellectimagination-high-3[\s\S]*?\| 適合 \| 要確認: ラベル「未知への好奇心を誘う紫」とHEX #4FA8B8/,
+    /palette-single-intellectimagination-high-3[\s\S]*?未知への好奇心を誘うターコイズ[\s\S]*?#4FA8B8[\s\S]*?\| 適合 \| 確認事項なし \|/,
   );
   assert.match(
     report,
-    /palette-single-extraversion-high-1[\s\S]*?\| 適合 \| 要確認: ラベル「陽気なサンフラワーイエロー」とHEX #E07868/,
+    /palette-single-extraversion-high-1[\s\S]*?陽気なコーラルピンク[\s\S]*?#E07868[\s\S]*?\| 適合 \| 確認事項なし \|/,
   );
 });
 
