@@ -77,7 +77,7 @@ test("review model preserves the complete current Q-013 structure", async () => 
   }
 });
 
-test("P-0 through P-4 are approved while later gates remain draft", async () => {
+test("P-0 through P-5 are approved while P-6 remains draft", async () => {
   const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
 
   assert.deepEqual(
@@ -88,7 +88,7 @@ test("P-0 through P-4 are approved while later gates remain draft", async () => 
       ["P-2", "approved"],
       ["P-3", "approved"],
       ["P-4", "approved"],
-      ["P-5", "draft"],
+      ["P-5", "approved"],
       ["P-6", "draft"],
     ],
   );
@@ -221,24 +221,25 @@ test("approval metadata consistency is required by both model and renderer", asy
   );
 
   const draftWithMetadata = structuredClone(model.approvals);
-  draftWithMetadata[5].approved_by = "user";
-  draftWithMetadata[5].approved_on = "2026-07-31";
+  draftWithMetadata[6].approved_by = "user";
+  draftWithMetadata[6].approved_on = "2026-07-31";
   assert.throws(
     () => renderPresentationReview({ ...model, approvals: draftWithMetadata }),
     { name: "TypeError", message: "PRESENTATION_REVIEW_INVALID" },
   );
 });
 
-test("P-0 through P-4 approvals render truthfully while later gates remain draft", async () => {
+test("P-0 through P-5 approvals render truthfully while P-6 remains draft", async () => {
   const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
   const report = renderPresentationReview(model);
-  assert.match(report, /承認状況: approved=P-0, P-1, P-2, P-3, P-4; draft=P-5, P-6/);
+  assert.match(report, /承認状況: approved=P-0, P-1, P-2, P-3, P-4, P-5; draft=P-6/);
   assert.doesNotMatch(report, /すべての行とP-0〜P-6は未承認/);
   assert.match(report, /## P-0 パレットと用途色（approved）/);
   assert.match(report, /## P-1 香調語彙と素材（approved）/);
   assert.match(report, /## P-2 バランス・単一因子称号（approved）/);
   assert.match(report, /## P-3 ペア称号 1〜10（approved）/);
   assert.match(report, /## P-4 ペア称号 11〜20（approved）/);
+  assert.match(report, /## P-5 ペア称号 21〜30（approved）/);
 });
 
 test("ordinary and share-card review show one to two concrete materials", async () => {

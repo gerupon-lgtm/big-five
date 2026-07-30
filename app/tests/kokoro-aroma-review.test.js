@@ -49,9 +49,8 @@ test("T-005/T-007 F-018 review covers every aroma master and title", async () =>
   assert.match(report, /\| P-2 \| [^|]+ \| approved \|/);
   assert.match(report, /\| P-3 \| [^|]+ \| approved \|/);
   assert.match(report, /\| P-4 \| [^|]+ \| approved \|/);
-  for (const gate of ["P-5", "P-6"]) {
-    assert.match(report, new RegExp(`\\| ${gate} \\| [^|]+ \\| draft \\|`));
-  }
+  assert.match(report, /\| P-5 \| [^|]+ \| approved \|/);
+  assert.match(report, /\| P-6 \| [^|]+ \| draft \|/);
 });
 
 test("T-005/T-007 F-018 aroma review CLI is byte deterministic", async (t) => {

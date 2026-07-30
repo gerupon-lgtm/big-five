@@ -1262,5 +1262,5 @@
 | P-2 | titles-balanced-and-single-01-11 | approved |
 | P-3 | titles-pair-01-10 | approved |
 | P-4 | titles-pair-11-20 | approved |
-| P-5 | titles-pair-21-30 | draft |
+| P-5 | titles-pair-21-30 | approved |
 | P-6 | titles-pair-31-40 | draft |
