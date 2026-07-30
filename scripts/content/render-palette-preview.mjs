@@ -373,25 +373,10 @@ function previewStyles() {
     }`;
 }
 
-function previewScript() {
+function previewCalculatorScript() {
   return `
     (() => {
       "use strict";
-      const HEX = /^#[0-9A-F]{6}$/;
-      const entries = JSON.parse(
-        document.getElementById("palette-data").textContent,
-      );
-      const byId = new Map(entries.map((entry) => [entry.paletteId, entry]));
-      const current = new Map(
-        entries.map((entry) => [entry.paletteId, { ...entry.baseColors }]),
-      );
-      const cards = [...document.querySelectorAll(".palette-preview-card")];
-      const search = document.getElementById("palette-search");
-      const standardOnly = document.getElementById("standard-only");
-      const reviewOnly = document.getElementById("review-only");
-      const changesOutput = document.getElementById("changes-output");
-      const visibleCount = document.getElementById("visible-count");
-
       function parseHex(color) {
         return [
           Number.parseInt(color.slice(1, 3), 16),
@@ -468,6 +453,33 @@ function previewScript() {
           chartBackground: contrastRatio(resolved.chart, resolved.background),
         };
       }
+
+      globalThis.PalettePreviewCalculator = Object.freeze({
+        resolve,
+        ratios,
+      });
+    })();`;
+}
+
+function previewScript() {
+  return `
+    (() => {
+      "use strict";
+      const HEX = /^#[0-9A-F]{6}$/;
+      const { resolve, ratios } = globalThis.PalettePreviewCalculator;
+      const entries = JSON.parse(
+        document.getElementById("palette-data").textContent,
+      );
+      const byId = new Map(entries.map((entry) => [entry.paletteId, entry]));
+      const current = new Map(
+        entries.map((entry) => [entry.paletteId, { ...entry.baseColors }]),
+      );
+      const cards = [...document.querySelectorAll(".palette-preview-card")];
+      const search = document.getElementById("palette-search");
+      const standardOnly = document.getElementById("standard-only");
+      const reviewOnly = document.getElementById("review-only");
+      const changesOutput = document.getElementById("changes-output");
+      const visibleCount = document.getElementById("visible-count");
 
       function isChanged(entry, colors) {
         return ["primary", "secondary", "accent"]
@@ -651,6 +663,8 @@ export function renderPalettePreview(model) {
     ${model.palettes.map(paletteCard).join("\n")}
   </main>
   <script type="application/json" id="palette-data">${scriptJson(model.palettes)}</script>
+  <script>${previewCalculatorScript()}
+  </script>
   <script>${previewScript()}
   </script>
 </body>

@@ -5,8 +5,12 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
-import { Script } from "node:vm";
+import { createContext, Script } from "node:vm";
 
+import {
+  contrastRatio,
+  resolvePaletteUsage,
+} from "../js/domain/palette-usage.js";
 import {
   loadPalettePreviewModel,
   renderPalettePreview,
@@ -124,11 +128,15 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
   const data = html.match(
     /<script type="application\/json" id="palette-data">([\s\S]*?)<\/script>/,
   );
-  const browserScript = html.match(/<script>([\s\S]*?)<\/script>/);
+  const browserScripts = [
+    ...html.matchAll(/<script>([\s\S]*?)<\/script>/g),
+  ].map((match) => match[1]);
   assert.ok(data);
-  assert.ok(browserScript);
+  assert.equal(browserScripts.length, 2);
   assert.equal(JSON.parse(data[1]).length, 153);
-  assert.doesNotThrow(() => new Script(browserScript[1]));
+  for (const browserScript of browserScripts) {
+    assert.doesNotThrow(() => new Script(browserScript));
+  }
 });
 
 test("P-0 preview CLI is deterministic and matches the committed HTML", async (t) => {
@@ -154,6 +162,77 @@ test("P-0 preview CLI is deterministic and matches the committed HTML", async (t
   ]);
   assert.deepEqual(first, second);
   assert.deepEqual(first, committed);
+});
+
+test("browser-side edited colors remain in parity with canonical palette usage", async () => {
+  const model = await loadPalettePreviewModel({ sourceDir: SOURCE_DIR });
+  const html = renderPalettePreview(model);
+  const executableScripts = [
+    ...html.matchAll(/<script>([\s\S]*?)<\/script>/g),
+  ].map((match) => match[1]);
+  assert.equal(executableScripts.length, 2);
+
+  const context = createContext({});
+  new Script(executableScripts[0]).runInContext(context);
+  const calculator = context.PalettePreviewCalculator;
+  assert.deepEqual(
+    Object.keys(calculator).sort(),
+    ["ratios", "resolve"],
+  );
+
+  const entry = model.palettes[0];
+  const cases = [
+    {
+      primary: "#1A2B3C",
+      secondary: "#EEDDCC",
+      accent: "#336699",
+    },
+    {
+      primary: "#FFFFFF",
+      secondary: "#000000",
+      accent: "#FF0000",
+    },
+    {
+      primary: "#E07868",
+      secondary: "#E69A4B",
+      accent: "#38A8A0",
+    },
+  ];
+
+  for (const colors of cases) {
+    const canonical = resolvePaletteUsage({
+      paletteId: entry.paletteId,
+      version: model.presentationDefinitionVersion,
+      label: entry.paletteLabel,
+      baseColors: colors,
+      description: entry.description,
+    }, {
+      paletteId: entry.paletteId,
+      version: model.presentationDefinitionVersion,
+      roles: {
+        background: entry.mapping.background,
+        surface: entry.mapping.surface,
+        accent: entry.mapping.accent,
+        chart: entry.mapping.chart,
+      },
+      textCandidates: entry.mapping.textCandidates,
+    });
+    const browserResolved = JSON.parse(JSON.stringify(
+      calculator.resolve(entry, colors),
+    ));
+    assert.deepEqual(browserResolved, canonical);
+
+    const expectedRatios = {
+      textBackground: contrastRatio(canonical.text, canonical.background),
+      textSurface: contrastRatio(canonical.text, canonical.surface),
+      accentSurface: contrastRatio(canonical.accent, canonical.surface),
+      chartBackground: contrastRatio(canonical.chart, canonical.background),
+    };
+    const browserRatios = JSON.parse(JSON.stringify(
+      calculator.ratios(browserResolved),
+    ));
+    assert.deepEqual(browserRatios, expectedRatios);
+  }
 });
 
 test("package command regenerates the standalone P-0 preview", async () => {
