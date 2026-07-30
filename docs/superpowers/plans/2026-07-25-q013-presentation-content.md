@@ -532,15 +532,15 @@ git commit -m "content: add q013 presentation v2 draft"
 **Interfaces:**
 - P-0 scope: the complete shared palette library, one wide recipe per palette, and exact 4.5:1/3:1 evidence.
 
-- [ ] **Step 1: Pause and present P-0**
+- [x] **Step 1: Pause and present P-0**
 
 Show the generated P-0 table with base HEX, resolved background/surface/accent/chart/text, all tested contrast pairs, and palette descriptions. Also generate the standalone `docs/palette-preview.html`, which shows all 153 palettes as 3:5 simplified shared-card previews. Each preview uses the resolved palette as its card background, plus the fixed five-factor display colors selected for the ココロパレア icon family; the factor bars are not the palette `chart` role. Use one representative character only for layout and color-visibility review, not as a title-specific Q-012 decision. The standalone file must have no runtime network dependency. It may support temporary browser-side base-color edits and a change list, but it must never write to the authority CSV or imply P-0 approval. Do not edit statuses while awaiting an explicit user decision.
 
-- [ ] **Step 2: Record only the actual decision**
+- [x] **Step 2: Record only the actual decision**
 
 If the user approves the complete batch, set its palette and mapping rows to`approved`, set P-0 to`approved`, and record the actual approver and date. If the user requests changes, keep P-0 non-approved, edit the affected draft rows, regenerate the report, rerun WCAG tests, and present the complete P-0 batch again.
 
-- [ ] **Step 3: Verify and commit P-0**
+- [x] **Step 3: Verify and commit P-0**
 
 Run:
 
@@ -551,6 +551,8 @@ npm.cmd run content:validate
 ```
 
 Expected after approval: tests PASS; P-0 is the only approved Q-013 gate and P-1〜P-6 retain blank approval metadata.
+
+2026-07-31 decision: the user explicitly approved comparison B as the formal P-0 mapping. The canonical recipe is background white mix 84% and surface white mix 90%. These values remain centralized in the two versioned mix columns so a later change can use a new version and the same P-0 review path.
 
 ```powershell
 git add content/source/presentation/presentation-v2/palettes.csv content/source/presentation/presentation-v2/palette-usage-mappings.csv content/source/approvals/presentation-content-approvals.csv scripts/content/render-palette-preview.mjs app/tests/palette-preview-tool.test.js docs/palette-preview.html docs/presentation-content-catalog.md package.json docs/content-authoring.md docs/tasks.md

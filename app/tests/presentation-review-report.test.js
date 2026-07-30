@@ -16,7 +16,7 @@ const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const SOURCE_DIR = path.join(ROOT, "content/source");
 const REVIEWED_PALETTE_PROJECTION_SHA256 =
-  "B00D3C71ECCA43D6372C65EF4794EB6A390BF3042FBAAE8662B3DEDADEAF8605";
+  "70FEB09CE0F96DE16172529E88D6CA12B538760223F2EFF79C89E821AA9B6AF8";
 
 test("reviewed palette projection stays byte-stable outside review notes", async () => {
   const source = await readFile(
@@ -74,6 +74,28 @@ test("review model preserves the complete current Q-013 structure", async () => 
     assert.ok(report.ratios.textSurface >= 4.5, report.paletteId);
     assert.ok(report.ratios.accentSurface >= 3, report.paletteId);
     assert.ok(report.ratios.chartBackground >= 3, report.paletteId);
+  }
+});
+
+test("P-0 approves B as the canonical usage intensity while later gates remain draft", async () => {
+  const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
+
+  assert.deepEqual(
+    model.approvals.map(({ gate_id, status }) => [gate_id, status]),
+    [
+      ["P-0", "approved"],
+      ["P-1", "draft"],
+      ["P-2", "draft"],
+      ["P-3", "draft"],
+      ["P-4", "draft"],
+      ["P-5", "draft"],
+      ["P-6", "draft"],
+    ],
+  );
+  assert.equal(model.definitionSet.paletteUsageMappings.length, 153);
+  for (const mapping of model.definitionSet.paletteUsageMappings) {
+    assert.equal(mapping.roles.background.mixPercent, 84);
+    assert.equal(mapping.roles.surface.mixPercent, 90);
   }
 });
 
@@ -166,7 +188,11 @@ test("P-0 review uses visible accessible swatches and separates WCAG from conten
   );
   assert.match(
     report,
-    /<span role="img" aria-label="background color #F5F5F6" style="[^"]*background-color:#F5F5F6;[^"]*"><\/span> <code>#F5F5F6<\/code>/,
+    /<span role="img" aria-label="background color #EAECED" style="[^"]*background-color:#EAECED;[^"]*"><\/span> <code>#EAECED<\/code>/,
+  );
+  assert.match(
+    report,
+    /<span role="img" aria-label="surface color #F5F7F7" style="[^"]*background-color:#F5F7F7;[^"]*"><\/span> <code>#F5F7F7<\/code>/,
   );
   assert.match(report, /\| WCAG判定 \| 内容確認 \|/);
   assert.match(
@@ -187,14 +213,16 @@ test("approval metadata consistency is required by both model and renderer", asy
   const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
   const approvedWithoutMetadata = structuredClone(model.approvals);
   approvedWithoutMetadata[0].status = "approved";
+  approvedWithoutMetadata[0].approved_by = "";
+  approvedWithoutMetadata[0].approved_on = "";
   assert.throws(
     () => renderPresentationReview({ ...model, approvals: approvedWithoutMetadata }),
     { name: "TypeError", message: "PRESENTATION_REVIEW_INVALID" },
   );
 
   const draftWithMetadata = structuredClone(model.approvals);
-  draftWithMetadata[0].approved_by = "user";
-  draftWithMetadata[0].approved_on = "2026-07-30";
+  draftWithMetadata[1].approved_by = "user";
+  draftWithMetadata[1].approved_on = "2026-07-31";
   assert.throws(
     () => renderPresentationReview({ ...model, approvals: draftWithMetadata }),
     { name: "TypeError", message: "PRESENTATION_REVIEW_INVALID" },

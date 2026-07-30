@@ -1,5 +1,5 @@
 gate_id,display_order,scope,status,approved_by,approved_on,note
-P-0,1,palette-mapping-wcag,draft,,,
+P-0,1,palette-mapping-wcag,approved,user,2026-07-31,51称号153配色のパレット名・基調色と正式用途色B（背景84%・表面90%）およびWCAG適合をユーザー承認。将来の濃度変更は版付きpalette-usage-mappings.csvの背景・表面mix値だけを更新する。
 P-1,2,fragrance-vocabulary-materials,draft,,,
 P-2,3,titles-balanced-and-single-01-11,draft,,,
 P-3,4,titles-pair-01-10,draft,,,

@@ -103,7 +103,7 @@ test("P-0 preview model maps 51 titles to exactly three palettes", async () => {
   const model = await loadPalettePreviewModel({ sourceDir: SOURCE_DIR });
 
   assert.equal(model.presentationDefinitionVersion, "presentation-v2");
-  assert.equal(model.approvalStatus, "draft");
+  assert.equal(model.approvalStatus, "approved");
   assert.equal(model.shareCardPreview.intensityId, "b");
   assert.equal(model.shareCardPreview.backgroundMixPercent, 84);
   assert.equal(model.shareCardPreview.surfaceMixPercent, 90);

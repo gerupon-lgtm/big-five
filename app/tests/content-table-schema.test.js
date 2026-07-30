@@ -327,7 +327,7 @@ test("T-005 F-018 Q-013 presentation v2 schemas require the exact authoring colu
   }
 });
 
-test("T-005 F-018 Q-013 approval ledger has the exact schema and initial seven draft gates", async () => {
+test("T-005 F-018 Q-013 approval ledger has the exact schema and current gate stages", async () => {
   const schema = await loadTableSchema(new URL(
     "../../content/schemas/presentation-content-approvals.schema.json",
     import.meta.url,
@@ -367,7 +367,7 @@ test("T-005 F-018 Q-013 approval ledger has the exact schema and initial seven d
     approvals.map(({ gate_id, display_order, status, approved_by, approved_on }) =>
       [gate_id, display_order, status, approved_by, approved_on]),
     [
-      ["P-0", 1, "draft", "", ""],
+      ["P-0", 1, "approved", "user", "2026-07-31"],
       ["P-1", 2, "draft", "", ""],
       ["P-2", 3, "draft", "", ""],
       ["P-3", 4, "draft", "", ""],

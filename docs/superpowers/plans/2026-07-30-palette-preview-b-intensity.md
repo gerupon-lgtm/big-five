@@ -125,3 +125,7 @@
   Run: `npm.cmd run content:preview:palettes` again, then `git diff --check` and `git status --short`.
 
   Expected: no diff after regeneration and no whitespace errors; only the intended commits are present.
+
+## Superseding decision (2026-07-31)
+
+The user subsequently approved B for formal P-0. This supersedes this plan's preview-only/A-canonical constraint for the current state: `palette-usage-mappings.csv` now canonically uses background white mix 84% and surface white mix 90%. Future intensity changes remain isolated to those two versioned mapping columns and require the P-0 verification/approval path again.

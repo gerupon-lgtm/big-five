@@ -72,5 +72,5 @@ test("every title keeps three distinct labels and primary colors", async () => {
   }
 
   assert.ok(rows.every(({ content_review_note }) => content_review_note === ""));
-  assert.ok(rows.every(({ status }) => status === "draft"));
+  assert.ok(rows.every(({ status }) => status === "approved"));
 });
