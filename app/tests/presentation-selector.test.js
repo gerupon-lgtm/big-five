@@ -98,6 +98,33 @@ test("T-005 F-018 rejects version mismatch, duplicate palettes, and missing repr
   }
 });
 
+test("T-005 F-018 rejects shallow-frozen schema 2 nested arrays and versions", () => {
+  const base = validatedSchema2DefinitionSet();
+  const shallowFrozen = structuredClone(base);
+  Object.freeze(shallowFrozen);
+  assert.throws(
+    () => selectPresentation(TitleProfileDefinitions[0], shallowFrozen),
+    { name: "TypeError", message: "PRESENTATION_SELECTION_INVALID" },
+  );
+
+  const cases = [
+    (value) => { value.paletteUsageMappings[0].version = "presentation-v1"; },
+    (value) => { value.fragranceMaterials[0].version = "presentation-v1"; },
+    (value) => { value.paletteUsageMappings[0].roles.background.source = "text"; },
+    (value) => { value.fragranceMaterials[0].displayName = ""; },
+  ];
+
+  for (const mutate of cases) {
+    const value = structuredClone(base);
+    mutate(value);
+    recursivelyFreeze(value);
+    assert.throws(
+      () => selectPresentation(TitleProfileDefinitions[0], value),
+      { name: "TypeError", message: "PRESENTATION_SELECTION_INVALID" },
+    );
+  }
+});
+
 test("T-005 F-018 rejects score, answer, character, and same-hue character inputs", () => {
   const definitionSet = validatedSchema2DefinitionSet();
   const titleProfile = TitleProfileDefinitions[0];
@@ -111,10 +138,31 @@ test("T-005 F-018 rejects score, answer, character, and same-hue character input
   }
   assert.throws(
     () => selectPresentation(titleProfile, definitionSet, {
-      character: { color: paletteHue(definitionSet.palettes[0]) },
+      character: { color: primaryColor(definitionSet.palettes[0]) },
     }),
     { name: "TypeError", message: "PRESENTATION_SELECTION_INVALID" },
   );
+});
+
+test("T-005 F-018 rejects invalid title factor shape and nested input contamination", () => {
+  const definitionSet = validatedSchema2DefinitionSet();
+  const singleProfile = TitleProfileDefinitions.find(({ kind }) => kind === "single");
+  const pairProfile = TitleProfileDefinitions.find(({ kind }) => kind === "pair");
+  const cases = [
+    { ...singleProfile, factors: [{ ...singleProfile.factors[0], score: 80 }] },
+    { ...singleProfile, factors: [{ ...singleProfile.factors[0], answers: {} }] },
+    { ...singleProfile, factors: [{ ...singleProfile.factors[0], character: {} }] },
+    { ...singleProfile, factors: [] },
+    { ...singleProfile, factors: [{ factorId: "unknown", direction: "high" }] },
+    { ...pairProfile, factors: [...pairProfile.factors].reverse() },
+  ];
+
+  for (const value of cases) {
+    assert.throws(
+      () => selectPresentation(value, definitionSet),
+      { name: "TypeError", message: "PRESENTATION_SELECTION_INVALID" },
+    );
+  }
 });
 
 test("T-005 F-018 rejects malformed fragrance summaries", () => {
@@ -124,6 +172,16 @@ test("T-005 F-018 rejects malformed fragrance summaries", () => {
   );
   const cases = [
     selection.fragranceScenes.slice(0, 2),
+    [
+      selection.fragranceScenes[0],
+      selection.fragranceScenes[0],
+      selection.fragranceScenes[2],
+    ],
+    [
+      selection.fragranceScenes[1],
+      selection.fragranceScenes[0],
+      selection.fragranceScenes[2],
+    ],
     selection.fragranceScenes.map((scene) => ({ ...scene, score: 1 })),
     selection.fragranceScenes.map((scene) => ({
       ...scene,
@@ -139,6 +197,14 @@ test("T-005 F-018 rejects malformed fragrance summaries", () => {
   }
 });
 
-function paletteHue(palette) {
+function primaryColor(palette) {
   return palette.baseColors.primary;
+}
+
+function recursivelyFreeze(value) {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const nested of Object.values(value)) recursivelyFreeze(nested);
+  }
+  return value;
 }

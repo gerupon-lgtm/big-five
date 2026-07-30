@@ -84,6 +84,16 @@ test("T-005 F-018 applies inclusive 4.5 text and 3.0 non-text contrast gates", (
 test("T-005 F-018 rejects malformed colors, mappings, and source or mix combinations", () => {
   const cases = [
     [structuredClone(palette), structuredClone(mapping), (p) => { p.baseColors.primary = "#abcdef"; }],
+    [structuredClone(palette), structuredClone(mapping), (p, m) => {
+      p.paletteId = undefined;
+      m.paletteId = undefined;
+    }],
+    [structuredClone(palette), structuredClone(mapping), (p, m) => {
+      p.version = undefined;
+      m.version = undefined;
+    }],
+    [structuredClone(palette), structuredClone(mapping), (p) => { p.label = ""; }],
+    [structuredClone(palette), structuredClone(mapping), (p) => { p.description = ""; }],
     [structuredClone(palette), structuredClone(mapping), (_p, m) => { m.paletteId = "palette-other"; }],
     [structuredClone(palette), structuredClone(mapping), (_p, m) => { m.version = "presentation-v1"; }],
     [structuredClone(palette), structuredClone(mapping), (_p, m) => { m.roles.background.source = "text"; }],
@@ -109,4 +119,3 @@ test("T-005 F-018 rejects malformed colors, mappings, and source or mix combinat
     { name: "TypeError", message: "PALETTE_USAGE_INVALID" },
   );
 });
-

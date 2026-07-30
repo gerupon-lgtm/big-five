@@ -28,6 +28,10 @@ function isHexColor(value) {
   return typeof value === "string" && HEX_COLOR_PATTERN.test(value);
 }
 
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.length > 0;
+}
+
 function deepFreeze(value) {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
     Object.freeze(value);
@@ -82,9 +86,13 @@ function relativeLuminance(color) {
 
 function validatePaletteAndMapping(palette, mapping) {
   if (!hasExactFields(palette, PALETTE_FIELDS) ||
+    !["paletteId", "version", "label", "description"]
+      .every((field) => isNonEmptyString(palette[field])) ||
     !hasExactFields(palette.baseColors, BASE_COLOR_FIELDS) ||
     !BASE_COLOR_FIELDS.every((field) => isHexColor(palette.baseColors[field])) ||
     !hasExactFields(mapping, MAPPING_FIELDS) ||
+    !isNonEmptyString(mapping.paletteId) ||
+    !isNonEmptyString(mapping.version) ||
     mapping.paletteId !== palette.paletteId ||
     mapping.version !== palette.version ||
     !hasExactFields(mapping.roles, ROLE_FIELDS) ||
@@ -165,4 +173,3 @@ export function validatePaletteContrast(resolved) {
     .map(([name]) => name);
   return deepFreeze({ valid: failures.length === 0, failures });
 }
-

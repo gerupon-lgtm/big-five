@@ -1,3 +1,6 @@
+import { FACTOR_ORDER } from "../config/factor-order.js";
+import { PRESENTATION_SCENE_IDS } from "./presentation-scenes.js";
+
 const TITLE_PROFILE_FIELDS = [
   "titleId",
   "label",
@@ -19,7 +22,25 @@ const DEFINITION_SET_FIELDS = [
 ];
 const SELECTOR_FIELDS = ["titleId", "alternativePaletteIds", "fragranceScenes"];
 const SCENE_SELECTOR_FIELDS = ["sceneId", "candidateFragranceIds", "shareFragranceId"];
-const SCENE_IDS = ["pause", "reset", "quiet-focus"];
+const FACTOR_FIELDS = ["factorId", "direction"];
+const SCENE_FIELDS = ["sceneId", "label"];
+const PALETTE_FIELDS = ["paletteId", "version", "label", "baseColors", "description"];
+const BASE_COLOR_FIELDS = ["primary", "secondary", "accent"];
+const MAPPING_FIELDS = ["paletteId", "version", "roles", "textCandidates"];
+const ROLE_FIELDS = ["background", "surface", "accent", "chart"];
+const ROLE_DEFINITION_FIELDS = ["source", "mixWith", "mixPercent"];
+const FRAGRANCE_FIELDS = [
+  "fragranceId",
+  "version",
+  "sceneId",
+  "accordLabel",
+  "description",
+  "materialIds",
+  "disclaimerId",
+];
+const MATERIAL_FIELDS = ["materialId", "version", "displayName", "materialKind"];
+const DIRECTIONS = ["high", "low"];
+const HEX_COLOR_PATTERN = /^#[0-9A-F]{6}$/;
 
 function invalidSelection() {
   throw new TypeError("PRESENTATION_SELECTION_INVALID");
@@ -43,6 +64,22 @@ function isNonEmptyString(value) {
   return typeof value === "string" && value.length > 0;
 }
 
+function hasUniqueValues(values) {
+  return new Set(values).size === values.length;
+}
+
+function isDeeplyFrozen(value, seen = new Set()) {
+  if (value === null || typeof value !== "object") return true;
+  if (seen.has(value)) return true;
+  if (!Object.isFrozen(value)) return false;
+  seen.add(value);
+  return Reflect.ownKeys(value).every((key) => {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    return descriptor && Object.hasOwn(descriptor, "value") &&
+      isDeeplyFrozen(descriptor.value, seen);
+  });
+}
+
 function deepFreeze(value) {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
     Object.freeze(value);
@@ -55,30 +92,144 @@ function frozenCopy(value) {
   return deepFreeze(structuredClone(value));
 }
 
-function validateInputs(titleProfile, definitionSet) {
+function isValidTitleProfile(titleProfile) {
   if (!hasExactFields(titleProfile, TITLE_PROFILE_FIELDS) ||
     !TITLE_PROFILE_FIELDS
       .filter((field) => field !== "factors")
       .every((field) => isNonEmptyString(titleProfile[field])) ||
+    !["balanced", "single", "pair"].includes(titleProfile.kind) ||
     !isDenseArray(titleProfile.factors) ||
-    !hasExactFields(definitionSet, DEFINITION_SET_FIELDS) ||
+    titleProfile.factors.length !== (
+      titleProfile.kind === "balanced" ? 0 : titleProfile.kind === "single" ? 1 : 2
+    )) {
+    return false;
+  }
+  return titleProfile.factors.every((factor, index) =>
+    hasExactFields(factor, FACTOR_FIELDS) &&
+    FACTOR_ORDER.includes(factor.factorId) &&
+    DIRECTIONS.includes(factor.direction) &&
+    (index === 0 ||
+      FACTOR_ORDER.indexOf(titleProfile.factors[index - 1].factorId) <
+      FACTOR_ORDER.indexOf(factor.factorId)));
+}
+
+function isValidRoleDefinition(value) {
+  return hasExactFields(value, ROLE_DEFINITION_FIELDS) &&
+    BASE_COLOR_FIELDS.includes(value.source) &&
+    ["white", "black", "none"].includes(value.mixWith) &&
+    Number.isInteger(value.mixPercent) &&
+    value.mixPercent >= 0 &&
+    value.mixPercent <= 100 &&
+    (value.mixWith !== "none" || value.mixPercent === 0);
+}
+
+function validateDefinitionSet(definitionSet) {
+  if (!hasExactFields(definitionSet, DEFINITION_SET_FIELDS) ||
     definitionSet.schemaVersion !== 2 ||
     !isNonEmptyString(definitionSet.presentationDefinitionVersion) ||
-    !Object.isFrozen(definitionSet) ||
-    !isDenseArray(definitionSet.scenes) ||
-    definitionSet.scenes.length !== SCENE_IDS.length ||
-    !definitionSet.scenes.every(({ sceneId }, index) => sceneId === SCENE_IDS[index]) ||
-    !isDenseArray(definitionSet.palettes) ||
-    !isDenseArray(definitionSet.fragrances) ||
-    !isDenseArray(definitionSet.titleSelectors)) {
+    !isDeeplyFrozen(definitionSet)) {
     invalidSelection();
   }
 
   const version = definitionSet.presentationDefinitionVersion;
-  if (!definitionSet.palettes.every(({ version: itemVersion }) => itemVersion === version) ||
-    !definitionSet.fragrances.every(({ version: itemVersion }) => itemVersion === version)) {
+  const { scenes, palettes, paletteUsageMappings, fragrances,
+    fragranceMaterials, titleSelectors } = definitionSet;
+
+  if (!isDenseArray(scenes) ||
+    scenes.length !== PRESENTATION_SCENE_IDS.length ||
+    !scenes.every((scene, index) =>
+      hasExactFields(scene, SCENE_FIELDS) &&
+      scene.sceneId === PRESENTATION_SCENE_IDS[index] &&
+      isNonEmptyString(scene.label)) ||
+    !isDenseArray(palettes) ||
+    palettes.length === 0 ||
+    !palettes.every((palette) =>
+      hasExactFields(palette, PALETTE_FIELDS) &&
+      isNonEmptyString(palette.paletteId) &&
+      palette.version === version &&
+      isNonEmptyString(palette.label) &&
+      hasExactFields(palette.baseColors, BASE_COLOR_FIELDS) &&
+      BASE_COLOR_FIELDS.every((field) =>
+        HEX_COLOR_PATTERN.test(palette.baseColors[field])) &&
+      isNonEmptyString(palette.description)) ||
+    !hasUniqueValues(palettes.map(({ paletteId }) => paletteId))) {
     invalidSelection();
   }
+
+  if (!isDenseArray(paletteUsageMappings) ||
+    paletteUsageMappings.length !== palettes.length ||
+    !paletteUsageMappings.every((mapping, index) =>
+      hasExactFields(mapping, MAPPING_FIELDS) &&
+      mapping.paletteId === palettes[index].paletteId &&
+      mapping.version === version &&
+      hasExactFields(mapping.roles, ROLE_FIELDS) &&
+      ROLE_FIELDS.every((role) => isValidRoleDefinition(mapping.roles[role])) &&
+      isDenseArray(mapping.textCandidates) &&
+      mapping.textCandidates.length === 2 &&
+      mapping.textCandidates.every((color) => HEX_COLOR_PATTERN.test(color)) &&
+      hasUniqueValues(mapping.textCandidates))) {
+    invalidSelection();
+  }
+
+  if (!isDenseArray(fragranceMaterials) ||
+    fragranceMaterials.length === 0 ||
+    !fragranceMaterials.every((material) =>
+      hasExactFields(material, MATERIAL_FIELDS) &&
+      isNonEmptyString(material.materialId) &&
+      material.version === version &&
+      isNonEmptyString(material.displayName) &&
+      ["plant-name", "essential-oil-name"].includes(material.materialKind)) ||
+    !hasUniqueValues(fragranceMaterials.map(({ materialId }) => materialId))) {
+    invalidSelection();
+  }
+  const materialIds = new Set(
+    fragranceMaterials.map(({ materialId }) => materialId),
+  );
+
+  if (!isDenseArray(fragrances) ||
+    fragrances.length === 0 ||
+    !fragrances.every((fragrance) =>
+      hasExactFields(fragrance, FRAGRANCE_FIELDS) &&
+      isNonEmptyString(fragrance.fragranceId) &&
+      fragrance.version === version &&
+      PRESENTATION_SCENE_IDS.includes(fragrance.sceneId) &&
+      isNonEmptyString(fragrance.accordLabel) &&
+      isNonEmptyString(fragrance.description) &&
+      isDenseArray(fragrance.materialIds) &&
+      fragrance.materialIds.length >= 1 &&
+      fragrance.materialIds.length <= 3 &&
+      fragrance.materialIds.every((materialId) =>
+        isNonEmptyString(materialId) && materialIds.has(materialId)) &&
+      hasUniqueValues(fragrance.materialIds) &&
+      isNonEmptyString(fragrance.disclaimerId)) ||
+    !hasUniqueValues(fragrances.map(({ fragranceId }) => fragranceId)) ||
+    !isDenseArray(titleSelectors) ||
+    titleSelectors.length === 0 ||
+    !titleSelectors.every((selector) =>
+      hasExactFields(selector, SELECTOR_FIELDS) &&
+      isNonEmptyString(selector.titleId) &&
+      isDenseArray(selector.alternativePaletteIds) &&
+      selector.alternativePaletteIds.length === 2 &&
+      selector.alternativePaletteIds.every(isNonEmptyString) &&
+      hasUniqueValues(selector.alternativePaletteIds) &&
+      isDenseArray(selector.fragranceScenes) &&
+      selector.fragranceScenes.length === PRESENTATION_SCENE_IDS.length &&
+      selector.fragranceScenes.every((scene, index) =>
+        hasExactFields(scene, SCENE_SELECTOR_FIELDS) &&
+        scene.sceneId === scenes[index].sceneId &&
+        isDenseArray(scene.candidateFragranceIds) &&
+        scene.candidateFragranceIds.length === 2 &&
+        scene.candidateFragranceIds.every(isNonEmptyString) &&
+        hasUniqueValues(scene.candidateFragranceIds) &&
+        scene.candidateFragranceIds.includes(scene.shareFragranceId))) ||
+    !hasUniqueValues(titleSelectors.map(({ titleId }) => titleId))) {
+    invalidSelection();
+  }
+}
+
+function validateInputs(titleProfile, definitionSet) {
+  if (!isValidTitleProfile(titleProfile)) invalidSelection();
+  validateDefinitionSet(definitionSet);
 }
 
 export function selectPresentation(titleProfile, definitionSet) {
@@ -96,7 +247,7 @@ export function selectPresentation(titleProfile, definitionSet) {
     new Set(selector.alternativePaletteIds).size !== 2 ||
     selector.alternativePaletteIds.includes(titleProfile.defaultPaletteId) ||
     !isDenseArray(selector.fragranceScenes) ||
-    selector.fragranceScenes.length !== SCENE_IDS.length) {
+    selector.fragranceScenes.length !== definitionSet.scenes.length) {
     invalidSelection();
   }
 
@@ -113,7 +264,7 @@ export function selectPresentation(titleProfile, definitionSet) {
   );
   const fragranceScenes = selector.fragranceScenes.map((sceneSelector, index) => {
     if (!hasExactFields(sceneSelector, SCENE_SELECTOR_FIELDS) ||
-      sceneSelector.sceneId !== SCENE_IDS[index] ||
+      sceneSelector.sceneId !== definitionSet.scenes[index].sceneId ||
       !isDenseArray(sceneSelector.candidateFragranceIds) ||
       sceneSelector.candidateFragranceIds.length !== 2 ||
       !sceneSelector.candidateFragranceIds.every(isNonEmptyString) ||
@@ -143,4 +294,3 @@ export function selectPresentation(titleProfile, definitionSet) {
     fragranceScenes,
   });
 }
-

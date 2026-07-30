@@ -1,4 +1,5 @@
-const SCENE_IDS = ["pause", "reset", "quiet-focus"];
+import { PRESENTATION_SCENE_IDS } from "./presentation-scenes.js";
+
 const SCENE_FIELDS = [
   "sceneId",
   "label",
@@ -39,14 +40,23 @@ function deepFreeze(value) {
 export function summarizeFragrances(fragranceScenes) {
   if (arguments.length !== 1 ||
     !isDenseArray(fragranceScenes) ||
-    fragranceScenes.length !== SCENE_IDS.length ||
+    fragranceScenes.length !== PRESENTATION_SCENE_IDS.length ||
     !fragranceScenes.every((scene, index) =>
       hasExactFields(scene, SCENE_FIELDS) &&
-      scene.sceneId === SCENE_IDS[index] &&
+      scene.sceneId === PRESENTATION_SCENE_IDS[index] &&
       isNonEmptyString(scene.label) &&
       isDenseArray(scene.candidates) &&
       scene.candidates.length === 2 &&
+      scene.candidates.every((candidate) =>
+        isRecord(candidate) &&
+        isNonEmptyString(candidate.fragranceId) &&
+        candidate.sceneId === scene.sceneId) &&
+      new Set(scene.candidates.map(({ fragranceId }) => fragranceId)).size === 2 &&
       isRecord(scene.shareRepresentative) &&
+      isNonEmptyString(scene.shareRepresentative.fragranceId) &&
+      scene.shareRepresentative.sceneId === scene.sceneId &&
+      scene.candidates.some(({ fragranceId }) =>
+        fragranceId === scene.shareRepresentative.fragranceId) &&
       isNonEmptyString(scene.shareRepresentative.accordLabel))) {
     invalidSummary();
   }
