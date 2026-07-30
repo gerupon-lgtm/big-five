@@ -22,7 +22,7 @@
 
 人手編集正典は`content/source/`の用途別・版付きCSVである。診断は`diagnoses/ipip-ja-50-definition-v1`、設問は`questions/ipip-ja-50-question-set-v1`、称号は`titles/title-rule-v1`、現行結果文は`result-texts/result-text-v2`、履歴互換用の旧結果文は`result-texts/result-text-v1`、根拠定義は`evidence/result-evidence-v1`に置く。release manifest/historyは`releases/`、Q-006の別承認台帳は`approvals/result-content-approvals.csv`である。
 
-Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。`result-text-v1`は237件の不変な履歴互換版である。現行`result-text-v2`は基本237件にTR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済みのv1→v2修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の`ResultEvidenceDefinition`は固定6件であり、両者を同じ件数として扱わない。Q-013は未作成、release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
+Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。`result-text-v1`は237件の不変な履歴互換版である。現行`result-text-v2`は基本237件にTR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済みのv1→v2修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の`ResultEvidenceDefinition`は固定6件であり、両者を同じ件数として扱わない。Q-013は`presentation-v2`のdraft候補、compiler、監査、確認資料まで作成済みで、approved production release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
 
 現在は既存ES Modulesがruntime compatibility authorityで、`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
 
@@ -145,7 +145,7 @@ exact schemaとして未知フィールド、空文字、空の`supportedClaims`
 
 `claimKind`は節ごとに固定する。`titleSubtitle`と`titleReason`は`entertainmentReason`、`titleReflection`と`strength`から`question`までは`reflectionPrompt`、`observation`は`scaleObservation`、`action`は`actionHint`とする。20問で許可する節は`titleSubtitle`、`titleReason`、`titleReflection`の固定順1件目、`observation`である。
 
-`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件の不変なliteral定義として履歴互換のため保持する。根拠台帳の全18 gateはapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。現行`result-text-v2`は基本237件＋`titleReflection`153件＝390件であり、基本文面には承認済み修正27件を含む。approved release未選択、Q-012正式release、Q-013 production dataは引き続き別の未完了条件である。
+`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件の不変なliteral定義として履歴互換のため保持する。根拠台帳の全18 gateはapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。現行`result-text-v2`は基本237件＋`titleReflection`153件＝390件であり、基本文面には承認済み修正27件を含む。approved release未選択、Q-012正式release、Q-013 draft候補のP-0〜P-6承認と正式runtime接続は引き続き別の未完了条件である。
 
 ### 2.7 TitleProfileDefinition
 
@@ -208,14 +208,15 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 | fragranceId | string | ○ | 一意ID |
 | version | string | ○ | 演出定義版 |
 | sceneId | `pause` \| `reset` \| `quiet-focus` | ○ | 利用場面 |
+| familyId | `citrus` \| `floral` \| `herbal` \| `woody` \| `resinous` \| `earthy` \| `spicy` \| `fresh` | ○ | 主となる香り系統 |
 | accordLabel | string | ○ | 香調名 |
 | description | string | ○ | 雰囲気の説明 |
-| materialIds | string[1..3] | schema 2のみ○ | `FragranceMaterialDefinition`への固定順参照 |
+| materialIds | string[1..2] | schema 2のみ○ | `FragranceMaterialDefinition`への固定順参照 |
 | disclaimerId | string | ○ | 共通注意書き |
 
 商品、用量、滴数、配合、摂取、塗布、ディフューザー使用法の項目は持たない。
 
-人手編集では香り素材を`fragrance-materials.csv`へ独立マスタ化し、`fragrance-material-examples.csv`は香調と素材IDの関連だけを持つ。コンパイラが1〜3件の`materialIds`へ結合する。名称は香り素材マスタだけに保持し、商品、使用法、効果のデータを持たない。
+人手編集では香り素材を`fragrance-materials.csv`へ独立マスタ化し、`fragrance-material-examples.csv`は香調と素材IDの関連だけを持つ。コンパイラが1〜2件の`materialIds`へ結合する。名称は香り素材マスタだけに保持し、商品、使用法、効果のデータを持たない。
 
 #### 2.10.1 FragranceMaterialDefinition
 
@@ -238,7 +239,7 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 | displayOrder | integer | ○ | 香調ごとに1から連続 |
 | status | enum | ○ | `draft`／`reviewed`／`approved`／`rejected` |
 
-同じ香調に1〜3件だけを許可し、素材重複、参照切れ、版不一致、順序欠損を拒否する。このauthoring relation自体はruntime JSONへ残さず、固定順の`materialIds`へ投影する。
+同じ香調に1〜2件だけを許可し、素材重複、参照切れ、版不一致、順序欠損を拒否する。このauthoring relation自体はruntime JSONへ残さず、固定順の`materialIds`へ投影する。
 
 ### 2.11 PresentationDefinitionSet
 
@@ -254,6 +255,8 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 
 sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを切り替えたい`、`quiet-focus = 静かに取り組みたい`とする。
 
+各`SceneDefinition`は`sceneId`、`label`、`iconId`を持つ。`iconId`は固定順に`aroma-pause`、`aroma-reset`、`aroma-quiet-focus`とし、scene IDとの1対1対応を検証する。
+
 schema 1の`presentation-v1`は素材例を持たない現行互換契約とし、schema 2の`presentation-v2`は`fragranceMaterials`と全`FragranceSuggestion.materialIds`を必須とする。Q-013のapproved release選択前に現行runtimeへschema 2を混在させない。
 
 #### TitlePresentationSelector
@@ -265,6 +268,8 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 | fragranceScenes | FragranceSceneSelector[3] | ○ | 3場面固定順 |
 
 標準パレットは`TitleProfileDefinition.defaultPaletteId`だけを正典とし、selectorへ重複保持しない。各FragranceSceneSelectorは同じ場面の候補2件と、その候補内の共有代表1件を持つ。未知フィールド、ID重複、版不一致、参照切れ、個数・順序違反、生回答・得点・猫色による条件を拒否する。
+
+`selectPresentation()`は香り素材マスタを一度だけ参照して、6候補と共有代表へ`materialNames`を解決し、各場面へ`iconId`を付与する。共有カード用`summarizeFragrances()`は固定3場面について`sceneId`、`iconId`、`label`、`materialNames`、`accordLabel`だけを返す。共有テキスト生成にはこの素材名を投影しない。
 
 ### 2.12 TitleReflectionCommentDefinition（`result-text-v2`）
 

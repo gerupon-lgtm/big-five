@@ -93,7 +93,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤として、`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。人はCSVだけを編集し、生成`app/content/` JSONを編集・コミットしない。
 
-ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。現行ES Modules runtimeは`result-text-v2`を使い、v1の基本237件を履歴互換として残した上で、承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を反映する。v2は基本237件＋振り返り153件＝390件、結果文と根拠の対応行は267件であり、実行時の根拠定義自体は固定6件である。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
+ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。現行ES Modules runtimeは`result-text-v2`を使い、v1の基本237件を履歴互換として残した上で、承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を反映する。v2は基本237件＋振り返り153件＝390件、結果文と根拠の対応行は267件であり、実行時の根拠定義自体は固定6件である。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013のP-0〜P-6承認・正式runtime接続未完了はrelease readinessを妨げる別条件として維持する。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 
 ## 4. 採点
 
@@ -369,9 +369,12 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 
 - `pause`、`reset`、`quiet-focus`の固定順で、各2件、合計6件を同時表示する。
 - 共有は各場面の`shareFragranceId`を1件、合計3件へ要約する。
-- `fragrance-materials.csv`を版付き香り素材マスタ、`fragrance-material-examples.csv`を香調と素材IDの関連表として検証する。コンパイラが香調ごとの固定順`materialIds`へ結合し、runtimeは素材マスタから表示名を解決する。通常結果だけに「香りの素材例」として表示し、共有モデルから除外する。
+- `scenes.csv`の固定`icon_id`、`fragrances.csv`の8値`family_id`、`fragrance-material-examples.csv`の素材ID 1〜2件をcompilerで結合する。
+- selectorは素材IDから表示名を解決し、結果用6候補と共有カード用代表3件を生成する。共有カード画像には素材名と短い印象を含めるが、共有テキストには素材名を含めない。
+- 純粋監査は`FRAGRANCE_TITLE_MATERIAL_DUPLICATE`、`FRAGRANCE_TITLE_SET_DUPLICATE`、`FRAGRANCE_SCENE_FAMILY_DUPLICATE`、`FRAGRANCE_SHARE_TRIPLE_OVERUSED`、`FRAGRANCE_USAGE_OVER_LIMIT`、`FRAGRANCE_SCENE_REUSE_OVER_LIMIT`、`FRAGRANCE_SCENE_COPY_DUPLICATE`、`FRAGRANCE_PROHIBITED_COPY`、`FRAGRANCE_SHARE_COPY_OVERFLOW`の9安定コードを返す。
 - ユーザー状態を推測する入力・処理を持たない。
 - 植物・精油名は香り素材マスタの`displayName`だけに許可する。商品、ブランド、購入URL、適合推奨、量、滴数、濃度、配合、摂取、塗布、ディフューザー等の使用法、治療・改善・能力向上効果のデータを定義スキーマで禁止する。
+- 現時点では決定的な確認Markdownと縦横比3:5の共有カード確認HTMLまで接続済みであり、S-003/S-004の正式結果DOMとT-007の正式共有Canvasには未接続である。
 
 ## 12. 共有カード
 
@@ -384,10 +387,10 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 3. 日本語フォントの準備を待つ。
 4. 選択パレットを変更せず背景へ適用し、副色由来の表面色を十分に白へ混ぜた淡い右上装飾へ適用する。右上装飾を暗色の面にはしない。
 5. 猫と隣接背景の分離状態を評価し、必要なら明暗二重縁取り、影、ニュートラル背景プレートを決定的に適用する。
-6. 背景、称号、猫、レーダー、短文、モード、香調候補、注意、版を描画。
+6. 背景、称号、猫、レーダー、短文、モード、`ココロアロマ`の代表3件（場面、素材例、短い印象）、共通注記、注意、版を描画。
 7. 猫は同一オリジンの静的アセットだけを使い、再配色・トリミングをしない。
 8. PNG Blobへ変換。
-9. 共有テキストを別生成。
+9. 素材例を含めない共有テキストを別生成。
 
 生回答、氏名、端末情報、公開結果URLを受け取る引数を設けない。
 同じResultSnapshot、猫アセット版、パレット版、カードテンプレート版からは同じ視認性補助を選び、共有前プレビューと完成PNGを一致させる。
