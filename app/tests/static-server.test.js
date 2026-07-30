@@ -29,7 +29,7 @@ test("the formal app serves its start shell and ES module", async (t) => {
   assert.equal(startResponse.status, 200);
   assert.match(startResponse.headers.get("content-type"), /^text\/html/);
   const html = await startResponse.text();
-  assert.match(html, /Big Five自己理解支援ツール/);
+  assert.match(html, /ココロパレア｜Big Five 自己理解支援ツール/);
   assert.match(html, /id="app"/);
   assert.match(html, /type="module" src="\.\/js\/main\.js"/);
 
