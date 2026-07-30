@@ -194,36 +194,36 @@
 - 共有投影: ほろ苦く明るい柑橘の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### 瑞々しい草と柑橘の香調（`fragrance-reset-lemongrass`）
+### レモンを思わせる青い草の香調（`fragrance-reset-lemongrass`）
 
 - 場面: 気持ちを切り替えたい
-- 説明: 瑞々しい草と明るい柑橘が重なる気配が、空気の流れが変わる情景を思わせる軽やかな香調です。
+- 説明: レモンを思わせる青い草の気配が、空気の流れが変わる情景を思わせる軽やかな香調です。
 - 素材例: レモングラス
-- 共有投影: 瑞々しい草と柑橘の香調
+- 共有投影: レモンを思わせる青い草の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### ほのかな甘みの柑橘の香調（`fragrance-quiet-focus-bergamot`）
+### ほろ苦く端正な柑橘の香調（`fragrance-quiet-focus-bergamot`）
 
 - 場面: 静かに取り組みたい
-- 説明: 明るい柑橘にほのかな甘みが重なる気配が、落ち着いた机辺と静かな時間を思わせる端正な香調です。
+- 説明: ほろ苦さと端正な輪郭を持つ柑橘の気配が、落ち着いた机辺と静かな時間を思わせる香調です。
 - 素材例: ベルガモット
-- 共有投影: ほのかな甘みの柑橘の香調
+- 共有投影: ほろ苦く端正な柑橘の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### 静かな樹脂と木質の香調（`fragrance-quiet-focus-frankincense`）
+### 静かな樹脂の輪郭を含む木質の香調（`fragrance-quiet-focus-frankincense`）
 
 - 場面: 静かに取り組みたい
-- 説明: 深い樹脂と乾いた木質を思わせる気配が、落ち着いた机辺と静かな時間を思わせる端正な香調です。
+- 説明: 乾いた木質に静かな樹脂の輪郭が重なる気配が、落ち着いた机辺と静かな時間を思わせる端正な香調です。
 - 素材例: フランキンセンス
-- 共有投影: 静かな樹脂と木質の香調
+- 共有投影: 静かな樹脂の輪郭を含む木質の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### 濃密で甘やかな花の香調（`fragrance-pause-ylang-ylang`）
+### やわらかな甘みの柑橘の香調（`fragrance-pause-sweet-orange`）
 
 - 場面: ひと息つきたい
-- 説明: 濃密な甘みと丸みのある花の気配が、静かな余白のある情景を思わせる穏やかな香調です。
-- 素材例: イランイラン
-- 共有投影: 濃密で甘やかな花の香調
+- 説明: 丸みのある柑橘の明るさが、静かな余白のある情景を思わせる穏やかな香調です。
+- 素材例: スイートオレンジ
+- 共有投影: やわらかな甘みの柑橘の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
 ### 温かく穏やかなハーブの香調（`fragrance-pause-marjoram`）
@@ -258,20 +258,20 @@
 - 共有投影: 青く端正なハーブの香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### 澄んだ樹木と果実の香調（`fragrance-quiet-focus-juniper-berry`）
+### 澄んだ針葉樹と青い実の香調（`fragrance-quiet-focus-juniper-berry`）
 
 - 場面: 静かに取り組みたい
-- 説明: 澄んだ空気と小さな果実を思わせる気配が、落ち着いた机辺と静かな時間を思わせる端正な香調です。
+- 説明: 澄んだ針葉樹と青い実を思わせる気配が、落ち着いた机辺と静かな時間を思わせる端正な香調です。
 - 素材例: ジュニパーベリー
-- 共有投影: 澄んだ樹木と果実の香調
+- 共有投影: 澄んだ針葉樹と青い実の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### 清らかで乾いた木質の香調（`fragrance-pause-hinoki`）
+### 静かな森を思わせる木質の香調（`fragrance-pause-hinoki`）
 
 - 場面: ひと息つきたい
-- 説明: 乾いた木の質感と静かな森を思わせる気配が、静かな余白のある情景を思わせる穏やかな香調です。
+- 説明: 穏やかな木の質感と静かな森を思わせる気配が、静かな余白のある情景を思わせる香調です。
 - 素材例: ヒノキ
-- 共有投影: 清らかで乾いた木質の香調
+- 共有投影: 静かな森を思わせる木質の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
 ### 透明感のある花と柑橘の香調（`fragrance-pause-neroli`）
@@ -282,12 +282,12 @@
 - 共有投影: 透明感のある花と柑橘の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### 青く端正なハーブの香調（`fragrance-reset-rosemary`）
+### 風を受ける青い葉のハーブの香調（`fragrance-reset-rosemary`）
 
 - 場面: 気持ちを切り替えたい
-- 説明: 青々とした葉と端正な輪郭を持つ気配が、空気の流れが変わる情景を思わせる軽やかな香調です。
+- 説明: 青い葉が風を受ける気配が、空気の流れが変わる情景を思わせる軽やかな香調です。
 - 素材例: ローズマリー
-- 共有投影: 青く端正なハーブの香調
+- 共有投影: 風を受ける青い葉のハーブの香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
 ### 軽快で透明な柑橘の香調（`fragrance-reset-lime`）
@@ -322,20 +322,20 @@
 - 共有投影: 静かな甘みを含む花の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### やさしい甘みの木質の香調（`fragrance-pause-ho-wood`）
+### やわらかな花を含む木質の香調（`fragrance-pause-ho-wood`）
 
 - 場面: ひと息つきたい
-- 説明: やさしい甘みと滑らかな木質が重なる気配が、静かな余白のある情景を思わせる穏やかな香調です。
+- 説明: なめらかな木質にやわらかな花のニュアンスが重なる気配が、静かな余白のある情景を思わせる穏やかな香調です。
 - 素材例: ホーウッド
-- 共有投影: やさしい甘みの木質の香調
+- 共有投影: やわらかな花を含む木質の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### ほのかな甘みの柑橘の香調（`fragrance-reset-bergamot`）
+### 明るく軽快な柑橘の香調（`fragrance-reset-bergamot`）
 
 - 場面: 気持ちを切り替えたい
-- 説明: 明るい柑橘にほのかな甘みが重なる気配が、空気の流れが変わる情景を思わせる軽やかな香調です。
+- 説明: 明るい柑橘のほろ苦さが、空気の流れが変わる情景を思わせる軽やかな香調です。
 - 素材例: ベルガモット
-- 共有投影: ほのかな甘みの柑橘の香調
+- 共有投影: 明るく軽快な柑橘の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
 ### 鋭く澄んだ清涼の香調（`fragrance-reset-peppermint`）
@@ -362,36 +362,36 @@
 - 共有投影: 根と土を思わせる重厚な香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### 丸みのある甘い柑橘の香調（`fragrance-reset-mandarin`）
+### 丸みのあるやさしい切替の香調（`fragrance-reset-mandarin`）
 
 - 場面: 気持ちを切り替えたい
-- 説明: 丸みのある甘さと明るさを持つ柑橘の気配が、空気の流れが変わる情景を思わせる軽やかな香調です。
+- 説明: 丸みのある甘さと明るさが、丸みのあるやさしい切替を思わせる香調です。
 - 素材例: マンダリン
-- 共有投影: 丸みのある甘い柑橘の香調
+- 共有投影: 丸みのあるやさしい切替の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### 清らかで乾いた木質の香調（`fragrance-quiet-focus-hinoki`）
+### 端正で澄んだ木質の香調（`fragrance-quiet-focus-hinoki`）
 
 - 場面: 静かに取り組みたい
-- 説明: 乾いた木の質感と静かな森を思わせる気配が、落ち着いた机辺と静かな時間を思わせる端正な香調です。
+- 説明: 乾いた木の質感と澄んだ輪郭が、落ち着いた机辺と静かな時間を思わせる端正な香調です。
 - 素材例: ヒノキ
-- 共有投影: 清らかで乾いた木質の香調
+- 共有投影: 端正で澄んだ木質の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### 静かな樹脂と木質の香調（`fragrance-pause-frankincense`）
+### やわらかな樹脂と木質の香調（`fragrance-pause-frankincense`）
 
 - 場面: ひと息つきたい
-- 説明: 深い樹脂と乾いた木質を思わせる気配が、静かな余白のある情景を思わせる穏やかな香調です。
+- 説明: 穏やかな樹脂と乾いた木質が重なる気配が、静かな余白のある情景を思わせる香調です。
 - 素材例: フランキンセンス
-- 共有投影: 静かな樹脂と木質の香調
+- 共有投影: やわらかな樹脂と木質の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
-### 青さを含む軽快な香調（`fragrance-reset-citronella`）
+### すっきりした辛みを含む香調（`fragrance-reset-ginger`）
 
 - 場面: 気持ちを切り替えたい
-- 説明: 青さと明るさが交わる軽快な気配が、空気の流れが変わる情景を思わせる軽やかな香調です。
-- 素材例: シトロネラ
-- 共有投影: 青さを含む軽快な香調
+- 説明: 軽い辛みと明るさが交わる気配が、空気の流れが変わる情景を思わせる軽やかな香調です。
+- 素材例: ジンジャー
+- 共有投影: すっきりした辛みを含む香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
 ### 透明感のある葉の香調（`fragrance-reset-eucalyptus-radiata`）
@@ -400,30 +400,6 @@
 - 説明: 透明感とすっきりした輪郭を持つ葉の気配が、空気の流れが変わる情景を思わせる軽やかな香調です。
 - 素材例: ユーカリ・ラディアータ
 - 共有投影: 透明感のある葉の香調
-- 注意書きID: `disclaimer-aroma-symbolic`
-
-### やわらかな草花の香調（`fragrance-pause-chamomile`）
-
-- 場面: ひと息つきたい
-- 説明: ほのかな甘みを含むやわらかな草花の気配が、静かな余白のある情景を思わせる穏やかな香調です。
-- 素材例: カモミール
-- 共有投影: やわらかな草花の香調
-- 注意書きID: `disclaimer-aroma-symbolic`
-
-### 湿り気を含む土と葉の香調（`fragrance-pause-patchouli`）
-
-- 場面: ひと息つきたい
-- 説明: 湿った土と葉を思わせる深みのある気配が、静かな余白のある情景を思わせる穏やかな香調です。
-- 素材例: パチュリ
-- 共有投影: 湿り気を含む土と葉の香調
-- 注意書きID: `disclaimer-aroma-symbolic`
-
-### やさしい余韻を含む草花の香調（`fragrance-pause-roman-chamomile-soft`）
-
-- 場面: ひと息つきたい
-- 説明: やさしい甘みと静かな余韻を含む草花の気配が、静かな余白のある情景を思わせる穏やかな香調です。
-- 素材例: ローマンカモミール
-- 共有投影: やさしい余韻を含む草花の香調
 - 注意書きID: `disclaimer-aroma-symbolic`
 
 ## P-2 バランス・単一因子称号（draft）
@@ -446,17 +422,17 @@
 
 - 香り候補: ほろ苦く明るい柑橘の香調 (`fragrance-reset-grapefruit`)
 - 素材例: グレープフルーツ
-- 香り候補: 瑞々しい草と柑橘の香調 (`fragrance-reset-lemongrass`)
+- 香り候補: レモンを思わせる青い草の香調 (`fragrance-reset-lemongrass`)
 - 素材例: レモングラス
 - 共有サマリ: ほろ苦く明るい柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-quiet-focus-bergamot`)
+- 香り候補: ほろ苦く端正な柑橘の香調 (`fragrance-quiet-focus-bergamot`)
 - 素材例: ベルガモット
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: ほろ苦く端正な柑橘の香調
 
 ### 2. おいかける探究者 (`title-single-intellectImagination-high`)
 
@@ -466,11 +442,11 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 濃密で甘やかな花の香調 (`fragrance-pause-ylang-ylang`)
-- 素材例: イランイラン
+- 香り候補: やわらかな甘みの柑橘の香調 (`fragrance-pause-sweet-orange`)
+- 素材例: スイートオレンジ
 - 香り候補: 温かく穏やかなハーブの香調 (`fragrance-pause-marjoram`)
 - 素材例: マジョラム
-- 共有サマリ: 濃密で甘やかな花の香調
+- 共有サマリ: やわらかな甘みの柑橘の香調
 
 #### 気持ちを切り替えたい（reset）
 
@@ -484,7 +460,7 @@
 
 - 香り候補: 青く端正なハーブの香調 (`fragrance-quiet-focus-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 青く端正なハーブの香調
 
@@ -496,19 +472,19 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
 - 香り候補: 透明感のある花と柑橘の香調 (`fragrance-pause-neroli`)
 - 素材例: ネロリ
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 軽快で透明な柑橘の香調 (`fragrance-reset-lime`)
 - 素材例: ライム
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -528,17 +504,17 @@
 
 - 香り候補: 静かな甘みを含む花の香調 (`fragrance-pause-true-lavender`)
 - 素材例: 真正ラベンダー
-- 香り候補: やさしい甘みの木質の香調 (`fragrance-pause-ho-wood`)
+- 香り候補: やわらかな花を含む木質の香調 (`fragrance-pause-ho-wood`)
 - 素材例: ホーウッド
 - 共有サマリ: 静かな甘みを含む花の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-reset-bergamot`)
+- 香り候補: 明るく軽快な柑橘の香調 (`fragrance-reset-bergamot`)
 - 素材例: ベルガモット
 - 香り候補: 鋭く澄んだ清涼の香調 (`fragrance-reset-peppermint`)
 - 素材例: ペパーミント
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: 明るく軽快な柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -566,17 +542,17 @@
 
 - 香り候補: ほろ苦く明るい柑橘の香調 (`fragrance-reset-grapefruit`)
 - 素材例: グレープフルーツ
-- 香り候補: 丸みのある甘い柑橘の香調 (`fragrance-reset-mandarin`)
+- 香り候補: 丸みのあるやさしい切替の香調 (`fragrance-reset-mandarin`)
 - 素材例: マンダリン
 - 共有サマリ: ほろ苦く明るい柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-quiet-focus-hinoki`)
+- 香り候補: 端正で澄んだ木質の香調 (`fragrance-quiet-focus-hinoki`)
 - 素材例: ヒノキ
-- 共有サマリ: 静かな樹脂と木質の香調
+- 共有サマリ: 静かな樹脂の輪郭を含む木質の香調
 
 ### 6. にぎわいへ進む交遊者 (`title-single-extraversion-high`)
 
@@ -588,23 +564,23 @@
 
 - 香り候補: 静かな甘みを含む花の香調 (`fragrance-pause-true-lavender`)
 - 素材例: 真正ラベンダー
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
 - 共有サマリ: 静かな甘みを含む花の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青さを含む軽快な香調 (`fragrance-reset-citronella`)
-- 素材例: シトロネラ
+- 香り候補: すっきりした辛みを含む香調 (`fragrance-reset-ginger`)
+- 素材例: ジンジャー
 - 香り候補: 透明感のある葉の香調 (`fragrance-reset-eucalyptus-radiata`)
 - 素材例: ユーカリ・ラディアータ
-- 共有サマリ: 青さを含む軽快な香調
+- 共有サマリ: すっきりした辛みを含む香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 青く端正なハーブの香調 (`fragrance-quiet-focus-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 青く端正なハーブの香調
 
@@ -616,19 +592,19 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
 - 香り候補: 透明感のある花と柑橘の香調 (`fragrance-pause-neroli`)
 - 素材例: ネロリ
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 軽快で透明な柑橘の香調 (`fragrance-reset-lime`)
 - 素材例: ライム
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -648,17 +624,17 @@
 
 - 香り候補: 静かな甘みを含む花の香調 (`fragrance-pause-true-lavender`)
 - 素材例: 真正ラベンダー
-- 香り候補: やわらかな草花の香調 (`fragrance-pause-chamomile`)
-- 素材例: カモミール
+- 香り候補: やわらかな花を含む木質の香調 (`fragrance-pause-ho-wood`)
+- 素材例: ホーウッド
 - 共有サマリ: 静かな甘みを含む花の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-reset-bergamot`)
+- 香り候補: 明るく軽快な柑橘の香調 (`fragrance-reset-bergamot`)
 - 素材例: ベルガモット
 - 香り候補: 鮮やかで明るい柑橘の香調 (`fragrance-reset-lemon`)
 - 素材例: レモン
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: 明るく軽快な柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -676,27 +652,27 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 湿り気を含む土と葉の香調 (`fragrance-pause-patchouli`)
-- 素材例: パチュリ
+- 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
+- 素材例: ローマンカモミール
 - 香り候補: 温かく穏やかな木質の香調 (`fragrance-pause-sandalwood`)
 - 素材例: サンダルウッド
-- 共有サマリ: 湿り気を含む土と葉の香調
+- 共有サマリ: まろやかな甘みの草花の香調
 
 #### 気持ちを切り替えたい（reset）
 
 - 香り候補: ほろ苦く明るい柑橘の香調 (`fragrance-reset-grapefruit`)
 - 素材例: グレープフルーツ
-- 香り候補: 丸みのある甘い柑橘の香調 (`fragrance-reset-mandarin`)
+- 香り候補: 丸みのあるやさしい切替の香調 (`fragrance-reset-mandarin`)
 - 素材例: マンダリン
 - 共有サマリ: ほろ苦く明るい柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-quiet-focus-hinoki`)
+- 香り候補: 端正で澄んだ木質の香調 (`fragrance-quiet-focus-hinoki`)
 - 素材例: ヒノキ
-- 共有サマリ: 静かな樹脂と木質の香調
+- 共有サマリ: 静かな樹脂の輪郭を含む木質の香調
 
 ### 10. 静かなる航行者 (`title-single-emotionalStability-high`)
 
@@ -708,7 +684,7 @@
 
 - 香り候補: 温かく穏やかなハーブの香調 (`fragrance-pause-marjoram`)
 - 素材例: マジョラム
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
 - 共有サマリ: 温かく穏やかなハーブの香調
 
@@ -724,7 +700,7 @@
 
 - 香り候補: 青く端正なハーブの香調 (`fragrance-quiet-focus-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 青く端正なハーブの香調
 
@@ -736,19 +712,19 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
 - 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
 - 素材例: ローマンカモミール
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 軽快で透明な柑橘の香調 (`fragrance-reset-lime`)
 - 素材例: ライム
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -768,11 +744,11 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 濃密で甘やかな花の香調 (`fragrance-pause-ylang-ylang`)
-- 素材例: イランイラン
-- 香り候補: やさしい甘みの木質の香調 (`fragrance-pause-ho-wood`)
+- 香り候補: やわらかな甘みの柑橘の香調 (`fragrance-pause-sweet-orange`)
+- 素材例: スイートオレンジ
+- 香り候補: やわらかな花を含む木質の香調 (`fragrance-pause-ho-wood`)
 - 素材例: ホーウッド
-- 共有サマリ: 濃密で甘やかな花の香調
+- 共有サマリ: やわらかな甘みの柑橘の香調
 
 #### 気持ちを切り替えたい（reset）
 
@@ -798,17 +774,17 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 濃密で甘やかな花の香調 (`fragrance-pause-ylang-ylang`)
-- 素材例: イランイラン
+- 香り候補: やわらかな甘みの柑橘の香調 (`fragrance-pause-sweet-orange`)
+- 素材例: スイートオレンジ
 - 香り候補: 温かく穏やかな木質の香調 (`fragrance-pause-sandalwood`)
 - 素材例: サンダルウッド
-- 共有サマリ: 濃密で甘やかな花の香調
+- 共有サマリ: やわらかな甘みの柑橘の香調
 
 #### 気持ちを切り替えたい（reset）
 
 - 香り候補: 青い葉と柑橘の香調 (`fragrance-reset-petitgrain`)
 - 素材例: プチグレン
-- 香り候補: 丸みのある甘い柑橘の香調 (`fragrance-reset-mandarin`)
+- 香り候補: 丸みのあるやさしい切替の香調 (`fragrance-reset-mandarin`)
 - 素材例: マンダリン
 - 共有サマリ: 青い葉と柑橘の香調
 
@@ -816,7 +792,7 @@
 
 - 香り候補: 青く端正なハーブの香調 (`fragrance-quiet-focus-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-quiet-focus-hinoki`)
+- 香り候補: 端正で澄んだ木質の香調 (`fragrance-quiet-focus-hinoki`)
 - 素材例: ヒノキ
 - 共有サマリ: 青く端正なハーブの香調
 
@@ -828,19 +804,19 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
-- 香り候補: やさしい甘みの木質の香調 (`fragrance-pause-ho-wood`)
+- 香り候補: やわらかな花を含む木質の香調 (`fragrance-pause-ho-wood`)
 - 素材例: ホーウッド
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 鋭く澄んだ清涼の香調 (`fragrance-reset-peppermint`)
 - 素材例: ペパーミント
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -858,25 +834,25 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
 - 香り候補: 温かく穏やかな木質の香調 (`fragrance-pause-sandalwood`)
 - 素材例: サンダルウッド
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 丸みのある甘い柑橘の香調 (`fragrance-reset-mandarin`)
+- 香り候補: 丸みのあるやさしい切替の香調 (`fragrance-reset-mandarin`)
 - 素材例: マンダリン
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 湿り気を含む土と葉の香調 (`fragrance-quiet-focus-patchouli`)
 - 素材例: パチュリ
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-quiet-focus-hinoki`)
+- 香り候補: 端正で澄んだ木質の香調 (`fragrance-quiet-focus-hinoki`)
 - 素材例: ヒノキ
 - 共有サマリ: 湿り気を含む土と葉の香調
 
@@ -888,11 +864,11 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 濃密で甘やかな花の香調 (`fragrance-pause-ylang-ylang`)
-- 素材例: イランイラン
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな甘みの柑橘の香調 (`fragrance-pause-sweet-orange`)
+- 素材例: スイートオレンジ
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
-- 共有サマリ: 濃密で甘やかな花の香調
+- 共有サマリ: やわらかな甘みの柑橘の香調
 
 #### 気持ちを切り替えたい（reset）
 
@@ -906,7 +882,7 @@
 
 - 香り候補: 青く端正なハーブの香調 (`fragrance-quiet-focus-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 青く端正なハーブの香調
 
@@ -918,11 +894,11 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 濃密で甘やかな花の香調 (`fragrance-pause-ylang-ylang`)
-- 素材例: イランイラン
+- 香り候補: やわらかな甘みの柑橘の香調 (`fragrance-pause-sweet-orange`)
+- 素材例: スイートオレンジ
 - 香り候補: 透明感のある花と柑橘の香調 (`fragrance-pause-neroli`)
 - 素材例: ネロリ
-- 共有サマリ: 濃密で甘やかな花の香調
+- 共有サマリ: やわらかな甘みの柑橘の香調
 
 #### 気持ちを切り替えたい（reset）
 
@@ -948,25 +924,25 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 透明感のある葉の香調 (`fragrance-reset-eucalyptus-radiata`)
 - 素材例: ユーカリ・ラディアータ
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 湿り気を含む土と葉の香調 (`fragrance-quiet-focus-patchouli`)
 - 素材例: パチュリ
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 湿り気を含む土と葉の香調
 
@@ -978,19 +954,19 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
 - 香り候補: 透明感のある花と柑橘の香調 (`fragrance-pause-neroli`)
 - 素材例: ネロリ
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 軽快で透明な柑橘の香調 (`fragrance-reset-lime`)
 - 素材例: ライム
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1008,11 +984,11 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 濃密で甘やかな花の香調 (`fragrance-pause-ylang-ylang`)
-- 素材例: イランイラン
-- 香り候補: やわらかな草花の香調 (`fragrance-pause-chamomile`)
-- 素材例: カモミール
-- 共有サマリ: 濃密で甘やかな花の香調
+- 香り候補: やわらかな甘みの柑橘の香調 (`fragrance-pause-sweet-orange`)
+- 素材例: スイートオレンジ
+- 香り候補: やわらかな花を含む木質の香調 (`fragrance-pause-ho-wood`)
+- 素材例: ホーウッド
+- 共有サマリ: やわらかな甘みの柑橘の香調
 
 #### 気持ちを切り替えたい（reset）
 
@@ -1038,17 +1014,17 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 濃密で甘やかな花の香調 (`fragrance-pause-ylang-ylang`)
-- 素材例: イランイラン
+- 香り候補: やわらかな甘みの柑橘の香調 (`fragrance-pause-sweet-orange`)
+- 素材例: スイートオレンジ
 - 香り候補: 温かく穏やかな木質の香調 (`fragrance-pause-sandalwood`)
 - 素材例: サンダルウッド
-- 共有サマリ: 濃密で甘やかな花の香調
+- 共有サマリ: やわらかな甘みの柑橘の香調
 
 #### 気持ちを切り替えたい（reset）
 
 - 香り候補: 青い葉と柑橘の香調 (`fragrance-reset-petitgrain`)
 - 素材例: プチグレン
-- 香り候補: 丸みのある甘い柑橘の香調 (`fragrance-reset-mandarin`)
+- 香り候補: 丸みのあるやさしい切替の香調 (`fragrance-reset-mandarin`)
 - 素材例: マンダリン
 - 共有サマリ: 青い葉と柑橘の香調
 
@@ -1056,7 +1032,7 @@
 
 - 香り候補: 青く端正なハーブの香調 (`fragrance-quiet-focus-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-quiet-focus-hinoki`)
+- 香り候補: 端正で澄んだ木質の香調 (`fragrance-quiet-focus-hinoki`)
 - 素材例: ヒノキ
 - 共有サマリ: 青く端正なハーブの香調
 
@@ -1070,19 +1046,19 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
-- 香り候補: やわらかな草花の香調 (`fragrance-pause-chamomile`)
-- 素材例: カモミール
-- 共有サマリ: 清らかで乾いた木質の香調
+- 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
+- 素材例: ローマンカモミール
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 鮮やかで明るい柑橘の香調 (`fragrance-reset-lemon`)
 - 素材例: レモン
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1100,25 +1076,25 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
 - 香り候補: 温かく穏やかな木質の香調 (`fragrance-pause-sandalwood`)
 - 素材例: サンダルウッド
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 丸みのある甘い柑橘の香調 (`fragrance-reset-mandarin`)
+- 香り候補: 丸みのあるやさしい切替の香調 (`fragrance-reset-mandarin`)
 - 素材例: マンダリン
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 湿り気を含む土と葉の香調 (`fragrance-quiet-focus-patchouli`)
 - 素材例: パチュリ
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-quiet-focus-hinoki`)
+- 香り候補: 端正で澄んだ木質の香調 (`fragrance-quiet-focus-hinoki`)
 - 素材例: ヒノキ
 - 共有サマリ: 湿り気を含む土と葉の香調
 
@@ -1130,11 +1106,11 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 濃密で甘やかな花の香調 (`fragrance-pause-ylang-ylang`)
-- 素材例: イランイラン
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな甘みの柑橘の香調 (`fragrance-pause-sweet-orange`)
+- 素材例: スイートオレンジ
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
-- 共有サマリ: 濃密で甘やかな花の香調
+- 共有サマリ: やわらかな甘みの柑橘の香調
 
 #### 気持ちを切り替えたい（reset）
 
@@ -1148,7 +1124,7 @@
 
 - 香り候補: 青く端正なハーブの香調 (`fragrance-quiet-focus-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 青く端正なハーブの香調
 
@@ -1160,11 +1136,11 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 濃密で甘やかな花の香調 (`fragrance-pause-ylang-ylang`)
-- 素材例: イランイラン
+- 香り候補: やわらかな甘みの柑橘の香調 (`fragrance-pause-sweet-orange`)
+- 素材例: スイートオレンジ
 - 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
 - 素材例: ローマンカモミール
-- 共有サマリ: 濃密で甘やかな花の香調
+- 共有サマリ: やわらかな甘みの柑橘の香調
 
 #### 気持ちを切り替えたい（reset）
 
@@ -1190,25 +1166,25 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 透明感のある葉の香調 (`fragrance-reset-eucalyptus-radiata`)
 - 素材例: ユーカリ・ラディアータ
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 湿り気を含む土と葉の香調 (`fragrance-quiet-focus-patchouli`)
 - 素材例: パチュリ
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 湿り気を含む土と葉の香調
 
@@ -1220,19 +1196,19 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
 - 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
 - 素材例: ローマンカモミール
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 軽快で透明な柑橘の香調 (`fragrance-reset-lime`)
 - 素材例: ライム
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1252,23 +1228,23 @@
 
 - 香り候補: 静かな甘みを含む花の香調 (`fragrance-pause-true-lavender`)
 - 素材例: 真正ラベンダー
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
 - 共有サマリ: 静かな甘みを含む花の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-reset-bergamot`)
+- 香り候補: 明るく軽快な柑橘の香調 (`fragrance-reset-bergamot`)
 - 素材例: ベルガモット
 - 香り候補: 透明感のある葉の香調 (`fragrance-reset-eucalyptus-radiata`)
 - 素材例: ユーカリ・ラディアータ
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: 明るく軽快な柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 乾いた深みのある木質の香調 (`fragrance-quiet-focus-cedarwood`)
 - 素材例: シダーウッド
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 乾いた深みのある木質の香調
 
@@ -1288,11 +1264,11 @@
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-reset-bergamot`)
+- 香り候補: 明るく軽快な柑橘の香調 (`fragrance-reset-bergamot`)
 - 素材例: ベルガモット
 - 香り候補: 軽快で透明な柑橘の香調 (`fragrance-reset-lime`)
 - 素材例: ライム
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: 明るく軽快な柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1312,7 +1288,7 @@
 
 - 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
 - 素材例: ローマンカモミール
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
 - 共有サマリ: まろやかな甘みの草花の香調
 
@@ -1326,11 +1302,11 @@
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
-- 共有サマリ: 静かな樹脂と木質の香調
+- 共有サマリ: 静かな樹脂の輪郭を含む木質の香調
 
 ### 31. 余白を楽しむ散策者 (`title-pair-conscientiousness-low--extraversion-low`)
 
@@ -1356,11 +1332,11 @@
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
 - 香り候補: 端正で清涼な木質の香調 (`fragrance-quiet-focus-cypress`)
 - 素材例: サイプレス
-- 共有サマリ: 静かな樹脂と木質の香調
+- 共有サマリ: 静かな樹脂の輪郭を含む木質の香調
 
 ## P-5 ペア称号 21〜30（draft）
 
@@ -1374,17 +1350,17 @@
 
 - 香り候補: 静かな甘みを含む花の香調 (`fragrance-pause-true-lavender`)
 - 素材例: 真正ラベンダー
-- 香り候補: やわらかな草花の香調 (`fragrance-pause-chamomile`)
-- 素材例: カモミール
+- 香り候補: やわらかな花を含む木質の香調 (`fragrance-pause-ho-wood`)
+- 素材例: ホーウッド
 - 共有サマリ: 静かな甘みを含む花の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-reset-bergamot`)
+- 香り候補: 明るく軽快な柑橘の香調 (`fragrance-reset-bergamot`)
 - 素材例: ベルガモット
 - 香り候補: 鮮やかで明るい柑橘の香調 (`fragrance-reset-lemon`)
 - 素材例: レモン
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: 明るく軽快な柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1410,17 +1386,17 @@
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-reset-bergamot`)
+- 香り候補: 明るく軽快な柑橘の香調 (`fragrance-reset-bergamot`)
 - 素材例: ベルガモット
-- 香り候補: 丸みのある甘い柑橘の香調 (`fragrance-reset-mandarin`)
+- 香り候補: 丸みのあるやさしい切替の香調 (`fragrance-reset-mandarin`)
 - 素材例: マンダリン
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: 明るく軽快な柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 乾いた深みのある木質の香調 (`fragrance-quiet-focus-cedarwood`)
 - 素材例: シダーウッド
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-quiet-focus-hinoki`)
+- 香り候補: 端正で澄んだ木質の香調 (`fragrance-quiet-focus-hinoki`)
 - 素材例: ヒノキ
 - 共有サマリ: 乾いた深みのある木質の香調
 
@@ -1434,8 +1410,8 @@
 
 - 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
 - 素材例: ローマンカモミール
-- 香り候補: やわらかな草花の香調 (`fragrance-pause-chamomile`)
-- 素材例: カモミール
+- 香り候補: やわらかな花を含む木質の香調 (`fragrance-pause-ho-wood`)
+- 素材例: ホーウッド
 - 共有サマリ: まろやかな甘みの草花の香調
 
 #### 気持ちを切り替えたい（reset）
@@ -1448,11 +1424,11 @@
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
 - 香り候補: 根と土を思わせる重厚な香調 (`fragrance-quiet-focus-vetiver`)
 - 素材例: ベチバー
-- 共有サマリ: 静かな樹脂と木質の香調
+- 共有サマリ: 静かな樹脂の輪郭を含む木質の香調
 
 ### 35. 自由な独行者 (`title-pair-conscientiousness-low--agreeableness-low`)
 
@@ -1472,17 +1448,17 @@
 
 - 香り候補: ほろ苦く明るい柑橘の香調 (`fragrance-reset-grapefruit`)
 - 素材例: グレープフルーツ
-- 香り候補: 丸みのある甘い柑橘の香調 (`fragrance-reset-mandarin`)
+- 香り候補: 丸みのあるやさしい切替の香調 (`fragrance-reset-mandarin`)
 - 素材例: マンダリン
 - 共有サマリ: ほろ苦く明るい柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-quiet-focus-hinoki`)
+- 香り候補: 端正で澄んだ木質の香調 (`fragrance-quiet-focus-hinoki`)
 - 素材例: ヒノキ
-- 共有サマリ: 静かな樹脂と木質の香調
+- 共有サマリ: 静かな樹脂の輪郭を含む木質の香調
 
 ### 36. 凪の計画者 (`title-pair-conscientiousness-high--emotionalStability-high`)
 
@@ -1494,23 +1470,23 @@
 
 - 香り候補: 静かな甘みを含む花の香調 (`fragrance-pause-true-lavender`)
 - 素材例: 真正ラベンダー
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
 - 共有サマリ: 静かな甘みを含む花の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-reset-bergamot`)
+- 香り候補: 明るく軽快な柑橘の香調 (`fragrance-reset-bergamot`)
 - 素材例: ベルガモット
 - 香り候補: 透明感のある葉の香調 (`fragrance-reset-eucalyptus-radiata`)
 - 素材例: ユーカリ・ラディアータ
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: 明るく軽快な柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 乾いた深みのある木質の香調 (`fragrance-quiet-focus-cedarwood`)
 - 素材例: シダーウッド
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 乾いた深みのある木質の香調
 
@@ -1530,11 +1506,11 @@
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-reset-bergamot`)
+- 香り候補: 明るく軽快な柑橘の香調 (`fragrance-reset-bergamot`)
 - 素材例: ベルガモット
 - 香り候補: 軽快で透明な柑橘の香調 (`fragrance-reset-lime`)
 - 素材例: ライム
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: 明るく軽快な柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1554,7 +1530,7 @@
 
 - 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
 - 素材例: ローマンカモミール
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
 - 共有サマリ: まろやかな甘みの草花の香調
 
@@ -1568,11 +1544,11 @@
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
-- 共有サマリ: 静かな樹脂と木質の香調
+- 共有サマリ: 静かな樹脂の輪郭を含む木質の香調
 
 ### 39. 揺れ影の遊歩者 (`title-pair-conscientiousness-low--emotionalStability-low`)
 
@@ -1584,8 +1560,8 @@
 
 - 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
 - 素材例: ローマンカモミール
-- 香り候補: やさしい余韻を含む草花の香調 (`fragrance-pause-roman-chamomile-soft`)
-- 素材例: ローマンカモミール
+- 香り候補: 温かく穏やかな木質の香調 (`fragrance-pause-sandalwood`)
+- 素材例: サンダルウッド
 - 共有サマリ: まろやかな甘みの草花の香調
 
 #### 気持ちを切り替えたい（reset）
@@ -1598,11 +1574,11 @@
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
 - 香り候補: 端正で清涼な木質の香調 (`fragrance-quiet-focus-cypress`)
 - 素材例: サイプレス
-- 共有サマリ: 静かな樹脂と木質の香調
+- 共有サマリ: 静かな樹脂の輪郭を含む木質の香調
 
 ### 40. 輪舞へ踏み出す共演者 (`title-pair-extraversion-high--agreeableness-high`)
 
@@ -1614,17 +1590,17 @@
 
 - 香り候補: 静かな甘みを含む花の香調 (`fragrance-pause-true-lavender`)
 - 素材例: 真正ラベンダー
-- 香り候補: やわらかな草花の香調 (`fragrance-pause-chamomile`)
-- 素材例: カモミール
+- 香り候補: やわらかな花を含む木質の香調 (`fragrance-pause-ho-wood`)
+- 素材例: ホーウッド
 - 共有サマリ: 静かな甘みを含む花の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青さを含む軽快な香調 (`fragrance-reset-citronella`)
-- 素材例: シトロネラ
+- 香り候補: すっきりした辛みを含む香調 (`fragrance-reset-ginger`)
+- 素材例: ジンジャー
 - 香り候補: 鮮やかで明るい柑橘の香調 (`fragrance-reset-lemon`)
 - 素材例: レモン
-- 共有サマリ: 青さを含む軽快な香調
+- 共有サマリ: すっきりした辛みを含む香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1650,17 +1626,17 @@
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青さを含む軽快な香調 (`fragrance-reset-citronella`)
-- 素材例: シトロネラ
-- 香り候補: 丸みのある甘い柑橘の香調 (`fragrance-reset-mandarin`)
+- 香り候補: すっきりした辛みを含む香調 (`fragrance-reset-ginger`)
+- 素材例: ジンジャー
+- 香り候補: 丸みのあるやさしい切替の香調 (`fragrance-reset-mandarin`)
 - 素材例: マンダリン
-- 共有サマリ: 青さを含む軽快な香調
+- 共有サマリ: すっきりした辛みを含む香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 青く端正なハーブの香調 (`fragrance-quiet-focus-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-quiet-focus-hinoki`)
+- 香り候補: 端正で澄んだ木質の香調 (`fragrance-quiet-focus-hinoki`)
 - 素材例: ヒノキ
 - 共有サマリ: 青く端正なハーブの香調
 
@@ -1674,19 +1650,19 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
-- 香り候補: やわらかな草花の香調 (`fragrance-pause-chamomile`)
-- 素材例: カモミール
-- 共有サマリ: 清らかで乾いた木質の香調
+- 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
+- 素材例: ローマンカモミール
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 鮮やかで明るい柑橘の香調 (`fragrance-reset-lemon`)
 - 素材例: レモン
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1704,25 +1680,25 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
 - 香り候補: 温かく穏やかな木質の香調 (`fragrance-pause-sandalwood`)
 - 素材例: サンダルウッド
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 丸みのある甘い柑橘の香調 (`fragrance-reset-mandarin`)
+- 香り候補: 丸みのあるやさしい切替の香調 (`fragrance-reset-mandarin`)
 - 素材例: マンダリン
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 湿り気を含む土と葉の香調 (`fragrance-quiet-focus-patchouli`)
 - 素材例: パチュリ
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-quiet-focus-hinoki`)
+- 香り候補: 端正で澄んだ木質の香調 (`fragrance-quiet-focus-hinoki`)
 - 素材例: ヒノキ
 - 共有サマリ: 湿り気を含む土と葉の香調
 
@@ -1736,23 +1712,23 @@
 
 - 香り候補: 静かな甘みを含む花の香調 (`fragrance-pause-true-lavender`)
 - 素材例: 真正ラベンダー
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
 - 共有サマリ: 静かな甘みを含む花の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青さを含む軽快な香調 (`fragrance-reset-citronella`)
-- 素材例: シトロネラ
+- 香り候補: すっきりした辛みを含む香調 (`fragrance-reset-ginger`)
+- 素材例: ジンジャー
 - 香り候補: 透明感のある葉の香調 (`fragrance-reset-eucalyptus-radiata`)
 - 素材例: ユーカリ・ラディアータ
-- 共有サマリ: 青さを含む軽快な香調
+- 共有サマリ: すっきりした辛みを含む香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 青く端正なハーブの香調 (`fragrance-quiet-focus-rosemary`)
 - 素材例: ローズマリー
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 青く端正なハーブの香調
 
@@ -1772,11 +1748,11 @@
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青さを含む軽快な香調 (`fragrance-reset-citronella`)
-- 素材例: シトロネラ
+- 香り候補: すっきりした辛みを含む香調 (`fragrance-reset-ginger`)
+- 素材例: ジンジャー
 - 香り候補: 軽快で透明な柑橘の香調 (`fragrance-reset-lime`)
 - 素材例: ライム
-- 共有サマリ: 青さを含む軽快な香調
+- 共有サマリ: すっきりした辛みを含む香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1794,25 +1770,25 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 透明感のある葉の香調 (`fragrance-reset-eucalyptus-radiata`)
 - 素材例: ユーカリ・ラディアータ
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 湿り気を含む土と葉の香調 (`fragrance-quiet-focus-patchouli`)
 - 素材例: パチュリ
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 湿り気を含む土と葉の香調
 
@@ -1824,19 +1800,19 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 清らかで乾いた木質の香調 (`fragrance-pause-hinoki`)
+- 香り候補: 静かな森を思わせる木質の香調 (`fragrance-pause-hinoki`)
 - 素材例: ヒノキ
 - 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
 - 素材例: ローマンカモミール
-- 共有サマリ: 清らかで乾いた木質の香調
+- 共有サマリ: 静かな森を思わせる木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: 青く端正なハーブの香調 (`fragrance-reset-rosemary`)
+- 香り候補: 風を受ける青い葉のハーブの香調 (`fragrance-reset-rosemary`)
 - 素材例: ローズマリー
 - 香り候補: 軽快で透明な柑橘の香調 (`fragrance-reset-lime`)
 - 素材例: ライム
-- 共有サマリ: 青く端正なハーブの香調
+- 共有サマリ: 風を受ける青い葉のハーブの香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1856,23 +1832,23 @@
 
 - 香り候補: 静かな甘みを含む花の香調 (`fragrance-pause-true-lavender`)
 - 素材例: 真正ラベンダー
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
 - 共有サマリ: 静かな甘みを含む花の香調
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-reset-bergamot`)
+- 香り候補: 明るく軽快な柑橘の香調 (`fragrance-reset-bergamot`)
 - 素材例: ベルガモット
 - 香り候補: 透明感のある葉の香調 (`fragrance-reset-eucalyptus-radiata`)
 - 素材例: ユーカリ・ラディアータ
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: 明るく軽快な柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
 - 香り候補: 乾いた深みのある木質の香調 (`fragrance-quiet-focus-cedarwood`)
 - 素材例: シダーウッド
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
 - 共有サマリ: 乾いた深みのある木質の香調
 
@@ -1892,11 +1868,11 @@
 
 #### 気持ちを切り替えたい（reset）
 
-- 香り候補: ほのかな甘みの柑橘の香調 (`fragrance-reset-bergamot`)
+- 香り候補: 明るく軽快な柑橘の香調 (`fragrance-reset-bergamot`)
 - 素材例: ベルガモット
 - 香り候補: 軽快で透明な柑橘の香調 (`fragrance-reset-lime`)
 - 素材例: ライム
-- 共有サマリ: ほのかな甘みの柑橘の香調
+- 共有サマリ: 明るく軽快な柑橘の香調
 
 #### 静かに取り組みたい（quiet-focus）
 
@@ -1914,11 +1890,11 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 湿り気を含む土と葉の香調 (`fragrance-pause-patchouli`)
-- 素材例: パチュリ
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-pause-frankincense`)
+- 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
+- 素材例: ローマンカモミール
+- 香り候補: やわらかな樹脂と木質の香調 (`fragrance-pause-frankincense`)
 - 素材例: フランキンセンス
-- 共有サマリ: 湿り気を含む土と葉の香調
+- 共有サマリ: まろやかな甘みの草花の香調
 
 #### 気持ちを切り替えたい（reset）
 
@@ -1930,11 +1906,11 @@
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
-- 香り候補: 澄んだ樹木と果実の香調 (`fragrance-quiet-focus-juniper-berry`)
+- 香り候補: 澄んだ針葉樹と青い実の香調 (`fragrance-quiet-focus-juniper-berry`)
 - 素材例: ジュニパーベリー
-- 共有サマリ: 静かな樹脂と木質の香調
+- 共有サマリ: 静かな樹脂の輪郭を含む木質の香調
 
 ### 51. 風鳴る戸口の掲示者 (`title-pair-agreeableness-low--emotionalStability-low`)
 
@@ -1944,11 +1920,11 @@
 
 #### ひと息つきたい（pause）
 
-- 香り候補: 湿り気を含む土と葉の香調 (`fragrance-pause-patchouli`)
-- 素材例: パチュリ
+- 香り候補: 温かく穏やかな木質の香調 (`fragrance-pause-sandalwood`)
+- 素材例: サンダルウッド
 - 香り候補: まろやかな甘みの草花の香調 (`fragrance-pause-roman-chamomile`)
 - 素材例: ローマンカモミール
-- 共有サマリ: 湿り気を含む土と葉の香調
+- 共有サマリ: 温かく穏やかな木質の香調
 
 #### 気持ちを切り替えたい（reset）
 
@@ -1960,8 +1936,8 @@
 
 #### 静かに取り組みたい（quiet-focus）
 
-- 香り候補: 静かな樹脂と木質の香調 (`fragrance-quiet-focus-frankincense`)
+- 香り候補: 静かな樹脂の輪郭を含む木質の香調 (`fragrance-quiet-focus-frankincense`)
 - 素材例: フランキンセンス
 - 香り候補: 端正で清涼な木質の香調 (`fragrance-quiet-focus-cypress`)
 - 素材例: サイプレス
-- 共有サマリ: 静かな樹脂と木質の香調
+- 共有サマリ: 静かな樹脂の輪郭を含む木質の香調

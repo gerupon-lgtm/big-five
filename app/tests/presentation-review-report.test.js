@@ -46,8 +46,8 @@ test("review model preserves the complete current Q-013 structure", async () => 
   assert.equal(model.definitionSet.presentationDefinitionVersion, "presentation-v2");
   assert.equal(model.definitionSet.palettes.length, 153);
   assert.equal(model.definitionSet.paletteUsageMappings.length, 153);
-  assert.equal(model.definitionSet.fragrances.length, 32);
-  assert.equal(model.definitionSet.fragranceMaterials.length, 26);
+  assert.equal(model.definitionSet.fragrances.length, 29);
+  assert.equal(model.definitionSet.fragranceMaterials.length, 25);
   assert.equal(model.definitionSet.titleSelectors.length, 51);
   assert.equal(model.paletteContentReviews.length, 153);
   assert.equal(
@@ -255,24 +255,24 @@ test("P-0 approval renders truthfully while later gates remain draft", async (t)
   assert.match(report, /## P-1 香調語彙と素材（draft）/);
 });
 
-test("ordinary review shows one to three materials while share projection excludes them", async () => {
+test("ordinary review shows one to two materials while share projection stays accord-only", async () => {
   const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
   const report = renderPresentationReview(model);
-  const materialNames = model.definitionSet.fragranceMaterials
-    .map(({ displayName }) => displayName);
+  const accordLabels = new Set(model.definitionSet.fragrances
+    .map(({ accordLabel }) => accordLabel));
 
   const materialLines = report.match(/^- 素材例: .+$/gm) ?? [];
   assert.ok(materialLines.length > 0);
   for (const line of materialLines) {
     const count = line.slice("- 素材例: ".length).split("、").length;
-    assert.ok(count >= 1 && count <= 3, line);
+    assert.ok(count >= 1 && count <= 2, line);
   }
   const shareLines = report.match(/^- 共有(?:投影|サマリ): .+$/gm) ?? [];
   assert.ok(shareLines.length > 0);
   for (const line of shareLines) {
-    for (const materialName of materialNames) {
-      assert.equal(line.includes(materialName), false, `${materialName}: ${line}`);
-    }
+    const value = line.replace(/^- 共有(?:投影|サマリ): /, "");
+    assert.equal(accordLabels.has(value), true, line);
+    assert.equal(line.includes("素材例:"), false, line);
   }
 });
 
