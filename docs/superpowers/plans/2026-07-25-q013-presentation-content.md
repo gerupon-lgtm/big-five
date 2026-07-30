@@ -73,7 +73,7 @@
 - Create: `scripts/content/generate-presentation-runtime.mjs`
 - Create: `app/js/data/presentation-definitions.js` as generated output.
 - Create: `app/tests/presentation-runtime-generation.test.js`
-- Modify: `content/source/titles/title-rule-v1/title-profiles.csv`
+- Read/verify: `content/source/titles/title-rule-v1/title-profiles.csv`
 - Modify: `app/js/data/title-profile-definitions.js` through the generator only.
 - Modify: `app/js/config/app-meta.js`
 - Modify: `app/tests/content-migration-parity.test.js`
@@ -449,6 +449,7 @@ git commit -m "feat: add q013 approval ledger"
 
 **Files:**
 - Create: all nine CSV files under `content/source/presentation/presentation-v2/` listed in the Phase and File Map.
+- Modify only: `default_palette_id` in `content/source/titles/title-rule-v1/title-profiles.csv`; all other title-profile columns remain byte-equivalent.
 - Create: `scripts/content/render-presentation-review.mjs`
 - Create: `app/tests/presentation-review-report.test.js`
 - Create: `docs/presentation-content-catalog.md`
@@ -472,7 +473,7 @@ Expected: all three hashes match. If a hash differs, stop authoring and retain t
 
 - [ ] **Step 2: Write the nine CSVs as draft authority**
 
-Manually join candidate rows to the exact 51 `title_id` values and `display_order` in `title-profiles.csv`; never join on the Japanese label alone. Consolidate identical palette, fragrance, and material proposals into one stable shared record and reference it from relations. Keep all source rows `draft`, uppercase every HEX, use contiguous ordering, and rewrite unsafe fragrance descriptions before they enter CSV.
+Manually join candidate rows to the exact 51 `title_id` values and `display_order` in `title-profiles.csv`; never join on the Japanese label alone. Consolidate identical palette, fragrance, and material proposals into one stable shared record and reference it from relations. Write each proposed standard palette directly to the matching authoritative `title-profiles.csv.default_palette_id`; leave title labels, factors, character IDs, result text IDs, title-rule version, and row status byte-equivalent. These IDs are draft Q-013 proposals until their P-2〜P-6 gate is approved and must not activate runtime. Keep all presentation-v2 source rows `draft`, uppercase every HEX, use contiguous ordering, and rewrite unsafe fragrance descriptions before they enter CSV.
 
 - [ ] **Step 3: Write report-generator RED tests**
 
@@ -503,7 +504,7 @@ Expected: renderer is byte-identical across two runs; tests PASS; validation rep
 - [ ] **Step 5: Commit the draft without approval claims**
 
 ```powershell
-git add content/source/presentation/presentation-v2 scripts/content/render-presentation-review.mjs app/tests/presentation-review-report.test.js docs/presentation-content-catalog.md
+git add content/source/presentation/presentation-v2 content/source/titles/title-rule-v1/title-profiles.csv scripts/content/render-presentation-review.mjs app/tests/presentation-review-report.test.js docs/presentation-content-catalog.md
 git commit -m "content: add q013 presentation v2 draft"
 ```
 
@@ -588,6 +589,7 @@ git commit -m "content: record q013 p1 approval"
 ### Task 8: Human Approval P-2 — Balanced and Ten Single-Factor Titles
 
 **Files:**
+- Modify only `default_palette_id` for title display-order 1〜11 in `content/source/titles/title-rule-v1/title-profiles.csv` when the user requests a standard-palette change.
 - Modify only title display-order 1〜11 rows in `content/source/presentation/presentation-v2/presentation-selectors.csv`.
 - Modify only title display-order 1〜11 relations in `content/source/presentation/presentation-v2/selector-palettes.csv`.
 - Modify only title display-order 1〜11 relations in `content/source/presentation/presentation-v2/selector-fragrances.csv`.
@@ -603,7 +605,7 @@ For every title, show standard palette, two alternatives, three scenes×two frag
 
 - [ ] **Step 2: Record only the actual decision**
 
-Approve exactly the selector/relation rows belonging to display order 1〜11 and P-2 only after full-batch approval. Requested edits keep the whole P-2 gate non-approved until the revised complete batch is accepted.
+Approve exactly the standard `default_palette_id`, selector/relation rows belonging to display order 1〜11, and P-2 only after full-batch approval. Requested edits keep the whole P-2 gate non-approved until the revised complete batch is accepted.
 
 - [ ] **Step 3: Verify and commit**
 
@@ -617,7 +619,7 @@ node --test app/tests/presentation-review-report.test.js
 Expected: 51-selector structure still passes; only the P-2 selector subset is approved.
 
 ```powershell
-git add content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
+git add content/source/titles/title-rule-v1/title-profiles.csv content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
 git commit -m "content: record q013 p2 approval"
 ```
 
@@ -626,6 +628,7 @@ git commit -m "content: record q013 p2 approval"
 ### Task 9: Human Approval P-3 — Pair Titles 1 Through 10
 
 **Files:**
+- Modify only `default_palette_id` for title display-order 12〜21 in `content/source/titles/title-rule-v1/title-profiles.csv` when the user requests a standard-palette change.
 - Modify only title display-order 12〜21 rows in `content/source/presentation/presentation-v2/presentation-selectors.csv`.
 - Modify only title display-order 12〜21 relations in `content/source/presentation/presentation-v2/selector-palettes.csv`.
 - Modify only title display-order 12〜21 relations in `content/source/presentation/presentation-v2/selector-fragrances.csv`.
@@ -640,7 +643,7 @@ For every title, show standard palette, two alternatives, three scenes×two frag
 
 - [ ] **Step 2: Record only the actual decision**
 
-Approve exactly the selector/relation rows belonging to display order 12〜21 and P-3 only after full-batch approval. Requested edits keep P-3 non-approved until the revised complete ten-title batch is accepted.
+Approve exactly the standard `default_palette_id`, selector/relation rows belonging to display order 12〜21, and P-3 only after full-batch approval. Requested edits keep P-3 non-approved until the revised complete ten-title batch is accepted.
 
 - [ ] **Step 3: Verify**
 
@@ -654,7 +657,7 @@ Expected: tests PASS; P-4〜P-6 remain non-approved with blank metadata.
 - [ ] **Step 4: Commit**
 
 ```powershell
-git add content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
+git add content/source/titles/title-rule-v1/title-profiles.csv content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
 git commit -m "content: record q013 p3 approval"
 ```
 
@@ -663,6 +666,7 @@ git commit -m "content: record q013 p3 approval"
 ### Task 10: Human Approval P-4 — Pair Titles 11 Through 20
 
 **Files:**
+- Modify only `default_palette_id` for title display-order 22〜31 in `content/source/titles/title-rule-v1/title-profiles.csv` when the user requests a standard-palette change.
 - Modify only title display-order 22〜31 rows in `content/source/presentation/presentation-v2/presentation-selectors.csv`.
 - Modify only title display-order 22〜31 relations in `content/source/presentation/presentation-v2/selector-palettes.csv`.
 - Modify only title display-order 22〜31 relations in `content/source/presentation/presentation-v2/selector-fragrances.csv`.
@@ -677,7 +681,7 @@ For every title, show standard palette, two alternatives, three scenes×two frag
 
 - [ ] **Step 2: Record only the actual decision**
 
-Approve exactly the selector/relation rows belonging to display order 22〜31 and P-4 only after full-batch approval. Requested edits keep P-4 non-approved until the revised complete ten-title batch is accepted.
+Approve exactly the standard `default_palette_id`, selector/relation rows belonging to display order 22〜31, and P-4 only after full-batch approval. Requested edits keep P-4 non-approved until the revised complete ten-title batch is accepted.
 
 - [ ] **Step 3: Verify**
 
@@ -691,7 +695,7 @@ Expected: tests PASS; P-5/P-6 remain non-approved with blank metadata.
 - [ ] **Step 4: Commit**
 
 ```powershell
-git add content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
+git add content/source/titles/title-rule-v1/title-profiles.csv content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
 git commit -m "content: record q013 p4 approval"
 ```
 
@@ -700,6 +704,7 @@ git commit -m "content: record q013 p4 approval"
 ### Task 11: Human Approval P-5 — Pair Titles 21 Through 30
 
 **Files:**
+- Modify only `default_palette_id` for title display-order 32〜41 in `content/source/titles/title-rule-v1/title-profiles.csv` when the user requests a standard-palette change.
 - Modify only title display-order 32〜41 rows in `content/source/presentation/presentation-v2/presentation-selectors.csv`.
 - Modify only title display-order 32〜41 relations in `content/source/presentation/presentation-v2/selector-palettes.csv`.
 - Modify only title display-order 32〜41 relations in `content/source/presentation/presentation-v2/selector-fragrances.csv`.
@@ -714,7 +719,7 @@ For every title, show standard palette, two alternatives, three scenes×two frag
 
 - [ ] **Step 2: Record only the actual decision**
 
-Approve exactly the selector/relation rows belonging to display order 32〜41 and P-5 only after full-batch approval. Requested edits keep P-5 non-approved until the revised complete ten-title batch is accepted.
+Approve exactly the standard `default_palette_id`, selector/relation rows belonging to display order 32〜41, and P-5 only after full-batch approval. Requested edits keep P-5 non-approved until the revised complete ten-title batch is accepted.
 
 - [ ] **Step 3: Verify**
 
@@ -728,7 +733,7 @@ Expected: tests PASS; P-6 remains non-approved with blank metadata.
 - [ ] **Step 4: Commit**
 
 ```powershell
-git add content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
+git add content/source/titles/title-rule-v1/title-profiles.csv content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
 git commit -m "content: record q013 p5 approval"
 ```
 
@@ -737,6 +742,7 @@ git commit -m "content: record q013 p5 approval"
 ### Task 12: Human Approval P-6 — Pair Titles 31 Through 40
 
 **Files:**
+- Modify only `default_palette_id` for title display-order 42〜51 in `content/source/titles/title-rule-v1/title-profiles.csv` when the user requests a standard-palette change.
 - Modify only title display-order 42〜51 rows in `content/source/presentation/presentation-v2/presentation-selectors.csv`.
 - Modify only title display-order 42〜51 relations in `content/source/presentation/presentation-v2/selector-palettes.csv`.
 - Modify only title display-order 42〜51 relations in `content/source/presentation/presentation-v2/selector-fragrances.csv`.
@@ -751,7 +757,7 @@ For every title, show standard palette, two alternatives, three scenes×two frag
 
 - [ ] **Step 2: Record only the actual decision**
 
-Approve exactly the selector/relation rows belonging to display order 42〜51 and P-6 only after full-batch approval. Requested edits keep P-6 non-approved until the revised complete ten-title batch is accepted.
+Approve exactly the standard `default_palette_id`, selector/relation rows belonging to display order 42〜51, and P-6 only after full-batch approval. Requested edits keep P-6 non-approved until the revised complete ten-title batch is accepted.
 
 - [ ] **Step 3: Verify**
 
@@ -765,7 +771,7 @@ Expected after approval: all presentation source rows and P-0〜P-6 are approved
 - [ ] **Step 4: Commit**
 
 ```powershell
-git add content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
+git add content/source/titles/title-rule-v1/title-profiles.csv content/source/presentation/presentation-v2/presentation-selectors.csv content/source/presentation/presentation-v2/selector-palettes.csv content/source/presentation/presentation-v2/selector-fragrances.csv content/source/approvals/presentation-content-approvals.csv docs/presentation-content-catalog.md
 git commit -m "content: record q013 p6 approval"
 ```
 
@@ -779,7 +785,7 @@ git commit -m "content: record q013 p6 approval"
 - Create: `scripts/content/generate-presentation-runtime.mjs`
 - Create: `app/js/data/presentation-definitions.js`
 - Create: `app/tests/presentation-runtime-generation.test.js`
-- Modify: `content/source/titles/title-rule-v1/title-profiles.csv`
+- Read/verify: `content/source/titles/title-rule-v1/title-profiles.csv`
 - Modify through generator: `app/js/data/title-profile-definitions.js`
 - Modify: `app/js/config/app-meta.js`
 - Modify: `app/tests/content-migration-parity.test.js`
@@ -827,9 +833,9 @@ node --test app/tests/presentation-runtime-generation.test.js app/tests/content-
 
 Expected: FAIL because the generator and generated presentation module do not exist and AppMeta is still `presentation-v1`.
 
-- [ ] **Step 3: Synchronize approved standard palette IDs**
+- [ ] **Step 3: Verify approved standard palette IDs**
 
-Apply the standard IDs shown in the approved P-2〜P-6 review projection to `title-profiles.csv` in fixed order. This is the only Task that changes those 51 authoritative `default_palette_id` values. Keep title labels, factors, character IDs, result text IDs, and title-rule version byte-equivalent.
+Verify the 51 authoritative `title-profiles.csv.default_palette_id` values are already the exact standard IDs shown in the approved P-2〜P-6 review projection, in fixed order. They were authored in Task 5 and could only be revised inside their unapproved P-2〜P-6 gate. Abort generation on any mismatch; Task 13 must not introduce or silently rewrite a standard palette decision.
 
 - [ ] **Step 4: Implement the deterministic generator**
 
@@ -876,7 +882,7 @@ Expected: all tests/checks PASS; `content:validate` has 0 errors and no Q-013 ap
 - [ ] **Step 9: Commit**
 
 ```powershell
-git add scripts/content/generate-presentation-runtime.mjs app/js/data/presentation-definitions.js app/js/data/title-profile-definitions.js app/js/config/app-meta.js app/tests/presentation-runtime-generation.test.js app/tests/content-migration-parity.test.js app/tests/version-contract.test.js content/source/titles/title-rule-v1/title-profiles.csv docs/content-authoring.md docs/data-model.md docs/processing-design.md docs/screens.md docs/tasks.md
+git add scripts/content/generate-presentation-runtime.mjs app/js/data/presentation-definitions.js app/js/data/title-profile-definitions.js app/js/config/app-meta.js app/tests/presentation-runtime-generation.test.js app/tests/content-migration-parity.test.js app/tests/version-contract.test.js docs/content-authoring.md docs/data-model.md docs/processing-design.md docs/screens.md docs/tasks.md
 git commit -m "feat: activate approved presentation v2 runtime"
 ```
 
