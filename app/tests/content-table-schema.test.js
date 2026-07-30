@@ -287,6 +287,38 @@ test("T-008A title reflection authoring schema requires the exact six-column con
   );
 });
 
+test("T-005 F-018 Q-013 presentation v2 schemas require the exact authoring columns", async () => {
+  const expected = {
+    palettes: [
+      "palette_id", "presentation_definition_version", "display_order", "label",
+      "primary_color", "secondary_color", "accent_color", "description", "status",
+    ],
+    "palette-usage-mappings": [
+      "palette_id", "presentation_definition_version", "display_order",
+      "background_source", "background_mix_with", "background_mix_percent",
+      "surface_source", "surface_mix_with", "surface_mix_percent",
+      "accent_source", "accent_mix_with", "accent_mix_percent",
+      "chart_source", "chart_mix_with", "chart_mix_percent",
+      "text_candidate_1", "text_candidate_2", "status",
+    ],
+    "fragrance-materials": [
+      "material_id", "presentation_definition_version", "display_order",
+      "display_name", "material_kind", "status",
+    ],
+    "fragrance-material-examples": [
+      "fragrance_id", "material_id", "presentation_definition_version",
+      "display_order", "status",
+    ],
+  };
+  for (const [name, columns] of Object.entries(expected)) {
+    const schema = await loadTableSchema(new URL(
+      `../../content/schemas/${name}.schema.json`,
+      import.meta.url,
+    ));
+    assert.deepEqual(schema.columns.map(({ name: columnName }) => columnName), columns);
+  }
+});
+
 test("T-012 report includes source, one-based row, column, code, and Japanese message", () => {
   const report = formatContentErrors([
     new ContentError({

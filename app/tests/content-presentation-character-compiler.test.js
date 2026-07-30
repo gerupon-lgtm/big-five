@@ -10,11 +10,14 @@ import {
 import { TitleProfileDefinitions } from "../js/data/title-profile-definitions.js";
 import { makeValidPresentationDefinitionSet } from "./fixtures/presentation-valid.fixture.js";
 
-const PRESENTATION_VERSION = "presentation-v1";
+const PRESENTATION_VERSION = "presentation-v2";
 const CHARACTER_VERSION = "character-manifest-v1";
 
 function validPresentationRows() {
-  const definition = makeValidPresentationDefinitionSet(TitleProfileDefinitions);
+  const definition = makeValidPresentationDefinitionSet(TitleProfileDefinitions, {
+    schemaVersion: 2,
+    version: PRESENTATION_VERSION,
+  });
   return {
     sceneRows: definition.scenes.map(({ sceneId, label }, index) => ({
       scene_id: sceneId,
@@ -23,22 +26,37 @@ function validPresentationRows() {
       label,
       status: "draft",
     })),
-    paletteRows: definition.palettes.map(({ paletteId, label, description }, index) => ({
+    paletteRows: definition.palettes.map(({ paletteId, label, baseColors, description }, index) => ({
       palette_id: paletteId,
       presentation_definition_version: PRESENTATION_VERSION,
       display_order: index + 1,
       label,
+      primary_color: baseColors.primary,
+      secondary_color: baseColors.secondary,
+      accent_color: baseColors.accent,
       description,
       status: "draft",
     })),
-    paletteUsageRows: definition.palettes.flatMap(({ paletteId, baseColors }) =>
-      ["primary", "secondary", "accent"].map((usage, index) => ({
-        palette_id: paletteId,
-        display_order: index + 1,
-        usage,
-        color: baseColors[usage],
-        status: "draft",
-      }))),
+    paletteUsageRows: definition.paletteUsageMappings.map(({ paletteId, roles, textCandidates }, index) => ({
+      palette_id: paletteId,
+      presentation_definition_version: PRESENTATION_VERSION,
+      display_order: index + 1,
+      background_source: roles.background.source,
+      background_mix_with: roles.background.mixWith,
+      background_mix_percent: roles.background.mixPercent,
+      surface_source: roles.surface.source,
+      surface_mix_with: roles.surface.mixWith,
+      surface_mix_percent: roles.surface.mixPercent,
+      accent_source: roles.accent.source,
+      accent_mix_with: roles.accent.mixWith,
+      accent_mix_percent: roles.accent.mixPercent,
+      chart_source: roles.chart.source,
+      chart_mix_with: roles.chart.mixWith,
+      chart_mix_percent: roles.chart.mixPercent,
+      text_candidate_1: textCandidates[0],
+      text_candidate_2: textCandidates[1],
+      status: "draft",
+    })),
     fragranceRows: definition.fragrances.map(({ fragranceId, sceneId, accordLabel, description, disclaimerId }, index) => ({
       fragrance_id: fragranceId,
       presentation_definition_version: PRESENTATION_VERSION,
@@ -49,6 +67,22 @@ function validPresentationRows() {
       disclaimer_id: disclaimerId,
       status: "draft",
     })),
+    fragranceMaterialRows: definition.fragranceMaterials.map(({ materialId, displayName, materialKind }, index) => ({
+      material_id: materialId,
+      presentation_definition_version: PRESENTATION_VERSION,
+      display_order: index + 1,
+      display_name: displayName,
+      material_kind: materialKind,
+      status: "draft",
+    })),
+    fragranceMaterialExampleRows: definition.fragrances.flatMap(({ fragranceId, materialIds }) =>
+      materialIds.map((materialId, index) => ({
+        fragrance_id: fragranceId,
+        material_id: materialId,
+        presentation_definition_version: PRESENTATION_VERSION,
+        display_order: index + 1,
+        status: "draft",
+      }))),
     selectorRows: definition.titleSelectors.map(({ titleId }, index) => ({
       title_id: titleId,
       presentation_definition_version: PRESENTATION_VERSION,
@@ -115,19 +149,76 @@ function assertPresentationRejected(mutate) {
 
 test("T-005 F-018 Q-013 normalized CSVs compile to the exact presentation definition", () => {
   const compiled = compilePresentationContent(validPresentationRows(), PRESENTATION_VERSION);
-  assert.deepEqual(compiled, makeValidPresentationDefinitionSet(TitleProfileDefinitions));
+  assert.deepEqual(compiled, makeValidPresentationDefinitionSet(TitleProfileDefinitions, {
+    schemaVersion: 2,
+    version: PRESENTATION_VERSION,
+  }));
+  assert.deepEqual(Object.keys(compiled), [
+    "schemaVersion",
+    "presentationDefinitionVersion",
+    "scenes",
+    "palettes",
+    "paletteUsageMappings",
+    "fragrances",
+    "fragranceMaterials",
+    "titleSelectors",
+  ]);
+  assert.equal(compiled.schemaVersion, 2);
+  assert.equal(compiled.fragrances[0].materialIds.length >= 1, true);
+  assert.equal(compiled.fragrances[0].materialIds.length <= 3, true);
   assert.equal(Object.isFrozen(compiled), true);
+});
+
+test("T-005 F-018 Q-013 graph invariants allow shared palette, fragrance, and material records", () => {
+  const rows = validPresentationRows();
+  const sharedPaletteIds = ["palette-shared-a", "palette-shared-b"];
+  rows.paletteRows = rows.paletteRows.slice(0, 3);
+  rows.paletteUsageRows = rows.paletteUsageRows.slice(0, 3);
+  sharedPaletteIds.forEach((paletteId, index) => {
+    rows.paletteRows[index + 1].palette_id = paletteId;
+    rows.paletteUsageRows[index + 1].palette_id = paletteId;
+  });
+  rows.selectorPaletteRows.forEach((row) => {
+    row.palette_id = sharedPaletteIds[row.display_order - 1];
+  });
+
+  const sharedFragranceIdsByScene = new Map();
+  for (const row of rows.selectorFragranceRows.slice(0, 6)) {
+    if (!sharedFragranceIdsByScene.has(row.scene_id)) sharedFragranceIdsByScene.set(row.scene_id, []);
+    sharedFragranceIdsByScene.get(row.scene_id).push(row.fragrance_id);
+  }
+  rows.selectorFragranceRows.forEach((row) => {
+    row.fragrance_id = sharedFragranceIdsByScene.get(row.scene_id)[row.display_order - 1];
+    row.share_selected = String(row.display_order === 1);
+  });
+  rows.fragranceRows = rows.fragranceRows.slice(0, 6);
+  rows.fragranceMaterialExampleRows = rows.fragranceMaterialExampleRows.slice(0, 12);
+  rows.fragranceMaterialRows = rows.fragranceMaterialRows.slice(0, 12);
+
+  const compiled = compilePresentationContent(rows, PRESENTATION_VERSION);
+  assert.equal(compiled.palettes.length, 3);
+  assert.equal(compiled.fragrances.length, 6);
+  assert.equal(compiled.fragranceMaterials.length, 12);
 });
 
 test("T-005 F-018 rejects incomplete, unordered, orphaned, and unsafe normalized presentation rows", () => {
   const cases = [
     ["missing scene", (rows) => rows.sceneRows.pop()],
     ["duplicate palette usage order", (rows) => { rows.paletteUsageRows[1].display_order = 1; }],
+    ["palette mapping order mismatch", (rows) => {
+      [rows.paletteUsageRows[0].display_order, rows.paletteUsageRows[1].display_order] =
+        [rows.paletteUsageRows[1].display_order, rows.paletteUsageRows[0].display_order];
+    }],
+    ["non-uppercase palette HEX", (rows) => { rows.paletteRows[0].secondary_color = "#abcdef"; }],
+    ["nonzero none mix", (rows) => { rows.paletteUsageRows[0].accent_mix_percent = 1; }],
+    ["mix over 100 percent", (rows) => { rows.paletteUsageRows[0].chart_mix_percent = 101; }],
+    ["duplicate text candidates", (rows) => { rows.paletteUsageRows[0].text_candidate_2 = rows.paletteUsageRows[0].text_candidate_1; }],
     ["orphan palette", (rows) => { rows.selectorPaletteRows[0].palette_id = "palette-missing"; }],
+    ["orphan material", (rows) => { rows.fragranceMaterialExampleRows[0].material_id = "material-missing"; }],
     ["extra alternative", (rows) => rows.selectorPaletteRows.push({ ...rows.selectorPaletteRows[0], palette_id: "palette-default", display_order: 3 })],
     ["unsafe fragrance copy", (rows) => { rows.fragranceRows[0].description = "Use 2 drops in a diffuser."; }],
     ["duplicate title selector", (rows) => { rows.selectorRows[1].title_id = rows.selectorRows[0].title_id; }],
-    ["wrong version", (rows) => { rows.paletteRows[0].presentation_definition_version = "presentation-v2"; }],
+    ["wrong version", (rows) => { rows.paletteRows[0].presentation_definition_version = "presentation-v1"; }],
   ];
 
   for (const [, mutate] of cases) {
@@ -146,6 +237,8 @@ test("T-005 F-018 rejects an invalid count in each normalized presentation input
     "paletteRows",
     "paletteUsageRows",
     "fragranceRows",
+    "fragranceMaterialRows",
+    "fragranceMaterialExampleRows",
     "selectorRows",
     "selectorPaletteRows",
     "selectorFragranceRows",
@@ -161,13 +254,14 @@ test("T-005 F-018 rejects duplicate relation-group orders and selector-fragrance
     ["selector fragrance order", (rows) => { rows.selectorFragranceRows[1].display_order = 1; }],
     ["selector fragrance parent", (rows) => { rows.selectorFragranceRows[0].title_id = "title-missing"; }],
     ["selector fragrance child", (rows) => { rows.selectorFragranceRows[0].fragrance_id = "fragrance-pause-missing"; }],
+    ["fragrance material order", (rows) => { rows.fragranceMaterialExampleRows[1].display_order = 1; }],
   ];
   for (const [, mutate] of cases) assertPresentationRejected(mutate);
 });
 
 test("T-005 F-018 rejects relation cardinality violations without changing global row counts", () => {
   const cases = [
-    ["three palette usages", (rows) => { rows.paletteUsageRows[0].palette_id = rows.paletteUsageRows[3].palette_id; }],
+    ["one mapping per palette", (rows) => { rows.paletteUsageRows[0].palette_id = rows.paletteUsageRows[1].palette_id; }],
     ["two selector palettes", (rows) => { rows.selectorPaletteRows[0].title_id = rows.selectorPaletteRows[2].title_id; }],
     ["three fragrance scenes", (rows) => {
       rows.selectorFragranceRows[0].title_id = rows.selectorFragranceRows[6].title_id;
@@ -175,16 +269,23 @@ test("T-005 F-018 rejects relation cardinality violations without changing globa
     }],
     ["two fragrance candidates", (rows) => { rows.selectorFragranceRows[0].title_id = rows.selectorFragranceRows[6].title_id; }],
     ["one shared fragrance", (rows) => { rows.selectorFragranceRows[0].share_selected = "false"; }],
+    ["one to three materials", (rows) => {
+      rows.fragranceMaterialExampleRows[0].fragrance_id = rows.fragranceMaterialExampleRows[2].fragrance_id;
+      rows.fragranceMaterialExampleRows[1].fragrance_id = rows.fragranceMaterialExampleRows[2].fragrance_id;
+    }],
   ];
   for (const [, mutate] of cases) assertPresentationRejected(mutate);
 });
 
 test("T-005 F-018 rejects version mismatches in every versioned presentation catalog", () => {
   const cases = [
-    (rows) => { rows.sceneRows[0].presentation_definition_version = "presentation-v2"; },
-    (rows) => { rows.paletteRows[0].presentation_definition_version = "presentation-v2"; },
-    (rows) => { rows.fragranceRows[0].presentation_definition_version = "presentation-v2"; },
-    (rows) => { rows.selectorRows[0].presentation_definition_version = "presentation-v2"; },
+    (rows) => { rows.sceneRows[0].presentation_definition_version = "presentation-v1"; },
+    (rows) => { rows.paletteRows[0].presentation_definition_version = "presentation-v1"; },
+    (rows) => { rows.paletteUsageRows[0].presentation_definition_version = "presentation-v1"; },
+    (rows) => { rows.fragranceRows[0].presentation_definition_version = "presentation-v1"; },
+    (rows) => { rows.fragranceMaterialRows[0].presentation_definition_version = "presentation-v1"; },
+    (rows) => { rows.fragranceMaterialExampleRows[0].presentation_definition_version = "presentation-v1"; },
+    (rows) => { rows.selectorRows[0].presentation_definition_version = "presentation-v1"; },
   ];
   for (const mutate of cases) assertPresentationRejected(mutate);
 });

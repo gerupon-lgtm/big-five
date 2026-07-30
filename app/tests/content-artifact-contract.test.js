@@ -62,6 +62,31 @@ test("artifact inspector accepts generated JSON with an approved evidence locato
   });
 });
 
+test("artifact inspector accepts compiled presentation v2 material references without authoring relations", async () => {
+  await withArtifactFixture({
+    "presentation.json": JSON.stringify({
+      schemaVersion: 2,
+      fragranceMaterials: [{
+        materialId: "material-lavender",
+        version: "presentation-v2",
+        displayName: "Lavender",
+        materialKind: "plant-name",
+      }],
+      fragrances: [{
+        fragranceId: "fragrance-pause-calm",
+        version: "presentation-v2",
+        sceneId: "pause",
+        accordLabel: "Calm",
+        description: "A quiet atmospheric suggestion.",
+        materialIds: ["material-lavender"],
+        disclaimerId: "fragrance-disclaimer-v1",
+      }],
+    }),
+  }, async (rootDir) => {
+    assert.deepEqual(inspectArtifact(rootDir), { checkedFiles: 1, checkedJsonFiles: 1 });
+  });
+});
+
 test("artifact inspector rejects prohibited artifact file types and authoring paths", async () => {
   await assertArtifactRejected({ "source.csv": "id,status" }, /ARTIFACT_INSPECTION_FAILED.*\.csv/);
   await assertArtifactRejected({ "notes.md": "draft notes" }, /ARTIFACT_INSPECTION_FAILED.*\.md/);

@@ -4,13 +4,16 @@ import { validateTitleProfileDefinitions } from "../../app/js/domain/title-profi
 
 const STATUSES = new Set(["draft", "reviewed", "approved", "rejected"]);
 const SCENE_IDS = ["pause", "reset", "quiet-focus"];
+const HEX_COLOR_PATTERN = /^#[0-9A-F]{6}$/;
+const PALETTE_SOURCES = new Set(["primary", "secondary", "accent"]);
+const MIX_TARGETS = new Set(["none", "white", "black"]);
 
 function invalid() {
   throw new Error("PRESENTATION_CONTENT_INVALID");
 }
 
-function assertRows(rows, count) {
-  if (!Array.isArray(rows) || rows.length !== count) invalid();
+function assertRows(rows, count = undefined) {
+  if (!Array.isArray(rows) || (count === undefined ? rows.length === 0 : rows.length !== count)) invalid();
 }
 
 function assertStatuses(...rowSets) {
@@ -18,9 +21,10 @@ function assertStatuses(...rowSets) {
 }
 
 function ordered(rows) {
-  if (!rows.every(({ display_order }) => Number.isInteger(display_order) && display_order >= 1) ||
-    new Set(rows.map(({ display_order }) => display_order)).size !== rows.length) invalid();
-  return [...rows].sort((left, right) => left.display_order - right.display_order);
+  if (!rows.every(({ display_order }) => Number.isInteger(display_order) && display_order >= 1)) invalid();
+  const sorted = [...rows].sort((left, right) => left.display_order - right.display_order);
+  if (!sorted.every(({ display_order }, index) => display_order === index + 1)) invalid();
+  return sorted;
 }
 
 function groupOrdered(rows, key) {
@@ -39,46 +43,107 @@ function assertUnique(rows, key) {
 }
 
 function compilePalettes(paletteRows, paletteUsageRows, expectedVersion) {
-  assertRows(paletteRows, 103);
-  assertRows(paletteUsageRows, 309);
+  assertRows(paletteRows);
+  assertRows(paletteUsageRows);
   assertUnique(paletteRows, ({ palette_id }) => palette_id);
-  if (!paletteRows.every((row) => row.presentation_definition_version === expectedVersion)) invalid();
+  assertUnique(paletteUsageRows, ({ palette_id }) => palette_id);
+  if (paletteRows.length !== paletteUsageRows.length ||
+    !paletteRows.every((row) =>
+      row.presentation_definition_version === expectedVersion &&
+      HEX_COLOR_PATTERN.test(row.primary_color) &&
+      HEX_COLOR_PATTERN.test(row.secondary_color) &&
+      HEX_COLOR_PATTERN.test(row.accent_color)) ||
+    !paletteUsageRows.every((row) => row.presentation_definition_version === expectedVersion)) invalid();
   const paletteIds = new Set(paletteRows.map(({ palette_id }) => palette_id));
-  const usages = groupOrdered(paletteUsageRows, ({ palette_id }) => palette_id);
-  if (usages.size !== paletteIds.size || [...usages.keys()].some((paletteId) => !paletteIds.has(paletteId))) invalid();
-  return ordered(paletteRows).map((row) => {
-    const usageRows = usages.get(row.palette_id);
-    if (usageRows.length !== 3 || new Set(usageRows.map(({ usage }) => usage)).size !== 3 ||
-      !["primary", "secondary", "accent"].every((usage) => usageRows.some((row) => row.usage === usage))) invalid();
-    const colors = Object.fromEntries(usageRows.map(({ usage, color }) => [usage, color]));
+  if (paletteUsageRows.some(({ palette_id }) => !paletteIds.has(palette_id))) invalid();
+  const orderedPaletteRows = ordered(paletteRows);
+  const orderedUsageRows = ordered(paletteUsageRows);
+  if (!orderedUsageRows.every(({ palette_id }, index) => palette_id === orderedPaletteRows[index].palette_id)) invalid();
+  const usageByPalette = new Map(orderedUsageRows.map((row) => [row.palette_id, row]));
+  const palettes = orderedPaletteRows.map((row) => ({
+    paletteId: row.palette_id,
+    version: row.presentation_definition_version,
+    label: row.label,
+    baseColors: {
+      primary: row.primary_color,
+      secondary: row.secondary_color,
+      accent: row.accent_color,
+    },
+    description: row.description,
+  }));
+  const paletteUsageMappings = palettes.map(({ paletteId }) => {
+    const row = usageByPalette.get(paletteId);
+    if (!row) invalid();
+    const roles = Object.fromEntries(["background", "surface", "accent", "chart"].map((role) => {
+      const source = row[`${role}_source`];
+      const mixWith = row[`${role}_mix_with`];
+      const mixPercent = row[`${role}_mix_percent`];
+      if (!PALETTE_SOURCES.has(source) || !MIX_TARGETS.has(mixWith) ||
+        !Number.isInteger(mixPercent) || mixPercent < 0 || mixPercent > 100 ||
+        (mixWith === "none" && mixPercent !== 0)) invalid();
+      return [role, { source, mixWith, mixPercent }];
+    }));
+    if (!HEX_COLOR_PATTERN.test(row.text_candidate_1) ||
+      !HEX_COLOR_PATTERN.test(row.text_candidate_2) ||
+      row.text_candidate_1 === row.text_candidate_2) invalid();
     return {
-      paletteId: row.palette_id,
+      paletteId,
       version: row.presentation_definition_version,
-      label: row.label,
-      baseColors: { primary: colors.primary, secondary: colors.secondary, accent: colors.accent },
-      description: row.description,
+      roles,
+      textCandidates: [row.text_candidate_1, row.text_candidate_2],
     };
   });
+  return { palettes, paletteUsageMappings };
 }
 
-function compileFragrances(fragranceRows, sceneIds, expectedVersion) {
-  assertRows(fragranceRows, 306);
+function compileFragrances(fragranceRows, materialRows, materialExampleRows, sceneIds, expectedVersion) {
+  assertRows(fragranceRows);
+  assertRows(materialRows);
+  assertRows(materialExampleRows);
   assertUnique(fragranceRows, ({ fragrance_id }) => fragrance_id);
-  if (!fragranceRows.every((row) => row.presentation_definition_version === expectedVersion && sceneIds.has(row.scene_id))) invalid();
-  return ordered(fragranceRows).map((row) => ({
-    fragranceId: row.fragrance_id,
+  assertUnique(materialRows, ({ material_id }) => material_id);
+  if (!fragranceRows.every((row) => row.presentation_definition_version === expectedVersion && sceneIds.has(row.scene_id)) ||
+    !materialRows.every((row) => row.presentation_definition_version === expectedVersion) ||
+    !materialExampleRows.every((row) => row.presentation_definition_version === expectedVersion)) invalid();
+  const fragranceIds = new Set(fragranceRows.map(({ fragrance_id }) => fragrance_id));
+  const orderedMaterials = ordered(materialRows);
+  const materialOrderById = new Map(orderedMaterials.map(({ material_id }, index) => [material_id, index]));
+  const examplesByFragrance = groupOrdered(materialExampleRows, ({ fragrance_id }) => fragrance_id);
+  if ([...examplesByFragrance.keys()].some((fragranceId) => !fragranceIds.has(fragranceId)) ||
+    materialExampleRows.some(({ material_id }) => !materialOrderById.has(material_id))) invalid();
+  const referencedMaterialIds = new Set();
+  const fragrances = ordered(fragranceRows).map((row) => {
+    const examples = examplesByFragrance.get(row.fragrance_id);
+    if (!examples || examples.length < 1 || examples.length > 3 ||
+      new Set(examples.map(({ material_id }) => material_id)).size !== examples.length ||
+      !examples.every(({ material_id }, index) =>
+        index === 0 || materialOrderById.get(examples[index - 1].material_id) < materialOrderById.get(material_id))) invalid();
+    const materialIds = examples.map(({ material_id }) => material_id);
+    materialIds.forEach((materialId) => referencedMaterialIds.add(materialId));
+    return {
+      fragranceId: row.fragrance_id,
+      version: row.presentation_definition_version,
+      sceneId: row.scene_id,
+      accordLabel: row.accord_label,
+      description: row.description,
+      materialIds,
+      disclaimerId: row.disclaimer_id,
+    };
+  });
+  if (referencedMaterialIds.size !== materialOrderById.size) invalid();
+  const fragranceMaterials = orderedMaterials.map((row) => ({
+    materialId: row.material_id,
     version: row.presentation_definition_version,
-    sceneId: row.scene_id,
-    accordLabel: row.accord_label,
-    description: row.description,
-    disclaimerId: row.disclaimer_id,
+    displayName: row.display_name,
+    materialKind: row.material_kind,
   }));
+  return { fragrances, fragranceMaterials };
 }
 
 function compileSelectors(selectorRows, selectorPaletteRows, selectorFragranceRows, titleProfiles, paletteIds, fragranceById, expectedVersion) {
   assertRows(selectorRows, 51);
-  assertRows(selectorPaletteRows, 102);
-  assertRows(selectorFragranceRows, 306);
+  assertRows(selectorPaletteRows);
+  assertRows(selectorFragranceRows);
   assertUnique(selectorRows, ({ title_id }) => title_id);
   if (!selectorRows.every((row) => row.presentation_definition_version === expectedVersion)) invalid();
   const selectors = ordered(selectorRows);
@@ -120,6 +185,8 @@ export function compilePresentationContent(input, expectedVersion) {
       paletteRows,
       paletteUsageRows,
       fragranceRows,
+      fragranceMaterialRows,
+      fragranceMaterialExampleRows,
       selectorRows,
       selectorPaletteRows,
       selectorFragranceRows,
@@ -128,11 +195,27 @@ export function compilePresentationContent(input, expectedVersion) {
     if (typeof expectedVersion !== "string" || expectedVersion === "") invalid();
     validateTitleProfileDefinitions(titleProfiles);
     assertRows(sceneRows, 3);
-    assertStatuses(sceneRows, paletteRows, paletteUsageRows, fragranceRows, selectorRows, selectorPaletteRows, selectorFragranceRows);
+    assertStatuses(
+      sceneRows,
+      paletteRows,
+      paletteUsageRows,
+      fragranceRows,
+      fragranceMaterialRows,
+      fragranceMaterialExampleRows,
+      selectorRows,
+      selectorPaletteRows,
+      selectorFragranceRows,
+    );
     if (!sceneRows.every((row) => row.presentation_definition_version === expectedVersion)) invalid();
     const scenes = ordered(sceneRows).map(({ scene_id, label }) => ({ sceneId: scene_id, label }));
-    const palettes = compilePalettes(paletteRows, paletteUsageRows, expectedVersion);
-    const fragrances = compileFragrances(fragranceRows, new Set(scenes.map(({ sceneId }) => sceneId)), expectedVersion);
+    const { palettes, paletteUsageMappings } = compilePalettes(paletteRows, paletteUsageRows, expectedVersion);
+    const { fragrances, fragranceMaterials } = compileFragrances(
+      fragranceRows,
+      fragranceMaterialRows,
+      fragranceMaterialExampleRows,
+      new Set(scenes.map(({ sceneId }) => sceneId)),
+      expectedVersion,
+    );
     const titleSelectors = compileSelectors(
       selectorRows,
       selectorPaletteRows,
@@ -143,11 +226,13 @@ export function compilePresentationContent(input, expectedVersion) {
       expectedVersion,
     );
     return validatePresentationDefinitionSet({
-      schemaVersion: 1,
+      schemaVersion: 2,
       presentationDefinitionVersion: expectedVersion,
       scenes,
       palettes,
+      paletteUsageMappings,
       fragrances,
+      fragranceMaterials,
       titleSelectors,
     }, { titleProfiles, expectedVersion });
   } catch {

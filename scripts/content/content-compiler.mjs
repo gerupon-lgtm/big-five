@@ -47,6 +47,8 @@ const TABLES = Object.freeze([
   ["paletteRows", "presentation", "presentation_definition_version", "palettes.csv"],
   ["paletteUsageRows", "presentation", "presentation_definition_version", "palette-usage-mappings.csv"],
   ["fragranceRows", "presentation", "presentation_definition_version", "fragrances.csv"],
+  ["fragranceMaterialRows", "presentation", "presentation_definition_version", "fragrance-materials.csv"],
+  ["fragranceMaterialExampleRows", "presentation", "presentation_definition_version", "fragrance-material-examples.csv"],
   ["selectorRows", "presentation", "presentation_definition_version", "presentation-selectors.csv"],
   ["selectorPaletteRows", "presentation", "presentation_definition_version", "selector-palettes.csv"],
   ["selectorFragranceRows", "presentation", "presentation_definition_version", "selector-fragrances.csv"],
@@ -397,7 +399,7 @@ function compileCoreCatalogs(catalogs, row) {
 function compilePresentationCatalog(catalogs, row, titleProfiles) {
   const get = (name) => catalogs[name].rows;
   return compilePresentationContent({
-    sceneRows: get("sceneRows"), paletteRows: get("paletteRows"), paletteUsageRows: get("paletteUsageRows"), fragranceRows: get("fragranceRows"), selectorRows: get("selectorRows"), selectorPaletteRows: get("selectorPaletteRows"), selectorFragranceRows: get("selectorFragranceRows"), titleProfiles,
+    sceneRows: get("sceneRows"), paletteRows: get("paletteRows"), paletteUsageRows: get("paletteUsageRows"), fragranceRows: get("fragranceRows"), fragranceMaterialRows: get("fragranceMaterialRows"), fragranceMaterialExampleRows: get("fragranceMaterialExampleRows"), selectorRows: get("selectorRows"), selectorPaletteRows: get("selectorPaletteRows"), selectorFragranceRows: get("selectorFragranceRows"), titleProfiles,
   }, row.presentation_definition_version);
 }
 

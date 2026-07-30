@@ -114,12 +114,17 @@ function resultRows() {
 }
 
 function presentationRows() {
-  const definition = makeValidPresentationDefinitionSet(TitleProfileDefinitions);
+  const definition = makeValidPresentationDefinitionSet(TitleProfileDefinitions, {
+    schemaVersion: 2,
+    version: appMeta.presentationDefinitionVersion,
+  });
   return {
     scenes: definition.scenes.map(({ sceneId, label }, index) => ({ scene_id: sceneId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, label, status: "approved" })),
-    palettes: definition.palettes.map(({ paletteId, label, description }, index) => ({ palette_id: paletteId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, label, description, status: "approved" })),
-    paletteUsage: definition.palettes.flatMap(({ paletteId, baseColors }) => ["primary", "secondary", "accent"].map((usage, index) => ({ palette_id: paletteId, display_order: index + 1, usage, color: baseColors[usage], status: "approved" }))),
+    palettes: definition.palettes.map(({ paletteId, label, baseColors, description }, index) => ({ palette_id: paletteId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, label, primary_color: baseColors.primary, secondary_color: baseColors.secondary, accent_color: baseColors.accent, description, status: "approved" })),
+    paletteUsage: definition.paletteUsageMappings.map(({ paletteId, roles, textCandidates }, index) => ({ palette_id: paletteId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, background_source: roles.background.source, background_mix_with: roles.background.mixWith, background_mix_percent: roles.background.mixPercent, surface_source: roles.surface.source, surface_mix_with: roles.surface.mixWith, surface_mix_percent: roles.surface.mixPercent, accent_source: roles.accent.source, accent_mix_with: roles.accent.mixWith, accent_mix_percent: roles.accent.mixPercent, chart_source: roles.chart.source, chart_mix_with: roles.chart.mixWith, chart_mix_percent: roles.chart.mixPercent, text_candidate_1: textCandidates[0], text_candidate_2: textCandidates[1], status: "approved" })),
     fragrances: definition.fragrances.map(({ fragranceId, sceneId, accordLabel, description, disclaimerId }, index) => ({ fragrance_id: fragranceId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, scene_id: sceneId, accord_label: accordLabel, description, disclaimer_id: disclaimerId, status: "approved" })),
+    fragranceMaterials: definition.fragranceMaterials.map(({ materialId, displayName, materialKind }, index) => ({ material_id: materialId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, display_name: displayName, material_kind: materialKind, status: "approved" })),
+    fragranceMaterialExamples: definition.fragrances.flatMap(({ fragranceId, materialIds }) => materialIds.map((material_id, index) => ({ fragrance_id: fragranceId, material_id, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, status: "approved" }))),
     selectors: definition.titleSelectors.map(({ titleId }, index) => ({ title_id: titleId, presentation_definition_version: appMeta.presentationDefinitionVersion, display_order: index + 1, status: "approved" })),
     selectorPalettes: definition.titleSelectors.flatMap(({ titleId, alternativePaletteIds }) => alternativePaletteIds.map((palette_id, index) => ({ title_id: titleId, display_order: index + 1, palette_id, status: "approved" }))),
     selectorFragrances: definition.titleSelectors.flatMap(({ titleId, fragranceScenes }) => fragranceScenes.flatMap(({ sceneId, candidateFragranceIds, shareFragranceId }) => candidateFragranceIds.map((fragrance_id, index) => ({ title_id: titleId, scene_id: sceneId, display_order: index + 1, fragrance_id, share_selected: String(fragrance_id === shareFragranceId), status: "approved" })))),
@@ -152,7 +157,7 @@ async function createApprovedSourceTree(t, { manifestStatus = "approved" } = {})
   const result = resultRows();
   await Promise.all([writeTable(sourceDir, `titles/${release.title_rule_version}/title-profiles.csv`, result.profiles), writeTable(sourceDir, `titles/${release.title_rule_version}/title-profile-factors.csv`, result.profileFactors), writeTable(sourceDir, `result-texts/${release.result_text_version}/result-texts.csv`, result.texts), writeTable(sourceDir, `result-texts/${release.result_text_version}/result-text-evidence.csv`, result.textEvidence), writeTable(sourceDir, `result-texts/${release.result_text_version}/title-reflection-comments.csv`, result.titleReflections), writeTable(sourceDir, `evidence/${release.result_evidence_version}/result-evidence.csv`, result.evidence), writeTable(sourceDir, `evidence/${release.result_evidence_version}/result-evidence-claims.csv`, result.evidenceClaims)]);
   const presentation = presentationRows(); const p = `presentation/${release.presentation_definition_version}`;
-  await Promise.all([writeTable(sourceDir, `${p}/scenes.csv`, presentation.scenes), writeTable(sourceDir, `${p}/palettes.csv`, presentation.palettes), writeTable(sourceDir, `${p}/palette-usage-mappings.csv`, presentation.paletteUsage), writeTable(sourceDir, `${p}/fragrances.csv`, presentation.fragrances), writeTable(sourceDir, `${p}/presentation-selectors.csv`, presentation.selectors), writeTable(sourceDir, `${p}/selector-palettes.csv`, presentation.selectorPalettes), writeTable(sourceDir, `${p}/selector-fragrances.csv`, presentation.selectorFragrances)]);
+  await Promise.all([writeTable(sourceDir, `${p}/scenes.csv`, presentation.scenes), writeTable(sourceDir, `${p}/palettes.csv`, presentation.palettes), writeTable(sourceDir, `${p}/palette-usage-mappings.csv`, presentation.paletteUsage), writeTable(sourceDir, `${p}/fragrances.csv`, presentation.fragrances), writeTable(sourceDir, `${p}/fragrance-materials.csv`, presentation.fragranceMaterials), writeTable(sourceDir, `${p}/fragrance-material-examples.csv`, presentation.fragranceMaterialExamples), writeTable(sourceDir, `${p}/presentation-selectors.csv`, presentation.selectors), writeTable(sourceDir, `${p}/selector-palettes.csv`, presentation.selectorPalettes), writeTable(sourceDir, `${p}/selector-fragrances.csv`, presentation.selectorFragrances)]);
   const characters = TitleProfileDefinitions.map((profile, index) => ({ title_id: profile.titleId, character_manifest_version: release.character_manifest_version, display_order: index + 1, character_id: profile.characterId, asset_version: "character-asset-v1", delivery_webp_path: `assets/characters/${index + 1}.webp`, delivery_sha256: "a".repeat(64), width: 1024, height: 1024, byte_length: 1, has_alpha: "true", alt: "全身が見える猫のイラスト", art_review_status: "approved", anatomy_review_status: "approved", technical_review_status: "approved", accessibility_review_status: "approved", approved_by: "reviewer", approved_at: "2026-07-26T00:00:00.000Z", status: "approved" }));
   await writeTable(sourceDir, `characters/${release.character_manifest_version}/characters.csv`, characters);
   return sourceDir;
@@ -330,6 +335,21 @@ test("T-006 approved fixture compiles seven byte-identical resources and hashes"
   assert.deepEqual([...first.resources.keys()], ["diagnosis", "questions", "titles", "result-texts", "evidence", "presentation", "characters"]);
   assert.deepEqual(Object.keys(first.manifest), ["schemaVersion", "releaseId", "appVersion", "diagnosisId", "versions", "resources"]);
   for (const resource of first.manifest.resources) assert.equal(resource.sha256, createHash("sha256").update(first.resources.get(resource.kind)).digest("hex"));
+  const presentation = JSON.parse(first.resources.get("presentation"));
+  assert.equal(presentation.schemaVersion, 2);
+  assert.deepEqual(Object.keys(presentation), [
+    "fragranceMaterials",
+    "fragrances",
+    "paletteUsageMappings",
+    "palettes",
+    "presentationDefinitionVersion",
+    "scenes",
+    "schemaVersion",
+    "titleSelectors",
+  ]);
+  assert.equal(Object.hasOwn(presentation, "fragranceMaterialExamples"), false);
+  assert.equal(first.manifest.resources.length, 7);
+  assert.equal(first.manifest.resources[5].kind, "presentation");
   assert.doesNotMatch(first.resources.get("result-texts"), /reviewer|human note|approved_on/);
 });
 
