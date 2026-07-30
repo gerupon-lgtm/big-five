@@ -61,3 +61,20 @@ export const invalidPresentationCases = [
   { name: "forbidden improvement copy", mutate: (value) => { value.fragrances[0].description = "Improves"; }, error: copyError, finding: { definitionId: "fragrance-pause-title-1-a", field: "description", code: "forbidden-effect" } },
   { name: "forbidden ability and performance copy", mutate: (value) => { value.fragrances[0].description = "Ability and performance"; }, error: copyError, finding: { definitionId: "fragrance-pause-title-1-a", field: "description", code: "forbidden-effect" } },
 ];
+
+export const invalidPresentationSchema2Cases = [
+  { name: "missing schema 2 root field", mutate: (value) => { delete value.fragranceMaterials; }, error: definitionError },
+  { name: "extra schema 2 root field", mutate: (value) => { value.unexpected = true; }, error: definitionError },
+  { name: "duplicate material IDs", mutate: (value) => { value.fragranceMaterials[1].materialId = value.fragranceMaterials[0].materialId; }, error: definitionError },
+  { name: "orphan material IDs", mutate: (value) => { value.fragranceMaterials.push({ ...value.fragranceMaterials[0], materialId: "material-orphan" }); }, error: definitionError },
+  { name: "zero material IDs", mutate: (value) => { value.fragrances[0].materialIds = []; }, error: definitionError },
+  { name: "four material IDs", mutate: (value) => { value.fragrances[0].materialIds = value.fragranceMaterials.slice(0, 4).map(({ materialId }) => materialId); }, error: definitionError },
+  { name: "duplicate material ID references", mutate: (value) => { value.fragrances[0].materialIds[1] = value.fragrances[0].materialIds[0]; }, error: definitionError },
+  { name: "mismatched material version", mutate: (value) => { value.fragranceMaterials[0].version = "presentation-v1"; }, error: definitionError },
+  { name: "unordered material IDs", mutate: (value) => { value.fragrances[0].materialIds.reverse(); }, error: definitionError },
+  { name: "absent palette usage mapping", mutate: (value) => { value.paletteUsageMappings.pop(); }, error: definitionError },
+  { name: "orphan palette usage mapping", mutate: (value) => { value.paletteUsageMappings[0].paletteId = "palette-orphan"; }, error: definitionError },
+  { name: "malformed palette usage recipe", mutate: (value) => { value.paletteUsageMappings[0].roles.background.mixPercent = 101; }, error: definitionError },
+  { name: "material field leaking into schema 1", schemaVersion: 1, mutate: (value) => { value.fragrances[0].materialIds = []; }, error: definitionError },
+  { name: "forbidden material usage copy", mutate: (value) => { value.fragranceMaterials[0].displayName = "Use a diffuser"; }, error: copyError, finding: { definitionId: "material-0001-a", field: "displayName", code: "forbidden-usage" } },
+];

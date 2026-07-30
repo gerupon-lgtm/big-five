@@ -20,21 +20,40 @@ function palette(paletteId, version) {
   };
 }
 
-function fragrance(fragranceId, version, sceneId) {
+function fragrance(fragranceId, version, sceneId, materialIds) {
   return {
     fragranceId,
     version,
     sceneId,
     accordLabel: "Fixture accord",
     description: "An atmospheric suggestion.",
+    ...(materialIds ? { materialIds } : {}),
     disclaimerId: "fragrance-disclaimer-v1",
   };
 }
 
-export function makeValidPresentationDefinitionSet(titleProfiles) {
-  const version = "presentation-v1";
+function paletteUsageMapping(paletteId, version) {
+  return {
+    paletteId,
+    version,
+    roles: {
+      background: { source: "primary", mixWith: "white", mixPercent: 88 },
+      surface: { source: "secondary", mixWith: "white", mixPercent: 94 },
+      accent: { source: "accent", mixWith: "none", mixPercent: 0 },
+      chart: { source: "primary", mixWith: "black", mixPercent: 12 },
+    },
+    textCandidates: ["#1F2430", "#FFFFFF"],
+  };
+}
+
+function fragranceMaterial(materialId, version, displayName, materialKind) {
+  return { materialId, version, displayName, materialKind };
+}
+
+export function makeValidPresentationDefinitionSet(titleProfiles, { schemaVersion = 1, version = "presentation-v1" } = {}) {
   const palettes = [palette("palette-default", version)];
   const fragrances = [];
+  const fragranceMaterials = [];
   const titleSelectors = titleProfiles.map((profile, titleIndex) => {
     const alternativePaletteIds = [
       `palette-title-${titleIndex + 1}-a`,
@@ -47,7 +66,17 @@ export function makeValidPresentationDefinitionSet(titleProfiles) {
         `fragrance-${sceneSuffix[sceneId]}-title-${titleIndex + 1}-a`,
         `fragrance-${sceneSuffix[sceneId]}-title-${titleIndex + 1}-b`,
       ];
-      fragrances.push(...candidateFragranceIds.map((fragranceId) => fragrance(fragranceId, version, sceneId)));
+      for (const fragranceId of candidateFragranceIds) {
+        const materialIndex = String(fragranceMaterials.length / 2 + 1).padStart(4, "0");
+        const materialIds = [`material-${materialIndex}-a`, `material-${materialIndex}-b`];
+        if (schemaVersion === 2) {
+          fragranceMaterials.push(
+            fragranceMaterial(materialIds[0], version, "Lavender", "plant-name"),
+            fragranceMaterial(materialIds[1], version, "Lavender essential oil", "essential-oil-name"),
+          );
+        }
+        fragrances.push(fragrance(fragranceId, version, sceneId, schemaVersion === 2 ? materialIds : undefined));
+      }
       return { sceneId, candidateFragranceIds, shareFragranceId: candidateFragranceIds[0] };
     });
 
@@ -55,11 +84,13 @@ export function makeValidPresentationDefinitionSet(titleProfiles) {
   });
 
   return {
-    schemaVersion: 1,
+    schemaVersion,
     presentationDefinitionVersion: version,
     scenes: structuredClone(SCENES),
     palettes,
+    ...(schemaVersion === 2 ? { paletteUsageMappings: palettes.map(({ paletteId }) => paletteUsageMapping(paletteId, version)) } : {}),
     fragrances,
+    ...(schemaVersion === 2 ? { fragranceMaterials } : {}),
     titleSelectors,
   };
 }
