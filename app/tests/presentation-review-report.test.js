@@ -255,24 +255,33 @@ test("P-0 approval renders truthfully while later gates remain draft", async (t)
   assert.match(report, /## P-1 香調語彙と素材（draft）/);
 });
 
-test("ordinary review shows one to two materials while share projection stays accord-only", async () => {
+test("ordinary and share-card review show one to two concrete materials", async () => {
   const model = await loadPresentationReviewModel({ sourceDir: SOURCE_DIR });
   const report = renderPresentationReview(model);
   const accordLabels = new Set(model.definitionSet.fragrances
     .map(({ accordLabel }) => accordLabel));
+  const materialNames = model.definitionSet.fragranceMaterials
+    .map(({ displayName }) => displayName);
+  const validMaterialDisplays = new Set(materialNames);
+  for (const first of materialNames) {
+    for (const second of materialNames) {
+      validMaterialDisplays.add(`${first}・${second}`);
+    }
+  }
 
   const materialLines = report.match(/^- 素材例: .+$/gm) ?? [];
   assert.ok(materialLines.length > 0);
   for (const line of materialLines) {
-    const count = line.slice("- 素材例: ".length).split("、").length;
-    assert.ok(count >= 1 && count <= 2, line);
+    const materials = line.slice("- 素材例: ".length);
+    assert.equal(validMaterialDisplays.has(materials), true, line);
   }
   const shareLines = report.match(/^- 共有(?:投影|サマリ): .+$/gm) ?? [];
   assert.ok(shareLines.length > 0);
   for (const line of shareLines) {
     const value = line.replace(/^- 共有(?:投影|サマリ): /, "");
-    assert.equal(accordLabels.has(value), true, line);
-    assert.equal(line.includes("素材例:"), false, line);
+    const [materials, accordLabel] = value.split("｜");
+    assert.equal(accordLabels.has(accordLabel), true, line);
+    assert.equal(validMaterialDisplays.has(materials), true, line);
   }
 });
 

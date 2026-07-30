@@ -366,9 +366,10 @@ function renderFragranceSection(lines, model) {
       `### ${fragrance.accordLabel}（\`${fragrance.fragranceId}\`）`,
       "",
       `- 場面: ${sceneById.get(fragrance.sceneId)?.label ?? fragrance.sceneId}`,
+      `- 系統: \`${fragrance.familyId}\``,
       `- 説明: ${fragrance.description}`,
       `- 素材例: ${materialNames.join("、")}`,
-      `- 共有投影: ${fragrance.accordLabel}`,
+      `- 共有投影: ${materialNames.join("・")}｜${fragrance.accordLabel}`,
       `- 注意書きID: \`${fragrance.disclaimerId}\``,
       "",
     );
@@ -411,7 +412,10 @@ function renderTitleGate(lines, model, gate) {
           `- 素材例: ${materialNames.join("、")}`,
         );
       }
-      lines.push(`- 共有サマリ: ${share[sceneIndex].accordLabel}`, "");
+      lines.push(
+        `- 共有サマリ: ${share[sceneIndex].materialNames.join("・")}｜${share[sceneIndex].accordLabel}`,
+        "",
+      );
     }
   }
 }
