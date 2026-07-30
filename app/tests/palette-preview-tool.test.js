@@ -11,6 +11,11 @@ import {
   contrastRatio,
   resolvePaletteUsage,
 } from "../js/domain/palette-usage.js";
+import { FACTOR_ORDER } from "../js/config/factor-order.js";
+import {
+  shareCardPreviewDefinition,
+  validateShareCardPreviewDefinition,
+} from "../../scripts/content/share-card-preview-definition.mjs";
 import {
   loadPalettePreviewModel,
   renderPalettePreview,
@@ -24,6 +29,51 @@ const SCRIPT_PATH = path.join(
   "scripts/content/render-palette-preview.mjs",
 );
 const COMMITTED_PREVIEW = path.join(ROOT, "docs/palette-preview.html");
+
+test("share-card preview definition fixes factor colors and sample values", () => {
+  assert.equal(shareCardPreviewDefinition.version, "share-card-preview-v1");
+  assert.equal(
+    shareCardPreviewDefinition.representativeCatSource,
+    "docs/assets/character-production/source-png/character-balanced.png",
+  );
+  assert.equal(
+    shareCardPreviewDefinition.representativeCatNotice,
+    "色・配置確認用の代表猫です。称号ごとの正式な猫ではありません。",
+  );
+  assert.deepEqual(
+    shareCardPreviewDefinition.factors.map(({ factorId }) => factorId),
+    [...FACTOR_ORDER],
+  );
+  assert.deepEqual(
+    shareCardPreviewDefinition.factors.map(
+      ({ factorId, label, value, fill, tone }) =>
+        [factorId, label, value, fill, tone],
+    ),
+    [
+      ["intellectImagination", "知性・想像力", 60, "#ADA1C0", "#6F677B"],
+      ["conscientiousness", "勤勉性", 58, "#7399B1", "#536E7F"],
+      ["extraversion", "外向性", 52, "#9BA789", "#656D59"],
+      ["agreeableness", "協調性", 56, "#E38543", "#9A5A2E"],
+      ["emotionalStability", "情緒安定性", 54, "#A5B6BA", "#616B6E"],
+    ],
+  );
+  for (const factor of shareCardPreviewDefinition.factors) {
+    assert.ok(contrastRatio(factor.tone, "#EBEBEB") >= 4.5);
+  }
+  assert.equal(
+    validateShareCardPreviewDefinition(shareCardPreviewDefinition),
+    true,
+  );
+});
+
+test("share-card preview definition rejects malformed factors", () => {
+  const invalid = structuredClone(shareCardPreviewDefinition);
+  invalid.factors[1].factorId = invalid.factors[0].factorId;
+  assert.throws(
+    () => validateShareCardPreviewDefinition(invalid),
+    { name: "TypeError", message: "SHARE_CARD_PREVIEW_INVALID" },
+  );
+});
 
 test("P-0 preview model maps 51 titles to exactly three palettes", async () => {
   const model = await loadPalettePreviewModel({ sourceDir: SOURCE_DIR });
