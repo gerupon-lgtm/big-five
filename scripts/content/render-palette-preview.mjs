@@ -625,7 +625,7 @@ export function renderPalettePreview(model) {
     .filter(({ contrast }) => contrast.valid)
     .length;
 
-  return `<!doctype html>
+  const html = `<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8">
@@ -670,6 +670,7 @@ export function renderPalettePreview(model) {
 </body>
 </html>
 `;
+  return html.replace(/[ \t]+$/gm, "");
 }
 
 function parseArguments(argv) {

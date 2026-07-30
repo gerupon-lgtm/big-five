@@ -124,6 +124,7 @@ test("P-0 preview is one offline HTML file with all interactive cards", async ()
   assert.doesNotMatch(html, /<script[^>]+\bsrc=/i);
   assert.doesNotMatch(html, /<link[^>]+\bhref=/i);
   assert.doesNotMatch(html, /\bfetch\s*\(/);
+  assert.doesNotMatch(html, /[ \t]+$/m);
 
   const data = html.match(
     /<script type="application\/json" id="palette-data">([\s\S]*?)<\/script>/,
