@@ -1549,6 +1549,139 @@ noscript {
   }
 }
 
+.app-shell.share-screen {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  width: min(100% - 16px, 720px);
+  block-size: 100vh;
+  block-size: 100dvh;
+  margin-inline: auto;
+  padding-block:
+    max(8px, env(safe-area-inset-top))
+    max(8px, env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+.share-screen .app-header {
+  min-height: 44px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+.share-screen .screen-heading {
+  margin-bottom: 8px;
+}
+
+.share-screen .screen-kicker {
+  margin-bottom: 2px;
+}
+
+.share-card-pane {
+  display: flex;
+  min-block-size: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.share-card-pane--card {
+  flex-direction: column;
+}
+
+.share-card-preview {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  aspect-ratio: 3 / 5;
+  border-radius: 12px;
+  object-fit: contain;
+  box-shadow: 0 8px 24px rgb(42 81 69 / 16%);
+}
+
+.share-view-actions,
+.share-delivery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.share-view-actions > button,
+.share-delivery-actions > button,
+.share-back-button {
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 12px;
+}
+
+.share-delivery-actions {
+  padding-top: 8px;
+}
+
+.share-back-button {
+  justify-self: center;
+}
+
+.share-card-pane--details,
+.share-card-pane--zoom {
+  align-items: start;
+  justify-content: start;
+  padding: 8px;
+  overflow: auto;
+}
+
+.share-card-pane--details {
+  flex-direction: column;
+}
+
+.share-card-pane--details .share-card-preview {
+  align-self: center;
+  max-block-size: min(58dvh, 640px);
+}
+
+.share-card-preview--zoom {
+  max-inline-size: none;
+  max-block-size: none;
+  inline-size: min(1080px, 160vw);
+}
+
+.share-text-section {
+  min-inline-size: 0;
+}
+
+.share-text-section h2 {
+  font-size: 1rem;
+}
+
+.share-text-fallback {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #bed4cc;
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+@media (min-width: 960px) {
+  .app-shell.share-screen {
+    width: min(100% - 32px, 1120px);
+  }
+
+  .share-screen--details .share-card-pane {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
+    align-items: center;
+  }
+
+  .share-screen--details .share-card-preview {
+    max-block-size: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

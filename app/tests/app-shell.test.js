@@ -575,7 +575,12 @@ test("T-005 F-016 preserves a saved result when its character ID is absent from 
   assert.deepEqual(requested, []);
 });
 
-function createAppHarness({ hash = "#/start", storage, confirmProvider = () => true } = {}) {
+function createAppHarness({
+  hash = "#/start",
+  storage,
+  confirmProvider = () => true,
+  ...appOptions
+} = {}) {
   const documentObject = {
     createElement(tagName) {
       return new FakeElement(tagName, documentObject);
@@ -598,9 +603,90 @@ function createAppHarness({ hash = "#/start", storage, confirmProvider = () => t
     nowProvider: () => "2026-07-27T12:00:00.000Z",
     uuidProvider: () => `00000000-0000-4000-8000-${String(uuid++).padStart(12, "0")}`,
     confirmProvider,
+    ...appOptions,
   });
   return { host, windowObject };
 }
+
+test("T-007 S-005 opens one generated share card and revokes it when returning", async () => {
+  let raw = null;
+  const blob = new Blob(["png"], { type: "image/png" });
+  const urls = [];
+  const revoked = [];
+  const { host, windowObject } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+    renderShareCardProvider: async (model) => {
+      assert.equal(model.width, 1080);
+      assert.equal(model.height, 1800);
+      return { status: "ok", blob };
+    },
+    shareDeliveryDependencies: {
+      File: class extends Blob {
+        constructor(parts, name, options) {
+          super(parts, options);
+          this.name = name;
+        }
+      },
+      navigator: {},
+      URL: {
+        createObjectURL(value) {
+          assert.strictEqual(value, blob);
+          const url = `blob:card-${urls.length + 1}`;
+          urls.push(url);
+          return url;
+        },
+        revokeObjectURL(url) { revoked.push(url); },
+      },
+      document: {},
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+  const resultId = JSON.parse(raw).results[0].resultId;
+  clickButton(host, "結果を共有する");
+  assert.equal(
+    windowObject.location.hash,
+    `#/share?resultId=${encodeURIComponent(resultId)}`,
+  );
+  await new Promise((resolve) => setImmediate(resolve));
+
+  const shareScreen = collectElements(host).find(({ className }) =>
+    className.includes("share-screen"));
+  assert.equal(shareScreen.getAttribute("data-share-view"), "card");
+  assert.deepEqual(urls, ["blob:card-1"]);
+  clickButton(host, "結果へ戻る");
+  assert.equal(
+    windowObject.location.hash,
+    `#/result?resultId=${encodeURIComponent(resultId)}`,
+  );
+  assert.deepEqual(revoked, ["blob:card-1"]);
+});
+
+test("T-007 S-005 returns a missing share result to history without storage mutation", async () => {
+  let writes = 0;
+  const { host, windowObject } = createAppHarness({
+    hash: "#/share?resultId=00000000-0000-4000-8000-000000000099",
+    storage: {
+      getItem: () => JSON.stringify({
+        schemaVersion: 1,
+        updatedAt: "2026-07-27T12:00:00.000Z",
+        progressByDiagnosis: {},
+        results: [],
+      }),
+      setItem() { writes += 1; },
+    },
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.equal(windowObject.location.hash, "#/history");
+  assert.match(collectText(host), /指定された診断結果を開けませんでした/);
+  assert.equal(writes, 0);
+});
 
 test("T-005 S-001 starts a new in-memory questionnaire after saving compatible progress", () => {
   let raw = null;

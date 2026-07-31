@@ -9,6 +9,9 @@ import {
   validateCharacterManifest,
 } from "./domain/character-manifest.js";
 import { compareResultSnapshots } from "./domain/result-comparison.js";
+import { createShareCardModel } from "./domain/share-card-model.js";
+import { summarizeFragrances } from "./domain/share-fragrance-summary.js";
+import { resolvePaletteUsage } from "./domain/palette-usage.js";
 import { createQuestionComposition } from "./domain/question-composition.js";
 import { resolveRegisteredDiagnosticDefinition } from "./domain/diagnostic-definition-registry.js";
 import { selectPresentation } from "./domain/presentation-selector.js";
@@ -35,9 +38,17 @@ import {
 } from "./infrastructure/progress-storage.js";
 import { loadCharacterImage } from "./infrastructure/character-loader.js";
 import { resolveRoute } from "./infrastructure/router.js";
+import {
+  copyShareText,
+  detectShareCapabilities,
+  downloadPng,
+  sharePng,
+} from "./infrastructure/share-delivery.js";
 import { renderComparisonScreen } from "./presentation/comparison-screen.js";
 import { renderHistoryScreen } from "./presentation/history-screen.js";
 import { renderSavedResultScreen } from "./presentation/result-screen.js";
+import { renderShareCard } from "./presentation/share-card-renderer.js";
+import { renderShareScreen } from "./presentation/share-screen.js";
 import { renderStartScreen } from "./presentation/start-screen.js";
 import { renderQuestionnaireScreen } from "./presentation/questionnaire-screen.js";
 
@@ -156,6 +167,9 @@ export function startApp({
   confirmProvider,
   decodeImage,
   observeViewport,
+  renderShareCardProvider = renderShareCard,
+  shareCanvasDependencies,
+  shareDeliveryDependencies,
 } = {}) {
   const screenHost = documentObject.getElementById("app");
   let historyNotice = null;
@@ -169,6 +183,31 @@ export function startApp({
   const baseObserveViewport = observeViewport ??
     createViewportObserver(windowObject);
   let activeViewportCleanups = [];
+  let activeShareObjectUrl = null;
+  let shareRenderGeneration = 0;
+  const effectiveShareDeliveryDependencies = shareDeliveryDependencies ?? {
+    File: windowObject.File ?? globalThis.File,
+    navigator: windowObject.navigator,
+    URL: windowObject.URL ?? globalThis.URL,
+    document: documentObject,
+  };
+  const effectiveShareCanvasDependencies = shareCanvasDependencies ?? {
+    createCanvas(width, height) {
+      const canvas = documentObject.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      return canvas;
+    },
+    async loadImage(path) {
+      const ImageConstructor = windowObject.Image ?? globalThis.Image;
+      if (typeof ImageConstructor !== "function") throw new Error("IMAGE_UNAVAILABLE");
+      const image = new ImageConstructor();
+      image.src = path;
+      if (typeof image.decode === "function") await image.decode();
+      return image;
+    },
+    fontsReady: documentObject.fonts?.ready ?? Promise.resolve(),
+  };
 
   function effectiveObserveViewport(target, onEnter) {
     const cleanup = baseObserveViewport(target, onEnter);
@@ -503,6 +542,20 @@ export function startApp({
     renderResult(snapshot, false, loadPreviewContinuation(snapshot), true);
   }
 
+  function clearShareResource() {
+    shareRenderGeneration += 1;
+    if (activeShareObjectUrl) {
+      try {
+        effectiveShareDeliveryDependencies.URL?.revokeObjectURL?.(
+          activeShareObjectUrl,
+        );
+      } catch {
+        // The route still changes when explicit URL cleanup is unavailable.
+      }
+      activeShareObjectUrl = null;
+    }
+  }
+
   function renderResult(
     snapshot,
     persistenceFailed,
@@ -662,6 +715,12 @@ export function startApp({
         persistProgress(progress);
         setRoute("#/answer");
       },
+      ...(presentation ? {
+        onShare() {
+          resultActionNotice = null;
+          setRoute(`#/share?resultId=${encodeURIComponent(snapshot.resultId)}`);
+        },
+      } : {}),
     }, {
       notice: resultActionNotice ?? (
         persistenceFailed
@@ -686,6 +745,122 @@ export function startApp({
         methodInformationUnavailable:
           "診断時の尺度・設問・採点版に対応する説明は、このアプリでは確認できません。保存された称号・スコア・結果文は、そのまま確認できます。",
       }),
+    });
+  }
+
+  function findShareSnapshot(resultId) {
+    if (liveResult?.snapshot?.resultId === resultId) return liveResult.snapshot;
+    const historyState = loadResultHistory({
+      storage: getStorage(),
+      now: nowProvider(),
+    });
+    if (historyState.status === "error") return null;
+    return historyState.results.find((snapshot) =>
+      snapshot.resultId === resultId) ?? null;
+  }
+
+  async function renderShareRoute(route) {
+    if (!route.resultId) {
+      returnMissingResultToHistory();
+      return;
+    }
+    const snapshot = findShareSnapshot(route.resultId);
+    if (!snapshot) {
+      returnMissingResultToHistory();
+      return;
+    }
+    const titleProfile = TitleProfileDefinitions.find(({ titleId }) =>
+      titleId === snapshot.titleId);
+    if (!titleProfile ||
+      snapshot.versionTuple.presentationDefinitionVersion !==
+        PresentationDefinitionSet.presentationDefinitionVersion) {
+      returnMissingResultToHistory();
+      return;
+    }
+
+    let presentation;
+    let characterEntry = null;
+    let model;
+    try {
+      presentation = selectPresentation(titleProfile, PresentationDefinitionSet);
+      try {
+        characterEntry = resolveCharacterEntry(
+          validatedCharacterManifest,
+          snapshot.characterId,
+        );
+      } catch {
+        characterEntry = null;
+      }
+      const palettes = [
+        presentation.palettes.standard,
+        ...presentation.palettes.alternatives,
+      ];
+      const palette = palettes.find(({ paletteId }) =>
+        paletteId === snapshot.selectedPaletteId);
+      const paletteMapping = PresentationDefinitionSet.paletteUsageMappings
+        .find(({ paletteId }) => paletteId === snapshot.selectedPaletteId);
+      model = createShareCardModel({
+        snapshot,
+        titleLabel: titleLabels[snapshot.titleId],
+        factorLabels,
+        characterEntry,
+        palette,
+        paletteUsage: resolvePaletteUsage(palette, paletteMapping),
+        fragranceSummary: summarizeFragrances(presentation.fragranceScenes),
+        brand: appMeta.brand,
+      });
+    } catch {
+      returnMissingResultToHistory();
+      return;
+    }
+
+    clearShareResource();
+    const generation = shareRenderGeneration;
+    const rendered = await renderShareCardProvider(
+      model,
+      effectiveShareCanvasDependencies,
+    );
+    if (generation !== shareRenderGeneration ||
+      resolveRoute(windowObject.location.hash).id !== "share") {
+      return;
+    }
+
+    let blob = null;
+    let imageUrl = null;
+    let renderErrorCode = rendered?.errorCode ?? null;
+    if (rendered?.status === "ok" && rendered.blob) {
+      blob = rendered.blob;
+      try {
+        imageUrl = effectiveShareDeliveryDependencies.URL.createObjectURL(blob);
+        activeShareObjectUrl = imageUrl;
+      } catch {
+        renderErrorCode = "SHARE_CANVAS_UNAVAILABLE";
+      }
+    }
+    const capabilities = detectShareCapabilities(
+      effectiveShareDeliveryDependencies,
+    );
+    renderShareScreen(screenHost, model, {
+      ...(blob ? {
+        onShare: () => sharePng({
+          blob,
+          filename: model.filename,
+          text: model.shareText,
+        }, effectiveShareDeliveryDependencies),
+        onDownload: () => downloadPng({
+          blob,
+          filename: model.filename,
+        }, effectiveShareDeliveryDependencies),
+      } : {}),
+      onCopyText: (text) =>
+        copyShareText(text, effectiveShareDeliveryDependencies),
+      onBackToResult() {
+        setRoute(`#/result?resultId=${encodeURIComponent(snapshot.resultId)}`);
+      },
+    }, {
+      imageUrl,
+      renderErrorCode,
+      capabilities,
     });
   }
 
@@ -732,6 +907,7 @@ export function startApp({
   function renderCurrentRoute() {
     clearViewportObservers();
     const route = resolveRoute(windowObject.location.hash);
+    if (route.id !== "share") clearShareResource();
     if (route.id !== "result") resultActionNotice = null;
 
     if (route.didFallback) {
@@ -748,6 +924,10 @@ export function startApp({
     }
     if (route.id === "result") {
       renderResultRoute(route);
+      return;
+    }
+    if (route.id === "share") {
+      void renderShareRoute(route);
       return;
     }
     if (route.id === "answer") {

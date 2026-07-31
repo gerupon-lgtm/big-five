@@ -29,6 +29,15 @@ export function resolveRoute(hash) {
       resultId: params.get("resultId"),
     });
   }
+  if (path === "#/share") {
+    const params = new URLSearchParams(query);
+    return Object.freeze({
+      id: "share",
+      canonicalHash: hash,
+      didFallback: false,
+      resultId: params.get("resultId"),
+    });
+  }
   if (path === "#/compare") {
     const params = new URLSearchParams(query);
     return Object.freeze({

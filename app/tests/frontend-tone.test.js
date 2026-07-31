@@ -77,3 +77,28 @@ test("T-008A uses the approved one-row 320px header fallback", async () => {
   assert.match(compactStyles, /\.app-brand-subtitle\s*\{[^}]*font-size:\s*0\.52rem[^}]*letter-spacing:\s*0\.08em/s);
   assert.match(compactStyles, /\.app-header-action\s*\{[^}]*font-size:\s*0\.7rem[^}]*white-space:\s*nowrap/s);
 });
+
+test("T-007 S-005 keeps the initial share card inside the viewport", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+
+  assert.match(
+    styles,
+    /\.share-screen\s*\{[^}]*block-size:\s*100vh[^}]*block-size:\s*100dvh[^}]*overflow:\s*hidden/s,
+  );
+  assert.match(
+    styles,
+    /\.share-card-pane\s*\{[^}]*display:\s*flex[^}]*min-block-size:\s*0[^}]*overflow:\s*hidden/s,
+  );
+  assert.match(
+    styles,
+    /\.share-card-preview\s*\{[^}]*max-inline-size:\s*100%[^}]*max-block-size:\s*100%[^}]*aspect-ratio:\s*3\s*\/\s*5[^}]*object-fit:\s*contain/s,
+  );
+  assert.match(
+    styles,
+    /\.share-delivery-actions\s*>\s*button[^}]*\{[^}]*min-height:\s*44px/s,
+  );
+  assert.match(
+    styles,
+    /@media\s*\(min-width:\s*960px\)[\s\S]*\.share-screen--details\s+\.share-card-pane\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*3fr\)\s+minmax\(320px,\s*2fr\)/s,
+  );
+});
