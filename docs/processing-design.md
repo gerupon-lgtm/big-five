@@ -227,7 +227,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
-上記Q-006ドメイン実装と独立レビューは完了している。`result-text-v1`は根拠台帳の全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`はユーザー承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を含む現行runtime版である。Q-013のP-0〜P-6も全承認済みで、`presentation-v2` ES Modules runtimeまで生成・接続済みである。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。approved JSON release、Q-012正式release、Q-013の結果DOM接続は後続である。
+上記Q-006ドメイン実装と独立レビューは完了している。`result-text-v1`は根拠台帳の全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`はユーザー承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を含む現行runtime版である。Q-013のP-0〜P-6も全承認済みで、`presentation-v2` ES Modules runtimeとS-003/S-004結果DOMまで接続済みである。`progress-storage.js`へのResultSnapshot保存・履歴・削除・対象1件のパレット更新統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。approved JSON release、Q-012正式release、Q-013共有Canvasは後続である。
 
 診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。純粋共有候補抽出境界`selectShareableResultTexts`は`titleReflection`を除外するが、実際の共有UI・共有画像・共有テキストはT-007の後続作業である。
 
@@ -291,7 +291,7 @@ ResultSnapshotの因子文（preview 5件／detail 40件）はsection-firstのhi
 
 2026-07-28の最終実ブラウザ検証では、320px、360px、960pxの結果・履歴で横overflowなし、360×800で履歴管理dialog全体がviewport内に収まることを確認した。因子・詳細の単一開閉、設問構成sheet、4方法sheet、50問結果のトップ直接遷移、履歴から保存済み結果への直接遷移、dialogの明示close・正確なbackdrop click・Escape・focus入場／復帰を通過し、console error／warningは0件だった。追加の自動回帰検証では、未登録の履歴診断版で現行方法情報を流用しないこと、ボトムシートのインラインfallback、保存結果を含む履歴fallbackの到達可能なfocus循環と全viewport surface、承認済み結果開示ラベルを含む全465件、`npm.cmd run check`、`git diff --check`に成功した。
 
-パレット変更は該当ResultSnapshotのselectedPaletteIdだけを更新する。スコア、称号、文章、猫、版を変更しない。
+`selectResultPalette`はResultSnapshotと標準1＋代替2の許可パレットを再検証し、`selectedPaletteId`だけを変更したdeep-freeze済みsnapshotを返す。`updateResultPaletteSelection`はschema 1の保存領域から対象の有効ResultSnapshotを1件だけ特定し、他の有効・破損・将来レコードと途中回答を保持したまま同フィールドだけを更新する。保存失敗時はcontrollerが純粋関数の返却snapshotを画面内に維持して通知する。スコア、称号、文章、猫、香り候補、版を変更しない。
 
 ## 8. 比較
 
@@ -374,7 +374,7 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 - 純粋監査は`FRAGRANCE_TITLE_MATERIAL_DUPLICATE`、`FRAGRANCE_TITLE_SET_DUPLICATE`、`FRAGRANCE_SCENE_FAMILY_DUPLICATE`、`FRAGRANCE_SHARE_TRIPLE_OVERUSED`、`FRAGRANCE_USAGE_OVER_LIMIT`、`FRAGRANCE_SCENE_REUSE_OVER_LIMIT`、`FRAGRANCE_SCENE_COPY_DUPLICATE`、`FRAGRANCE_PROHIBITED_COPY`、`FRAGRANCE_SHARE_COPY_OVERFLOW`の9安定コードを返す。
 - ユーザー状態を推測する入力・処理を持たない。
 - 植物・精油名は香り素材マスタの`displayName`だけに許可する。商品、ブランド、購入URL、適合推奨、量、滴数、濃度、配合、摂取、塗布、ディフューザー等の使用法、治療・改善・能力向上効果のデータを定義スキーマで禁止する。
-- 現時点では決定的な確認Markdownと縦横比3:5の共有カード確認HTMLまで接続済みであり、S-003/S-004の正式結果DOMとT-007の正式共有Canvasには未接続である。
+- S-003/S-004では固定3場面を縦に並べ、各2件の香調名、素材名1〜2件、説明を表示する。現在の心理状態や効果を示すものではなく、使用方法を案内しない共通注記を添える。T-007の正式共有Canvasは未接続である。
 
 ## 12. 共有カード
 

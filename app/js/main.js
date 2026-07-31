@@ -1,6 +1,7 @@
 import { appMeta } from "./config/app-meta.js";
 import { CharacterManifest } from "./data/character-manifest.js";
 import { DiagnosticDefinition, FactorDefinitions, QuestionDefinitions } from "./data/diagnostic-definition.js";
+import { PresentationDefinitionSet } from "./data/presentation-definitions.js";
 import { ResultTextDefinitions } from "./data/result-text-definitions.js";
 import { TitleProfileDefinitions } from "./data/title-profile-definitions.js";
 import {
@@ -10,6 +11,8 @@ import {
 import { compareResultSnapshots } from "./domain/result-comparison.js";
 import { createQuestionComposition } from "./domain/question-composition.js";
 import { resolveRegisteredDiagnosticDefinition } from "./domain/diagnostic-definition-registry.js";
+import { selectPresentation } from "./domain/presentation-selector.js";
+import { selectResultPalette } from "./domain/result-palette-selection.js";
 import { createStartVersionViewModel } from "./domain/version-model.js";
 import {
   choosePreviewExit,
@@ -28,6 +31,7 @@ import {
   saveProgress,
   saveResultSnapshot,
   transitionAndSave,
+  updateResultPaletteSelection,
 } from "./infrastructure/progress-storage.js";
 import { loadCharacterImage } from "./infrastructure/character-loader.js";
 import { resolveRoute } from "./infrastructure/router.js";
@@ -509,6 +513,24 @@ export function startApp({
       snapshot.versionTuple,
       diagnosticDefinitionRegistry,
     );
+    let presentation = null;
+    if (
+      snapshot.versionTuple.presentationDefinitionVersion ===
+      PresentationDefinitionSet.presentationDefinitionVersion
+    ) {
+      const titleProfile = TitleProfileDefinitions.find(({ titleId }) =>
+        titleId === snapshot.titleId);
+      if (titleProfile) {
+        try {
+          presentation = selectPresentation(
+            titleProfile,
+            PresentationDefinitionSet,
+          );
+        } catch {
+          // Historical results remain readable if their presentation cannot resolve.
+        }
+      }
+    }
     let characterEntry = null;
     try {
       characterEntry = resolveCharacterEntry(
@@ -569,12 +591,55 @@ export function startApp({
         },
       } : {}),
     } : {};
+    const paletteActions = presentation ? {
+      onSelectPalette(paletteId) {
+        let selectedSnapshot;
+        try {
+          selectedSnapshot = selectResultPalette(
+            snapshot,
+            presentation.palettes,
+            paletteId,
+          );
+        } catch {
+          return;
+        }
+        const allowedPaletteIds = [
+          presentation.palettes.standard.paletteId,
+          ...presentation.palettes.alternatives.map(({ paletteId: id }) => id),
+        ];
+        const persistence = persistenceFailed
+          ? { status: "error" }
+          : updateResultPaletteSelection({
+              storage: getStorage(),
+              resultId: selectedSnapshot.resultId,
+              paletteId,
+              allowedPaletteIds,
+              now: nowProvider(),
+            });
+        if (liveResult?.snapshot?.resultId === selectedSnapshot.resultId) {
+          liveResult = {
+            ...liveResult,
+            snapshot: selectedSnapshot,
+          };
+        }
+        resultActionNotice = persistence.status === "ok"
+          ? null
+          : "色はこの画面に反映しましたが、履歴には保存できませんでした。";
+        renderResult(
+          selectedSnapshot,
+          persistenceFailed,
+          previewProgress,
+          historyDetail,
+        );
+      },
+    } : {};
     renderSavedResultScreen(screenHost, snapshot, {
       factorLabels,
       factorDescriptions,
       titleLabels,
     }, {
       ...previewActions,
+      ...paletteActions,
       onReturnToStart() {
         if (
           persistenceFailed &&
@@ -608,6 +673,7 @@ export function startApp({
       loadCharacterImage,
       observeViewport: effectiveObserveViewport,
       historyDetail,
+      presentation,
       definitionSupported: definitionRegistration !== null,
       ...(definitionRegistration ? {
         questionComposition:

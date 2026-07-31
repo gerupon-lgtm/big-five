@@ -29,6 +29,15 @@ test("T-008A S-001 aligns start and resume actions with an equal-width responsiv
   );
 });
 
+test("T-005/T-006 result-history navigation uses the same button treatment as other actions", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+
+  assert.match(
+    styles,
+    /\.result-actions\s*>\s*a\.secondary-button\s*\{[^}]*display:\s*inline-flex[^}]*min-height:\s*44px[^}]*padding:\s*10px 16px[^}]*border:\s*1px solid #26705c[^}]*border-radius:\s*12px[^}]*background:\s*#fff[^}]*text-decoration:\s*none/s,
+  );
+});
+
 test("T-008A keeps sticky header behavior without redefining brand geometry", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
   const stickyHeader = styles.match(/\.app-header\.is-sticky\s*\{([^}]*)\}/)?.[1] ?? "";

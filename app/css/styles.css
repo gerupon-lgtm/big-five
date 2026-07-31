@@ -995,6 +995,152 @@ dd {
   margin-top: 28px;
 }
 
+.result-actions > a.secondary-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border: 1px solid #26705c;
+  border-radius: 12px;
+  background: #fff;
+  text-decoration: none;
+}
+
+.result-palette-selector {
+  margin-top: 28px;
+  padding: 20px;
+  border: 1px solid #d6e4df;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 82%);
+}
+
+.result-palette-selector h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.result-palette-note {
+  margin: 8px 0 0;
+  color: #526b66;
+  line-height: 1.7;
+}
+
+.result-palette-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.result-palette-option {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  padding: 10px;
+  text-align: left;
+}
+
+.result-palette-option[aria-pressed="true"] {
+  border-color: #26705c;
+  outline: 3px solid rgb(38 112 92 / 20%);
+  outline-offset: 1px;
+}
+
+.result-palette-swatch {
+  display: block;
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid rgb(25 51 47 / 18%);
+  border-radius: 9px;
+}
+
+.result-palette-label {
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.result-fragrance-section {
+  margin-top: 28px;
+  padding: 20px;
+  border: 1px solid #d6e4df;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 82%);
+}
+
+.result-fragrance-section > h2 {
+  margin: 0;
+  text-align: center;
+}
+
+.result-fragrance-subtitle {
+  margin: 4px 0 0;
+  color: #526b66;
+  text-align: center;
+}
+
+.result-fragrance-scene {
+  margin-top: 20px;
+}
+
+.result-fragrance-scene > h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.result-fragrance-candidates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.result-fragrance-candidate {
+  padding: 14px;
+  border: 1px solid #d6e4df;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.result-fragrance-candidate h4,
+.result-fragrance-candidate p {
+  margin: 0;
+}
+
+.result-fragrance-candidate h4 {
+  font-size: 0.95rem;
+}
+
+.result-fragrance-materials {
+  margin-top: 8px !important;
+  color: #1f6955;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.result-fragrance-description {
+  margin-top: 8px !important;
+  color: #526b66;
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+
+.result-fragrance-note,
+.result-fragrance-disclaimer {
+  color: #526b66;
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.result-fragrance-note {
+  margin: 18px 0 0;
+}
+
+.result-fragrance-disclaimer {
+  margin: 6px 0 0;
+}
+
 .primary-button {
   border-color: #26705c;
   background: #26705c;
@@ -1324,6 +1470,11 @@ noscript {
 
   .questionnaire-navigation {
     display: grid;
+  }
+
+  .result-palette-options,
+  .result-fragrance-candidates {
+    grid-template-columns: 1fr;
   }
 
   dl {

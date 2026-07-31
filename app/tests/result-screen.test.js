@@ -36,6 +36,99 @@ const characterEntry = Object.freeze({
   integrity: "sha256-gVfqsXoZbwa5AVZhAGwvT2via6MzHVbuVfrr3tK8seo=",
 });
 
+const presentation = Object.freeze({
+  palettes: Object.freeze({
+    standard: Object.freeze({
+      paletteId: "palette-default",
+      label: "若葉の余白",
+      baseColors: Object.freeze({
+        primary: "#74A88C",
+        secondary: "#DCEBDD",
+        accent: "#D7985D",
+      }),
+    }),
+    alternatives: Object.freeze([
+      Object.freeze({
+        paletteId: "palette-alternative-1",
+        label: "朝空のリズム",
+        baseColors: Object.freeze({
+          primary: "#78A9C8",
+          secondary: "#E6D7A4",
+          accent: "#D87878",
+        }),
+      }),
+      Object.freeze({
+        paletteId: "palette-alternative-2",
+        label: "木陰の灯り",
+        baseColors: Object.freeze({
+          primary: "#9886B8",
+          secondary: "#C9D89D",
+          accent: "#E3A55C",
+        }),
+      }),
+    ]),
+  }),
+  fragranceScenes: Object.freeze([
+    Object.freeze({
+      sceneId: "pause",
+      iconId: "aroma-pause",
+      label: "ひと息つきたい",
+      candidates: Object.freeze([
+        Object.freeze({
+          fragranceId: "fragrance-pause-camomile",
+          accordLabel: "やわらかな草花の香調",
+          description: "静かな余白を思わせる穏やかな香調です。",
+          materialNames: Object.freeze(["ローマンカモミール"]),
+        }),
+        Object.freeze({
+          fragranceId: "fragrance-pause-wood",
+          accordLabel: "温かな木質の香調",
+          description: "丸みのある木陰を思わせる香調です。",
+          materialNames: Object.freeze(["サンダルウッド"]),
+        }),
+      ]),
+    }),
+    Object.freeze({
+      sceneId: "reset",
+      iconId: "aroma-reset",
+      label: "気持ちを切り替えたい",
+      candidates: Object.freeze([
+        Object.freeze({
+          fragranceId: "fragrance-reset-citrus",
+          accordLabel: "明るい柑橘の香調",
+          description: "軽やかな風景を思わせる香調です。",
+          materialNames: Object.freeze(["グレープフルーツ", "ジンジャー"]),
+        }),
+        Object.freeze({
+          fragranceId: "fragrance-reset-green",
+          accordLabel: "みずみずしい緑の香調",
+          description: "雨上がりの葉を思わせる香調です。",
+          materialNames: Object.freeze(["プチグレン"]),
+        }),
+      ]),
+    }),
+    Object.freeze({
+      sceneId: "quiet-focus",
+      iconId: "aroma-quiet-focus",
+      label: "静かに取り組みたい",
+      candidates: Object.freeze([
+        Object.freeze({
+          fragranceId: "fragrance-focus-hinoki",
+          accordLabel: "澄んだ木質の香調",
+          description: "静かな森を思わせる香調です。",
+          materialNames: Object.freeze(["ヒノキ", "フランキンセンス"]),
+        }),
+        Object.freeze({
+          fragranceId: "fragrance-focus-herb",
+          accordLabel: "清らかな草葉の香調",
+          description: "整った庭を思わせる香調です。",
+          materialNames: Object.freeze(["ローズマリー"]),
+        }),
+      ]),
+    }),
+  ]),
+});
+
 function resultTextRecords(host) {
   return collectElements(host)
     .filter(({ className }) => className.includes("result-text-record"));
@@ -134,8 +227,13 @@ test("T-005 S-003 renders the complete saved preview with factor help and the 30
     factorDetails.map((element) => collectText(element).trim().split(/\s+/)[0]),
     ["知性・想像力", "勤勉性", "外向性", "協調性", "情緒安定性"],
   );
-  assert.ok(collectElements(host).some(({ tagName, attributes }) =>
-    tagName === "a" && attributes.get("href") === "#/history"));
+  assert.equal(
+    collectElements(host).some(({ tagName, attributes, textContent }) =>
+      tagName === "a"
+      && attributes.get("href") === "#/history"
+      && textContent === "結果履歴を見る"),
+    false,
+  );
 
   assert.equal(resultTextRecords(host).length, 7);
   assert.deepEqual(
@@ -194,8 +292,11 @@ test("T-005 S-004 renders all 42 saved detail texts exactly once", () => {
   assert.match(text, /50問詳細結果/);
   assert.match(text, /称号.*五つの風を見渡す観測者/);
   assert.doesNotMatch(text, /仮称号|あと30問|20問だけでは/);
-  assert.ok(collectElements(host).some(({ tagName, attributes }) =>
-    tagName === "a" && attributes.get("href") === "#/history"));
+  assert.ok(collectElements(host).some(({ tagName, attributes, className, textContent }) =>
+    tagName === "a"
+    && attributes.get("href") === "#/history"
+    && className === "secondary-button"
+    && textContent === "結果履歴を見る"));
 
   collectElements(host).find(({ tagName, textContent }) =>
     tagName === "button" && textContent === "もう一度診断する").dispatch("click");
@@ -223,11 +324,108 @@ test("T-006 S-004 history detail returns to the history list without fresh-resul
     && textContent === "履歴一覧に戻る");
   assert.equal(historyLinks.length, 2);
   assert.ok(historyLinks.some(({ className }) => className === "app-header-action"));
+  assert.ok(historyLinks.some(({ className }) => className === "secondary-button"));
   assert.equal(elements.some(({ tagName, textContent }) =>
     tagName === "button" && textContent === "トップへ戻る"), false);
   assert.equal(elements.some(({ tagName, textContent }) =>
     tagName === "button" && textContent === "もう一度診断する"), false);
   assert.doesNotMatch(collectText(host), /結果履歴を見る/);
+});
+
+test("T-005 F-018 offers three named card colors without changing the diagnosis display", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000063",
+  });
+  const selected = [];
+
+  renderSavedResultScreen(host, snapshot, labels, {
+    onSelectPalette: (paletteId) => selected.push(paletteId),
+  }, {
+    presentation,
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+  });
+
+  const paletteButtons = collectElements(host).filter(({ className }) =>
+    className === "result-palette-option");
+  assert.equal(paletteButtons.length, 3);
+  assert.deepEqual(
+    paletteButtons.map(({ attributes }) => attributes.get("data-palette-id")),
+    [
+      "palette-default",
+      "palette-alternative-1",
+      "palette-alternative-2",
+    ],
+  );
+  assert.deepEqual(
+    paletteButtons.map(({ attributes }) => attributes.get("aria-pressed")),
+    ["true", "false", "false"],
+  );
+  assert.match(
+    collectText(host),
+    /選んだ色で、結果カードを彩れます。診断結果は変わりません。/,
+  );
+  assert.match(collectText(host), /標準.*若葉の余白/);
+  assert.match(collectText(host), /代替1.*朝空のリズム/);
+  assert.match(collectText(host), /代替2.*木陰の灯り/);
+  const swatch = paletteButtons[0].children[0];
+  assert.equal(swatch.tagName, "canvas");
+  assert.equal(swatch.attributes.get("width"), "300");
+  assert.equal(swatch.attributes.get("height"), "32");
+  assert.equal(swatch.attributes.has("style"), false);
+
+  paletteButtons[1].dispatch("click");
+  assert.deepEqual(selected, ["palette-alternative-1"]);
+  assert.equal(snapshot.selectedPaletteId, "palette-default");
+  assert.equal(
+    collectElements(host).filter(({ className }) =>
+      className === "factor-score-row").length,
+    5,
+  );
+  assert.match(collectText(host), /五つの風を見渡す観測者/);
+});
+
+test("T-005 F-018 shows six fragrance ideas in the fixed three-scene order", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000064",
+  });
+
+  renderSavedResultScreen(host, snapshot, labels, {
+    onSelectPalette() {},
+  }, {
+    presentation,
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+  });
+
+  const text = collectText(host);
+  assert.match(text, /ココロアロマ/);
+  assert.match(text, /～あなたらしさから着想した香り～/);
+  const scenes = collectElements(host).filter(({ className }) =>
+    className === "result-fragrance-scene");
+  assert.equal(scenes.length, 3);
+  assert.deepEqual(
+    scenes.map((scene) => scene.attributes.get("data-scene-id")),
+    ["pause", "reset", "quiet-focus"],
+  );
+  assert.equal(
+    collectElements(host).filter(({ className }) =>
+      className === "result-fragrance-candidate").length,
+    6,
+  );
+  for (const expected of [
+    "ひと息つきたい",
+    "気持ちを切り替えたい",
+    "静かに取り組みたい",
+    "ローマンカモミール",
+    "グレープフルーツ・ジンジャー",
+    "ヒノキ・フランキンセンス",
+  ]) {
+    assert.match(text, new RegExp(expected));
+  }
+  assert.match(text, /香りをイメージするための素材例です/);
+  assert.match(text, /現在の心理状態や効果を示すものではありません/);
+  assert.doesNotMatch(text, /fragrance-|material-/);
 });
 
 test("T-005 F-006 keeps every text and factor reachable when radar drawing fails", () => {
@@ -280,8 +478,11 @@ test("T-005 S-003/S-004 omits action buttons whose callbacks were not provided",
       collectElements(actions).filter(({ tagName }) => tagName === "button").length,
       0,
     );
-    assert.ok(collectElements(host).some(({ tagName, attributes }) =>
-      tagName === "a" && attributes.get("href") === "#/history"));
+    assert.equal(
+      collectElements(host).some(({ tagName, attributes }) =>
+        tagName === "a" && attributes.get("href") === "#/history"),
+      questionCount === 50,
+    );
   }
 });
 

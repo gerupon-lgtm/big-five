@@ -89,6 +89,167 @@ function renderResultHero(parent, snapshot, labels, dependencies) {
   parent.append(hero);
 }
 
+function drawPaletteSwatch(canvas, baseColors) {
+  try {
+    const context = canvas.getContext?.("2d");
+    if (!context) return;
+    const colors = [
+      baseColors.primary,
+      baseColors.secondary,
+      baseColors.accent,
+    ];
+    colors.forEach((color, index) => {
+      context.fillStyle = color;
+      context.fillRect(index * 100, 0, 100, 32);
+    });
+  } catch {
+    // The palette name remains available when Canvas drawing is unavailable.
+  }
+}
+
+function renderPaletteSelector(parent, snapshot, actions, dependencies) {
+  const paletteSet = dependencies.presentation?.palettes;
+  const options = paletteSet && Array.isArray(paletteSet.alternatives)
+    ? [paletteSet.standard, ...paletteSet.alternatives]
+    : [];
+  if (
+    typeof actions.onSelectPalette !== "function"
+    || options.length !== 3
+    || new Set(options.map((palette) => palette?.paletteId)).size !== 3
+    || !options.some(({ paletteId }) => paletteId === snapshot.selectedPaletteId)
+    || options.some((palette) =>
+      !palette
+      || typeof palette.paletteId !== "string"
+      || typeof palette.label !== "string"
+      || !palette.baseColors
+      || !["primary", "secondary", "accent"].every((role) =>
+        /^#[0-9A-F]{6}$/.test(palette.baseColors[role])))
+  ) {
+    return;
+  }
+
+  const section = parent.ownerDocument.createElement("section");
+  section.className = "result-palette-selector";
+  appendTextElement(section, "h2", "結果カードの色");
+  appendTextElement(
+    section,
+    "p",
+    "選んだ色で、結果カードを彩れます。診断結果は変わりません。",
+    "result-palette-note",
+  );
+  const group = parent.ownerDocument.createElement("div");
+  group.className = "result-palette-options";
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "結果カードの色を選ぶ");
+  const positionLabels = ["標準", "代替1", "代替2"];
+
+  options.forEach((palette, index) => {
+    const selected = palette.paletteId === snapshot.selectedPaletteId;
+    const button = parent.ownerDocument.createElement("button");
+    button.className = "result-palette-option";
+    button.setAttribute("type", "button");
+    button.setAttribute("data-palette-id", palette.paletteId);
+    button.setAttribute("aria-pressed", String(selected));
+    const swatch = parent.ownerDocument.createElement("canvas");
+    swatch.className = "result-palette-swatch";
+    swatch.setAttribute("aria-hidden", "true");
+    swatch.setAttribute("width", "300");
+    swatch.setAttribute("height", "32");
+    drawPaletteSwatch(swatch, palette.baseColors);
+    button.append(swatch);
+    appendTextElement(
+      button,
+      "span",
+      `${positionLabels[index]} ${palette.label}${selected ? " 選択中" : ""}`,
+      "result-palette-label",
+    );
+    button.addEventListener("click", () =>
+      actions.onSelectPalette?.(palette.paletteId));
+    group.append(button);
+  });
+  section.append(group);
+  parent.append(section);
+}
+
+function renderFragranceIdeas(parent, dependencies) {
+  const scenes = dependencies.presentation?.fragranceScenes;
+  if (
+    !Array.isArray(scenes)
+    || scenes.length !== 3
+    || scenes.some((scene) =>
+      !scene
+      || typeof scene.sceneId !== "string"
+      || typeof scene.iconId !== "string"
+      || typeof scene.label !== "string"
+      || !Array.isArray(scene.candidates)
+      || scene.candidates.length !== 2
+      || scene.candidates.some((candidate) =>
+        !candidate
+        || typeof candidate.accordLabel !== "string"
+        || typeof candidate.description !== "string"
+        || !Array.isArray(candidate.materialNames)
+        || candidate.materialNames.length < 1
+        || candidate.materialNames.length > 2
+        || candidate.materialNames.some((name) =>
+          typeof name !== "string" || name.length === 0)))
+  ) {
+    return;
+  }
+
+  const section = parent.ownerDocument.createElement("section");
+  section.className = "result-fragrance-section";
+  appendTextElement(section, "h2", "ココロアロマ");
+  appendTextElement(
+    section,
+    "p",
+    "～あなたらしさから着想した香り～",
+    "result-fragrance-subtitle",
+  );
+
+  for (const scene of scenes) {
+    const sceneSection = parent.ownerDocument.createElement("section");
+    sceneSection.className = "result-fragrance-scene";
+    sceneSection.setAttribute("data-scene-id", scene.sceneId);
+    sceneSection.setAttribute("data-icon-id", scene.iconId);
+    appendTextElement(sceneSection, "h3", scene.label);
+    const candidates = parent.ownerDocument.createElement("div");
+    candidates.className = "result-fragrance-candidates";
+    for (const candidate of scene.candidates) {
+      const article = parent.ownerDocument.createElement("article");
+      article.className = "result-fragrance-candidate";
+      appendTextElement(article, "h4", candidate.accordLabel);
+      appendTextElement(
+        article,
+        "p",
+        `香りの素材例：${candidate.materialNames.join("・")}`,
+        "result-fragrance-materials",
+      );
+      appendTextElement(
+        article,
+        "p",
+        candidate.description,
+        "result-fragrance-description",
+      );
+      candidates.append(article);
+    }
+    sceneSection.append(candidates);
+    section.append(sceneSection);
+  }
+  appendTextElement(
+    section,
+    "p",
+    "香りをイメージするための素材例です。",
+    "result-fragrance-note",
+  );
+  appendTextElement(
+    section,
+    "p",
+    "あなたらしさから着想した雰囲気の候補であり、現在の心理状態や効果を示すものではありません。実際の使用方法を案内するものではありません。",
+    "result-fragrance-disclaimer",
+  );
+  parent.append(section);
+}
+
 function renderTitleReason(parent, snapshot) {
   const section = parent.ownerDocument.createElement("section");
   section.className = "result-title-reason";
@@ -449,13 +610,15 @@ function renderActions(parent, snapshot, actions, { historyDetail = false } = {}
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onRetry?.());
   }
-  const historyLink = appendTextElement(
-    controls,
-    "a",
-    historyDetail ? "履歴一覧に戻る" : "結果履歴を見る",
-    "text-link",
-  );
-  historyLink.setAttribute("href", "#/history");
+  if (snapshot.mode === "detail50" || historyDetail) {
+    const historyLink = appendTextElement(
+      controls,
+      "a",
+      historyDetail ? "履歴一覧に戻る" : "結果履歴を見る",
+      "secondary-button",
+    );
+    historyLink.setAttribute("href", "#/history");
+  }
   if (typeof actions.onShare === "function") {
     const button = appendTextElement(controls, "button", "結果を共有する", "secondary-button");
     button.setAttribute("type", "button");
@@ -491,6 +654,8 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
     notice.setAttribute("role", "alert");
   }
   renderResultHero(main, savedSnapshot, labels, dependencies);
+  renderPaletteSelector(main, savedSnapshot, actions, dependencies);
+  renderFragranceIdeas(main, dependencies);
   renderTitleReason(main, savedSnapshot);
   renderTitleReflection(main, savedSnapshot);
   renderRadarAndFactors(main, savedSnapshot, labels, dependencies.drawRadar ?? drawResultRadar);

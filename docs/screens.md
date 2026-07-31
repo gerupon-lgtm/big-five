@@ -20,7 +20,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は実装済みで、人は`content/source/`のCSVだけを編集する。3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testがあり、画面はES Modulesをruntime compatibility authorityとして使う。Q-013は承認済みCSVから生成した`presentation-v2`へ接続済みで、`app/content/` JSONはfetchしない。
 
-`result-text-v1`は237件の不変な履歴互換版で、別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなっている。現行ES Modules runtimeの`result-text-v2`は基本237件に、TR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済み修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の根拠定義は引き続き固定6件である。Q-013はP-0〜P-6を承認済みで、全51称号の標準1＋代替2パレット、3場面×各2香調、共有代表が確定し、`presentation-v2` ES Modules runtimeへ生成・接続済みである。正式共有カードのココロアロマ3件は縦積みとし、簡略プレビューの横並びは配色・情報量確認専用である。approved JSON release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013の結果DOM・共有Canvas接続未完了はrelease readinessを妨げる別条件として維持する。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
+`result-text-v1`は237件の不変な履歴互換版で、別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなっている。現行ES Modules runtimeの`result-text-v2`は基本237件に、TR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済み修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の根拠定義は引き続き固定6件である。Q-013はP-0〜P-6を承認済みで、全51称号の標準1＋代替2パレット、3場面×各2香調、共有代表が確定し、`presentation-v2` ES Modules runtimeとS-003/S-004結果DOMへ接続済みである。正式共有カードのココロアロマ3件は縦積みとし、簡略プレビューの横並びは配色・情報量確認専用である。approved JSON release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013の共有Canvas接続未完了はrelease readinessを妨げる別条件として維持する。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
 
 ## 2. 画面一覧
 
@@ -162,7 +162,7 @@ flowchart TD
 
 ## 7. S-003 基本結果
 
-Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。結果画面は称号・猫hero、称号理由、称号別`titleReflection`を独立sectionにし、名前付きレーダー、固定順5因子のコンパクトな行・実スコアを反映する棒・数値、同時1因子／1カテゴリの二段階開閉、設問構成sheet、4つの固定方法sheetまで接続済みである。初期状態では本文を閉じ、因子を開くとカテゴリ名、カテゴリ名を開くと診断時の本文を表示する。保存済みsnapshotの`scaleVersion`、`questionVersion`、`scoringVersion`が登録済み診断定義と完全一致する場合だけ、その定義の設問構成・方法説明を表示する。未登録の履歴版では現行版の件数・限界・出典を流用せず、説明を利用できない旨と、保存済みの称号・スコア・結果文は確認できる旨を表示する。`result-text-v1`の237件は全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`の153件の`titleReflection`はTR-0〜TR-4ですべて承認済みで、現行runtimeへ実装済みである。Q-013のP-0〜P-6も全承認済みで、`presentation-v2` ES Modules runtimeへ生成・接続済みである。approved JSON release未選択、Q-012正式release、Q-013の結果DOM、実際のT-007共有UIは未完了として維持する。
+Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独立レビュー済みである。20問の`showPreview`は選択されたQ-012 manifest entryの個別`assetVersion`とTitleProfileの`defaultPaletteId`を保存し、answer-freeの結果を`#/result?resultId=...`へ表示する。保存済みsnapshotは履歴からも同画面を開け、対応する互換ProgressRecordが残る場合だけ追加30問へ進める。結果画面は称号・猫hero、称号理由、称号別`titleReflection`を独立sectionにし、名前付きレーダー、固定順5因子のコンパクトな行・実スコアを反映する棒・数値、同時1因子／1カテゴリの二段階開閉、設問構成sheet、4つの固定方法sheetまで接続済みである。初期状態では本文を閉じ、因子を開くとカテゴリ名、カテゴリ名を開くと診断時の本文を表示する。保存済みsnapshotの`scaleVersion`、`questionVersion`、`scoringVersion`が登録済み診断定義と完全一致する場合だけ、その定義の設問構成・方法説明を表示する。未登録の履歴版では現行版の件数・限界・出典を流用せず、説明を利用できない旨と、保存済みの称号・スコア・結果文は確認できる旨を表示する。`result-text-v1`の237件は全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`の153件の`titleReflection`はTR-0〜TR-4ですべて承認済みで、現行runtimeへ実装済みである。Q-013のP-0〜P-6も全承認済みで、`presentation-v2` ES Modules runtimeから標準1＋代替2パレットと固定3場面×各2香調を結果画面へ接続した。approved JSON release未選択、Q-012正式release、実際のT-007共有UI・共有Canvasは未完了として維持する。
 
 ### ファーストビュー
 
@@ -219,7 +219,7 @@ Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独
 
 猫画像、Canvasまたは共有APIが失敗しても、称号、結果文、最下部へ集約した「結果の根拠と見方」への導線、共有テキストへの経路を同じ結果画面から利用できるようにする。Clipboardも利用できない場合は選択可能テキストへ到達可能にする。
 
-診断直後の`トップへ戻る`は保存済みResultSnapshotなら確認なしで`#/start`へ移動する。履歴保存に失敗したlive結果では、戻ると再表示できないことを確認し、取消時は同じ結果画面を維持する。履歴から開いた保存済み結果では、ヘッダーと最下部に`履歴一覧に戻る`を表示し、最下部の`結果履歴を見る`を同文言へ置き換える。この状態では`トップへ戻る`と`もう一度診断する`を表示しない。診断直後のlive結果は従来の操作を維持する。
+診断直後の`トップへ戻る`は保存済みResultSnapshotなら確認なしで`#/start`へ移動する。履歴保存に失敗したlive結果では、戻ると再表示できないことを確認し、取消時は同じ結果画面を維持する。20問簡易プレビューの最下部には`結果履歴を見る`を表示しない。50問結果の`結果履歴を見る`は文字リンクではなくボタン表示とする。履歴から開いた保存済み結果では、ヘッダーと最下部に`履歴一覧に戻る`を表示し、最下部はボタン表示とする。この状態では`トップへ戻る`と`もう一度診断する`を表示しない。診断直後のlive結果は従来の操作を維持する。
 
 2026-07-28の実ブラウザ検証では、320px、360px、960pxの結果画面で横overflowがないこと、因子と詳細の単一開閉、設問構成sheetと4方法sheet、診断直後の保存済み50問結果のトップ直接遷移を確認し、console error／warningは0件だった。2026-07-31に履歴から開いた結果だけを履歴一覧導線へ分離し、自動テストでヘッダー・最下部の導線と診断直後専用操作の非表示を確認した。
 
@@ -243,6 +243,8 @@ S-003/S-004に複数パレットを表示する。
 - 履歴にパレットIDを保存し、後から同じカードを再生成できる。
 
 香調候補は「ひと息つきたい」「気持ちを切り替えたい」「静かに取り組みたい」の固定順で、各2件、合計6件を同時表示する。通常結果では`ココロアロマ`、副題`～あなたらしさから着想した香り～`の下で、各香調の素材例1〜2件、短い印象、説明を表示する。共有プレビューでは各場面の代表1件、合計3件へ要約し、素材例と短い印象、共通注記`香りをイメージするための素材例です`を表示する。共有テキストには素材例を含めない。
+
+2026-07-31にS-003/S-004へ実装した。色候補は名称・3色見本・標準／代替1／代替2・選択状態を併記し、選択時はResultSnapshotの`selectedPaletteId`だけを更新する。保存失敗時も画面内の選択と結果全体を維持して通知する。ココロアロマは3場面を縦に並べ、各場面の2候補へ香調名、素材例1〜2件、説明を表示する。現在の心理状態や効果を示さず、使用方法を案内しない共通注記を添える。
 
 ## 10. S-005 共有プレビュー
 

@@ -705,6 +705,75 @@ test("T-005 S-002 renders an answer-free live preview with the exact notice when
   );
 });
 
+test("T-005 F-018 selects and persists one of the current title's three result-card colors", () => {
+  let raw = null;
+  const { host } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+
+  const paletteButtons = collectElements(host).filter(({ className }) =>
+    className === "result-palette-option");
+  assert.equal(paletteButtons.length, 3);
+  const alternativeId = paletteButtons[1].attributes.get("data-palette-id");
+  paletteButtons[1].dispatch("click");
+
+  assert.equal(JSON.parse(raw).results[0].selectedPaletteId, alternativeId);
+  const rerendered = collectElements(host).filter(({ className }) =>
+    className === "result-palette-option");
+  assert.equal(
+    rerendered.find(({ attributes }) =>
+      attributes.get("data-palette-id") === alternativeId)
+      .attributes.get("aria-pressed"),
+    "true",
+  );
+  assert.doesNotMatch(collectText(host), /履歴には保存できませんでした/);
+});
+
+test("T-005 F-018 keeps the selected card color in memory when its history update fails", () => {
+  let raw = null;
+  let failPaletteWrite = false;
+  const { host } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) {
+        if (failPaletteWrite) throw new Error("quota");
+        raw = value;
+      },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+
+  const initialPaletteId = JSON.parse(raw).results[0].selectedPaletteId;
+  const paletteButtons = collectElements(host).filter(({ className }) =>
+    className === "result-palette-option");
+  const alternativeId = paletteButtons[2].attributes.get("data-palette-id");
+  failPaletteWrite = true;
+  paletteButtons[2].dispatch("click");
+
+  assert.equal(JSON.parse(raw).results[0].selectedPaletteId, initialPaletteId);
+  assert.match(
+    collectText(host),
+    /色はこの画面に反映しましたが、履歴には保存できませんでした。/,
+  );
+  assert.equal(
+    collectElements(host).find(({ className, attributes }) =>
+      className === "result-palette-option"
+      && attributes.get("data-palette-id") === alternativeId)
+      .attributes.get("aria-pressed"),
+    "true",
+  );
+});
+
 test("T-005 S-002 discarding is cancelled without writes, succeeds to start, and preserves the flow on deletion failure", () => {
   let raw = null;
   let writes = 0;

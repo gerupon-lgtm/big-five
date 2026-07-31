@@ -1,4 +1,5 @@
 import { isStrictIsoTimestamp } from "../domain/iso-timestamp.js";
+import { selectResultPalette } from "../domain/result-palette-selection.js";
 import { validateResultSnapshot } from "../domain/result-snapshot.js";
 import {
   RESPONSE_ERROR,
@@ -148,6 +149,75 @@ export function loadResultHistory({ storage, now }) {
     .filter(Boolean)
     .sort(compareHistoryResults);
   return { status: "ok", results: Object.freeze(results) };
+}
+
+/**
+ * Change only the selected palette of one valid result snapshot.
+ * T-005 F-018: unrelated valid, malformed, and future records remain byte-value
+ * equivalent after JSON decoding and are never sanitized by this operation.
+ */
+export function updateResultPaletteSelection({
+  storage,
+  resultId,
+  paletteId,
+  allowedPaletteIds,
+  now,
+}) {
+  const validPaletteIds =
+    Array.isArray(allowedPaletteIds)
+    && Object.keys(allowedPaletteIds).length === 3
+    && allowedPaletteIds.length === 3
+    && allowedPaletteIds.every((id) => typeof id === "string" && id.length > 0)
+    && new Set(allowedPaletteIds).size === 3;
+  if (
+    typeof resultId !== "string"
+    || !UUID_PATTERN.test(resultId)
+    || typeof paletteId !== "string"
+    || !validPaletteIds
+    || !allowedPaletteIds.includes(paletteId)
+    || !isStrictIsoTimestamp(now)
+  ) {
+    return { status: "error", code: STORAGE_ERROR.SAVE_FAILED };
+  }
+
+  const read = readEnvelope(storage, now);
+  if (read.status === "error") return read;
+  const matches = read.envelope.results
+    .map((result, index) => ({ index, snapshot: canonicalResultOrNull(result) }))
+    .filter(({ snapshot }) => snapshot?.resultId === resultId);
+  if (matches.length !== 1) {
+    return { status: "error", code: STORAGE_ERROR.SAVE_FAILED };
+  }
+
+  let snapshot;
+  try {
+    snapshot = selectResultPalette(
+      matches[0].snapshot,
+      {
+        standard: { paletteId: allowedPaletteIds[0] },
+        alternatives: allowedPaletteIds.slice(1).map((id) => ({ paletteId: id })),
+      },
+      paletteId,
+    );
+  } catch {
+    return { status: "error", code: STORAGE_ERROR.SAVE_FAILED };
+  }
+
+  if (!storage || typeof storage.setItem !== "function") {
+    return { status: "error", code: STORAGE_ERROR.SAVE_FAILED };
+  }
+  const results = [...read.envelope.results];
+  results[matches[0].index] = snapshot;
+  try {
+    storage.setItem(FORMAL_STORAGE_KEY, JSON.stringify({
+      ...read.envelope,
+      updatedAt: now,
+      results,
+    }));
+    return { status: "ok", snapshot };
+  } catch {
+    return { status: "error", code: STORAGE_ERROR.SAVE_FAILED };
+  }
 }
 
 /**

@@ -17,6 +17,7 @@ import {
   saveResultSnapshot,
   saveProgress,
   transitionAndSave,
+  updateResultPaletteSelection,
 } from "../js/infrastructure/progress-storage.js";
 
 const NOW = "2026-07-25T00:00:00.000Z";
@@ -334,6 +335,104 @@ test("T-005 T-006 leaves a future envelope untouched and reports unsafe detail c
     cleanup: { status: "error", code: "STORAGE_DELETE_FAILED" },
   });
   assert.equal(writes, 0);
+});
+
+test("T-005 F-018 updates one result palette without rewriting surrounding records", () => {
+  const untouched = validResult(
+    "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c030",
+    "detail50",
+    "2026-07-24T00:00:00.000Z",
+  );
+  const target = validResult(
+    "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c031",
+    "detail50",
+    "2026-07-25T00:00:00.000Z",
+  );
+  const futureRecord = {
+    futureSchema: 2,
+    resultId: "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c032",
+    payload: { retained: true },
+  };
+  const initialEnvelope = {
+    schemaVersion: 1,
+    updatedAt: NOW,
+    progressByDiagnosis: {
+      "unrelated-diagnosis": { ...progress(), diagnosisId: "unrelated-diagnosis" },
+    },
+    results: [untouched, futureRecord, target],
+  };
+  const storage = memoryStorage(JSON.stringify(initialEnvelope));
+
+  const outcome = updateResultPaletteSelection({
+    storage,
+    resultId: target.resultId,
+    paletteId: "palette-alternative-1",
+    allowedPaletteIds: [
+      "palette-retained",
+      "palette-alternative-1",
+      "palette-alternative-2",
+    ],
+    now: "2026-07-25T00:01:00.000Z",
+  });
+  const persisted = JSON.parse(storage.read());
+
+  assert.equal(outcome.status, "ok");
+  assert.equal(outcome.snapshot.selectedPaletteId, "palette-alternative-1");
+  assert.deepEqual(persisted.results[0], initialEnvelope.results[0]);
+  assert.deepEqual(persisted.results[1], initialEnvelope.results[1]);
+  assert.deepEqual(
+    {
+      ...persisted.results[2],
+      selectedPaletteId: target.selectedPaletteId,
+    },
+    target,
+  );
+  assert.deepEqual(
+    persisted.progressByDiagnosis,
+    initialEnvelope.progressByDiagnosis,
+  );
+  assert.equal(persisted.updatedAt, "2026-07-25T00:01:00.000Z");
+});
+
+test("T-005 F-018 refuses invalid or absent palette targets without writing", () => {
+  const target = validResult(
+    "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c033",
+  );
+  const raw = JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: NOW,
+    progressByDiagnosis: {},
+    results: [target],
+  });
+
+  for (const input of [
+    {
+      resultId: target.resultId,
+      paletteId: "palette-unknown",
+      allowedPaletteIds: [
+        "palette-retained",
+        "palette-alternative-1",
+        "palette-alternative-2",
+      ],
+    },
+    {
+      resultId: "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c034",
+      paletteId: "palette-alternative-1",
+      allowedPaletteIds: [
+        "palette-retained",
+        "palette-alternative-1",
+        "palette-alternative-2",
+      ],
+    },
+  ]) {
+    const storage = memoryStorage(raw);
+    assert.equal(updateResultPaletteSelection({
+      storage,
+      now: "2026-07-25T00:01:00.000Z",
+      ...input,
+    }).status, "error");
+    assert.equal(storage.read(), raw);
+  }
 });
 
 test("T-005 T-006 reports both initial detail write and safe cleanup write failures", () => {
