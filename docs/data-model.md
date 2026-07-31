@@ -199,7 +199,7 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 | baseColors | object | ○ | primary/secondary/accentの大文字6桁HEX |
 | description | string | ○ | 象徴的な提案である説明 |
 
-用途色への展開、コントラスト、猫用の明暗二重縁取り、影、ニュートラル背景プレートは版付き`PaletteUsageMappingDefinition`で扱う。同系色の猫を理由にPaletteDefinitionを無効化せず、猫の再配色や候補パレットの除外を行わない。
+用途色への展開、コントラスト、猫用の明暗二重縁取り、影、共通円形リース内のニュートラルな円形面は版付き`PaletteUsageMappingDefinition`で扱う。同系色の猫を理由にPaletteDefinitionを無効化せず、猫の再配色や候補パレットの除外を行わない。内部の`neutral-plate`判定値は互換のため維持するが、描画は矩形プレートではなく円形面とする。
 
 ### 2.10 FragranceSuggestion
 
@@ -416,8 +416,8 @@ schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし�
 
 `createShareCardModel`は検証済みResultSnapshot、選択済みパレット、猫manifest entry、固定3場面の共有代表を受け取り、1080×1800のPNG描画と共有テキストに必要な値だけを持つdeep-freeze済みモデルを返す。
 
-- カード画像はブランド、称号、猫、固定順5因子、20問／50問のモード、版、注意書き、`ココロアロマ`の代表3件を持つ。
-- 各アロマは場面名、香調名、`materialNames`、短い印象を持ち、画像では3件を縦に描画する。
+- カード画像は中央ブランド、称号ラベルと称号、共通円形リース、透過猫、固定順5因子、`ココロアロマ`の見出しと副題、20問／50問のモード、アプリ版、注意書き、透過素材画付き代表3件を持つ。ブランドの画面用`iconPath`とカード用高解像度`cardIconPath`を分離し、共有モデルは後者を描画へ渡す。詳細な称号理由と内部版IDは画像へ表示しない。
+- 各アロマは場面名、香調名、`materialNames`、短い印象を持ち、画像では透過素材画とともに3件を縦に描画する。
 - 共有テキストは同じモデルから生成するが、香りの素材名と`titleReflection`を含めない。
 - `resultId`、生回答、端末情報、公開結果URL、未知フィールドをモデルへ投影しない。
 - 共有物は保存しない。ResultSnapshotだけを永続的な再生成元とし、PNG BlobとObject URLは共有画面の生存期間に限って保持・解放する。

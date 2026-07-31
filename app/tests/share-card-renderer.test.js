@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import {
+  PaletteDefinitions,
+  PaletteUsageMappingDefinitions,
+} from "../js/data/presentation-definitions.js";
+import {
+  contrastRatio,
+  resolvePaletteUsage,
+} from "../js/domain/palette-usage.js";
 import { renderShareCard } from "../js/presentation/share-card-renderer.js";
 
 function makeModel({
@@ -11,6 +19,7 @@ function makeModel({
   height: 1024,
   },
   titleReason = "五つの因子を見渡した結果です。",
+  factorScores = [75, 60, 50, 40, 25],
 } = {}) {
   return Object.freeze({
     width: 1080,
@@ -21,17 +30,18 @@ function makeModel({
       name: "ココロパレア",
       cardSubtitle: "～Big Five 自己理解支援ツール～",
       iconPath: "./assets/brand/kokoro-parea-mark.svg",
+      cardIconPath: "./assets/brand/kokoro-parea-icon-512.png",
     }),
     modeLabel: "50問 詳細結果",
     titleLabel: "五つの風を見渡す観測者",
     titleReason,
     character,
     factors: Object.freeze([
-      ["intellectImagination", "知性・想像力", 75],
-      ["conscientiousness", "勤勉性", 60],
-      ["extraversion", "外向性", 50],
-      ["agreeableness", "協調性", 40],
-      ["emotionalStability", "情緒安定性", 25],
+      ["intellectImagination", "知性・想像力", factorScores[0]],
+      ["conscientiousness", "勤勉性", factorScores[1]],
+      ["extraversion", "外向性", factorScores[2]],
+      ["agreeableness", "協調性", factorScores[3]],
+      ["emotionalStability", "情緒安定性", factorScores[4]],
     ].map(([factorId, label, displayScore]) =>
       Object.freeze({ factorId, label, displayScore }))),
     fragrances: Object.freeze([
@@ -92,11 +102,12 @@ function recordingDependencies({
       lineTo: (x, y) => operations.push(["lineTo", kind, x, y]),
       bezierCurveTo: (...args) => operations.push(["bezierCurveTo", kind, ...args]),
       arc: (...args) => operations.push(["arc", kind, ...args]),
-      fill: () => operations.push(["fill", kind]),
+      fill: () => operations.push(["fill", kind, context.fillStyle]),
       stroke: () => operations.push(["stroke", kind]),
       fillRect: (...args) => operations.push(["fillRect", kind, ...args]),
       strokeRect: (...args) => operations.push(["strokeRect", kind, ...args]),
-      fillText: (text, x, y) => operations.push(["fillText", kind, text, x, y]),
+      fillText: (text, x, y) =>
+        operations.push(["fillText", kind, text, x, y, context.fillStyle]),
       measureText: (text) => ({ width: text.length * 24 }),
       clearRect: (...args) => operations.push(["clearRect", kind, ...args]),
       drawImage: (...args) => operations.push([
@@ -152,22 +163,28 @@ test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and
   const texts = operations
     .filter(([operation, kind]) => operation === "fillText" && kind === "main")
     .map(([, , text]) => text);
-  assert.ok(texts.indexOf("ココロパレア") < texts.indexOf("五つの風を見渡す観測者"));
+  assert.ok(texts.indexOf("ココロパレア") < texts.indexOf("あなたの称号"));
+  assert.ok(texts.indexOf("あなたの称号") < texts.indexOf("五つの風を見渡す観測者"));
   assert.ok(texts.indexOf("五つの風を見渡す観測者") < texts.indexOf("知性・想像力"));
-  assert.ok(texts.indexOf("情緒安定性") < texts.indexOf("ひと息つきたい"));
+  assert.ok(texts.indexOf("情緒安定性") < texts.indexOf("ココロアロマ"));
+  assert.ok(texts.indexOf("ココロアロマ") < texts.indexOf("～あなたらしさから着想した香り～"));
+  assert.ok(texts.indexOf("～あなたらしさから着想した香り～") < texts.indexOf("ひと息つきたい"));
   assert.ok(texts.indexOf("ひと息つきたい") < texts.indexOf("ローマンカモミール"));
   assert.ok(texts.indexOf("ローマンカモミール") < texts.indexOf("気持ちを切り替えたい"));
   assert.ok(texts.indexOf("気持ちを切り替えたい") < texts.indexOf("グレープフルーツ・ジンジャー"));
   assert.ok(texts.indexOf("グレープフルーツ・ジンジャー") < texts.indexOf("静かに取り組みたい"));
   assert.ok(texts.indexOf("静かに取り組みたい") < texts.indexOf("ヒノキ・フランキンセンス"));
+  assert.ok(texts.indexOf("ヒノキ・フランキンセンス") <
+    texts.indexOf("香りをイメージするための素材例です"));
   assert.ok(texts.indexOf("静かに取り組みたい") < texts.indexOf("50問 詳細結果"));
   assert.ok(texts.includes("～Big Five 自己理解支援ツール～"));
+  assert.ok(texts.includes("香りをイメージするための素材例です"));
   assert.ok(texts.includes("これは性格の優劣や心理学上の正式なタイプを示すものではありません。"));
-  assert.ok(texts.some((text) =>
-    text.includes("mvp-0.1.0") &&
-    text.includes("card-template-v1") &&
-    text.includes("presentation-v2") &&
-    text.includes("result-text-v2")));
+  assert.ok(texts.includes("mvp-0.1.0"));
+  assert.equal(texts.some((text) =>
+    text.includes("card-template-v1") ||
+    text.includes("presentation-v2") ||
+    text.includes("result-text-v2")), false);
   assert.equal(texts.filter((text) => Object.values({
     intellectImagination: "知性・想像力",
     conscientiousness: "勤勉性",
@@ -182,7 +199,22 @@ test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
     operation[2].endsWith(".webp"));
-  assert.deepEqual(finalCatDraw.slice(3), [280, 420, 520, 520]);
+  assert.deepEqual(finalCatDraw.slice(3), [225, 330, 630, 630]);
+  assert.equal(operations.some((operation) =>
+    operation[0] === "loadImage" &&
+    operation[1] === "./assets/brand/kokoro-parea-icon-512.png"), true);
+  assert.equal(operations.some((operation) =>
+    operation[0] === "loadImage" &&
+    operation[1] === "./assets/brand/kokoro-parea-mark.svg"), false);
+  const aromaDraws = operations.filter((operation) =>
+    operation[0] === "drawImage" &&
+    operation[1] === "main" &&
+    operation[2].startsWith("./assets/share-card/aroma-"));
+  assert.deepEqual(aromaDraws.map((operation) => operation[2]), [
+    "./assets/share-card/aroma-pause-v1.png",
+    "./assets/share-card/aroma-reset-v1.png",
+    "./assets/share-card/aroma-quiet-focus-v1.png",
+  ]);
   assert.ok(operations.some((operation) =>
     operation[0] === "toBlob" && operation[1] === "image/png"));
 });
@@ -202,7 +234,58 @@ test("T-007 F-015 preserves a text-complete card when the cat fails", async () =
     operation[2] === "五つの風を見渡す観測者"));
 });
 
-test("T-007 F-011 wraps a long title reason inside the card width", async () => {
+test("T-007 F-011 keeps zero scores visually empty and uses readable text colors", async () => {
+  const { dependencies, operations } = recordingDependencies();
+
+  const result = await renderShareCard(
+    makeModel({ factorScores: [0, 1, 50, 99, 100] }),
+    dependencies,
+  );
+
+  assert.equal(result.status, "ok");
+  const factorFills = operations.filter((operation) =>
+    operation[0] === "fill" &&
+    operation[1] === "main" &&
+    ["#EF6471", "#54A8D8", "#F2AA22", "#8AAF50", "#9475C4"]
+      .includes(operation[2]));
+  assert.equal(factorFills.length, 4);
+  assert.equal(factorFills.some((operation) => operation[2] === "#EF6471"), false);
+
+  const scoreColors = operations
+    .filter((operation) =>
+      operation[0] === "fillText" &&
+      operation[1] === "main" &&
+      ["0", "1", "50", "99", "100"].includes(operation[2]))
+    .map((operation) => operation[5]);
+  assert.deepEqual(scoreColors, [
+    "#9B2837",
+    "#1C648F",
+    "#8A5200",
+    "#466522",
+    "#5B4086",
+  ]);
+  const accordColors = operations
+    .filter((operation) =>
+      operation[0] === "fillText" &&
+      operation[1] === "main" &&
+      operation[2].endsWith("の香調"))
+    .map((operation) => operation[5]);
+  assert.deepEqual(accordColors, ["#48632A", "#8A4D00", "#5B4674"]);
+
+  for (const palette of PaletteDefinitions) {
+    const mapping = PaletteUsageMappingDefinitions.find((candidate) =>
+      candidate.paletteId === palette.paletteId);
+    const usage = resolvePaletteUsage(palette, mapping);
+    for (const color of scoreColors) {
+      assert.ok(contrastRatio(color, usage.background) >= 4.5);
+    }
+    for (const color of accordColors) {
+      assert.ok(contrastRatio(color, usage.surface) >= 4.5);
+    }
+  }
+});
+
+test("T-007 F-011 keeps the detailed title reason out of the approved compact card", async () => {
   const titleReason = "今回の回答では、".repeat(10);
   const { dependencies, operations } = recordingDependencies();
 
@@ -212,14 +295,15 @@ test("T-007 F-011 wraps a long title reason inside the card width", async () => 
   const reasonLines = operations.filter((operation) =>
     operation[0] === "fillText" &&
     operation[1] === "main" &&
-    operation[3] === 540 &&
-    [338, 364, 390].includes(operation[4]));
-  assert.equal(reasonLines.length, 3);
-  assert.equal(reasonLines.map((operation) => operation[2]).join(""), titleReason);
-  assert.equal(reasonLines.some((operation) => operation[2] === titleReason), false);
+    operation[2].includes("今回の回答では、"));
+  assert.equal(reasonLines.length, 0);
+  assert.equal(operations.some((operation) =>
+    operation[0] === "fillText" &&
+    operation[1] === "main" &&
+    operation[2] === "五つの風を見渡す観測者"), true);
 });
 
-test("T-007 F-016 falls back to a neutral plate when cat pixels cannot be read", async () => {
+test("T-007 F-016 falls back to a circular neutral wash without a rectangular cat plate", async () => {
   const { dependencies, operations } = recordingDependencies({ throwImageData: true });
 
   const result = await renderShareCard(makeModel(), dependencies);
@@ -229,12 +313,18 @@ test("T-007 F-016 falls back to a neutral plate when cat pixels cannot be read",
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
     operation[2].endsWith(".webp"));
-  const plateIndex = operations.findIndex((operation) =>
+  const legacyPlateIndex = operations.findIndex((operation) =>
     operation[0] === "fillRect" &&
     operation[1] === "main" &&
     operation[2] === 244 &&
     operation[3] === 396);
-  assert.ok(plateIndex >= 0 && plateIndex < catIndex);
+  const circularWashIndex = operations.findIndex((operation) =>
+    operation[0] === "arc" &&
+    operation[1] === "main" &&
+    operation[2] === 540 &&
+    operation[3] === 650);
+  assert.equal(legacyPlateIndex, -1);
+  assert.ok(circularWashIndex >= 0 && circularWashIndex < catIndex);
 });
 
 test("T-007 F-015 returns stable renderer errors", async () => {

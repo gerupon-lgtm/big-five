@@ -24,6 +24,7 @@ test("AppMeta is the canonical mvp-0.1.0 normal-build metadata", () => {
     cardSubtitle: "～Big Five 自己理解支援ツール～",
     publicOrigin: "https://kokoroparea.gerupon.uk",
     iconPath: "./assets/brand/kokoro-parea-mark.svg",
+    cardIconPath: "./assets/brand/kokoro-parea-icon-512.png",
   });
   assert.equal(Object.isFrozen(appMeta.brand), true);
 });

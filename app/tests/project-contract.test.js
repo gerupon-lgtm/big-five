@@ -333,12 +333,15 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     "1080×1800",
     "3:5",
     "320×480",
+    "共通円形リース",
+    "最終視覚承認まで完了",
   ], documentPaths.requirements);
   assertIncludesAll(dataModel, [
     "createShareCardModel",
     "1080×1800",
     "titleReflection",
     "共有物は保存しない",
+    "透過素材画付き代表3件",
   ], documentPaths.dataModel);
   assertIncludesAll(screens, [
     "#/share?resultId=<UUID>",
@@ -347,6 +350,7 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     "details",
     "zoom",
     "320×480",
+    "完成カードをSVGからラスタライズしない",
   ], documentPaths.screens);
   assertIncludesAll(processing, [
     "createShareCardModel",
@@ -355,16 +359,18 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     "SHARE_CANVAS_UNAVAILABLE",
     "SHARE_FONT_UNAVAILABLE",
     "SHARE_PNG_UNAVAILABLE",
+    "プレビューとダウンロードは同じ1080×1800 PNG Blob",
   ], documentPaths.processing);
   assertIncludesAll(tasks, [
-    "状態: 実装完了・視覚承認待ち",
+    "状態: DONE",
     "#/share?resultId=<UUID>",
     "1080×1800",
+    "ユーザーの最終視覚承認を得た",
   ], documentPaths.tasks);
   assertIncludesAll(basicDesign, [
-    "要件定義 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.26",
+    "要件定義 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.27",
     "1080×1800",
-    "実装完了・視覚承認待ち",
+    "完成カードをSVGからラスタライズしない",
   ], documentPaths.basicDesign);
   for (const [document, name] of [
     [requirements, documentPaths.requirements],
@@ -374,7 +380,7 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     assert.doesNotMatch(document, /共有画像の寸法、形式、トリミング、文字量\s*\|\s*ユーザー\s*\|\s*共有画面実装前/);
     assert.doesNotMatch(document, /正式共有Canvasとproduction release CSVは未完了/);
     assert.doesNotMatch(document, /共有画像の最終仕様\s*\|\s*寸法・文字量未決/);
-    assert.ok(document.includes("視覚承認待ち"), `${name} missing visual approval status`);
+    assert.doesNotMatch(document, /視覚承認待ち/, `${name} retains stale visual approval status`);
   }
   for (const document of [requirements, screens, basicDesign, tasks]) {
     assert.doesNotMatch(

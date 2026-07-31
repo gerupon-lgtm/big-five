@@ -53,6 +53,7 @@ const BRAND_FIELDS = Object.freeze([
   "cardSubtitle",
   "publicOrigin",
   "iconPath",
+  "cardIconPath",
 ]);
 const HEX_COLOR_PATTERN = /^#[0-9A-F]{6}$/;
 const CARD_SUBTITLE = "～Big Five 自己理解支援ツール～";
@@ -172,13 +173,15 @@ function projectBrand(brand) {
   if (!hasExactFields(brand, BRAND_FIELDS) ||
     brand.name !== "ココロパレア" ||
     brand.cardSubtitle !== CARD_SUBTITLE ||
-    !isNonEmptyString(brand.iconPath)) {
+    !isNonEmptyString(brand.iconPath) ||
+    !isNonEmptyString(brand.cardIconPath)) {
     invalidModel();
   }
   return {
     name: brand.name,
     cardSubtitle: brand.cardSubtitle,
     iconPath: brand.iconPath,
+    cardIconPath: brand.cardIconPath,
   };
 }
 

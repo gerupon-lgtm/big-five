@@ -63,6 +63,7 @@ const BRAND = Object.freeze({
   cardSubtitle: "～Big Five 自己理解支援ツール～",
   publicOrigin: "https://kokoroparea.gerupon.uk",
   iconPath: "./assets/brand/kokoro-parea-mark.svg",
+  cardIconPath: "./assets/brand/kokoro-parea-icon-512.png",
 });
 
 const CHARACTER_ENTRY = Object.freeze({
@@ -117,6 +118,7 @@ test("T-007 F-011 creates the exact immutable 1080 by 1800 detail card model", (
     name: "ココロパレア",
     cardSubtitle: "～Big Five 自己理解支援ツール～",
     iconPath: "./assets/brand/kokoro-parea-mark.svg",
+    cardIconPath: "./assets/brand/kokoro-parea-icon-512.png",
   });
   assert.equal(model.modeLabel, "50問 詳細結果");
   assert.equal(model.titleLabel, "五つの風を見渡す観測者");

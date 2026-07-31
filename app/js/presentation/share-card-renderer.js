@@ -4,102 +4,250 @@ import {
 } from "../domain/share-card-visibility.js";
 
 const FACTOR_COLORS = Object.freeze([
-  "#E98596",
-  "#72AED0",
-  "#F1B640",
-  "#93B978",
-  "#A68BC4",
+  "#EF6471",
+  "#54A8D8",
+  "#F2AA22",
+  "#8AAF50",
+  "#9475C4",
 ]);
+const FACTOR_TEXT_COLORS = Object.freeze([
+  "#9B2837",
+  "#1C648F",
+  "#8A5200",
+  "#466522",
+  "#5B4086",
+]);
+const AROMA_COLORS = Object.freeze(["#7FA650", "#EB9B2D", "#9980B9"]);
+const AROMA_TEXT_COLORS = Object.freeze(["#48632A", "#8A4D00", "#5B4674"]);
+const AROMA_ASSET_PATHS = Object.freeze({
+  pause: "./assets/share-card/aroma-pause-v1.png",
+  reset: "./assets/share-card/aroma-reset-v1.png",
+  "quiet-focus": "./assets/share-card/aroma-quiet-focus-v1.png",
+});
+const AROMA_SUBTITLE = "～あなたらしさから着想した香り～";
+const AROMA_NOTE = "香りをイメージするための素材例です";
 
 function errorResult(errorCode) {
   return Object.freeze({ status: "error", errorCode });
 }
 
-function setFont(context, size, weight = 400) {
+function setSansFont(context, size, weight = 400) {
   context.font = `${weight} ${size}px "Noto Sans JP", "Yu Gothic", sans-serif`;
 }
 
-function drawCenteredWrappedText(
-  context,
-  text,
-  centerX,
-  startY,
-  maxWidth,
-  lineHeight,
-  maxLines,
-) {
-  const remaining = [...text];
-  const lines = [];
-  while (remaining.length > 0 && lines.length < maxLines) {
-    let line = "";
-    while (remaining.length > 0) {
-      const candidate = `${line}${remaining[0]}`;
-      if (line && context.measureText(candidate).width > maxWidth) break;
-      line = candidate;
-      remaining.shift();
-    }
-    lines.push(line);
-  }
-  if (remaining.length > 0) {
-    const lastIndex = lines.length - 1;
-    let lastLine = lines[lastIndex];
-    while (
-      lastLine.length > 0 &&
-      context.measureText(`${lastLine}…`).width > maxWidth
-    ) {
-      lastLine = [...lastLine].slice(0, -1).join("");
-    }
-    lines[lastIndex] = `${lastLine}…`;
-  }
-  lines.forEach((line, index) => {
-    context.fillText(line, centerX, startY + index * lineHeight);
-  });
+function setSerifFont(context, size, weight = 500) {
+  context.font = `${weight} ${size}px "Noto Serif JP", "Yu Mincho", serif`;
 }
 
-function drawBotanicalMotif(context, x, y, color, direction = 1) {
-  context.save();
-  context.strokeStyle = color;
-  context.fillStyle = color;
-  context.globalAlpha = 0.22;
-  context.lineWidth = 5;
+function roundedRectPath(context, x, y, width, height, radius) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  const handle = safeRadius * 0.5522847498;
   context.beginPath();
-  context.moveTo(x, y);
+  context.moveTo(x + safeRadius, y);
+  context.lineTo(x + width - safeRadius, y);
   context.bezierCurveTo(
-    x + 30 * direction, y - 42,
-    x + 45 * direction, y - 92,
-    x + 70 * direction, y - 132,
+    x + width - safeRadius + handle,
+    y,
+    x + width,
+    y + safeRadius - handle,
+    x + width,
+    y + safeRadius,
   );
+  context.lineTo(x + width, y + height - safeRadius);
+  context.bezierCurveTo(
+    x + width,
+    y + height - safeRadius + handle,
+    x + width - safeRadius + handle,
+    y + height,
+    x + width - safeRadius,
+    y + height,
+  );
+  context.lineTo(x + safeRadius, y + height);
+  context.bezierCurveTo(
+    x + safeRadius - handle,
+    y + height,
+    x,
+    y + height - safeRadius + handle,
+    x,
+    y + height - safeRadius,
+  );
+  context.lineTo(x, y + safeRadius);
+  context.bezierCurveTo(
+    x,
+    y + safeRadius - handle,
+    x + safeRadius - handle,
+    y,
+    x + safeRadius,
+    y,
+  );
+  context.closePath();
+}
+
+function fillRoundedRect(context, x, y, width, height, radius) {
+  roundedRectPath(context, x, y, width, height, radius);
+  context.fill();
+}
+
+function strokeRoundedRect(context, x, y, width, height, radius) {
+  roundedRectPath(context, x, y, width, height, radius);
   context.stroke();
-  for (let index = 0; index < 4; index += 1) {
-    context.beginPath();
-    context.arc(
-      x + (18 + index * 15) * direction,
-      y - 28 - index * 27,
-      10 + index,
-      0,
-      Math.PI * 2,
-    );
-    context.fill();
-  }
-  context.restore();
 }
 
 function drawPaperTexture(context, color) {
   context.save();
   context.fillStyle = color;
-  context.globalAlpha = 0.05;
-  for (let y = 38; y < 1800; y += 92) {
-    for (let x = 34 + (y % 184); x < 1080; x += 184) {
+  context.globalAlpha = 0.035;
+  for (let y = 42; y < 1800; y += 104) {
+    for (let x = 38 + (y % 208); x < 1080; x += 208) {
       context.beginPath();
-      context.arc(x, y, 3, 0, Math.PI * 2);
+      context.arc(x, y, 2.2, 0, Math.PI * 2);
       context.fill();
     }
   }
   context.restore();
 }
 
+function drawLeaf(context, x, y, length, angle, color, alpha = 0.58) {
+  const directionX = Math.cos(angle);
+  const directionY = Math.sin(angle);
+  const normalX = -directionY;
+  const normalY = directionX;
+  const tipX = x + directionX * length;
+  const tipY = y + directionY * length;
+  const halfWidth = length * 0.28;
+
+  context.save();
+  context.fillStyle = color;
+  context.globalAlpha = alpha;
+  context.beginPath();
+  context.moveTo(x, y);
+  context.bezierCurveTo(
+    x + directionX * length * 0.28 + normalX * halfWidth,
+    y + directionY * length * 0.28 + normalY * halfWidth,
+    tipX - directionX * length * 0.28 + normalX * halfWidth * 0.35,
+    tipY - directionY * length * 0.28 + normalY * halfWidth * 0.35,
+    tipX,
+    tipY,
+  );
+  context.bezierCurveTo(
+    tipX - directionX * length * 0.28 - normalX * halfWidth * 0.35,
+    tipY - directionY * length * 0.28 - normalY * halfWidth * 0.35,
+    x + directionX * length * 0.28 - normalX * halfWidth,
+    y + directionY * length * 0.28 - normalY * halfWidth,
+    x,
+    y,
+  );
+  context.fill();
+  context.restore();
+}
+
+function drawSprig(
+  context,
+  x,
+  y,
+  length,
+  angle,
+  color,
+  direction = 1,
+  alpha = 0.56,
+) {
+  const directionX = Math.cos(angle);
+  const directionY = Math.sin(angle);
+  const endX = x + directionX * length;
+  const endY = y + directionY * length;
+
+  context.save();
+  context.strokeStyle = color;
+  context.globalAlpha = alpha;
+  context.lineWidth = 2.5;
+  context.beginPath();
+  context.moveTo(x, y);
+  context.bezierCurveTo(
+    x + directionX * length * 0.34,
+    y + directionY * length * 0.34 - 8 * direction,
+    x + directionX * length * 0.7,
+    y + directionY * length * 0.7 + 6 * direction,
+    endX,
+    endY,
+  );
+  context.stroke();
+  context.restore();
+
+  [0.24, 0.43, 0.62, 0.79].forEach((progress, index) => {
+    const leafX = x + directionX * length * progress;
+    const leafY = y + directionY * length * progress;
+    const side = index % 2 === 0 ? direction : -direction;
+    drawLeaf(
+      context,
+      leafX,
+      leafY,
+      24 - index * 1.5,
+      angle + side * 0.95,
+      color,
+      alpha,
+    );
+  });
+}
+
+function drawDot(context, x, y, radius, color, alpha = 0.8) {
+  context.save();
+  context.fillStyle = color;
+  context.globalAlpha = alpha;
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+}
+
+function drawHeaderDecoration(context, model) {
+  context.save();
+  context.strokeStyle = model.palette.chart;
+  context.globalAlpha = 0.52;
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(300, 154);
+  context.lineTo(488, 154);
+  context.moveTo(592, 154);
+  context.lineTo(780, 154);
+  context.stroke();
+  context.restore();
+  drawSprig(context, 285, 153, 84, Math.PI + 0.12, model.palette.chart, 1, 0.55);
+  drawSprig(context, 795, 153, 84, -0.12, model.palette.chart, -1, 0.55);
+  drawDot(context, 275, 144, 4, "#EB8A3A");
+  drawDot(context, 805, 144, 4, "#EB8A3A");
+  drawDot(context, 540, 154, 5, model.palette.accent, 0.72);
+}
+
+function drawWreath(context, model) {
+  context.save();
+  context.strokeStyle = model.palette.chart;
+  context.globalAlpha = 0.16;
+  context.lineWidth = 4;
+  context.beginPath();
+  context.arc(540, 650, 270, 0, Math.PI * 2);
+  context.stroke();
+  context.restore();
+
+  drawSprig(context, 322, 777, 128, -2.18, model.palette.chart, 1, 0.48);
+  drawSprig(context, 300, 610, 92, -1.72, model.palette.chart, -1, 0.45);
+  drawSprig(context, 758, 790, 132, -0.95, model.palette.accent, -1, 0.47);
+  drawSprig(context, 785, 610, 94, -1.42, model.palette.accent, 1, 0.44);
+  drawDot(context, 308, 718, 4, "#EB8A3A", 0.75);
+  drawDot(context, 772, 713, 4, "#EB8A3A", 0.75);
+}
+
+function drawCharacterBackdrop(context, model, treatment) {
+  context.save();
+  context.fillStyle = model.palette.surface;
+  context.globalAlpha = treatment === "neutral-plate" ? 0.82 : 0.38;
+  context.beginPath();
+  context.arc(540, 650, 244, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+}
+
 function drawContainedImage(context, image, character, treatment) {
-  const box = { x: 280, y: 420, width: 520, height: 520 };
+  const box = { x: 225, y: 330, width: 630, height: 630 };
   const ratio = Math.min(
     box.width / character.width,
     box.height / character.height,
@@ -109,28 +257,22 @@ function drawContainedImage(context, image, character, treatment) {
   const x = box.x + (box.width - width) / 2;
   const y = box.y + (box.height - height) / 2;
 
-  if (treatment === "neutral-plate") {
+  if (treatment === "shadow" || treatment === "neutral-plate") {
     context.save();
-    context.fillStyle = "#FFFDF7";
-    context.globalAlpha = 0.94;
-    context.fillRect(244, 396, 592, 568);
-    context.restore();
-  } else if (treatment === "shadow") {
-    context.save();
-    context.shadowColor = "rgba(35, 38, 42, 0.42)";
-    context.shadowBlur = 18;
-    context.shadowOffsetY = 8;
+    context.shadowColor = "rgba(54, 45, 36, 0.28)";
+    context.shadowBlur = treatment === "neutral-plate" ? 14 : 18;
+    context.shadowOffsetY = 7;
     context.drawImage(image, x, y, width, height);
     context.restore();
   } else if (treatment === "double-outline") {
     context.save();
-    context.shadowColor = "rgba(255, 255, 255, 0.95)";
-    context.shadowBlur = 18;
+    context.shadowColor = "rgba(255, 255, 255, 0.96)";
+    context.shadowBlur = 16;
     context.drawImage(image, x, y, width, height);
     context.restore();
     context.save();
-    context.shadowColor = "rgba(36, 40, 44, 0.75)";
-    context.shadowBlur = 8;
+    context.shadowColor = "rgba(54, 45, 36, 0.52)";
+    context.shadowBlur = 7;
     context.drawImage(image, x, y, width, height);
     context.restore();
   }
@@ -163,29 +305,225 @@ function analyzeCharacter(image, character, dependencies) {
   }
 }
 
-function drawCard(context, model, assets, dependencies) {
+function drawImageContain(context, image, x, y, width, height) {
+  const sourceWidth = image.naturalWidth || image.width || width;
+  const sourceHeight = image.naturalHeight || image.height || height;
+  const ratio = Math.min(width / sourceWidth, height / sourceHeight);
+  const drawWidth = sourceWidth * ratio;
+  const drawHeight = sourceHeight * ratio;
+  context.drawImage(
+    image,
+    x + (width - drawWidth) / 2,
+    y + (height - drawHeight) / 2,
+    drawWidth,
+    drawHeight,
+  );
+}
+
+function drawFitText(
+  context,
+  text,
+  x,
+  y,
+  maxWidth,
+  initialSize,
+  minimumSize,
+  weight = 400,
+  family = "sans",
+) {
+  let size = initialSize;
+  const applyFont = family === "serif" ? setSerifFont : setSansFont;
+  applyFont(context, size, weight);
+  while (size > minimumSize && context.measureText(text).width > maxWidth) {
+    size -= 1;
+    applyFont(context, size, weight);
+  }
+  context.fillText(text, x, y);
+}
+
+function drawFrame(context, model) {
+  context.save();
+  context.strokeStyle = model.palette.text;
+  context.globalAlpha = 0.22;
+  context.lineWidth = 3;
+  strokeRoundedRect(context, 18, 18, 1044, 1764, 46);
+  context.globalAlpha = 0.12;
+  context.lineWidth = 2;
+  strokeRoundedRect(context, 28, 28, 1024, 1744, 38);
+  context.restore();
+}
+
+function drawBrand(context, model, icon) {
+  if (icon) drawImageContain(context, icon, 292, 50, 94, 94);
+  context.fillStyle = model.palette.text;
+  context.textAlign = "left";
+  setSansFont(context, 48, 600);
+  context.fillText(model.brand.name, 408, 100);
+  setSansFont(context, 23, 400);
+  context.fillText(model.brand.cardSubtitle, 408, 137);
+  drawHeaderDecoration(context, model);
+}
+
+function drawTitle(context, model) {
+  context.textAlign = "center";
+  context.fillStyle = model.palette.surface;
+  context.globalAlpha = 0.9;
+  fillRoundedRect(context, 368, 178, 344, 52, 26);
+  context.globalAlpha = 1;
+  context.fillStyle = model.palette.text;
+  setSerifFont(context, 27, 500);
+  context.fillText("あなたの称号", 540, 214);
+  drawFitText(
+    context,
+    model.titleLabel,
+    540,
+    292,
+    890,
+    52,
+    38,
+    600,
+    "serif",
+  );
+}
+
+function drawFactors(context, model) {
+  model.factors.forEach((factor, index) => {
+    const y = 965 + index * 45;
+    context.textAlign = "left";
+    context.fillStyle = model.palette.text;
+    setSansFont(context, 25, 600);
+    context.fillText(factor.label, 138, y + 25);
+
+    context.fillStyle = model.palette.surface;
+    context.globalAlpha = 0.78;
+    fillRoundedRect(context, 350, y + 3, 520, 23, 12);
+    context.globalAlpha = 1;
+    if (factor.displayScore > 0) {
+      context.fillStyle = FACTOR_COLORS[index];
+      fillRoundedRect(
+        context,
+        350,
+        y + 3,
+        520 * factor.displayScore / 100,
+        23,
+        12,
+      );
+    }
+
+    context.textAlign = "right";
+    context.fillStyle = FACTOR_TEXT_COLORS[index];
+    setSerifFont(context, 29, 600);
+    context.fillText(String(factor.displayScore), 936, y + 26);
+  });
+}
+
+function drawAromaHeading(context, model) {
+  context.textAlign = "center";
+  context.fillStyle = model.palette.text;
+  setSansFont(context, 38, 700);
+  context.fillText("ココロアロマ", 540, 1217);
+  drawSprig(context, 330, 1207, 70, Math.PI + 0.08, "#739A58", 1, 0.56);
+  drawSprig(context, 750, 1207, 70, -0.08, "#739A58", -1, 0.56);
+  drawDot(context, 317, 1200, 4, "#EB8A3A");
+  drawDot(context, 763, 1200, 4, "#EB8A3A");
+  setSansFont(context, 20, 400);
+  context.fillText(AROMA_SUBTITLE, 540, 1255);
+}
+
+function drawAromaRow(context, fragrance, index, image, model) {
+  const y = 1270 + index * 122;
+  context.save();
+  context.fillStyle = model.palette.surface;
+  context.globalAlpha = 0.74;
+  fillRoundedRect(context, 90, y, 900, 108, 24);
+  context.restore();
+  context.save();
+  context.strokeStyle = AROMA_COLORS[index];
+  context.globalAlpha = 0.8;
+  context.lineWidth = 2;
+  strokeRoundedRect(context, 90, y, 900, 108, 24);
+  context.restore();
+
+  if (image) drawImageContain(context, image, 105, y + 8, 148, 92);
+
+  context.textAlign = "left";
+  context.fillStyle = model.palette.text;
+  setSansFont(context, 18, 500);
+  context.fillText(fragrance.sceneLabel, 270, y + 32);
+  drawFitText(
+    context,
+    fragrance.materialNames.join("・"),
+    270,
+    y + 70,
+    410,
+    27,
+    20,
+    700,
+  );
+
+  context.textAlign = "right";
+  context.fillStyle = AROMA_TEXT_COLORS[index];
+  drawFitText(
+    context,
+    fragrance.accordLabel,
+    958,
+    y + 71,
+    275,
+    18,
+    14,
+    600,
+  );
+
+  context.save();
+  context.strokeStyle = AROMA_COLORS[index];
+  context.globalAlpha = 0.28;
+  context.lineWidth = 1.5;
+  context.beginPath();
+  context.moveTo(270, y + 89);
+  context.lineTo(958, y + 89);
+  context.stroke();
+  context.restore();
+}
+
+function drawFooter(context, model) {
+  context.textAlign = "center";
+  context.fillStyle = model.palette.text;
+  setSansFont(context, 17, 400);
+  context.fillText(AROMA_NOTE, 540, 1645);
+
+  const disclaimerLines = model.disclaimer.split("\n");
+  setSansFont(context, 17, 400);
+  const disclaimerStartY = disclaimerLines.length > 1 ? 1668 : 1677;
+  disclaimerLines.forEach((line, index) => {
+    context.fillText(line, 540, disclaimerStartY + index * 24);
+  });
+
+  context.fillStyle = model.palette.surface;
+  context.globalAlpha = 0.9;
+  fillRoundedRect(context, 382, 1710, 316, 44, 22);
+  context.globalAlpha = 1;
+  context.fillStyle = model.palette.text;
+  setSerifFont(context, 26, 500);
+  context.fillText(model.modeLabel, 540, 1741);
+  setSansFont(context, 16, 400);
+  context.globalAlpha = 0.72;
+  context.fillText(model.versions.appVersion, 540, 1765);
+  context.globalAlpha = 1;
+}
+
+function drawCard(context, model, assets) {
   context.fillStyle = model.palette.background;
   context.fillRect(0, 0, model.width, model.height);
   drawPaperTexture(context, model.palette.text);
-  drawBotanicalMotif(context, 110, 390, model.palette.chart, 1);
-  drawBotanicalMotif(context, 970, 390, model.palette.accent, -1);
-
-  if (assets.icon) context.drawImage(assets.icon, 76, 62, 92, 92);
-  context.fillStyle = model.palette.text;
-  context.textAlign = "left";
-  setFont(context, 50, 700);
-  context.fillText(model.brand.name, 190, 112);
-  setFont(context, 28, 400);
-  context.fillText(model.brand.cardSubtitle, 190, 153);
-
-  context.textAlign = "center";
-  setFont(context, 25, 500);
-  context.fillText("あなたの称号", 540, 225);
-  setFont(context, 52, 700);
-  context.fillText(model.titleLabel, 540, 292);
-  setFont(context, 20, 400);
-  drawCenteredWrappedText(context, model.titleReason, 540, 338, 900, 26, 3);
-
+  drawFrame(context, model);
+  drawBrand(context, model, assets.icon);
+  drawTitle(context, model);
+  drawCharacterBackdrop(
+    context,
+    model,
+    assets.character?.treatment ?? "neutral-plate",
+  );
+  drawWreath(context, model);
   if (assets.character) {
     drawContainedImage(
       context,
@@ -194,55 +532,18 @@ function drawCard(context, model, assets, dependencies) {
       assets.character.treatment,
     );
   }
-
-  context.textAlign = "left";
-  model.factors.forEach((factor, index) => {
-    const y = 995 + index * 60;
-    context.fillStyle = model.palette.text;
-    setFont(context, 25, 600);
-    context.fillText(factor.label, 112, y + 29);
-    context.fillStyle = model.palette.surface;
-    context.fillRect(340, y, 590, 32);
-    context.fillStyle = FACTOR_COLORS[index];
-    context.fillRect(340, y, 590 * factor.displayScore / 100, 32);
-    context.strokeStyle = model.palette.chart;
-    context.lineWidth = 2;
-    context.strokeRect(340, y, 590, 32);
-    context.fillStyle = model.palette.text;
-    context.textAlign = "right";
-    context.fillText(String(factor.displayScore), 978, y + 29);
-    context.textAlign = "left";
-  });
-
-  context.textAlign = "center";
-  setFont(context, 34, 700);
-  context.fillStyle = model.palette.text;
-  context.fillText("ココロアロマ", 540, 1318);
+  drawFactors(context, model);
+  drawAromaHeading(context, model);
   model.fragrances.forEach((fragrance, index) => {
-    const y = 1355 + index * 75;
-    context.textAlign = "left";
-    setFont(context, 19, 500);
-    context.fillText(fragrance.sceneLabel, 120, y);
-    setFont(context, 24, 700);
-    context.fillText(fragrance.materialNames.join("・"), 330, y + 24);
-    setFont(context, 18, 400);
-    context.fillText(fragrance.accordLabel, 330, y + 48);
+    drawAromaRow(
+      context,
+      fragrance,
+      index,
+      assets.aromas.get(fragrance.sceneId) ?? null,
+      model,
+    );
   });
-
-  context.textAlign = "center";
-  setFont(context, 25, 600);
-  context.fillText(model.modeLabel, 540, 1600);
-  setFont(context, 20, 400);
-  model.disclaimer.split("\n").forEach((line, index) => {
-    context.fillText(line, 540, 1650 + index * 30);
-  });
-  setFont(context, 17, 400);
-  context.fillText([
-    model.versions.appVersion,
-    model.versions.cardTemplateVersion,
-    model.versions.presentationDefinitionVersion,
-    model.versions.resultTextVersion,
-  ].join(" / "), 540, 1750);
+  drawFooter(context, model);
 }
 
 function canvasToBlob(canvas, mimeType) {
@@ -256,6 +557,14 @@ function canvasToBlob(canvas, mimeType) {
       reject(new Error("SHARE_PNG_UNAVAILABLE"));
     }
   });
+}
+
+async function loadOptionalImage(path, dependencies) {
+  try {
+    return await dependencies.loadImage(path);
+  } catch {
+    return null;
+  }
 }
 
 export async function renderShareCard(model, dependencies) {
@@ -277,11 +586,10 @@ export async function renderShareCard(model, dependencies) {
     return errorResult("SHARE_FONT_UNAVAILABLE");
   }
 
-  let icon = null;
-  try {
-    icon = await dependencies.loadImage(model.brand.iconPath);
-  } catch {
-    icon = null;
+  const icon = await loadOptionalImage(model.brand.cardIconPath, dependencies);
+  const aromas = new Map();
+  for (const [sceneId, path] of Object.entries(AROMA_ASSET_PATHS)) {
+    aromas.set(sceneId, await loadOptionalImage(path, dependencies));
   }
 
   let character = null;
@@ -301,7 +609,7 @@ export async function renderShareCard(model, dependencies) {
   }
 
   try {
-    drawCard(context, model, { icon, character }, dependencies);
+    drawCard(context, model, { icon, aromas, character });
   } catch {
     return errorResult("SHARE_CANVAS_UNAVAILABLE");
   }
