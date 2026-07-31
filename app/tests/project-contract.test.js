@@ -11,6 +11,7 @@ const documentPaths = {
   dataModel: "docs/data-model.md",
   screens: "docs/screens.md",
   processing: "docs/processing-design.md",
+  basicDesign: "docs/基本設計サマリ.md",
   t005Spec: "docs/superpowers/specs/2026-07-25-t005-result-character-presentation-design.md",
   tasks: "docs/tasks.md",
   evidenceLedger: "docs/research/2026-07-25-q006-result-content-evidence.md",
@@ -314,6 +315,73 @@ test("Q-006 screens preserve text sharing fallbacks independently in preview and
     "共有テキスト",
     "選択可能テキスト",
   ], documentPaths.screens);
+});
+
+test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () => {
+  const [requirements, dataModel, screens, processing, basicDesign, tasks] = await Promise.all([
+    readProjectDocument(documentPaths.requirements),
+    readProjectDocument(documentPaths.dataModel),
+    readProjectDocument(documentPaths.screens),
+    readProjectDocument(documentPaths.processing),
+    readProjectDocument(documentPaths.basicDesign),
+    readProjectDocument(documentPaths.tasks),
+  ]);
+
+  assertIncludesAll(requirements, [
+    "ココロパレア",
+    "https://kokoroparea.gerupon.uk",
+    "1080×1800",
+    "3:5",
+    "320×480",
+  ], documentPaths.requirements);
+  assertIncludesAll(dataModel, [
+    "createShareCardModel",
+    "1080×1800",
+    "titleReflection",
+    "共有物は保存しない",
+  ], documentPaths.dataModel);
+  assertIncludesAll(screens, [
+    "#/share?resultId=<UUID>",
+    "data-share-view",
+    "card",
+    "details",
+    "zoom",
+    "320×480",
+  ], documentPaths.screens);
+  assertIncludesAll(processing, [
+    "createShareCardModel",
+    "renderShareCard",
+    "sharePng",
+    "SHARE_CANVAS_UNAVAILABLE",
+    "SHARE_FONT_UNAVAILABLE",
+    "SHARE_PNG_UNAVAILABLE",
+  ], documentPaths.processing);
+  assertIncludesAll(tasks, [
+    "状態: 実装完了・視覚承認待ち",
+    "#/share?resultId=<UUID>",
+    "1080×1800",
+  ], documentPaths.tasks);
+  assertIncludesAll(basicDesign, [
+    "要件定義 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.26",
+    "1080×1800",
+    "実装完了・視覚承認待ち",
+  ], documentPaths.basicDesign);
+  for (const [document, name] of [
+    [requirements, documentPaths.requirements],
+    [basicDesign, documentPaths.basicDesign],
+    [tasks, documentPaths.tasks],
+  ]) {
+    assert.doesNotMatch(document, /共有画像の寸法、形式、トリミング、文字量\s*\|\s*ユーザー\s*\|\s*共有画面実装前/);
+    assert.doesNotMatch(document, /正式共有Canvasとproduction release CSVは未完了/);
+    assert.doesNotMatch(document, /共有画像の最終仕様\s*\|\s*寸法・文字量未決/);
+    assert.ok(document.includes("視覚承認待ち"), `${name} missing visual approval status`);
+  }
+  for (const document of [requirements, screens, basicDesign, tasks]) {
+    assert.doesNotMatch(
+      document,
+      /【想定】`～あなたらしさから着想した色～`/,
+    );
+  }
 });
 
 test("Q-006 records every content gate as approved and the overall gate as resolved", async () => {

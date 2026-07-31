@@ -410,7 +410,17 @@ schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし�
 | text | string | ○ | 診断時に表示した文面 |
 | evidenceRefs | string[] | ○ | 診断時の根拠参照ID |
 
-`ResultTextDefinition`から`id`、`version`、`section`、`text`、`evidenceRefs`だけを投影するexact 5フィールドschemaである。`claimKind`、`appliesTo`、`previewAllowed`、未知フィールド、生回答を含めない。`composeResultTexts`とsnapshot生成時に深く複製し、各recordと`evidenceRefs`をdeep freezeする。将来のT-007共有合成で使う純粋境界`selectShareableResultTexts`は`section === "titleReflection"`を除外した候補だけを返す。これは共有画面・共有画像・共有テキスト自体の実装完了を意味せず、T-007は引き続き後続作業である。
+`ResultTextDefinition`から`id`、`version`、`section`、`text`、`evidenceRefs`だけを投影するexact 5フィールドschemaである。`claimKind`、`appliesTo`、`previewAllowed`、未知フィールド、生回答を含めない。`composeResultTexts`とsnapshot生成時に深く複製し、各recordと`evidenceRefs`をdeep freezeする。T-007の共有境界`selectShareableResultTexts`は`section === "titleReflection"`を除外した候補だけを返し、共有カードモデルと共有テキストの双方でこの境界を維持する。
+
+### 3.8 ShareCardModel
+
+`createShareCardModel`は検証済みResultSnapshot、選択済みパレット、猫manifest entry、固定3場面の共有代表を受け取り、1080×1800のPNG描画と共有テキストに必要な値だけを持つdeep-freeze済みモデルを返す。
+
+- カード画像はブランド、称号、猫、固定順5因子、20問／50問のモード、版、注意書き、`ココロアロマ`の代表3件を持つ。
+- 各アロマは場面名、香調名、`materialNames`、短い印象を持ち、画像では3件を縦に描画する。
+- 共有テキストは同じモデルから生成するが、香りの素材名と`titleReflection`を含めない。
+- `resultId`、生回答、端末情報、公開結果URL、未知フィールドをモデルへ投影しない。
+- 共有物は保存しない。ResultSnapshotだけを永続的な再生成元とし、PNG BlobとObject URLは共有画面の生存期間に限って保持・解放する。
 
 ## 4. 比較互換性
 
@@ -435,7 +445,7 @@ schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし�
 | 静的定義 | リリース時 | 新しい版を追加 | 利用中の版は削除しない | Gitで復元 |
 | 途中回答 | 新規開始時 | 回答ごと | 完答・破棄・全削除 | 提供しない |
 | 結果履歴 | 完答時 | パレット選択だけ更新可 | 個別・全削除 | 提供しない |
-| 共有物 | 明示操作時 | 再生成 | 生成物をアプリ内保持しない | 履歴から再生成 |
+| 共有物 | 明示操作時 | 再生成 | 共有物は保存しない | 履歴から再生成 |
 | ベータ集計値 | ベータ版の完答・カード利用時 | 原子的な加算だけ | Q-011に従い管理者が一括処理 | DBバックアップからの復旧。個人単位復元は非該当 |
 
 ## 6. 保存エラーと破損

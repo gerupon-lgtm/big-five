@@ -143,6 +143,7 @@ test("T-007 F-011 creates the exact immutable 1080 by 1800 detail card model", (
   assert.deepEqual(model.fragrances[0], {
     sceneId: "pause",
     sceneLabel: "ひと息つきたい",
+    materialNames: ["ローマンカモミール"],
     accordLabel: "まろやかな甘みの草花の香調",
   });
   assert.equal(
@@ -173,7 +174,7 @@ test("T-007 F-011 creates the exact immutable 1080 by 1800 detail card model", (
   );
   assert.doesNotMatch(
     JSON.stringify(model),
-    /answers|titleReflection|materialIds|materialNames|publicOrigin|resultId|https?:\/\//,
+    /answers|titleReflection|materialIds|publicOrigin|resultId|https?:\/\//,
   );
   assert.deepEqual(input, before);
   assertDeeplyFrozen(model);

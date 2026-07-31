@@ -3,12 +3,15 @@ import test from "node:test";
 
 import { renderShareCard } from "../js/presentation/share-card-renderer.js";
 
-function makeModel({ character = {
+function makeModel({
+  character = {
   path: "./assets/characters/cat.webp",
   alt: "結果の猫",
   width: 1024,
   height: 1024,
-} } = {}) {
+  },
+  titleReason = "五つの因子を見渡した結果です。",
+} = {}) {
   return Object.freeze({
     width: 1080,
     height: 1800,
@@ -21,7 +24,7 @@ function makeModel({ character = {
     }),
     modeLabel: "50問 詳細結果",
     titleLabel: "五つの風を見渡す観測者",
-    titleReason: "五つの因子を見渡した結果です。",
+    titleReason,
     character,
     factors: Object.freeze([
       ["intellectImagination", "知性・想像力", 75],
@@ -32,9 +35,9 @@ function makeModel({ character = {
     ].map(([factorId, label, displayScore]) =>
       Object.freeze({ factorId, label, displayScore }))),
     fragrances: Object.freeze([
-      Object.freeze({ sceneId: "pause", sceneLabel: "ひと息つきたい", accordLabel: "草花の香調" }),
-      Object.freeze({ sceneId: "reset", sceneLabel: "気持ちを切り替えたい", accordLabel: "柑橘の香調" }),
-      Object.freeze({ sceneId: "quiet-focus", sceneLabel: "静かに取り組みたい", accordLabel: "木質の香調" }),
+      Object.freeze({ sceneId: "pause", sceneLabel: "ひと息つきたい", materialNames: Object.freeze(["ローマンカモミール"]), accordLabel: "草花の香調" }),
+      Object.freeze({ sceneId: "reset", sceneLabel: "気持ちを切り替えたい", materialNames: Object.freeze(["グレープフルーツ", "ジンジャー"]), accordLabel: "柑橘の香調" }),
+      Object.freeze({ sceneId: "quiet-focus", sceneLabel: "静かに取り組みたい", materialNames: Object.freeze(["ヒノキ", "フランキンセンス"]), accordLabel: "木質の香調" }),
     ]),
     disclaimer: "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
     versions: Object.freeze({
@@ -152,6 +155,11 @@ test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and
   assert.ok(texts.indexOf("ココロパレア") < texts.indexOf("五つの風を見渡す観測者"));
   assert.ok(texts.indexOf("五つの風を見渡す観測者") < texts.indexOf("知性・想像力"));
   assert.ok(texts.indexOf("情緒安定性") < texts.indexOf("ひと息つきたい"));
+  assert.ok(texts.indexOf("ひと息つきたい") < texts.indexOf("ローマンカモミール"));
+  assert.ok(texts.indexOf("ローマンカモミール") < texts.indexOf("気持ちを切り替えたい"));
+  assert.ok(texts.indexOf("気持ちを切り替えたい") < texts.indexOf("グレープフルーツ・ジンジャー"));
+  assert.ok(texts.indexOf("グレープフルーツ・ジンジャー") < texts.indexOf("静かに取り組みたい"));
+  assert.ok(texts.indexOf("静かに取り組みたい") < texts.indexOf("ヒノキ・フランキンセンス"));
   assert.ok(texts.indexOf("静かに取り組みたい") < texts.indexOf("50問 詳細結果"));
   assert.ok(texts.includes("～Big Five 自己理解支援ツール～"));
   assert.ok(texts.includes("これは性格の優劣や心理学上の正式なタイプを示すものではありません。"));
@@ -192,6 +200,23 @@ test("T-007 F-015 preserves a text-complete card when the cat fails", async () =
   assert.ok(operations.some((operation) =>
     operation[0] === "fillText" &&
     operation[2] === "五つの風を見渡す観測者"));
+});
+
+test("T-007 F-011 wraps a long title reason inside the card width", async () => {
+  const titleReason = "今回の回答では、".repeat(10);
+  const { dependencies, operations } = recordingDependencies();
+
+  const result = await renderShareCard(makeModel({ titleReason }), dependencies);
+
+  assert.equal(result.status, "ok");
+  const reasonLines = operations.filter((operation) =>
+    operation[0] === "fillText" &&
+    operation[1] === "main" &&
+    operation[3] === 540 &&
+    [338, 364, 390].includes(operation[4]));
+  assert.equal(reasonLines.length, 3);
+  assert.equal(reasonLines.map((operation) => operation[2]).join(""), titleReason);
+  assert.equal(reasonLines.some((operation) => operation[2] === titleReason), false);
 });
 
 test("T-007 F-016 falls back to a neutral plate when cat pixels cannot be read", async () => {

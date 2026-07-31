@@ -227,9 +227,9 @@ displayScore = round((rawMean - 1) / 4 * 100)
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
-上記Q-006ドメイン実装と独立レビューは完了している。`result-text-v1`は根拠台帳の全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`はユーザー承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を含む現行runtime版である。Q-013のP-0〜P-6も全承認済みで、`presentation-v2` ES Modules runtimeとS-003/S-004結果DOMまで接続済みである。`progress-storage.js`へのResultSnapshot保存・履歴・削除・対象1件のパレット更新統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。approved JSON release、Q-012正式release、Q-013共有Canvasは後続である。
+上記Q-006ドメイン実装と独立レビューは完了している。`result-text-v1`は根拠台帳の全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`はユーザー承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を含む現行runtime版である。Q-013のP-0〜P-6も全承認済みで、`presentation-v2` ES Modules runtime、S-003/S-004結果DOM、T-007共有Canvasまで接続済みである。`progress-storage.js`へのResultSnapshot保存・履歴・削除・対象1件のパレット更新統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。approved JSON releaseとQ-012正式releaseは別ゲートである。
 
-診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。純粋共有候補抽出境界`selectShareableResultTexts`は`titleReflection`を除外するが、実際の共有UI・共有画像・共有テキストはT-007の後続作業である。
+診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。純粋共有候補抽出境界`selectShareableResultTexts`は`titleReflection`を除外し、その出力をT-007の共有UI・共有画像・共有テキストへ接続する。
 
 ## 7. 履歴保存
 
@@ -381,23 +381,25 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 - 純粋監査は`FRAGRANCE_TITLE_MATERIAL_DUPLICATE`、`FRAGRANCE_TITLE_SET_DUPLICATE`、`FRAGRANCE_SCENE_FAMILY_DUPLICATE`、`FRAGRANCE_SHARE_TRIPLE_OVERUSED`、`FRAGRANCE_USAGE_OVER_LIMIT`、`FRAGRANCE_SCENE_REUSE_OVER_LIMIT`、`FRAGRANCE_SCENE_COPY_DUPLICATE`、`FRAGRANCE_PROHIBITED_COPY`、`FRAGRANCE_SHARE_COPY_OVERFLOW`の9安定コードを返す。
 - ユーザー状態を推測する入力・処理を持たない。
 - 植物・精油名は香り素材マスタの`displayName`だけに許可する。商品、ブランド、購入URL、適合推奨、量、滴数、濃度、配合、摂取、塗布、ディフューザー等の使用法、治療・改善・能力向上効果のデータを定義スキーマで禁止する。
-- S-003/S-004では固定3場面を縦に並べ、各2件の香調名、素材名1〜2件、説明を表示する。現在の心理状態や効果を示すものではなく、使用方法を案内しない共通注記を添える。T-007の正式共有Canvasは未接続である。
+- S-003/S-004では固定3場面を縦に並べ、各2件の香調名、素材名1〜2件、説明を表示する。現在の心理状態や効果を示すものではなく、使用方法を案内しない共通注記を添える。T-007では各場面の共有代表1件を正式共有Canvasへ縦に接続する。
 
 ## 12. 共有カード
 
-この章はT-007の設計であり、現時点で共有画面・カード描画・共有テキスト生成の実装完了を示さない。先行実装済みなのは、ResultSnapshotの結果文から`titleReflection`を除外したdeep-freeze済み候補を返す純粋関数`selectShareableResultTexts`とその単体テストだけである。
+T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareCardModel`でカードモデルと共有テキストを構成し、`renderShareCard`でPNG Blobを生成する。S-005は同じBlobのObject URLを`card`、`details`、`zoom`で再利用し、ルート離脱時に解放する。
+
+画面内のObject URL表示に限ってCSPの`img-src`へ`blob:`を追加する。外部通信能力は追加せず、通常版の`connect-src 'none'`を維持する。称号理由は900px幅、最大3行の中央揃えで描画し、カード左右へのはみ出しを防ぐ。
 
 ### 12.1 生成
 
-1. ResultSnapshotと選択／標準PaletteDefinitionを検証。
-2. Q-007で確定した寸法のCanvasを作成。
-3. 日本語フォントの準備を待つ。
+1. ResultSnapshotと選択／標準PaletteDefinitionを検証する。
+2. `createShareCardModel`で1080×1800のdeep-freeze済みモデルを生成する。
+3. `renderShareCard`が1080×1800のCanvasを作成し、日本語フォントの準備を待つ。
 4. 選択パレットを変更せず背景へ適用し、副色由来の表面色を十分に白へ混ぜた淡い右上装飾へ適用する。右上装飾を暗色の面にはしない。
 5. 猫と隣接背景の分離状態を評価し、必要なら明暗二重縁取り、影、ニュートラル背景プレートを決定的に適用する。
-6. 背景、称号、猫、レーダー、短文、モード、`ココロアロマ`の代表3件（場面、素材例、短い印象）、共通注記、注意、版を描画。
+6. 背景、ブランド、称号、猫、固定順5因子の棒、短文、モード、`ココロアロマ`の代表3件（場面、素材例、短い印象）、共通注記、注意、版を描画する。
 7. 猫は同一オリジンの静的アセットだけを使い、再配色・トリミングをしない。
-8. PNG Blobへ変換。
-9. 素材例を含めない共有テキストを別生成。
+8. PNG Blobへ変換し、S-005の表示と共有操作へ同じBlobを渡す。
+9. 素材例と`titleReflection`を含めない共有テキストを同じカードモデルへ保持する。
 
 生回答、氏名、端末情報、公開結果URLを受け取る引数を設けない。
 同じResultSnapshot、猫アセット版、パレット版、カードテンプレート版からは同じ視認性補助を選び、共有前プレビューと完成PNGを一致させる。
@@ -412,16 +414,15 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 | テキストコピー | Clipboard API | コピー |
 | すべて不可 | 常に可能なDOMテキスト | 手動選択 |
 
-共有キャンセルはエラー扱いせず元画面へ戻る。Blob URLは使用後に解放する。
+`detectShareCapabilities`で能力を個別判定し、`sharePng`、`downloadPng`、`copyShareText`を利用可能な時だけ提示する。返却状態は`shared`、`cancelled`、`downloaded`、`copied`、`unavailable`、`failed`である。共有キャンセルはエラー扱いせず画面を維持する。Blob URLは使用後または共有ルート離脱時に解放する。
 
 ### 12.3 安定コード
 
-- SHARE_IMAGE_GENERATION_FAILED
+- SHARE_CARD_MODEL_INVALID
+- SHARE_CARD_VISIBILITY_INVALID
+- SHARE_CANVAS_UNAVAILABLE
 - SHARE_FONT_UNAVAILABLE
-- SHARE_FILE_UNSUPPORTED
-- SHARE_CANCELLED
-- CLIPBOARD_DENIED
-- DOWNLOAD_UNAVAILABLE
+- SHARE_PNG_UNAVAILABLE
 
 ## 13. 削除
 

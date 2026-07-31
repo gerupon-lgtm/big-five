@@ -155,9 +155,15 @@ function projectFragrances(fragranceSummary) {
       isNonEmptyString(fragrance.accordLabel))) {
     invalidModel();
   }
-  return fragranceSummary.map(({ sceneId, label, accordLabel }) => ({
+  return fragranceSummary.map(({
+    sceneId,
+    label,
+    materialNames,
+    accordLabel,
+  }) => ({
     sceneId,
     sceneLabel: label,
+    materialNames: [...materialNames],
     accordLabel,
   }));
 }

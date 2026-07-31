@@ -1589,6 +1589,11 @@ noscript {
   flex-direction: column;
 }
 
+.share-card-pane--card .share-card-preview {
+  min-block-size: 0;
+  max-block-size: calc(100% - 54px);
+}
+
 .share-card-preview {
   display: block;
   max-inline-size: 100%;
@@ -1644,6 +1649,22 @@ noscript {
   max-inline-size: none;
   max-block-size: none;
   inline-size: min(1080px, 160vw);
+}
+
+@media (max-width: 420px) and (max-height: 600px) {
+  .share-delivery-actions {
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding-top: 4px;
+  }
+
+  .share-delivery-actions > button {
+    min-inline-size: 0;
+    flex: 1;
+    padding-inline: 4px;
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
 }
 
 .share-text-section {

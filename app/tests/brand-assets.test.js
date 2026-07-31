@@ -94,6 +94,7 @@ test("T-007 F-001 publishes the canonical brand metadata and deterministic icons
   assert.match(index, /rel="manifest"\s+href="\.\/manifest\/app\.webmanifest"/);
   assert.match(index, /rel="icon"\s+href="\.\/assets\/brand\/kokoro-parea-mark\.svg"\s+type="image\/svg\+xml"/);
   assert.doesNotMatch(index, /gerupo\.uk|kokoropalea/);
+  assert.match(index, /img-src 'self' data: blob:/);
   assert.match(index, /connect-src 'none'/);
 
   for (const [filename, width] of ICONS) {

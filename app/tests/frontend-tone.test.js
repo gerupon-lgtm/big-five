@@ -99,6 +99,18 @@ test("T-007 S-005 keeps the initial share card inside the viewport", async () =>
   );
   assert.match(
     styles,
+    /\.share-card-pane--card\s+\.share-card-preview\s*\{[^}]*min-block-size:\s*0[^}]*max-block-size:\s*calc\(100%\s*-\s*54px\)/s,
+  );
+  assert.match(
+    styles,
+    /@media\s*\(max-width:\s*420px\)\s*and\s*\(max-height:\s*600px\)[\s\S]*\.share-delivery-actions\s*\{[^}]*flex-wrap:\s*nowrap/s,
+  );
+  assert.match(
+    styles,
+    /@media\s*\(max-width:\s*420px\)\s*and\s*\(max-height:\s*600px\)[\s\S]*\.share-delivery-actions\s*>\s*button\s*\{[^}]*min-inline-size:\s*0[^}]*flex:\s*1/s,
+  );
+  assert.match(
+    styles,
     /@media\s*\(min-width:\s*960px\)[\s\S]*\.share-screen--details\s+\.share-card-pane\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*3fr\)\s+minmax\(320px,\s*2fr\)/s,
   );
 });

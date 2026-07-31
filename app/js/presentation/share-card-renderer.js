@@ -19,6 +19,43 @@ function setFont(context, size, weight = 400) {
   context.font = `${weight} ${size}px "Noto Sans JP", "Yu Gothic", sans-serif`;
 }
 
+function drawCenteredWrappedText(
+  context,
+  text,
+  centerX,
+  startY,
+  maxWidth,
+  lineHeight,
+  maxLines,
+) {
+  const remaining = [...text];
+  const lines = [];
+  while (remaining.length > 0 && lines.length < maxLines) {
+    let line = "";
+    while (remaining.length > 0) {
+      const candidate = `${line}${remaining[0]}`;
+      if (line && context.measureText(candidate).width > maxWidth) break;
+      line = candidate;
+      remaining.shift();
+    }
+    lines.push(line);
+  }
+  if (remaining.length > 0) {
+    const lastIndex = lines.length - 1;
+    let lastLine = lines[lastIndex];
+    while (
+      lastLine.length > 0 &&
+      context.measureText(`${lastLine}…`).width > maxWidth
+    ) {
+      lastLine = [...lastLine].slice(0, -1).join("");
+    }
+    lines[lastIndex] = `${lastLine}…`;
+  }
+  lines.forEach((line, index) => {
+    context.fillText(line, centerX, startY + index * lineHeight);
+  });
+}
+
 function drawBotanicalMotif(context, x, y, color, direction = 1) {
   context.save();
   context.strokeStyle = color;
@@ -146,8 +183,8 @@ function drawCard(context, model, assets, dependencies) {
   context.fillText("あなたの称号", 540, 225);
   setFont(context, 52, 700);
   context.fillText(model.titleLabel, 540, 292);
-  setFont(context, 25, 400);
-  context.fillText(model.titleReason, 540, 344);
+  setFont(context, 20, 400);
+  drawCenteredWrappedText(context, model.titleReason, 540, 338, 900, 26, 3);
 
   if (assets.character) {
     drawContainedImage(
@@ -180,14 +217,16 @@ function drawCard(context, model, assets, dependencies) {
   context.textAlign = "center";
   setFont(context, 34, 700);
   context.fillStyle = model.palette.text;
-  context.fillText("ココロアロマ", 540, 1328);
+  context.fillText("ココロアロマ", 540, 1318);
   model.fragrances.forEach((fragrance, index) => {
-    const y = 1380 + index * 70;
+    const y = 1355 + index * 75;
     context.textAlign = "left";
-    setFont(context, 23, 600);
+    setFont(context, 19, 500);
     context.fillText(fragrance.sceneLabel, 120, y);
-    setFont(context, 23, 400);
-    context.fillText(fragrance.accordLabel, 430, y);
+    setFont(context, 24, 700);
+    context.fillText(fragrance.materialNames.join("・"), 330, y + 24);
+    setFont(context, 18, 400);
+    context.fillText(fragrance.accordLabel, 330, y + 48);
   });
 
   context.textAlign = "center";
