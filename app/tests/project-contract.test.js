@@ -368,7 +368,7 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     "ユーザーの最終視覚承認を得た",
   ], documentPaths.tasks);
   assertIncludesAll(basicDesign, [
-    "要件定義 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.27",
+    "要件定義 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.28",
     "1080×1800",
     "完成カードをSVGからラスタライズしない",
   ], documentPaths.basicDesign);

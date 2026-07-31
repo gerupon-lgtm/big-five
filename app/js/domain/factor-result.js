@@ -12,8 +12,24 @@ function expectedBand(keyedSum, itemCount) {
   return keyedSum >= 3.5 * itemCount ? "high" : keyedSum <= 2.5 * itemCount ? "low" : "middle";
 }
 
-function displayScoreFromRational(keyedSum, itemCount) {
+export function displayScoreFromRational(keyedSum, itemCount) {
   return Math.floor((((keyedSum - itemCount) * 25 * 2) + itemCount) / (itemCount * 2));
+}
+
+export function displayScoreFromRawMean(rawMean, questionCount) {
+  if (!Number.isFinite(rawMean) || ![20, 50].includes(questionCount)) {
+    throw new TypeError("FACTOR_DISPLAY_SCORE_INVALID");
+  }
+  const itemCount = questionCount / FACTOR_ORDER.length;
+  const keyedSum = Math.round(rawMean * itemCount);
+  if (
+    rawMean !== keyedSum / itemCount
+    || keyedSum < itemCount
+    || keyedSum > itemCount * 5
+  ) {
+    throw new TypeError("FACTOR_DISPLAY_SCORE_INVALID");
+  }
+  return displayScoreFromRational(keyedSum, itemCount);
 }
 
 function reachableRationals(rawMean, questionCount) {

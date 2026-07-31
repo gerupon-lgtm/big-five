@@ -21,6 +21,20 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
     "lead start-lead",
   );
 
+  const introduction = documentObject.createElement("section");
+  introduction.className = "start-introduction";
+  appendTextElement(
+    introduction,
+    "h2",
+    "自分を知る。自分と付き合う。そのためのツール。",
+  );
+  appendTextElement(
+    introduction,
+    "p",
+    "ココロパレアは、自分自身のことを知りたくて作り始めた自己理解支援ツールです。イメージキャラクターは愛猫の「もなか」。いつも文句ひとつ言わずに付き合ってくれるもなかのように、ココロパレアもそっとあなたに付き合える存在を目指しています。その時々の自分の傾向に応じて、出会えるもなかも変わります。",
+  );
+  panel.append(introduction);
+
   const overview = documentObject.createElement("section");
   overview.className = "start-overview";
   overview.setAttribute("aria-labelledby", "start-tool-overview-title");
@@ -71,6 +85,12 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
   );
   historyLink.setAttribute("href", "#/history");
   main.append(secondaryNavigation);
+  appendTextElement(
+    main,
+    "p",
+    versionModel.versionLabel,
+    "start-app-version",
+  );
 
   const diagnosticVersion = documentObject.createElement("details");
   diagnosticVersion.className = "diagnostic-version";

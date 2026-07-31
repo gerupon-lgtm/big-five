@@ -49,3 +49,18 @@ test("the formal app server returns 404 for unknown files", async (t) => {
   const response = await fetch(`${origin}/missing.js`);
   assert.equal(response.status, 404);
 });
+
+test("the formal app serves share-card raster assets with image MIME types", async (t) => {
+  const server = createStaticServer({ rootDir: appRoot });
+  t.after(() => server.close());
+  const origin = await listen(server);
+
+  const png = await fetch(`${origin}/assets/share-card/aroma-pause-v1.png`);
+  const webp = await fetch(
+    `${origin}/assets/characters/character-balanced.webp`,
+  );
+  assert.equal(png.status, 200);
+  assert.equal(png.headers.get("content-type"), "image/png");
+  assert.equal(webp.status, 200);
+  assert.equal(webp.headers.get("content-type"), "image/webp");
+});

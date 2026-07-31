@@ -5,7 +5,7 @@ import { renderStartScreen } from "../js/presentation/start-screen.js";
 import { collectElements, collectText, createFakeScreen } from "./helpers/fake-dom.js";
 
 const versionModel = Object.freeze({
-  versionLabel: "バージョン mvp-0.1.0",
+  versionLabel: "バージョン mvp-1.0.0",
   diagnosticVersionLabel: "診断データの版",
   diagnosticVersionItems: Object.freeze(["質問 ipip-ja-50-question-set-v1"]),
 });
@@ -33,6 +33,21 @@ test("T-005 S-001 offers a new diagnosis action and accurate available-flow copy
   assert.match(collectText(host), /IPIP日本語50項目版/);
   assert.doesNotMatch(collectText(host), /5つの傾向/);
   assert.doesNotMatch(collectText(host), /正式版MVPを準備中です/);
+  assert.match(
+    collectText(host),
+    /自分を知る。自分と付き合う。そのためのツール。/,
+  );
+  assert.match(
+    collectText(host),
+    /イメージキャラクターは愛猫の「もなか」/,
+  );
+  assert.match(
+    collectText(host),
+    /その時々の自分の傾向に応じて、出会えるもなかも変わります。/,
+  );
+  const visibleVersion = collectElements(host).find(({ className }) =>
+    className === "start-app-version");
+  assert.equal(visibleVersion.textContent, "バージョン mvp-1.0.0");
 });
 
 test("T-005 S-001 offers resume only when the caller provides a compatible progress callback", () => {
@@ -165,7 +180,7 @@ test("T-008A S-001 keeps the diagnostic label and version details inside the dia
       .textContent,
     "診断データの版",
   );
-  assert.match(collectText(diagnosticVersion), /バージョン mvp-0\.1\.0/);
+  assert.match(collectText(diagnosticVersion), /バージョン mvp-1\.0\.0/);
   assert.match(collectText(diagnosticVersion), /質問 ipip-ja-50-question-set-v1/);
 });
 

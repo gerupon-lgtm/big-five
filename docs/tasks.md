@@ -2,34 +2,35 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.10 |
+| 設計版 | 0.11 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-07-31 |
-| 要件正典 | 要件定義書v1.27 |
+| 要件正典 | 要件定義書v1.28 |
 | 初期リリース | `mvp-0.1.0` |
+| 現在リリース | `mvp-1.0.0` |
 
 ## 1. トレーサビリティ表（正典）
 
 | 要件ID | 機能名 | 画面 | 処理 | データ | タスク | 状態 |
 |---|---|---|---|---|---|---|
-| F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008A, T-008 | `Big Five 自己理解チェック`／`BIG FIVE SELF UNDERSTANDING`の共通ヘッダー、`SELF CHECK`／`自分のことを知る`／承認済みBig Five・IPIP説明、`このツールについて`、同幅の開始・再開操作を実装・browser smoke済み |
+| F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008A, T-008 | 共通ヘッダー、`SELF CHECK`／`自分のことを知る`、承認済みBig Five・IPIP説明、`自分を知る。自分と付き合う。そのためのツール。`と愛猫もなかを含む紹介文、同幅の開始・再開操作、現在版表示を実装・browser smoke済み |
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approvalは2026-07-28に完了 |
 | F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 他画面と同じ通常の共通ヘッダー、緑の進捗／設問`h1`、折り返さない`中断してトップへ`、設問20px・回答文字16px・回答ボタン高56pxを実装・320／360／414px browser smoke済み |
-| F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A | 状態別再開、preview終了、新規置換確認を保存成功・失敗・取消まで実装済み |
+| F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A | 状態別再開、preview終了、新規置換確認、全削除成功時の画面内再開状態破棄を保存成功・失敗・取消まで実装済み |
 | F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 現行`result-text-v2`で称号別ヒント1件を含む8件を表示・保存。不完全なヒント組は全件省略して7件へフォールバックし、称号・因子を維持 |
 | F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 現行`result-text-v2`で称号別ヒント3件を含む45件を表示・保存し、1件＋追加2件を展開。不完全なヒント組は全件省略して42件へフォールバック |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A | 名前付きレーダー、CSP下でも実スコアを反映する固定順5因子行・棒、同時1因子／1カテゴリの二段階開閉、最下部の設問構成sheetと4つの固定方法sheetを実装済み |
-| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A, T-008B | 基盤実装済み。履歴から再開可能な20問結果の操作を継続＋履歴一覧復帰だけへ整理する追補はT-008B |
-| F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A, T-008B | 基盤実装済み。同一0〜100表示軸、二段の差表示、固定桁、版情報の可読化、ヘッダー文言統一はT-008B |
+| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A, T-008B | 履歴から再開可能な20問結果はヘッダーを`履歴一覧に戻る`とし、継続＋履歴一覧復帰だけを表示する追補まで実装済み |
+| F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A, T-008B | 同一0〜100表示軸、二段の差表示、固定桁、版情報のラベル化、ヘッダー`履歴一覧に戻る`まで実装済み |
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007 | 完了。正式ビジュアル実装・実ブラウザ確認・ユーザー承認済み |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007 | 完了。プレビューと共有・保存で同じPNG Blobを使用 |
-| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A | 省略記号ではなく`履歴削除`から開く既存履歴管理dialog、削除・preview終了、明示close・正確なbackdrop click・native／fallback Escape・focus入退場・fallback背景隔離・Tab containmentを実装済み |
-| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | 確定 |
+| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。全削除成功時は保存値と画面内再開状態を同時に破棄する |
+| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | `mvp-1.0.0`を正典とし、開始画面・共有物を含む版契約へ反映済み |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A | 保存失敗時の中断・preview終了、live結果維持、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
-| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-010 | Q-013データ、結果DOM、共有Canvas接続済み。`ココロパレット`／`ココロアロマ`の段階展開UIはT-008B |
+| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-010 | Q-013データ、結果DOM、共有Canvas、`ココロパレット`／`ココロアロマ`の相互排他的な段階展開UIまで実装済み |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -387,8 +388,8 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 
 - 依存: T-005、T-006
 - 対応機能: F-005、F-006、F-009、F-010、F-018
-- 優先度: 低。T-007の共有カード接続後に実装する
-- 状態: PLANNED（2026-07-31の利用者確認を設計へ反映済み。UIコードは未変更）
+- 優先度: 低。T-007の共有カード接続後に実装
+- 状態: COMPLETED（2026-07-31）
 - 作業:
   - 履歴から再開可能な20問結果を開いた場合、ヘッダーに`履歴一覧に戻る`を表示し、結果操作を`あと30問続ける`と`履歴一覧に戻る`の2件だけにする。
   - 比較画面の前回・今回・差を同じ0〜100表示軸へ統一し、差の数値と状態文を二段に分ける。整数は`±0`形式と固定桁数字を使い、将来小数を採用する場合は`±0.00`へ統一する。
@@ -412,6 +413,12 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - result単体: パレット閉→開、アロマ閉→開→3場面、相互排他、色選択後も開閉で選択を維持。
   - 実ブラウザ: 320px、360px、960px、200%文字拡大、タッチ相当、キーボードで横overflow・文字重なり・不自然な折返しがないことを確認する。
   - `npm.cmd test`、`npm.cmd run check`、`git diff --check`。
+- 実装記録（2026-07-31）:
+  - 保存済み結果を履歴から開く時に同セッションの`liveResult`を破棄し、履歴previewの操作集合を継続＋履歴一覧復帰だけへ限定した。
+  - 比較は前回・今回を0〜100整数へ統一し、符号付き差と状態文を二段表示、版条件をラベル付き項目へ変更した。
+  - パレットとアロマはnative disclosureで閉じて開始し、外側およびアロマ3場面をそれぞれ同時1件だけ開く。
+  - 全削除成功時に保存領域とcontrollerの`currentProgress`／`liveResult`を同時に初期化し、開始画面へ紹介文と現在版を追加した。共有カードQA成果物へ香りの透過PNG3件を同梱し、リース、余白、ブランド文字間、footerを調整して`card-template-v2`へ更新した。
+  - ローカル実ブラウザで320pxの全削除後トップ・比較、360px／960pxの共有カードを確認し、横overflow、文字重複、console warning／errorがないことを確認した。`npm.cmd test`は677件成功・失敗0件、`npm.cmd run check`は60 JavaScript files・canonical runtime version 1件、`npm.cmd run content:validate`は警告657件・エラー0件、`npm.cmd run qa:preview:build`は121 files・10,357,812 bytesで成功した。
 
 ### T-008 全画面統合・レスポンシブ・アクセシビリティ
 
@@ -513,7 +520,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 |---|---|---|
 | F-017外部ベータ公開 | API・DB方式は確定。募集・保持・公開ドメイン等の運用値が未決 | Q-009/Q-011 |
 | Q-014結果・履歴・中断再開UI | 回答中断、preview終了、状態別再開、新規開始確認、結果hero、実スコアを反映する5因子行・棒、因子→カテゴリ名の二段階で本文を表示、最下部へ集約した設問構成／4方法sheet、診断直後50問トップ導線、保存済み結果の履歴一覧導線、簡潔な履歴、固定比較導線、履歴管理dialog、`result-text-v2`の称号別ヒントを実装 | T-008A完了。2026-07-31の結果UX追補のPages再確認はT-011で管理 |
-| 結果・履歴画面統合 | 基盤、Q-013結果DOM、T-007共有UIまで実装済み。履歴preview、比較表示、パレット／アロマ開閉の追補が未完了 | T-005/T-007/T-008A/T-008B/T-008 |
+| 結果・履歴画面統合 | 基盤、Q-013結果DOM、T-007共有UI、履歴preview、比較表示、パレット／アロマ開閉のT-008B追補まで実装済み | T-005/T-007/T-008A/T-008B/T-008 |
 | 共有画像の最終仕様 | 1080×1800（3:5）PNG、中央ブランド、称号、共通円形リース、透過猫の全体表示、固定5因子、透過素材画付きアロマ3件の縦配置、注記・モード・アプリ版、320×480の初期表示を実装済み | Q-007解決済み。T-007実装・実ブラウザ確認・ユーザー承認完了 |
 | Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
 | 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを制作・技術確認済み。runtime manifest、整合検査、単一画像遅延loader、live／保存済み結果画面・共有Canvasまで接続済み | Q-012の正式なapproved release選択は未完了 |

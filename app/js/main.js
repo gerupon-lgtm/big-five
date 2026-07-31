@@ -343,6 +343,12 @@ export function startApp({
           confirmed: true,
           now: nowProvider(),
         });
+        if (outcome.status === "ok") {
+          currentProgress = null;
+          liveResult = null;
+          questionnaireStorageStatus = "ok";
+          resultActionNotice = null;
+        }
         historyNotice = outcome.status === "ok"
           ? { kind: "success", text: "端末内の途中回答と診断結果をすべて削除しました。" }
           : { kind: "error", text: "端末内データを削除できませんでした。もう一度お試しください。" };
@@ -352,6 +358,8 @@ export function startApp({
         setRoute(`#/compare?before=${encodeURIComponent(comparison.beforeResultId)}&after=${encodeURIComponent(comparison.afterResultId)}`);
       },
       onOpenResult(resultId) {
+        liveResult = null;
+        resultActionNotice = null;
         setRoute(`#/result?resultId=${encodeURIComponent(resultId)}`);
       },
     }, {

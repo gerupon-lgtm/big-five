@@ -207,6 +207,26 @@ h1 {
   border-top: 1px solid #d6e4df;
 }
 
+.start-introduction {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 14px;
+  background: #f3f8f6;
+}
+
+.start-introduction h2 {
+  margin: 0;
+  color: #1f6955;
+  font-size: clamp(1.1rem, 1rem + 0.45vw, 1.3rem);
+  line-height: 1.6;
+}
+
+.start-introduction p {
+  margin: 12px 0 0;
+  color: #45635d;
+  line-height: 1.85;
+}
+
 .start-overview h2 {
   margin: 0;
   font-size: clamp(1.125rem, 1rem + 0.5vw, 1.35rem);
@@ -247,6 +267,13 @@ h1 {
 
 .start-history-link {
   margin-top: 0;
+}
+
+.start-app-version {
+  margin: 16px 0 0;
+  color: #526b66;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .status-card h2 {
@@ -679,12 +706,62 @@ dd {
   margin: 0;
 }
 
-.raw-mean-transition {
+.comparison-condition-list {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 14px;
+  margin: 12px 0 0;
+}
+
+.comparison-condition-list dt {
   color: #526b66;
+  font-weight: 700;
+}
+
+.comparison-condition-list dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.raw-mean-transition {
+  display: grid;
+  grid-template-columns: 3ch 1.5ch 3ch;
+  justify-content: end;
+  align-items: baseline;
+  color: #526b66;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.comparison-score-value {
+  min-width: 3ch;
+  text-align: right;
+}
+
+.comparison-score-arrow {
+  text-align: center;
 }
 
 .display-delta {
+  display: grid;
+  min-width: 7.5em;
+  justify-items: end;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.display-delta-value,
+.display-delta-label {
+  display: block;
+}
+
+.display-delta-label {
+  color: #526b66;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 .version-notice h2 {
@@ -1015,26 +1092,65 @@ dd {
   background: rgb(255 255 255 / 82%);
 }
 
-.result-palette-selector h2 {
-  margin: 0;
-  font-size: 1.15rem;
+.result-presentation-summary {
+  display: grid;
+  cursor: pointer;
+  list-style: none;
 }
 
-.result-palette-note {
-  margin: 8px 0 0;
+.result-presentation-summary::-webkit-details-marker {
+  display: none;
+}
+
+.result-presentation-summary::after {
+  content: "＋";
+  grid-area: 1 / 2 / 4;
+  align-self: center;
+  color: #26705c;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+details[open] > .result-presentation-summary::after {
+  content: "−";
+}
+
+.result-presentation-title {
+  display: block;
+  grid-column: 1;
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.result-presentation-subtitle,
+.result-presentation-description {
+  grid-column: 1;
   color: #526b66;
+}
+
+.result-presentation-subtitle {
+  margin: 3px 0 0;
+  font-size: 0.9rem;
+}
+
+.result-presentation-description {
+  margin: 8px 0 0;
+  font-size: 0.84rem;
   line-height: 1.7;
 }
 
 .result-palette-options {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   margin-top: 16px;
 }
 
 .result-palette-option {
   display: grid;
+  grid-template-columns: minmax(120px, 0.42fr) minmax(0, 1fr);
+  align-items: center;
   min-width: 0;
   gap: 8px;
   padding: 10px;
@@ -1056,8 +1172,8 @@ dd {
 }
 
 .result-palette-label {
-  overflow-wrap: anywhere;
-  font-size: 0.82rem;
+  overflow-wrap: break-word;
+  font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.45;
 }
@@ -1070,30 +1186,49 @@ dd {
   background: rgb(255 255 255 / 82%);
 }
 
-.result-fragrance-section > h2 {
-  margin: 0;
-  text-align: center;
-}
-
-.result-fragrance-subtitle {
-  margin: 4px 0 0;
-  color: #526b66;
-  text-align: center;
-}
-
 .result-fragrance-scene {
   margin-top: 20px;
+  border: 1px solid #d6e4df;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
 }
 
-.result-fragrance-scene > h3 {
-  margin: 0 0 10px;
+.result-fragrance-scene > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.result-fragrance-scene > summary::-webkit-details-marker {
+  display: none;
+}
+
+.result-fragrance-scene > summary::after {
+  content: "＋";
+  flex: 0 0 auto;
+  color: #26705c;
+  font-weight: 700;
+}
+
+.result-fragrance-scene[open] > summary::after {
+  content: "−";
+}
+
+.result-fragrance-scene > summary h3 {
+  margin: 0;
   font-size: 1rem;
 }
 
 .result-fragrance-candidates {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
+  padding: 0 14px 14px;
 }
 
 .result-fragrance-candidate {

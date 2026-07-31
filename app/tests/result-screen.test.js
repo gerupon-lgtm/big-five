@@ -312,6 +312,7 @@ test("T-006 S-004 history detail returns to the history list without fresh-resul
   renderSavedResultScreen(host, snapshot, labels, {
     onReturnToStart() {},
     onRetry() {},
+    onShare() {},
   }, {
     historyDetail: true,
     drawRadar: () => ({ drawn: true, errorCode: null }),
@@ -329,7 +330,42 @@ test("T-006 S-004 history detail returns to the history list without fresh-resul
     tagName === "button" && textContent === "トップへ戻る"), false);
   assert.equal(elements.some(({ tagName, textContent }) =>
     tagName === "button" && textContent === "もう一度診断する"), false);
+  assert.equal(elements.some(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "結果を共有する"), true);
   assert.doesNotMatch(collectText(host), /結果履歴を見る/);
+});
+
+test("T-008B S-003 history preview keeps only continuation and history return actions", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000054",
+    questionCount: 20,
+  });
+
+  renderSavedResultScreen(host, snapshot, labels, {
+    onContinueDetail() {},
+    onPausePreview() {},
+    onFinishPreview() {},
+    onShare() {},
+  }, {
+    historyDetail: true,
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+  });
+
+  const elements = collectElements(host);
+  const actions = elements.find(({ className }) => className === "result-actions");
+  const buttons = collectElements(actions)
+    .filter(({ tagName }) => tagName === "button")
+    .map(({ textContent }) => textContent);
+  assert.deepEqual(buttons, ["あと30問続ける"]);
+  assert.equal(elements.filter(({ tagName, attributes, textContent }) =>
+    tagName === "a"
+    && attributes.get("href") === "#/history"
+    && textContent === "履歴一覧に戻る").length, 2);
+  assert.doesNotMatch(
+    collectText(host),
+    /中断してトップへ|簡易プレビューで終了する|結果を共有する/,
+  );
 });
 
 test("T-005 F-018 offers three named card colors without changing the diagnosis display", () => {
@@ -348,6 +384,19 @@ test("T-005 F-018 offers three named card colors without changing the diagnosis 
 
   const paletteButtons = collectElements(host).filter(({ className }) =>
     className === "result-palette-option");
+  const paletteDisclosure = collectElements(host).find(({ className }) =>
+    className === "result-palette-selector");
+  assert.equal(paletteDisclosure.tagName, "details");
+  assert.equal(paletteDisclosure.open, false);
+  assert.match(collectText(paletteDisclosure.children[0]), /ココロパレット/);
+  assert.match(
+    collectText(paletteDisclosure.children[0]),
+    /～あなたらしさから着想した色～/,
+  );
+  assert.match(
+    collectText(paletteDisclosure.children[0]),
+    /結果カードの雰囲気を選べます/,
+  );
   assert.equal(paletteButtons.length, 3);
   assert.deepEqual(
     paletteButtons.map(({ attributes }) => attributes.get("data-palette-id")),
@@ -361,10 +410,7 @@ test("T-005 F-018 offers three named card colors without changing the diagnosis 
     paletteButtons.map(({ attributes }) => attributes.get("aria-pressed")),
     ["true", "false", "false"],
   );
-  assert.match(
-    collectText(host),
-    /選んだ色で、結果カードを彩れます。診断結果は変わりません。/,
-  );
+  assert.doesNotMatch(collectText(host), /診断結果は変わりません/);
   assert.match(collectText(host), /標準.*若葉の余白/);
   assert.match(collectText(host), /代替1.*朝空のリズム/);
   assert.match(collectText(host), /代替2.*木陰の灯り/);
@@ -399,11 +445,24 @@ test("T-005 F-018 shows six fragrance ideas in the fixed three-scene order", () 
   });
 
   const text = collectText(host);
+  const fragranceDisclosure = collectElements(host).find(({ className }) =>
+    className === "result-fragrance-section");
+  assert.equal(fragranceDisclosure.tagName, "details");
+  assert.equal(fragranceDisclosure.open, false);
+  assert.match(
+    collectText(fragranceDisclosure.children[0]),
+    /ココロアロマ.*～あなたらしさから着想した香り～/,
+  );
   assert.match(text, /ココロアロマ/);
   assert.match(text, /～あなたらしさから着想した香り～/);
   const scenes = collectElements(host).filter(({ className }) =>
     className === "result-fragrance-scene");
   assert.equal(scenes.length, 3);
+  assert.deepEqual(scenes.map(({ tagName, open }) => [tagName, open]), [
+    ["details", false],
+    ["details", false],
+    ["details", false],
+  ]);
   assert.deepEqual(
     scenes.map((scene) => scene.attributes.get("data-scene-id")),
     ["pause", "reset", "quiet-focus"],
@@ -426,6 +485,53 @@ test("T-005 F-018 shows six fragrance ideas in the fixed three-scene order", () 
   assert.match(text, /香りをイメージするための素材例です/);
   assert.match(text, /現在の心理状態や効果を示すものではありません/);
   assert.doesNotMatch(text, /fragrance-|material-/);
+});
+
+test("T-008B F-018 keeps palette, aroma, and aroma scenes mutually exclusive", () => {
+  const { host } = createFakeScreen();
+  renderSavedResultScreen(
+    host,
+    createTestResultSnapshot({
+      resultId: "00000000-0000-4000-8000-000000000065",
+    }),
+    labels,
+    { onSelectPalette() {} },
+    {
+      presentation,
+      drawRadar: () => ({ drawn: true, errorCode: null }),
+    },
+  );
+
+  const elements = collectElements(host);
+  const palette = elements.find(({ className }) =>
+    className === "result-palette-selector");
+  const aroma = elements.find(({ className }) =>
+    className === "result-fragrance-section");
+  const scenes = elements.filter(({ className }) =>
+    className === "result-fragrance-scene");
+
+  palette.open = true;
+  palette.dispatch("toggle");
+  aroma.open = true;
+  aroma.dispatch("toggle");
+  assert.equal(palette.open, false);
+  assert.equal(aroma.open, true);
+
+  scenes[0].open = true;
+  scenes[0].dispatch("toggle");
+  scenes[1].open = true;
+  scenes[1].dispatch("toggle");
+  assert.equal(scenes[0].open, false);
+  assert.equal(scenes[1].open, true);
+
+  palette.open = true;
+  palette.dispatch("toggle");
+  assert.equal(aroma.open, false);
+  assert.deepEqual(scenes.map(({ open }) => open), [false, false, false]);
+
+  aroma.open = true;
+  aroma.dispatch("toggle");
+  assert.deepEqual(scenes.map(({ open }) => open), [false, false, false]);
 });
 
 test("T-005 F-006 keeps every text and factor reachable when radar drawing fails", () => {

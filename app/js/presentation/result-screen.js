@@ -107,7 +107,33 @@ function drawPaletteSwatch(canvas, baseColors) {
   }
 }
 
-function renderPaletteSelector(parent, snapshot, actions, dependencies) {
+function registerExclusiveDisclosure(
+  disclosure,
+  group,
+  { onClose = () => {} } = {},
+) {
+  disclosure.addEventListener("toggle", () => {
+    if (!disclosure.open) {
+      onClose();
+      return;
+    }
+    for (const other of group) {
+      if (other.disclosure !== disclosure && other.disclosure.open) {
+        other.disclosure.open = false;
+        other.onClose();
+      }
+    }
+  });
+  group.push({ disclosure, onClose });
+}
+
+function renderPaletteSelector(
+  parent,
+  snapshot,
+  actions,
+  dependencies,
+  disclosureGroup,
+) {
   const paletteSet = dependencies.presentation?.palettes;
   const options = paletteSet && Array.isArray(paletteSet.alternatives)
     ? [paletteSet.standard, ...paletteSet.alternatives]
@@ -128,15 +154,29 @@ function renderPaletteSelector(parent, snapshot, actions, dependencies) {
     return;
   }
 
-  const section = parent.ownerDocument.createElement("section");
+  const section = parent.ownerDocument.createElement("details");
   section.className = "result-palette-selector";
-  appendTextElement(section, "h2", "結果カードの色");
+  const summary = parent.ownerDocument.createElement("summary");
+  summary.className = "result-presentation-summary";
   appendTextElement(
-    section,
-    "p",
-    "選んだ色で、結果カードを彩れます。診断結果は変わりません。",
-    "result-palette-note",
+    summary,
+    "span",
+    "ココロパレット",
+    "result-presentation-title",
   );
+  appendTextElement(
+    summary,
+    "span",
+    "～あなたらしさから着想した色～",
+    "result-presentation-subtitle",
+  );
+  appendTextElement(
+    summary,
+    "span",
+    "3つの色から、結果カードの雰囲気を選べます。",
+    "result-presentation-description",
+  );
+  section.append(summary);
   const group = parent.ownerDocument.createElement("div");
   group.className = "result-palette-options";
   group.setAttribute("role", "group");
@@ -168,10 +208,11 @@ function renderPaletteSelector(parent, snapshot, actions, dependencies) {
     group.append(button);
   });
   section.append(group);
+  registerExclusiveDisclosure(section, disclosureGroup);
   parent.append(section);
 }
 
-function renderFragranceIdeas(parent, dependencies) {
+function renderFragranceIdeas(parent, dependencies, disclosureGroup) {
   const scenes = dependencies.presentation?.fragranceScenes;
   if (
     !Array.isArray(scenes)
@@ -196,22 +237,33 @@ function renderFragranceIdeas(parent, dependencies) {
     return;
   }
 
-  const section = parent.ownerDocument.createElement("section");
+  const section = parent.ownerDocument.createElement("details");
   section.className = "result-fragrance-section";
-  appendTextElement(section, "h2", "ココロアロマ");
+  const summary = parent.ownerDocument.createElement("summary");
+  summary.className = "result-presentation-summary";
   appendTextElement(
-    section,
-    "p",
-    "～あなたらしさから着想した香り～",
-    "result-fragrance-subtitle",
+    summary,
+    "span",
+    "ココロアロマ",
+    "result-presentation-title",
   );
+  appendTextElement(
+    summary,
+    "span",
+    "～あなたらしさから着想した香り～",
+    "result-presentation-subtitle",
+  );
+  section.append(summary);
 
+  const sceneDisclosures = [];
   for (const scene of scenes) {
-    const sceneSection = parent.ownerDocument.createElement("section");
+    const sceneSection = parent.ownerDocument.createElement("details");
     sceneSection.className = "result-fragrance-scene";
     sceneSection.setAttribute("data-scene-id", scene.sceneId);
     sceneSection.setAttribute("data-icon-id", scene.iconId);
-    appendTextElement(sceneSection, "h3", scene.label);
+    const sceneSummary = parent.ownerDocument.createElement("summary");
+    appendTextElement(sceneSummary, "h3", scene.label);
+    sceneSection.append(sceneSummary);
     const candidates = parent.ownerDocument.createElement("div");
     candidates.className = "result-fragrance-candidates";
     for (const candidate of scene.candidates) {
@@ -233,6 +285,7 @@ function renderFragranceIdeas(parent, dependencies) {
       candidates.append(article);
     }
     sceneSection.append(candidates);
+    registerExclusiveDisclosure(sceneSection, sceneDisclosures);
     section.append(sceneSection);
   }
   appendTextElement(
@@ -247,6 +300,11 @@ function renderFragranceIdeas(parent, dependencies) {
     "あなたらしさから着想した雰囲気の候補であり、現在の心理状態や効果を示すものではありません。実際の使用方法を案内するものではありません。",
     "result-fragrance-disclaimer",
   );
+  registerExclusiveDisclosure(section, disclosureGroup, {
+    onClose() {
+      for (const scene of sceneDisclosures) scene.disclosure.open = false;
+    },
+  });
   parent.append(section);
 }
 
@@ -582,12 +640,20 @@ function renderActions(parent, snapshot, actions, { historyDetail = false } = {}
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onContinueDetail?.(snapshot));
   }
-  if (snapshot.mode === "preview20" && typeof actions.onPausePreview === "function") {
+  if (
+    !historyDetail
+    && snapshot.mode === "preview20"
+    && typeof actions.onPausePreview === "function"
+  ) {
     const button = appendTextElement(controls, "button", "中断してトップへ", "secondary-button");
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onPausePreview?.());
   }
-  if (snapshot.mode === "preview20" && typeof actions.onFinishPreview === "function") {
+  if (
+    !historyDetail
+    && snapshot.mode === "preview20"
+    && typeof actions.onFinishPreview === "function"
+  ) {
     const button = appendTextElement(controls, "button", "簡易プレビューで終了する", "text-button");
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onFinishPreview?.());
@@ -619,7 +685,10 @@ function renderActions(parent, snapshot, actions, { historyDetail = false } = {}
     );
     historyLink.setAttribute("href", "#/history");
   }
-  if (typeof actions.onShare === "function") {
+  if (
+    !(historyDetail && snapshot.mode === "preview20")
+    && typeof actions.onShare === "function"
+  ) {
     const button = appendTextElement(controls, "button", "結果を共有する", "secondary-button");
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onShare(snapshot));
@@ -654,8 +723,15 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
     notice.setAttribute("role", "alert");
   }
   renderResultHero(main, savedSnapshot, labels, dependencies);
-  renderPaletteSelector(main, savedSnapshot, actions, dependencies);
-  renderFragranceIdeas(main, dependencies);
+  const presentationDisclosures = [];
+  renderPaletteSelector(
+    main,
+    savedSnapshot,
+    actions,
+    dependencies,
+    presentationDisclosures,
+  );
+  renderFragranceIdeas(main, dependencies, presentationDisclosures);
   renderTitleReason(main, savedSnapshot);
   renderTitleReflection(main, savedSnapshot);
   renderRadarAndFactors(main, savedSnapshot, labels, dependencies.drawRadar ?? drawResultRadar);

@@ -261,6 +261,16 @@ test("generated QA artifact serves the shell, brand resources, and one character
     audit.files.includes("assets/characters/character-balanced.webp"),
     true,
   );
+  for (const name of [
+    "aroma-pause-v1.png",
+    "aroma-reset-v1.png",
+    "aroma-quiet-focus-v1.png",
+  ]) {
+    assert.equal(
+      audit.files.includes(`assets/share-card/${name}`),
+      true,
+    );
+  }
 
   const server = createServer(async (request, response) => {
     const relative = request.url === "/" ? "index.html" : request.url.slice(1);
@@ -281,6 +291,9 @@ test("generated QA artifact serves the shell, brand resources, and one character
     "/assets/brand/kokoro-parea-icon-192.png",
     "/assets/brand/kokoro-parea-icon-512.png",
     "/assets/characters/character-balanced.webp",
+    "/assets/share-card/aroma-pause-v1.png",
+    "/assets/share-card/aroma-reset-v1.png",
+    "/assets/share-card/aroma-quiet-focus-v1.png",
     "/manifest/app.webmanifest",
   ]) {
     assert.equal((await fetch(`http://127.0.0.1:${port}${path}`)).status, 200);

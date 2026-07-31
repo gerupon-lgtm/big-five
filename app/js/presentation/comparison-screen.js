@@ -1,3 +1,4 @@
+import { displayScoreFromRawMean } from "../domain/factor-result.js";
 import { comparisonErrorMessage } from "./comparison-copy.js";
 import { appendAppHeader } from "./app-header.js";
 import { appendScreenHeading } from "./screen-heading.js";
@@ -11,6 +12,15 @@ const PRESENTATION_VERSION_FIELDS = [
   "cardTemplateVersion",
   "appVersion",
 ];
+const PRESENTATION_VERSION_LABELS = Object.freeze({
+  resultTextVersion: "結果文版",
+  titleRuleVersion: "称号判定版",
+  characterManifestVersion: "キャラクター一覧版",
+  presentationDefinitionVersion: "表示定義版",
+  cardTemplateVersion: "カードテンプレート版",
+  ["appVersion"]: "アプリ版",
+  characterAssetVersion: "キャラクター画像版",
+});
 
 function renderHistoryReturn(main, message) {
   appendTextElement(main, "p", message, "notice error-notice").setAttribute("role", "alert");
@@ -18,11 +28,11 @@ function renderHistoryReturn(main, message) {
   link.setAttribute("href", "#/history");
 }
 
-function displayDelta(deltaRawMean) {
-  const value = Math.round(deltaRawMean * 25);
-  if (value > 0) return `＋${value}（増加）`;
-  if (value < 0) return `−${Math.abs(value)}（減少）`;
-  return "±0（変化なし）";
+function displayDelta(beforeDisplayScore, afterDisplayScore) {
+  const value = afterDisplayScore - beforeDisplayScore;
+  if (value > 0) return { value: `＋${value}`, label: "（増加）" };
+  if (value < 0) return { value: `−${Math.abs(value)}`, label: "（減少）" };
+  return { value: "±0", label: "（変化なし）" };
 }
 
 function presentationVersionDifferences(before, after) {
@@ -48,7 +58,7 @@ export function renderComparisonScreen(host, state) {
   const main = documentObject.createElement("main");
   main.className = "app-shell comparison-screen";
   appendAppHeader(main, {
-    action: { label: "履歴へ戻る", href: "#/history" },
+    action: { label: "履歴一覧に戻る", href: "#/history" },
   });
   appendScreenHeading(main, {
     kicker: "COMPARISON",
@@ -70,11 +80,18 @@ export function renderComparisonScreen(host, state) {
     const conditions = documentObject.createElement("section");
     conditions.className = "comparison-conditions";
     appendTextElement(conditions, "h2", "比較条件");
-    appendTextElement(
-      conditions,
-      "p",
-      `${before.questionCount}問 · ${before.versionTuple.scaleVersion} · ${before.versionTuple.questionVersion} · ${before.versionTuple.scoringVersion}`,
-    );
+    const conditionList = documentObject.createElement("dl");
+    conditionList.className = "comparison-condition-list";
+    for (const [label, value] of [
+      ["設問数", `${before.questionCount}問`],
+      ["尺度版", before.versionTuple.scaleVersion],
+      ["設問版", before.versionTuple.questionVersion],
+      ["採点版", before.versionTuple.scoringVersion],
+    ]) {
+      appendTextElement(conditionList, "dt", label);
+      appendTextElement(conditionList, "dd", value);
+    }
+    conditions.append(conditionList);
     main.append(conditions);
 
     const dates = documentObject.createElement("div");
@@ -94,19 +111,52 @@ export function renderComparisonScreen(host, state) {
     const factorList = documentObject.createElement("ul");
     factorList.className = "comparison-factor-list";
     for (const factor of comparison.factorDeltas) {
+      const beforeDisplayScore = displayScoreFromRawMean(
+        factor.beforeRawMean,
+        before.questionCount,
+      );
+      const afterDisplayScore = displayScoreFromRawMean(
+        factor.afterRawMean,
+        after.questionCount,
+      );
       const item = documentObject.createElement("li");
       appendTextElement(
         item,
         "h2",
         state.factorLabels[factor.factorId] ?? factor.factorId,
       );
+      const transition = documentObject.createElement("p");
+      transition.className = "raw-mean-transition";
       appendTextElement(
-        item,
-        "p",
-        `${factor.beforeRawMean} → ${factor.afterRawMean}`,
-        "raw-mean-transition",
+        transition,
+        "span",
+        String(beforeDisplayScore),
+        "comparison-score-value",
       );
-      appendTextElement(item, "p", displayDelta(factor.deltaRawMean), "display-delta");
+      appendTextElement(transition, "span", "→", "comparison-score-arrow");
+      appendTextElement(
+        transition,
+        "span",
+        String(afterDisplayScore),
+        "comparison-score-value",
+      );
+      item.append(transition);
+      const delta = displayDelta(beforeDisplayScore, afterDisplayScore);
+      const deltaElement = documentObject.createElement("p");
+      deltaElement.className = "display-delta";
+      appendTextElement(
+        deltaElement,
+        "span",
+        delta.value,
+        "display-delta-value",
+      );
+      appendTextElement(
+        deltaElement,
+        "span",
+        delta.label,
+        "display-delta-label",
+      );
+      item.append(deltaElement);
       factorList.append(item);
     }
     main.append(factorList);
@@ -130,7 +180,11 @@ export function renderComparisonScreen(host, state) {
       );
       const versions = documentObject.createElement("dl");
       for (const difference of differingFields) {
-        appendTextElement(versions, "dt", difference.field);
+        appendTextElement(
+          versions,
+          "dt",
+          PRESENTATION_VERSION_LABELS[difference.field] ?? difference.field,
+        );
         appendTextElement(
           versions,
           "dd",

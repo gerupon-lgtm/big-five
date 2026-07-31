@@ -20,6 +20,8 @@ function makeModel({
   },
   titleReason = "五つの因子を見渡した結果です。",
   factorScores = [75, 60, 50, 40, 25],
+  appVersion = "mvp-1.0.0",
+  cardTemplateVersion = "card-template-v2",
 } = {}) {
   return Object.freeze({
     width: 1080,
@@ -51,8 +53,8 @@ function makeModel({
     ]),
     disclaimer: "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
     versions: Object.freeze({
-      appVersion: "mvp-0.1.0",
-      cardTemplateVersion: "card-template-v1",
+      appVersion,
+      cardTemplateVersion,
       presentationDefinitionVersion: "presentation-v2",
       resultTextVersion: "result-text-v2",
     }),
@@ -102,8 +104,19 @@ function recordingDependencies({
       lineTo: (x, y) => operations.push(["lineTo", kind, x, y]),
       bezierCurveTo: (...args) => operations.push(["bezierCurveTo", kind, ...args]),
       arc: (...args) => operations.push(["arc", kind, ...args]),
-      fill: () => operations.push(["fill", kind, context.fillStyle]),
-      stroke: () => operations.push(["stroke", kind]),
+      fill: () => operations.push([
+        "fill",
+        kind,
+        context.fillStyle,
+        context.globalAlpha,
+      ]),
+      stroke: () => operations.push([
+        "stroke",
+        kind,
+        context.strokeStyle,
+        context.globalAlpha,
+        context.lineWidth,
+      ]),
       fillRect: (...args) => operations.push(["fillRect", kind, ...args]),
       strokeRect: (...args) => operations.push(["strokeRect", kind, ...args]),
       fillText: (text, x, y) =>
@@ -163,7 +176,17 @@ test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and
   const texts = operations
     .filter(([operation, kind]) => operation === "fillText" && kind === "main")
     .map(([, , text]) => text);
-  assert.ok(texts.indexOf("ココロパレア") < texts.indexOf("あなたの称号"));
+  const brandCharacters = operations
+    .filter((operation) =>
+      operation[0] === "fillText" &&
+      operation[1] === "main" &&
+      "ココロパレア".includes(operation[2]) &&
+      operation[2].length === 1);
+  assert.equal(brandCharacters.map((operation) => operation[2]).join(""), "ココロパレア");
+  assert.ok(brandCharacters.at(-1)[3] > brandCharacters[0][3] + 180);
+  assert.ok(operations.indexOf(brandCharacters[0]) <
+    operations.findIndex((operation) =>
+      operation[0] === "fillText" && operation[2] === "あなたの称号"));
   assert.ok(texts.indexOf("あなたの称号") < texts.indexOf("五つの風を見渡す観測者"));
   assert.ok(texts.indexOf("五つの風を見渡す観測者") < texts.indexOf("知性・想像力"));
   assert.ok(texts.indexOf("情緒安定性") < texts.indexOf("ココロアロマ"));
@@ -180,9 +203,9 @@ test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and
   assert.ok(texts.includes("～Big Five 自己理解支援ツール～"));
   assert.ok(texts.includes("香りをイメージするための素材例です"));
   assert.ok(texts.includes("これは性格の優劣や心理学上の正式なタイプを示すものではありません。"));
-  assert.ok(texts.includes("mvp-0.1.0"));
+  assert.ok(texts.includes("mvp-1.0.0"));
   assert.equal(texts.some((text) =>
-    text.includes("card-template-v1") ||
+    text.includes("card-template-v2") ||
     text.includes("presentation-v2") ||
     text.includes("result-text-v2")), false);
   assert.equal(texts.filter((text) => Object.values({
@@ -217,6 +240,77 @@ test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and
   ]);
   assert.ok(operations.some((operation) =>
     operation[0] === "toBlob" && operation[1] === "image/png"));
+});
+
+test("T-007 F-011 reproduces the legacy v1 layout for v1 history", async () => {
+  const { dependencies, operations } = recordingDependencies();
+
+  const result = await renderShareCard(makeModel({
+    appVersion: "mvp-0.1.0",
+    cardTemplateVersion: "card-template-v1",
+  }), dependencies);
+
+  assert.equal(result.status, "ok");
+  assert.ok(operations.some((operation) =>
+    operation[0] === "fillText"
+    && operation[1] === "main"
+    && operation[2] === "ココロパレア"
+    && operation[3] === 408
+    && operation[4] === 100));
+  assert.equal(operations.some((operation) =>
+    operation[0] === "fillText"
+    && operation[1] === "main"
+    && operation[2].length === 1
+    && "ココロパレア".includes(operation[2])), false);
+  assert.ok(operations.some((operation) =>
+    operation[0] === "stroke"
+    && operation[1] === "main"
+    && operation[3] === 0.16
+    && operation[4] === 4));
+});
+
+test("T-007 F-015 rejects an unsupported historical card template safely", async () => {
+  const { dependencies } = recordingDependencies();
+
+  const result = await renderShareCard(makeModel({
+    cardTemplateVersion: "card-template-v999",
+  }), dependencies);
+
+  assert.deepEqual(result, {
+    status: "error",
+    errorCode: "SHARE_CARD_TEMPLATE_UNSUPPORTED",
+  });
+});
+
+test("T-007 F-011 keeps the approved wreath visible without an opaque white cover", async () => {
+  const { dependencies, operations } = recordingDependencies({
+    throwImageData: true,
+  });
+
+  const result = await renderShareCard(makeModel(), dependencies);
+
+  assert.equal(result.status, "ok");
+  const wreathArc = operations.findIndex((operation) =>
+    operation[0] === "arc" &&
+    operation[1] === "main" &&
+    operation[2] === 540 &&
+    operation[3] === 650 &&
+    operation[4] === 270);
+  assert.ok(wreathArc >= 0);
+  const wreathStroke = operations.slice(wreathArc).find((operation) =>
+    operation[0] === "stroke" && operation[1] === "main");
+  assert.ok(wreathStroke[3] >= 0.28);
+  assert.ok(wreathStroke[4] >= 4);
+
+  const backdropArc = operations.findIndex((operation) =>
+    operation[0] === "arc" &&
+    operation[1] === "main" &&
+    operation[2] === 540 &&
+    operation[3] === 650 &&
+    operation[4] === 244);
+  const backdropFill = operations.slice(backdropArc).find((operation) =>
+    operation[0] === "fill" && operation[1] === "main");
+  assert.ok(backdropFill[3] <= 0.6);
 });
 
 test("T-007 F-015 preserves a text-complete card when the cat fails", async () => {

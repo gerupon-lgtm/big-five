@@ -34,7 +34,7 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つの
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
-| appVersion | string | ○ | `mvp-0.1.0`等 |
+| appVersion | string | ○ | `mvp-1.0.0`等 |
 | storageSchemaVersion | integer | ○ | 端末保存スキーマ版 |
 | cardTemplateVersion | string | ○ | 共有カード描画版 |
 | characterManifestVersion | string | ○ | 猫アセット対応版 |
@@ -384,7 +384,7 @@ schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし�
 
 `app/js/domain/result-snapshot.js`の`validateResultSnapshot`と`app/js/infrastructure/progress-storage.js`の`saveResultSnapshot`は、この13フィールドschemaを唯一の結果履歴契約として実装済みである。旧`diagnosisId`付きgeneric result schemaと旧section集合は置き換えた。保存APIは`storage`、`snapshot`、`diagnosisId`、`definition`、`meta`、`now`を受け、対象ProgressRecordを現行定義・版で検証してから保存する。破損・版不一致の対象進捗は上書き・削除しない。
 
-同ファイルの`loadResultHistory`は各ResultSnapshotを再検証し、破損レコードだけを除外して`completedAt`実時刻の降順、同時刻は`resultId`辞書順で返す。`updateResultPaletteSelection`は対象の有効ResultSnapshot 1件だけの`selectedPaletteId`を標準1＋代替2の許可集合内で更新し、途中回答と他の有効・破損・将来結果を保持する。`deleteResultSnapshot`は確認後に指定IDと一致する最初の有効ResultSnapshotだけを削除し、途中回答と他の有効・破損結果を保持する。`deleteAllData`は確認後に途中回答と結果履歴を空にする。S-003/S-004、S-006/S-007画面統合、Q-012画像表示、回答完答からの本番caller、live S-002、Q-013の3パレット選択・保存とココロアロマ6候補表示は実装済みである。Q-014の中断再開・結果段階表示・簡潔な履歴UIをT-008Aで追加する。
+同ファイルの`loadResultHistory`は各ResultSnapshotを再検証し、破損レコードだけを除外して`completedAt`実時刻の降順、同時刻は`resultId`辞書順で返す。`updateResultPaletteSelection`は対象の有効ResultSnapshot 1件だけの`selectedPaletteId`を標準1＋代替2の許可集合内で更新し、途中回答と他の有効・破損・将来結果を保持する。`deleteResultSnapshot`は確認後に指定IDと一致する最初の有効ResultSnapshotだけを削除し、途中回答と他の有効・破損結果を保持する。`deleteAllData`は確認後に途中回答と結果履歴を空にする。画面controllerは全削除成功時だけ`currentProgress`、`liveResult`、保存状態通知を同時に初期化し、開始画面の再開操作を消す。S-003/S-004、S-006/S-007画面統合、Q-012画像表示、回答完答からの本番caller、live S-002、Q-013の3パレット選択・保存とココロアロマ6候補表示、Q-014の中断再開・結果段階表示・簡潔な履歴UIは実装済みである。
 
 ### 3.6 FactorResult
 
@@ -420,7 +420,7 @@ schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし�
 - 各アロマは場面名、香調名、`materialNames`、短い印象を持ち、画像では透過素材画とともに3件を縦に描画する。
 - 共有テキストは同じモデルから生成するが、香りの素材名と`titleReflection`を含めない。
 - `resultId`、生回答、端末情報、公開結果URL、未知フィールドをモデルへ投影しない。
-- 共有物は保存しない。ResultSnapshotだけを永続的な再生成元とし、PNG BlobとObject URLは共有画面の生存期間に限って保持・解放する。
+- 共有物は保存しない。ResultSnapshotだけを永続的な再生成元とし、PNG BlobとObject URLは共有画面の生存期間に限って保持・解放する。rendererは`card-template-v1`の旧配置と`card-template-v2`の現行配置を版で振り分け、未対応版では誤った画像を生成せずテキスト共有へフォールバックする。
 
 ## 4. 比較互換性
 

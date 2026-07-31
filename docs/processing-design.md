@@ -247,7 +247,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 10. 履歴読込は有効なResultSnapshotだけを返し、破損1件を除外しても残りを表示できる。読込だけではStorageEnvelopeを書き換えない。
 11. 履歴順は`completedAt`の実時刻降順、同時刻は`resultId`辞書順とする。返却配列と各snapshotはdeep freezeする。
 12. 個別削除は確認後、指定`resultId`と一致する最初の有効ResultSnapshotだけを削除する。途中回答、非対象結果、破損結果の構造と順序を保持し、対象なしでは書き込まない。
-13. 全削除は確認後、現行StorageEnvelopeの`progressByDiagnosis`と`results`だけを空にする。確認取消、壊れたJSON、将来schema、保存失敗では既存値を変更しない。
+13. 全削除は確認後、現行StorageEnvelopeの`progressByDiagnosis`と`results`を空にする。保存成功後に画面controllerの`currentProgress`、`liveResult`、保存状態通知も初期化し、開始画面へ戻った時に再開操作を表示しない。確認取消、壊れたJSON、将来schema、保存失敗では保存値・画面内状態を変更しない。
 14. S-006は履歴0件でも`データの管理`から全削除へ到達できる。通常カードは猫サムネイル、称号、実施日時、20問／50問、結果表示導線だけを投影する。比較モードは選択ResultSnapshot IDを最大2件の一時状態として持ち、1件目は取消・再選択でき、互換結果だけを2件目候補として有効化する。2件選択だけでは遷移せず、固定アクションバーの明示実行でS-007へ進む。
 
 状態遷移:
@@ -393,7 +393,7 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 
 1. ResultSnapshotと選択／標準PaletteDefinitionを検証する。
 2. `createShareCardModel`で1080×1800のdeep-freeze済みモデルを生成する。
-3. `renderShareCard`が1080×1800のCanvasを作成し、日本語フォントの準備を待つ。
+3. `renderShareCard`が`cardTemplateVersion`を検証し、履歴互換の`card-template-v1`は旧配置、現行`card-template-v2`は調整後配置へ振り分ける。未対応版は画像を生成せず、共有画面の選択可能テキストへフォールバックする。対応版では1080×1800のCanvasを作成し、日本語フォントの準備を待つ。
 4. 選択パレットを変更せず背景へ適用し、副色由来の表面色を十分に白へ混ぜた淡い右上装飾へ適用する。右上装飾を暗色の面にはしない。
 5. 猫と隣接背景の分離状態を評価し、必要なら明暗二重縁取り、影、共通円形リース内のニュートラルな円形面を決定的に適用する。矩形の背景プレートは描画しない。
 6. 背景と二重枠、中央ブランド、称号ラベルと称号、共通円形リース、猫、固定順5因子の棒、`ココロアロマ`の見出しと副題、透過素材画付き代表3件（場面、素材例、短い印象）、共通注記、注意、モード、アプリ版を描画する。
@@ -430,7 +430,7 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 
 - 途中回答破棄: 対象diagnosisIdのProgressRecordだけを削除。
 - 履歴個別削除: `deleteResultSnapshot`でresultId一致の有効な1件だけを削除し、確認を要求。途中回答、非対象結果、破損結果を保持する。
-- 全削除: `deleteAllData`でprogressByDiagnosisとresultsを空にし、確認を要求。
+- 全削除: `deleteAllData`でprogressByDiagnosisとresultsを空にし、成功時だけcontrollerの途中回答・live結果・保存状態通知も初期化する。確認を要求し、取消・失敗では双方を維持する。
 - 削除後の復元機能は提供しない。
 - 保存API失敗時は削除完了と表示せず、再試行または安全な戻り先を示す。
 

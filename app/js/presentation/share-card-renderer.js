@@ -218,11 +218,11 @@ function drawHeaderDecoration(context, model) {
   drawDot(context, 540, 154, 5, model.palette.accent, 0.72);
 }
 
-function drawWreath(context, model) {
+function drawWreath(context, model, templateVersion) {
   context.save();
   context.strokeStyle = model.palette.chart;
-  context.globalAlpha = 0.16;
-  context.lineWidth = 4;
+  context.globalAlpha = templateVersion === "card-template-v1" ? 0.16 : 0.32;
+  context.lineWidth = templateVersion === "card-template-v1" ? 4 : 5;
   context.beginPath();
   context.arc(540, 650, 270, 0, Math.PI * 2);
   context.stroke();
@@ -236,10 +236,12 @@ function drawWreath(context, model) {
   drawDot(context, 772, 713, 4, "#EB8A3A", 0.75);
 }
 
-function drawCharacterBackdrop(context, model, treatment) {
+function drawCharacterBackdrop(context, model, treatment, templateVersion) {
   context.save();
   context.fillStyle = model.palette.surface;
-  context.globalAlpha = treatment === "neutral-plate" ? 0.82 : 0.38;
+  context.globalAlpha = templateVersion === "card-template-v1"
+    ? treatment === "neutral-plate" ? 0.82 : 0.38
+    : treatment === "neutral-plate" ? 0.56 : 0.18;
   context.beginPath();
   context.arc(540, 650, 244, 0, Math.PI * 2);
   context.fill();
@@ -341,6 +343,22 @@ function drawFitText(
   context.fillText(text, x, y);
 }
 
+function drawTrackedText(context, text, x, y, targetWidth) {
+  const characters = [...text];
+  const widths = characters.map(
+    (character) => context.measureText(character).width,
+  );
+  const naturalWidth = widths.reduce((sum, width) => sum + width, 0);
+  const tracking = characters.length > 1
+    ? Math.max(0, targetWidth - naturalWidth) / (characters.length - 1)
+    : 0;
+  let cursor = x;
+  characters.forEach((character, index) => {
+    context.fillText(character, cursor, y);
+    cursor += widths[index] + tracking;
+  });
+}
+
 function drawFrame(context, model) {
   context.save();
   context.strokeStyle = model.palette.text;
@@ -353,14 +371,36 @@ function drawFrame(context, model) {
   context.restore();
 }
 
-function drawBrand(context, model, icon) {
-  if (icon) drawImageContain(context, icon, 292, 50, 94, 94);
+function drawBrand(context, model, icon, templateVersion) {
   context.fillStyle = model.palette.text;
   context.textAlign = "left";
-  setSansFont(context, 48, 600);
-  context.fillText(model.brand.name, 408, 100);
+  if (templateVersion === "card-template-v1") {
+    if (icon) drawImageContain(context, icon, 292, 50, 94, 94);
+    setSansFont(context, 48, 600);
+    context.fillText(model.brand.name, 408, 100);
+    setSansFont(context, 23, 400);
+    context.fillText(model.brand.cardSubtitle, 408, 137);
+    drawHeaderDecoration(context, model);
+    return;
+  }
   setSansFont(context, 23, 400);
-  context.fillText(model.brand.cardSubtitle, 408, 137);
+  const subtitleWidth = context.measureText(model.brand.cardSubtitle).width;
+  setSansFont(context, 48, 600);
+  const naturalTitleWidth = [...model.brand.name].reduce(
+    (width, character) => width + context.measureText(character).width,
+    0,
+  );
+  const titleWidth = Math.max(
+    naturalTitleWidth,
+    Math.min(360, subtitleWidth),
+  );
+  const groupWidth = 94 + 22 + titleWidth;
+  const groupX = (1080 - groupWidth) / 2;
+  const textX = groupX + 116;
+  if (icon) drawImageContain(context, icon, groupX, 50, 94, 94);
+  drawTrackedText(context, model.brand.name, textX, 100, titleWidth);
+  setSansFont(context, 23, 400);
+  context.fillText(model.brand.cardSubtitle, textX, 137);
   drawHeaderDecoration(context, model);
 }
 
@@ -417,45 +457,68 @@ function drawFactors(context, model) {
   });
 }
 
-function drawAromaHeading(context, model) {
+function drawAromaHeading(context, model, templateVersion) {
   context.textAlign = "center";
   context.fillStyle = model.palette.text;
   setSansFont(context, 38, 700);
   context.fillText("ココロアロマ", 540, 1217);
-  drawSprig(context, 330, 1207, 70, Math.PI + 0.08, "#739A58", 1, 0.56);
-  drawSprig(context, 750, 1207, 70, -0.08, "#739A58", -1, 0.56);
-  drawDot(context, 317, 1200, 4, "#EB8A3A");
-  drawDot(context, 763, 1200, 4, "#EB8A3A");
+  if (templateVersion === "card-template-v1") {
+    drawSprig(context, 330, 1207, 70, Math.PI + 0.08, "#739A58", 1, 0.56);
+    drawSprig(context, 750, 1207, 70, -0.08, "#739A58", -1, 0.56);
+    drawDot(context, 317, 1200, 4, "#EB8A3A");
+    drawDot(context, 763, 1200, 4, "#EB8A3A");
+  } else {
+    drawSprig(context, 386, 1207, 58, Math.PI + 0.08, "#739A58", 1, 0.56);
+    drawSprig(context, 694, 1207, 58, -0.08, "#739A58", -1, 0.56);
+    drawDot(context, 375, 1200, 4, "#EB8A3A");
+    drawDot(context, 705, 1200, 4, "#EB8A3A");
+  }
   setSansFont(context, 20, 400);
   context.fillText(AROMA_SUBTITLE, 540, 1255);
 }
 
-function drawAromaRow(context, fragrance, index, image, model) {
+function drawAromaRow(
+  context,
+  fragrance,
+  index,
+  image,
+  model,
+  templateVersion,
+) {
   const y = 1270 + index * 122;
+  const legacy = templateVersion === "card-template-v1";
+  const cardX = legacy ? 90 : 120;
+  const cardWidth = legacy ? 900 : 840;
+  const imageX = legacy ? 105 : 134;
+  const imageWidth = legacy ? 148 : 136;
+  const textX = legacy ? 270 : 286;
+  const textWidth = legacy ? 410 : 390;
+  const rightX = legacy ? 958 : 936;
+  const rightWidth = legacy ? 275 : 250;
   context.save();
   context.fillStyle = model.palette.surface;
   context.globalAlpha = 0.74;
-  fillRoundedRect(context, 90, y, 900, 108, 24);
+  fillRoundedRect(context, cardX, y, cardWidth, 108, 24);
   context.restore();
   context.save();
   context.strokeStyle = AROMA_COLORS[index];
   context.globalAlpha = 0.8;
   context.lineWidth = 2;
-  strokeRoundedRect(context, 90, y, 900, 108, 24);
+  strokeRoundedRect(context, cardX, y, cardWidth, 108, 24);
   context.restore();
 
-  if (image) drawImageContain(context, image, 105, y + 8, 148, 92);
+  if (image) drawImageContain(context, image, imageX, y + 8, imageWidth, 92);
 
   context.textAlign = "left";
   context.fillStyle = model.palette.text;
   setSansFont(context, 18, 500);
-  context.fillText(fragrance.sceneLabel, 270, y + 32);
+  context.fillText(fragrance.sceneLabel, textX, y + 32);
   drawFitText(
     context,
     fragrance.materialNames.join("・"),
-    270,
+    textX,
     y + 70,
-    410,
+    textWidth,
     27,
     20,
     700,
@@ -466,9 +529,9 @@ function drawAromaRow(context, fragrance, index, image, model) {
   drawFitText(
     context,
     fragrance.accordLabel,
-    958,
+    rightX,
     y + 71,
-    275,
+    rightWidth,
     18,
     14,
     600,
@@ -479,51 +542,63 @@ function drawAromaRow(context, fragrance, index, image, model) {
   context.globalAlpha = 0.28;
   context.lineWidth = 1.5;
   context.beginPath();
-  context.moveTo(270, y + 89);
-  context.lineTo(958, y + 89);
+  context.moveTo(textX, y + 89);
+  context.lineTo(rightX, y + 89);
   context.stroke();
   context.restore();
 }
 
-function drawFooter(context, model) {
+function drawFooter(context, model, templateVersion) {
+  const legacy = templateVersion === "card-template-v1";
   context.textAlign = "center";
   context.fillStyle = model.palette.text;
   setSansFont(context, 17, 400);
-  context.fillText(AROMA_NOTE, 540, 1645);
+  context.fillText(AROMA_NOTE, 540, legacy ? 1645 : 1638);
 
   const disclaimerLines = model.disclaimer.split("\n");
   setSansFont(context, 17, 400);
-  const disclaimerStartY = disclaimerLines.length > 1 ? 1668 : 1677;
+  const disclaimerStartY = legacy
+    ? disclaimerLines.length > 1 ? 1668 : 1677
+    : disclaimerLines.length > 1 ? 1662 : 1671;
   disclaimerLines.forEach((line, index) => {
     context.fillText(line, 540, disclaimerStartY + index * 24);
   });
 
   context.fillStyle = model.palette.surface;
   context.globalAlpha = 0.9;
-  fillRoundedRect(context, 382, 1710, 316, 44, 22);
+  fillRoundedRect(
+    context,
+    382,
+    legacy ? 1710 : 1708,
+    316,
+    legacy ? 44 : 40,
+    legacy ? 22 : 20,
+  );
   context.globalAlpha = 1;
   context.fillStyle = model.palette.text;
   setSerifFont(context, 26, 500);
-  context.fillText(model.modeLabel, 540, 1741);
+  context.fillText(model.modeLabel, 540, legacy ? 1741 : 1737);
   setSansFont(context, 16, 400);
   context.globalAlpha = 0.72;
-  context.fillText(model.versions.appVersion, 540, 1765);
+  context.fillText(model.versions.appVersion, 540, legacy ? 1765 : 1768);
   context.globalAlpha = 1;
 }
 
 function drawCard(context, model, assets) {
+  const templateVersion = model.versions.cardTemplateVersion;
   context.fillStyle = model.palette.background;
   context.fillRect(0, 0, model.width, model.height);
   drawPaperTexture(context, model.palette.text);
   drawFrame(context, model);
-  drawBrand(context, model, assets.icon);
+  drawBrand(context, model, assets.icon, templateVersion);
   drawTitle(context, model);
   drawCharacterBackdrop(
     context,
     model,
     assets.character?.treatment ?? "neutral-plate",
+    templateVersion,
   );
-  drawWreath(context, model);
+  drawWreath(context, model, templateVersion);
   if (assets.character) {
     drawContainedImage(
       context,
@@ -533,7 +608,7 @@ function drawCard(context, model, assets) {
     );
   }
   drawFactors(context, model);
-  drawAromaHeading(context, model);
+  drawAromaHeading(context, model, templateVersion);
   model.fragrances.forEach((fragrance, index) => {
     drawAromaRow(
       context,
@@ -541,9 +616,10 @@ function drawCard(context, model, assets) {
       index,
       assets.aromas.get(fragrance.sceneId) ?? null,
       model,
+      templateVersion,
     );
   });
-  drawFooter(context, model);
+  drawFooter(context, model, templateVersion);
 }
 
 function canvasToBlob(canvas, mimeType) {
@@ -568,6 +644,13 @@ async function loadOptionalImage(path, dependencies) {
 }
 
 export async function renderShareCard(model, dependencies) {
+  if (
+    !["card-template-v1", "card-template-v2"].includes(
+      model?.versions?.cardTemplateVersion,
+    )
+  ) {
+    return errorResult("SHARE_CARD_TEMPLATE_UNSUPPORTED");
+  }
   let canvas;
   let context;
   try {

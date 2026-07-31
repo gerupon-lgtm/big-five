@@ -46,7 +46,7 @@ test("startApp renders the start heading and canonical version from a hash route
       .textContent,
     "Big Five 自己理解支援ツール",
   );
-  assert.match(renderedText, /バージョン mvp-0\.1\.0/);
+  assert.match(renderedText, /バージョン mvp-1\.0\.0/);
   assert.match(renderedText, /ipip-ja-50-v1/);
   assert.match(renderedText, /ipip-ja-50-question-set-v1/);
   assert.match(renderedText, /ipip-ja-50-scoring-v1/);
@@ -203,6 +203,36 @@ test("T-006 S-006 confirms and clears progress and history through startApp", ()
   assert.deepEqual(JSON.parse(raw).progressByDiagnosis, {});
   assert.deepEqual(JSON.parse(raw).results, []);
   assert.match(collectText(host), /まだ結果がありません/);
+});
+
+test("T-008B F-004 clears in-memory progress as well as storage after delete all", () => {
+  let raw = null;
+  const { host, navigateHash } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  answerCurrent(host);
+  clickButton(host, "中断してトップへ");
+  assert.match(collectText(host), /途中から再開する/);
+
+  navigateHash("#/history");
+  collectElements(host)
+    .find(({ className }) => className === "history-management-toggle")
+    .dispatch("click");
+  clickButton(host, "端末内データをすべて削除");
+  clickButton(host, "すべて削除する");
+  navigateHash("#/start");
+
+  assert.deepEqual(JSON.parse(raw).progressByDiagnosis, {});
+  assert.deepEqual(JSON.parse(raw).results, []);
+  assert.doesNotMatch(
+    collectText(host),
+    /途中から再開する|残り30問を再開する/,
+  );
 });
 
 test("T-006 S-006/S-007 selects two compatible results and opens their comparison", () => {
@@ -590,9 +620,12 @@ function createAppHarness({
     },
   };
   const host = new FakeElement("div", documentObject);
+  let hashchange;
   const windowObject = {
     location: { hash },
-    addEventListener() {},
+    addEventListener(type, callback) {
+      if (type === "hashchange") hashchange = callback;
+    },
   };
   let uuid = 1;
   startApp({
@@ -605,7 +638,14 @@ function createAppHarness({
     confirmProvider,
     ...appOptions,
   });
-  return { host, windowObject };
+  return {
+    host,
+    windowObject,
+    navigateHash(nextHash) {
+      windowObject.location.hash = nextHash;
+      hashchange?.();
+    },
+  };
 }
 
 test("T-007 S-005 opens one generated share card and revokes it when returning", async () => {
@@ -793,7 +833,7 @@ test("T-005 S-002 renders an answer-free live preview with the exact notice when
 
 test("T-005 F-018 selects and persists one of the current title's three result-card colors", () => {
   let raw = null;
-  const { host } = createAppHarness({
+  const { host, navigateHash } = createAppHarness({
     storage: {
       getItem: () => raw,
       setItem(_key, value) { raw = value; },
@@ -1152,10 +1192,44 @@ test("T-005 S-003 reloads a saved preview into question 21 only with its compati
     storage: { getItem: () => raw, setItem(_key, value) { raw = value; } },
   });
 
+  const resultText = collectText(host);
+  assert.equal(collectElements(host).filter(({ tagName, attributes, textContent }) =>
+    tagName === "a"
+    && attributes.get("href") === "#/history"
+    && textContent === "履歴一覧に戻る").length, 2);
+  assert.doesNotMatch(
+    resultText,
+    /中断してトップへ|簡易プレビューで終了する|結果を共有する/,
+  );
   clickButton(host, "あと30問続ける");
   assert.equal(windowObject.location.hash, "#/answer");
   assert.match(collectText(host), /21 \/ 50問/);
   assert.equal(JSON.parse(raw).progressByDiagnosis[DiagnosticDefinition.diagnosisId].previewDecision, "showPreview");
+});
+
+test("T-008B S-003 reopens a live preview from history with history-only actions", () => {
+  let raw = null;
+  const { host, navigateHash } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+  clickButton(host, "中断してトップへ");
+  navigateHash("#/history");
+  clickButton(host, "結果を見る");
+
+  const text = collectText(host);
+  assert.match(text, /履歴一覧に戻る/);
+  assert.match(text, /あと30問続ける/);
+  assert.doesNotMatch(
+    text,
+    /中断してトップへ|簡易プレビューで終了する|結果を共有する/,
+  );
 });
 
 test("T-005 S-003 hides saved preview continuation without a matching compatible progress record", () => {

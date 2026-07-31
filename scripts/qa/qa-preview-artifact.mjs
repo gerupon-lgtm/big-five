@@ -16,6 +16,9 @@ const REQUIRED_FILES = new Set([
   "assets/brand/kokoro-parea-icon-192.png",
   "assets/brand/kokoro-parea-icon-512.png",
   "assets/brand/kokoro-parea-mark.svg",
+  "assets/share-card/aroma-pause-v1.png",
+  "assets/share-card/aroma-quiet-focus-v1.png",
+  "assets/share-card/aroma-reset-v1.png",
   "index.html",
   "manifest/app.webmanifest",
   "robots.txt",
@@ -24,6 +27,7 @@ const ALLOWED_PATTERNS = [
   /^css\/.+\.css$/,
   /^js\/.+\.js$/,
   /^assets\/characters\/[^/]+\.webp$/,
+  /^assets\/share-card\/[^/]+\.png$/,
 ];
 
 function qaError(code) {
@@ -244,6 +248,12 @@ export async function assembleQaPreview({ appDir, outputDir, allowedParentDir })
     source: path.join(app, "assets", "characters"),
     destination: path.join(output, "assets", "characters"),
     extension: ".webp",
+  });
+  await mkdir(path.join(output, "assets", "share-card"), { recursive: true });
+  await copyTree({
+    source: path.join(app, "assets", "share-card"),
+    destination: path.join(output, "assets", "share-card"),
+    extension: ".png",
   });
   for (const relativePath of [
     "assets/brand/kokoro-parea-icon-192.png",

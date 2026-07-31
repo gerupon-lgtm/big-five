@@ -79,7 +79,7 @@ function validResult(resultId = "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c003", mode = "
     },
     characterAssetVersion: "character-retained-asset-v1",
     selectedPaletteId: "palette-retained",
-    cardTemplateVersion: "card-template-v1",
+    cardTemplateVersion: progress().versionTuple.cardTemplateVersion,
   });
 }
 
