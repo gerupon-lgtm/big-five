@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { selectShareableResultTexts } from "../js/domain/share-result-text.js";
+import {
+  createShareResultText,
+  selectShareableResultTexts,
+} from "../js/domain/share-result-text.js";
 
 function makeRecord(id, section, text) {
   return {
@@ -67,4 +70,48 @@ test("T-007 F-006 rejects non-array input with the stable boundary error", () =>
       { name: "TypeError", message: "INVALID_RESULT_TEXTS" },
     );
   }
+});
+
+test("T-007 F-011 builds deterministic URL-free fallback text", () => {
+  const input = {
+    brandName: "ココロパレア",
+    modeLabel: "50問 詳細結果",
+    titleLabel: "五つの風を見渡す観測者",
+    factors: [
+      { factorId: "intellectImagination", label: "知性・想像力", displayScore: 50 },
+      { factorId: "conscientiousness", label: "勤勉性", displayScore: 50 },
+      { factorId: "extraversion", label: "外向性", displayScore: 50 },
+      { factorId: "agreeableness", label: "協調性", displayScore: 50 },
+      { factorId: "emotionalStability", label: "情緒安定性", displayScore: 50 },
+    ],
+    fragrances: [
+      { sceneId: "pause", sceneLabel: "ひと息つきたい", accordLabel: "草花の香調" },
+      { sceneId: "reset", sceneLabel: "気持ちを切り替えたい", accordLabel: "柑橘の香調" },
+      { sceneId: "quiet-focus", sceneLabel: "静かに取り組みたい", accordLabel: "木質の香調" },
+    ],
+    disclaimer: "香りをイメージするための素材例です。",
+  };
+
+  const text = createShareResultText(input);
+
+  assert.equal(text, [
+    "ココロパレア",
+    "50問 詳細結果",
+    "五つの風を見渡す観測者",
+    "",
+    "知性・想像力：50",
+    "勤勉性：50",
+    "外向性：50",
+    "協調性：50",
+    "情緒安定性：50",
+    "",
+    "ココロアロマ",
+    "ひと息つきたい：草花の香調",
+    "気持ちを切り替えたい：柑橘の香調",
+    "静かに取り組みたい：木質の香調",
+    "",
+    "香りをイメージするための素材例です。",
+  ].join("\n"));
+  assert.doesNotMatch(text, /https?:\/\/|resultId|material/);
+  assert.equal(Object.isFrozen(input), false);
 });
