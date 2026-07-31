@@ -22,6 +22,8 @@ function makeModel({
   factorScores = [75, 60, 50, 40, 25],
   appVersion = "mvp-1.0.0",
   cardTemplateVersion = "card-template-v2",
+  modeLabel = "50問 詳細結果",
+  disclaimer = "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
 } = {}) {
   return Object.freeze({
     width: 1080,
@@ -34,7 +36,7 @@ function makeModel({
       iconPath: "./assets/brand/kokoro-parea-mark.svg",
       cardIconPath: "./assets/brand/kokoro-parea-icon-512.png",
     }),
-    modeLabel: "50問 詳細結果",
+    modeLabel,
     titleLabel: "五つの風を見渡す観測者",
     titleReason,
     character,
@@ -51,7 +53,7 @@ function makeModel({
       Object.freeze({ sceneId: "reset", sceneLabel: "気持ちを切り替えたい", materialNames: Object.freeze(["グレープフルーツ", "ジンジャー"]), accordLabel: "柑橘の香調" }),
       Object.freeze({ sceneId: "quiet-focus", sceneLabel: "静かに取り組みたい", materialNames: Object.freeze(["ヒノキ", "フランキンセンス"]), accordLabel: "木質の香調" }),
     ]),
-    disclaimer: "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
+    disclaimer,
     versions: Object.freeze({
       appVersion,
       cardTemplateVersion,
@@ -120,7 +122,15 @@ function recordingDependencies({
       fillRect: (...args) => operations.push(["fillRect", kind, ...args]),
       strokeRect: (...args) => operations.push(["strokeRect", kind, ...args]),
       fillText: (text, x, y) =>
-        operations.push(["fillText", kind, text, x, y, context.fillStyle]),
+        operations.push([
+          "fillText",
+          kind,
+          text,
+          x,
+          y,
+          context.fillStyle,
+          context.font,
+        ]),
       measureText: (text) => ({ width: text.length * 24 }),
       clearRect: (...args) => operations.push(["clearRect", kind, ...args]),
       drawImage: (...args) => operations.push([
@@ -299,8 +309,8 @@ test("T-007 F-011 keeps the approved wreath visible without an opaque white cove
   assert.ok(wreathArc >= 0);
   const wreathStroke = operations.slice(wreathArc).find((operation) =>
     operation[0] === "stroke" && operation[1] === "main");
-  assert.ok(wreathStroke[3] >= 0.28);
-  assert.ok(wreathStroke[4] >= 4);
+  assert.ok(wreathStroke[3] >= 0.5);
+  assert.ok(wreathStroke[4] >= 5);
 
   const backdropArc = operations.findIndex((operation) =>
     operation[0] === "arc" &&
@@ -310,7 +320,70 @@ test("T-007 F-011 keeps the approved wreath visible without an opaque white cove
     operation[4] === 244);
   const backdropFill = operations.slice(backdropArc).find((operation) =>
     operation[0] === "fill" && operation[1] === "main");
-  assert.ok(backdropFill[3] <= 0.6);
+  assert.ok(backdropFill[3] <= 0.18);
+});
+
+test("T-007 F-011 fills aroma whitespace without overlapping footer copy", async () => {
+  const { dependencies, operations } = recordingDependencies();
+
+  const result = await renderShareCard(makeModel(), dependencies);
+
+  assert.equal(result.status, "ok");
+  const accordLabels = operations.filter((operation) =>
+    operation[0] === "fillText"
+    && operation[1] === "main"
+    && operation[2].endsWith("の香調"));
+  assert.equal(accordLabels.length, 3);
+  assert.ok(accordLabels.every((operation) =>
+    operation[6].includes("21px")));
+
+  const aromaConnectors = operations.filter((operation) =>
+    operation[0] === "arc"
+    && operation[1] === "main"
+    && operation[4] === 2.2
+    && [1335, 1457, 1579].includes(operation[3]));
+  for (const y of [1335, 1457, 1579]) {
+    assert.ok(aromaConnectors.filter((operation) => operation[3] === y).length >= 2);
+  }
+
+  const aromaNote = operations.find((operation) =>
+    operation[0] === "fillText"
+    && operation[1] === "main"
+    && operation[2] === "香りをイメージするための素材例です");
+  const version = operations.find((operation) =>
+    operation[0] === "fillText"
+    && operation[1] === "main"
+    && operation[2] === "mvp-1.0.0");
+  assert.equal(aromaNote[4], 1649);
+  assert.equal(version[4], 1756);
+});
+
+test("T-007 F-011 separates the preview note, two-line disclaimer, mode, and version", async () => {
+  const disclaimer = [
+    "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
+    "20問の簡易プレビューであり、50問で結果が変わることがあります。",
+  ].join("\n");
+  const { dependencies, operations } = recordingDependencies();
+
+  const result = await renderShareCard(makeModel({
+    modeLabel: "20問 簡易プレビュー",
+    disclaimer,
+  }), dependencies);
+
+  assert.equal(result.status, "ok");
+  const textPositions = new Map(
+    operations
+      .filter((operation) => operation[0] === "fillText" && operation[1] === "main")
+      .map((operation) => [operation[2], operation[4]]),
+  );
+  assert.equal(
+    textPositions.get("香りをイメージするための素材例です"),
+    1649,
+  );
+  assert.equal(textPositions.get(disclaimer.split("\n")[0]), 1670);
+  assert.equal(textPositions.get(disclaimer.split("\n")[1]), 1690);
+  assert.equal(textPositions.get("20問 簡易プレビュー"), 1728);
+  assert.equal(textPositions.get("mvp-1.0.0"), 1756);
 });
 
 test("T-007 F-015 preserves a text-complete card when the cat fails", async () => {

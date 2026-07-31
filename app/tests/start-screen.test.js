@@ -45,6 +45,18 @@ test("T-005 S-001 offers a new diagnosis action and accurate available-flow copy
     collectText(host),
     /その時々の自分の傾向に応じて、出会えるもなかも変わります。/,
   );
+  const introduction = collectElements(host).find(({ className }) =>
+    className === "start-introduction");
+  assert.equal(introduction.tagName, "details");
+  assert.equal(introduction.open, false);
+  assert.equal(
+    introduction.children.find(({ tagName }) => tagName === "summary").textContent,
+    "自分を知る。自分と付き合う。そのためのツール。",
+  );
+  assert.equal(
+    collectElements(introduction).filter(({ tagName }) => tagName === "p").length,
+    1,
+  );
   const visibleVersion = collectElements(host).find(({ className }) =>
     className === "start-app-version");
   assert.equal(visibleVersion.textContent, "バージョン mvp-1.0.0");

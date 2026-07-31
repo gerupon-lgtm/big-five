@@ -5,7 +5,7 @@
 | 設計版 | 0.11 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-07-31 |
-| 要件正典 | 要件定義書v1.28 |
+| 要件正典 | 要件定義書v1.29 |
 | 初期リリース | `mvp-0.1.0` |
 | 現在リリース | `mvp-1.0.0` |
 
@@ -13,7 +13,7 @@
 
 | 要件ID | 機能名 | 画面 | 処理 | データ | タスク | 状態 |
 |---|---|---|---|---|---|---|
-| F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008A, T-008 | 共通ヘッダー、`SELF CHECK`／`自分のことを知る`、承認済みBig Five・IPIP説明、`自分を知る。自分と付き合う。そのためのツール。`と愛猫もなかを含む紹介文、同幅の開始・再開操作、現在版表示を実装・browser smoke済み |
+| F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008A, T-008 | 共通ヘッダー、`SELF CHECK`／`自分のことを知る`、承認済みBig Five・IPIP説明、初期状態で見出しだけを示す愛猫もなか紹介文の段階展開、同幅の開始・再開操作、現在版表示を実装・browser smoke済み |
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approvalは2026-07-28に完了 |
 | F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 他画面と同じ通常の共通ヘッダー、緑の進捗／設問`h1`、折り返さない`中断してトップへ`、設問20px・回答文字16px・回答ボタン高56pxを実装・320／360／414px browser smoke済み |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A | 状態別再開、preview終了、新規置換確認、全削除成功時の画面内再開状態破棄を保存成功・失敗・取消まで実装済み |
@@ -30,7 +30,7 @@
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A | 保存失敗時の中断・preview終了、live結果維持、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
-| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-010 | Q-013データ、結果DOM、共有Canvas、`ココロパレット`／`ココロアロマ`の相互排他的な段階展開UIまで実装済み |
+| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-010 | Q-013データ、結果DOM、共有Canvas、色選択後も維持する`ココロパレット`／`ココロアロマ`の相互排他的な段階展開UIまで実装済み |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -418,7 +418,8 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 比較は前回・今回を0〜100整数へ統一し、符号付き差と状態文を二段表示、版条件をラベル付き項目へ変更した。
   - パレットとアロマはnative disclosureで閉じて開始し、外側およびアロマ3場面をそれぞれ同時1件だけ開く。
   - 全削除成功時に保存領域とcontrollerの`currentProgress`／`liveResult`を同時に初期化し、開始画面へ紹介文と現在版を追加した。共有カードQA成果物へ香りの透過PNG3件を同梱し、リース、余白、ブランド文字間、footerを調整して`card-template-v2`へ更新した。
-  - ローカル実ブラウザで320pxの全削除後トップ・比較、360px／960pxの共有カードを確認し、横overflow、文字重複、console warning／errorがないことを確認した。`npm.cmd test`は677件成功・失敗0件、`npm.cmd run check`は60 JavaScript files・canonical runtime version 1件、`npm.cmd run content:validate`は警告657件・エラー0件、`npm.cmd run qa:preview:build`は121 files・10,357,812 bytesで成功した。
+  - 開始紹介文を見出しだけの閉状態から展開するnative disclosureへ変更した。パレット展開後に選択色が共有・保存画像へ反映される説明を置き、色選択による再描画後もパレットだけを開いたまま維持する。共有カードは白い円に見えていたニュートラル面を低濃度化し、リースを強調した。アロマ行は香調説明を拡大し、素材名との可変空白へ装飾点を配置し、共通注記とアプリ版を隣接枠線から離した。
+  - ローカル実ブラウザで320pxの全削除後トップ・比較、360px／960pxの共有カードを確認し、横overflow、文字重複、console warning／errorがないことを確認した。追加UI確認では360pxの紹介文開閉と色選択後のパレット展開維持、960pxのリース・アロマ装飾点・footer非重複を確認した。`npm.cmd test`は681件成功・失敗0件、`npm.cmd run check`は60 JavaScript files・canonical runtime version 1件、`npm.cmd run content:validate`は警告657件・エラー0件、`npm.cmd run qa:preview:build`は121 files・10,359,380 bytesで成功した。
 
 ### T-008 全画面統合・レスポンシブ・アクセシビリティ
 

@@ -21,11 +21,11 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
     "lead start-lead",
   );
 
-  const introduction = documentObject.createElement("section");
+  const introduction = documentObject.createElement("details");
   introduction.className = "start-introduction";
   appendTextElement(
     introduction,
-    "h2",
+    "summary",
     "自分を知る。自分と付き合う。そのためのツール。",
   );
   appendTextElement(

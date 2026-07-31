@@ -853,6 +853,9 @@ test("T-005 F-018 selects and persists one of the current title's three result-c
   assert.equal(JSON.parse(raw).results[0].selectedPaletteId, alternativeId);
   const rerendered = collectElements(host).filter(({ className }) =>
     className === "result-palette-option");
+  const paletteDisclosure = collectElements(host).find(({ className }) =>
+    className === "result-palette-selector");
+  assert.equal(paletteDisclosure.open, true);
   assert.equal(
     rerendered.find(({ attributes }) =>
       attributes.get("data-palette-id") === alternativeId)

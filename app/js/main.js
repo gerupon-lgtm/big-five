@@ -569,6 +569,7 @@ export function startApp({
     persistenceFailed,
     previewProgress = null,
     historyDetail = false,
+    presentationState = {},
   ) {
     const definitionRegistration = resolveRegisteredDiagnosticDefinition(
       snapshot.versionTuple,
@@ -691,6 +692,7 @@ export function startApp({
           persistenceFailed,
           previewProgress,
           historyDetail,
+          { paletteExpanded: true },
         );
       },
     } : {};
@@ -741,6 +743,7 @@ export function startApp({
       observeViewport: effectiveObserveViewport,
       historyDetail,
       presentation,
+      paletteExpanded: presentationState.paletteExpanded === true,
       definitionSupported: definitionRegistration !== null,
       ...(definitionRegistration ? {
         questionComposition:

@@ -209,20 +209,42 @@ h1 {
 
 .start-introduction {
   margin-top: 24px;
-  padding: 20px;
   border-radius: 14px;
   background: #f3f8f6;
 }
 
-.start-introduction h2 {
+.start-introduction summary {
+  padding: 20px 48px 20px 20px;
+  cursor: pointer;
+  list-style: none;
   margin: 0;
   color: #1f6955;
   font-size: clamp(1.1rem, 1rem + 0.45vw, 1.3rem);
+  font-weight: 700;
   line-height: 1.6;
+  position: relative;
+}
+
+.start-introduction summary::-webkit-details-marker {
+  display: none;
+}
+
+.start-introduction summary::after {
+  content: "＋";
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  font-size: 1.35rem;
+}
+
+.start-introduction[open] summary::after {
+  content: "−";
 }
 
 .start-introduction p {
-  margin: 12px 0 0;
+  margin: 0;
+  padding: 0 20px 20px;
   color: #45635d;
   line-height: 1.85;
 }
@@ -1144,7 +1166,14 @@ details[open] > .result-presentation-summary::after {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 12px;
+}
+
+.result-palette-share-note {
+  margin: 16px 0 0;
+  color: #45635d;
+  font-size: 0.9rem;
+  line-height: 1.7;
 }
 
 .result-palette-option {

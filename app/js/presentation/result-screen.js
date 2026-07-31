@@ -177,6 +177,12 @@ function renderPaletteSelector(
     "result-presentation-description",
   );
   section.append(summary);
+  appendTextElement(
+    section,
+    "p",
+    "選んだ色は、画像として共有・保存する結果カードに反映されます。",
+    "result-palette-share-note",
+  );
   const group = parent.ownerDocument.createElement("div");
   group.className = "result-palette-options";
   group.setAttribute("role", "group");
@@ -208,6 +214,7 @@ function renderPaletteSelector(
     group.append(button);
   });
   section.append(group);
+  section.open = dependencies.paletteExpanded === true;
   registerExclusiveDisclosure(section, disclosureGroup);
   parent.append(section);
 }

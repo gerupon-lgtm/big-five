@@ -397,6 +397,10 @@ test("T-005 F-018 offers three named card colors without changing the diagnosis 
     collectText(paletteDisclosure.children[0]),
     /結果カードの雰囲気を選べます/,
   );
+  assert.match(
+    collectText(paletteDisclosure),
+    /選んだ色は、画像として共有・保存する結果カードに反映されます。/,
+  );
   assert.equal(paletteButtons.length, 3);
   assert.deepEqual(
     paletteButtons.map(({ attributes }) => attributes.get("data-palette-id")),
@@ -429,6 +433,28 @@ test("T-005 F-018 offers three named card colors without changing the diagnosis 
     5,
   );
   assert.match(collectText(host), /五つの風を見渡す観測者/);
+});
+
+test("T-008B F-018 can render the palette disclosure open after a color rerender", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000069",
+  });
+
+  renderSavedResultScreen(host, snapshot, labels, {
+    onSelectPalette() {},
+  }, {
+    presentation,
+    paletteExpanded: true,
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+  });
+
+  const paletteDisclosure = collectElements(host).find(({ className }) =>
+    className === "result-palette-selector");
+  const fragranceDisclosure = collectElements(host).find(({ className }) =>
+    className === "result-fragrance-section");
+  assert.equal(paletteDisclosure.open, true);
+  assert.equal(fragranceDisclosure.open, false);
 });
 
 test("T-005 F-018 shows six fragrance ideas in the fixed three-scene order", () => {

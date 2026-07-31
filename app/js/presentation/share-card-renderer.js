@@ -219,19 +219,21 @@ function drawHeaderDecoration(context, model) {
 }
 
 function drawWreath(context, model, templateVersion) {
+  const legacy = templateVersion === "card-template-v1";
   context.save();
   context.strokeStyle = model.palette.chart;
-  context.globalAlpha = templateVersion === "card-template-v1" ? 0.16 : 0.32;
-  context.lineWidth = templateVersion === "card-template-v1" ? 4 : 5;
+  context.globalAlpha = legacy ? 0.16 : 0.56;
+  context.lineWidth = legacy ? 4 : 5.5;
   context.beginPath();
   context.arc(540, 650, 270, 0, Math.PI * 2);
   context.stroke();
   context.restore();
 
-  drawSprig(context, 322, 777, 128, -2.18, model.palette.chart, 1, 0.48);
-  drawSprig(context, 300, 610, 92, -1.72, model.palette.chart, -1, 0.45);
-  drawSprig(context, 758, 790, 132, -0.95, model.palette.accent, -1, 0.47);
-  drawSprig(context, 785, 610, 94, -1.42, model.palette.accent, 1, 0.44);
+  const sprigAlpha = legacy ? 0.48 : 0.66;
+  drawSprig(context, 322, 777, 128, -2.18, model.palette.chart, 1, sprigAlpha);
+  drawSprig(context, 300, 610, 92, -1.72, model.palette.chart, -1, legacy ? 0.45 : 0.62);
+  drawSprig(context, 758, 790, 132, -0.95, model.palette.accent, -1, legacy ? 0.47 : 0.65);
+  drawSprig(context, 785, 610, 94, -1.42, model.palette.accent, 1, legacy ? 0.44 : 0.61);
   drawDot(context, 308, 718, 4, "#EB8A3A", 0.75);
   drawDot(context, 772, 713, 4, "#EB8A3A", 0.75);
 }
@@ -241,7 +243,7 @@ function drawCharacterBackdrop(context, model, treatment, templateVersion) {
   context.fillStyle = model.palette.surface;
   context.globalAlpha = templateVersion === "card-template-v1"
     ? treatment === "neutral-plate" ? 0.82 : 0.38
-    : treatment === "neutral-plate" ? 0.56 : 0.18;
+    : treatment === "neutral-plate" ? 0.14 : 0.04;
   context.beginPath();
   context.arc(540, 650, 244, 0, Math.PI * 2);
   context.fill();
@@ -341,6 +343,7 @@ function drawFitText(
     applyFont(context, size, weight);
   }
   context.fillText(text, x, y);
+  return context.measureText(text).width;
 }
 
 function drawTrackedText(context, text, x, y, targetWidth) {
@@ -513,7 +516,7 @@ function drawAromaRow(
   context.fillStyle = model.palette.text;
   setSansFont(context, 18, 500);
   context.fillText(fragrance.sceneLabel, textX, y + 32);
-  drawFitText(
+  const materialWidth = drawFitText(
     context,
     fragrance.materialNames.join("・"),
     textX,
@@ -526,16 +529,24 @@ function drawAromaRow(
 
   context.textAlign = "right";
   context.fillStyle = AROMA_TEXT_COLORS[index];
-  drawFitText(
+  const accordWidth = drawFitText(
     context,
     fragrance.accordLabel,
     rightX,
     y + 71,
     rightWidth,
-    18,
-    14,
+    legacy ? 18 : 21,
+    legacy ? 14 : 16,
     600,
   );
+
+  if (!legacy) {
+    const connectorStart = textX + Math.min(materialWidth, textWidth) + 18;
+    const connectorEnd = rightX - Math.min(accordWidth, rightWidth) - 18;
+    for (let x = connectorStart; x <= connectorEnd; x += 18) {
+      drawDot(context, x, y + 65, 2.2, AROMA_COLORS[index], 0.42);
+    }
+  }
 
   context.save();
   context.strokeStyle = AROMA_COLORS[index];
@@ -552,35 +563,38 @@ function drawFooter(context, model, templateVersion) {
   const legacy = templateVersion === "card-template-v1";
   context.textAlign = "center";
   context.fillStyle = model.palette.text;
-  setSansFont(context, 17, 400);
-  context.fillText(AROMA_NOTE, 540, legacy ? 1645 : 1638);
+  setSansFont(context, legacy ? 17 : 16, 400);
+  context.fillText(AROMA_NOTE, 540, legacy ? 1645 : 1649);
 
   const disclaimerLines = model.disclaimer.split("\n");
-  setSansFont(context, 17, 400);
+  setSansFont(context, legacy ? 17 : 15, 400);
   const disclaimerStartY = legacy
     ? disclaimerLines.length > 1 ? 1668 : 1677
-    : disclaimerLines.length > 1 ? 1662 : 1671;
+    : disclaimerLines.length > 1 ? 1670 : 1678;
   disclaimerLines.forEach((line, index) => {
-    context.fillText(line, 540, disclaimerStartY + index * 24);
+    context.fillText(line, 540, disclaimerStartY + index * (legacy ? 24 : 20));
   });
 
+  const modeBoxY = legacy
+    ? 1710
+    : disclaimerLines.length > 1 ? 1703 : 1708;
   context.fillStyle = model.palette.surface;
   context.globalAlpha = 0.9;
   fillRoundedRect(
     context,
     382,
-    legacy ? 1710 : 1708,
+    modeBoxY,
     316,
-    legacy ? 44 : 40,
-    legacy ? 22 : 20,
+    legacy ? 44 : 34,
+    legacy ? 22 : 17,
   );
   context.globalAlpha = 1;
   context.fillStyle = model.palette.text;
-  setSerifFont(context, 26, 500);
-  context.fillText(model.modeLabel, 540, legacy ? 1741 : 1737);
-  setSansFont(context, 16, 400);
+  setSerifFont(context, legacy ? 26 : 24, 500);
+  context.fillText(model.modeLabel, 540, legacy ? 1741 : modeBoxY + 25);
+  setSansFont(context, legacy ? 16 : 13, 400);
   context.globalAlpha = 0.72;
-  context.fillText(model.versions.appVersion, 540, legacy ? 1765 : 1768);
+  context.fillText(model.versions.appVersion, 540, legacy ? 1765 : 1756);
   context.globalAlpha = 1;
 }
 

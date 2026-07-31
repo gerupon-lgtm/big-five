@@ -54,6 +54,33 @@ test("formal app satisfies the static project contract", async () => {
   assert.equal(result.prototypeImports, 0);
 });
 
+test("major design documents reference the canonical requirements version", async () => {
+  const [requirements, screens, processing, tasks, basicDesign] = await Promise.all([
+    readProjectDocument(documentPaths.requirements),
+    readProjectDocument(documentPaths.screens),
+    readProjectDocument(documentPaths.processing),
+    readProjectDocument(documentPaths.tasks),
+    readProjectDocument(documentPaths.basicDesign),
+  ]);
+  const requirementVersion = requirements.match(/^\|\s*文書版\s*\|\s*(\d+\.\d+)\s*\|$/m)?.[1];
+
+  assert.ok(requirementVersion, "canonical requirements version is missing");
+  for (const [document, name, field] of [
+    [screens, documentPaths.screens, "入力要件"],
+    [processing, documentPaths.processing, "入力要件"],
+    [tasks, documentPaths.tasks, "要件正典"],
+  ]) {
+    assert.ok(
+      document.includes(`| ${field} | 要件定義書v${requirementVersion} |`),
+      `${name} does not reference requirements v${requirementVersion}`,
+    );
+  }
+  assert.ok(
+    basicDesign.includes(`要件定義 | \`docs/requirements/2026-07-20-big-five-self-understanding-requirements.md\` v${requirementVersion}`),
+    `${documentPaths.basicDesign} does not reference requirements v${requirementVersion}`,
+  );
+});
+
 test("Q-006 data model documents the exact evidence, text, rendered, and snapshot schemas", async () => {
   const text = await readProjectDocument(documentPaths.dataModel);
 
@@ -368,7 +395,6 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     "ユーザーの最終視覚承認を得た",
   ], documentPaths.tasks);
   assertIncludesAll(basicDesign, [
-    "要件定義 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.28",
     "1080×1800",
     "完成カードをSVGからラスタライズしない",
   ], documentPaths.basicDesign);
