@@ -145,7 +145,10 @@ test("T-007 F-011 creates the exact immutable 1080 by 1800 detail card model", (
     sceneLabel: "ひと息つきたい",
     accordLabel: "まろやかな甘みの草花の香調",
   });
-  assert.equal(model.disclaimer, "香りをイメージするための素材例です。");
+  assert.equal(
+    model.disclaimer,
+    "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
+  );
   assert.deepEqual(Object.keys(model.versions), [
     "appVersion",
     "cardTemplateVersion",
@@ -164,7 +167,10 @@ test("T-007 F-011 creates the exact immutable 1080 by 1800 detail card model", (
   assert.match(model.shareText, /ココロパレア\n50問 詳細結果\n五つの風を見渡す観測者/);
   assert.match(model.shareText, /知性・想像力：50/);
   assert.match(model.shareText, /ひと息つきたい：まろやかな甘みの草花の香調/);
-  assert.match(model.shareText, /香りをイメージするための素材例です。$/);
+  assert.match(
+    model.shareText,
+    /これは性格の優劣や心理学上の正式なタイプを示すものではありません。$/,
+  );
   assert.doesNotMatch(
     JSON.stringify(model),
     /answers|titleReflection|materialIds|materialNames|publicOrigin|resultId|https?:\/\//,
@@ -184,6 +190,10 @@ test("T-007 F-011 creates preview and no-cat variants without changing the resul
   assert.equal(model.factors.length, 5);
   assert.equal(model.fragrances.length, 3);
   assert.match(model.shareText, /20問 簡易プレビュー/);
+  assert.equal(model.disclaimer, [
+    "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
+    "20問の簡易プレビューであり、50問で結果が変わることがあります。",
+  ].join("\n"));
 });
 
 test("T-007 F-011 rejects malformed or contaminated card inputs with one stable error", () => {

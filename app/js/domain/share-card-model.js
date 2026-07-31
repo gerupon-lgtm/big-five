@@ -56,7 +56,10 @@ const BRAND_FIELDS = Object.freeze([
 ]);
 const HEX_COLOR_PATTERN = /^#[0-9A-F]{6}$/;
 const CARD_SUBTITLE = "～Big Five 自己理解支援ツール～";
-const DISCLAIMER = "香りをイメージするための素材例です。";
+const DISCLAIMER =
+  "これは性格の優劣や心理学上の正式なタイプを示すものではありません。";
+const PREVIEW_DISCLAIMER =
+  "20問の簡易プレビューであり、50問で結果が変わることがあります。";
 
 function invalidModel() {
   throw new TypeError("SHARE_CARD_MODEL_INVALID");
@@ -202,13 +205,16 @@ function buildModel(input) {
   const modeLabel = snapshot.mode === "preview20"
     ? "20問 簡易プレビュー"
     : "50問 詳細結果";
+  const disclaimer = snapshot.mode === "preview20"
+    ? `${DISCLAIMER}\n${PREVIEW_DISCLAIMER}`
+    : DISCLAIMER;
   const shareText = createShareResultText({
     brandName: brand.name,
     modeLabel,
     titleLabel: input.titleLabel,
     factors,
     fragrances,
-    disclaimer: DISCLAIMER,
+    disclaimer,
   });
 
   return deepFreeze({
@@ -223,7 +229,7 @@ function buildModel(input) {
     character,
     factors,
     fragrances,
-    disclaimer: DISCLAIMER,
+    disclaimer,
     versions: {
       appVersion: snapshot.versionTuple.appVersion,
       cardTemplateVersion: snapshot.versionTuple.cardTemplateVersion,

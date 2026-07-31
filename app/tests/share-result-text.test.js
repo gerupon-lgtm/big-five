@@ -89,7 +89,7 @@ test("T-007 F-011 builds deterministic URL-free fallback text", () => {
       { sceneId: "reset", sceneLabel: "気持ちを切り替えたい", accordLabel: "柑橘の香調" },
       { sceneId: "quiet-focus", sceneLabel: "静かに取り組みたい", accordLabel: "木質の香調" },
     ],
-    disclaimer: "香りをイメージするための素材例です。",
+    disclaimer: "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
   };
 
   const text = createShareResultText(input);
@@ -110,7 +110,7 @@ test("T-007 F-011 builds deterministic URL-free fallback text", () => {
     "気持ちを切り替えたい：柑橘の香調",
     "静かに取り組みたい：木質の香調",
     "",
-    "香りをイメージするための素材例です。",
+    "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
   ].join("\n"));
   assert.doesNotMatch(text, /https?:\/\/|resultId|material/);
   assert.equal(Object.isFrozen(input), false);
