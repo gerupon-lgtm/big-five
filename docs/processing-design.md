@@ -266,6 +266,8 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 live controllerは`#/answer`を正規routeとし、ResultSnapshotをメモリ上にも1件だけ保持できる。結果保存失敗時はlive snapshotを履歴より先に解決して結果画面を成立させ、`結果は表示できましたが、この端末の履歴には保存できませんでした。`を表示する。再読込後はlive snapshotを復元せず、保存履歴にないresultIdは既存の欠落結果フォールバックへ送る。保存済みpreviewは、互換ProgressRecordが`preview20`・`showPreview`・20回答で、snapshotとVersionTupleが完全一致する場合だけ追加30問へ進める。対応進捗がない場合は無反応の継続ボタンを描画しない。
 
+履歴から保存済みpreviewを開き、上記の互換ProgressRecordがある場合は、診断直後のlive previewとは別の操作モデルを使う。ヘッダーと結果操作へ`履歴一覧に戻る`を設定し、結果操作は追加30問の継続と履歴一覧への復帰だけを返す。`中断してトップへ`と`簡易プレビューで終了する`のcallbackは渡さない。
+
 結果画面の表示状態は永続化しない。開いている因子IDと詳細sectionはpresentation層の一時状態とし、次の規則で更新する。
 
 - `openFactorId`は`null`または既知のFactorId 1件。
@@ -327,6 +329,9 @@ ResultSnapshotの因子文（preview 5件／detail 40件）はsection-firstのhi
 - completedAtが古い方をbefore、新しい方をafterとする。
 - 同時刻ならresultIdの辞書順で安定化する。
 - 差はrawMean同士で計算し、表示時だけ0〜100相当へ変換・丸める。
+- S-007表示モデルは前回と今回の`rawMean`をそれぞれ既存の0〜100表示式で整数化し、差も同じ0〜100軸の符号付き整数として表示する。比較互換判定と差の正は`rawMean`のまま維持し、表示整数をドメイン判定へ戻さない。
+- 差表示は`{ signedValue, changeLabel }`相当の別フィールドへ分け、数値行と状態行を別DOMにする。整数表示では`±0`、小数表示を将来採用する場合は小数点以下2桁固定の`±0.00`とし、CSSの固定桁数字で位置をそろえる。
+- 比較条件は連結済み文字列ではなく、`questionCount`、`scaleVersion`、`questionVersion`、`scoringVersion`を利用者向けラベル付きの4項目へ投影する。
 - 互換結果と因子差分配列はdeep freezeし、生回答、表示整数、ResultSnapshot全体を返さない。
 - 「上がった／下がった」だけでなく、「回答時の状況でも変動する」と表示する。
 - S-007は保存履歴から両IDを再検証し、欠落・削除済み・破損・非互換では差を計算しない。ID不足の直接URLはS-006へ戻す。
@@ -360,6 +365,7 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 
 - `selectPresentation`はTitleProfileDefinitionとPresentationDefinitionSetだけを受け取る純粋関数とし、生回答、得点、因子band、猫色、DOM、Canvas、localStorage、ネットワークを受け取らない。
 - 結果モデルは`standard`に標準1件、`alternatives`に代替2件を分けて保持し、画面では標準、代替1、代替2の固定順で表示する。
+- presentation層は`openSuggestionPanel`を`null`、`palette`、`aroma`のいずれかとして一時保持する。初期値は`null`とし、`ココロパレット`を開いた時だけ3候補を縦1列で描画する。開閉状態はResultSnapshotへ保存しない。
 - 利用者選択はpresentation stateとselectedPaletteIdだけを更新。
 - `resolvePaletteUsage`で主・副・差の3基調色を背景、表面、アクセント、文字、グラフへ決定的に展開し、コントラストと猫用の分離補助を確認する。
 - 不正パレットは標準へ戻す。
@@ -367,7 +373,8 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 
 ### 香り
 
-- `pause`、`reset`、`quiet-focus`の固定順で、各2件、合計6件を同時表示する。
+- `pause`、`reset`、`quiet-focus`の固定順で、各2件、合計6件を持つ。
+- `ココロアロマ`の初期状態は外側を閉じる。外側を開いた直後は3場面をすべて閉じ、`openAromaSceneId`は`null`とする。場面を開くと同時に以前の場面を閉じる。`ココロパレット`を開くとアロマ外側と場面を閉じる。
 - 共有は各場面の`shareFragranceId`を1件、合計3件へ要約する。
 - `scenes.csv`の固定`icon_id`、`fragrances.csv`の8値`family_id`、`fragrance-material-examples.csv`の素材ID 1〜2件をcompilerで結合する。
 - selectorは素材IDから表示名を解決し、結果用6候補と共有カード用代表3件を生成する。共有カード画像には素材名と短い印象を含めるが、共有テキストには素材名を含めない。
