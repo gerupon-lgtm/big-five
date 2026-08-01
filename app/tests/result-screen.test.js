@@ -368,7 +368,7 @@ test("T-008B S-003 history preview keeps only continuation and history return ac
   );
 });
 
-test("T-005 F-018 offers three named card colors without changing the diagnosis display", () => {
+test("T-008B F-018 renders three always-visible circular Palette choices", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000063",
@@ -382,28 +382,26 @@ test("T-005 F-018 offers three named card colors without changing the diagnosis 
     drawRadar: () => ({ drawn: true, errorCode: null }),
   });
 
-  const paletteButtons = collectElements(host).filter(({ className }) =>
-    className === "result-palette-option");
-  const paletteDisclosure = collectElements(host).find(({ className }) =>
+  const paletteChoices = collectElements(host).filter(({ tagName, attributes }) =>
+    tagName === "button" && attributes.has("data-palette-id"));
+  const palette = collectElements(host).find(({ className }) =>
     className === "result-palette-selector");
-  assert.equal(paletteDisclosure.tagName, "details");
-  assert.equal(paletteDisclosure.open, false);
-  assert.match(collectText(paletteDisclosure.children[0]), /ココロパレット/);
-  assert.match(
-    collectText(paletteDisclosure.children[0]),
-    /～あなたらしさから着想した色～/,
-  );
-  assert.match(
-    collectText(paletteDisclosure.children[0]),
-    /結果カードの雰囲気を選べます/,
-  );
-  assert.match(
-    collectText(paletteDisclosure),
-    /選んだ色は、画像として共有・保存する結果カードに反映されます。/,
-  );
-  assert.equal(paletteButtons.length, 3);
+  assert.equal(palette.tagName, "section");
+  assert.notEqual(palette.tagName, "details");
+  assert.equal(palette.attributes.has("data-palette-selector"), true);
+  assert.match(collectText(palette), /ココロパレット/);
+  assert.match(collectText(palette), /～あなたらしさから着想した色～/);
+  assert.match(collectText(palette), /共有カードの色合いに反映されます/);
   assert.deepEqual(
-    paletteButtons.map(({ attributes }) => attributes.get("data-palette-id")),
+    collectElements(palette)
+      .filter(({ attributes }) => attributes.has("data-palette-option-label"))
+      .map(({ textContent }) => textContent),
+    ["パレット1", "パレット2", "パレット3"],
+  );
+  assert.doesNotMatch(collectText(palette), /標準|代替|選択中/);
+  assert.equal(paletteChoices.length, 3);
+  assert.deepEqual(
+    paletteChoices.map(({ attributes }) => attributes.get("data-palette-id")),
     [
       "palette-default",
       "palette-alternative-1",
@@ -411,21 +409,31 @@ test("T-005 F-018 offers three named card colors without changing the diagnosis 
     ],
   );
   assert.deepEqual(
-    paletteButtons.map(({ attributes }) => attributes.get("aria-pressed")),
+    paletteChoices.map(({ attributes }) => attributes.get("aria-pressed")),
     ["true", "false", "false"],
   );
-  assert.doesNotMatch(collectText(host), /診断結果は変わりません/);
-  assert.match(collectText(host), /標準.*若葉の余白/);
-  assert.match(collectText(host), /代替1.*朝空のリズム/);
-  assert.match(collectText(host), /代替2.*木陰の灯り/);
-  const swatch = paletteButtons[0].children[0];
+  assert.match(paletteChoices[0].attributes.get("aria-label"), /パレット1、選択中/);
+  assert.match(paletteChoices[1].attributes.get("aria-label"), /パレット2/);
+  assert.doesNotMatch(collectText(host), /若葉の余白|朝空のリズム|木陰の灯り/);
+  const swatch = paletteChoices[0].children[0];
   assert.equal(swatch.tagName, "canvas");
-  assert.equal(swatch.attributes.get("width"), "300");
-  assert.equal(swatch.attributes.get("height"), "32");
-  assert.equal(swatch.attributes.has("style"), false);
+  assert.equal(swatch.className, "palette-choice__swatch");
+  assert.equal(swatch.attributes.get("width"), "72");
+  assert.equal(swatch.attributes.get("height"), "72");
 
-  paletteButtons[1].dispatch("click");
+  const factorTrigger = collectElements(host).find(({ attributes }) =>
+    attributes.has("data-factor-disclosure-trigger"));
+  const factorPanel = collectElements(host).find(({ attributes }) =>
+    attributes.has("data-factor-disclosure-panel"));
+  factorTrigger.dispatch("click");
+  paletteChoices[1].dispatch("click");
   assert.deepEqual(selected, ["palette-alternative-1"]);
+  assert.equal(paletteChoices[1].attributes.get("aria-pressed"), "true");
+  assert.match(paletteChoices[1].className, /palette-choice--selected/);
+  assert.equal(paletteChoices[1].children[1].textContent, "✓");
+  assert.equal(paletteChoices[1].children[1].hidden, false);
+  assert.equal(factorPanel.hidden, false);
+  assert.equal(factorTrigger.attributes.get("aria-expanded"), "true");
   assert.equal(snapshot.selectedPaletteId, "palette-default");
   assert.equal(
     collectElements(host).filter(({ className }) =>
@@ -435,7 +443,7 @@ test("T-005 F-018 offers three named card colors without changing the diagnosis 
   assert.match(collectText(host), /五つの風を見渡す観測者/);
 });
 
-test("T-008B F-018 can render the palette disclosure open after a color rerender", () => {
+test("T-008B F-018 does not accept a Palette disclosure state", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000069",
@@ -445,16 +453,15 @@ test("T-008B F-018 can render the palette disclosure open after a color rerender
     onSelectPalette() {},
   }, {
     presentation,
-    paletteExpanded: true,
     drawRadar: () => ({ drawn: true, errorCode: null }),
   });
 
-  const paletteDisclosure = collectElements(host).find(({ className }) =>
+  const palette = collectElements(host).find(({ className }) =>
     className === "result-palette-selector");
   const fragranceDisclosure = collectElements(host).find(({ className }) =>
     className === "result-fragrance-section");
-  assert.equal(paletteDisclosure.open, true);
-  assert.equal(fragranceDisclosure.open, false);
+  assert.equal(palette.tagName, "section");
+  assert.equal(fragranceDisclosure.tagName, "section");
 });
 
 test("T-005 F-018 shows six fragrance ideas in the fixed three-scene order", () => {
@@ -535,8 +542,8 @@ test("T-008B F-018 keeps Palette independent while Aroma scenes remain mutually 
   );
 
   const elements = collectElements(host);
-  const palette = elements.find(({ className }) =>
-    className === "result-palette-selector");
+  const paletteChoice = elements.find(({ tagName, attributes }) =>
+    tagName === "button" && attributes.has("data-palette-id"));
   const aroma = elements.find(({ className }) =>
     className === "result-fragrance-section");
   const scenes = elements.filter(({ className }) =>
@@ -549,9 +556,7 @@ test("T-008B F-018 keeps Palette independent while Aroma scenes remain mutually 
   assert.equal(scenes[0].open, false);
   assert.equal(scenes[1].open, true);
 
-  palette.open = true;
-  palette.dispatch("toggle");
-  assert.equal(palette.open, true);
+  paletteChoice.dispatch("click");
   assert.equal(aroma.hidden, false);
   assert.deepEqual(scenes.map(({ open }) => open), [false, true, false]);
 });

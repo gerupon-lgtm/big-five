@@ -1107,6 +1107,8 @@ dd {
 }
 
 .result-palette-selector {
+  --surface: #fff;
+  --accent-strong: #26705c;
   margin-top: 28px;
   padding: 20px;
   border: 1px solid #d6e4df;
@@ -1164,47 +1166,68 @@ details[open] > .result-presentation-summary::after {
 
 .result-palette-options {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
   margin-top: 12px;
 }
 
-.result-palette-share-note {
-  margin: 16px 0 0;
-  color: #45635d;
-  font-size: 0.9rem;
-  line-height: 1.7;
-}
-
-.result-palette-option {
+.palette-choice {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(120px, 0.42fr) minmax(0, 1fr);
-  align-items: center;
+  justify-items: center;
   min-width: 0;
-  gap: 8px;
-  padding: 10px;
-  text-align: left;
+  gap: 7px;
+  padding: 6px 4px 8px;
+  border-color: transparent;
+  background: transparent;
+  text-align: center;
 }
 
-.result-palette-option[aria-pressed="true"] {
-  border-color: #26705c;
-  outline: 3px solid rgb(38 112 92 / 20%);
-  outline-offset: 1px;
+.palette-choice:hover,
+.palette-choice:focus-visible {
+  background: #f3f8f6;
 }
 
-.result-palette-swatch {
+.palette-choice__swatch {
   display: block;
-  width: 100%;
-  min-height: 38px;
-  border: 1px solid rgb(25 51 47 / 18%);
-  border-radius: 9px;
+  width: clamp(48px, 16vw, 72px);
+  height: clamp(48px, 16vw, 72px);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(25 51 47 / 24%);
 }
 
-.result-palette-label {
-  overflow-wrap: break-word;
-  font-size: 0.9rem;
+.palette-choice[aria-pressed="true"] .palette-choice__swatch {
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--accent-strong);
+}
+
+.palette-choice__check {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgb(25 51 47 / 78%);
+  color: #fff;
+  font-size: 1rem;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1;
+}
+
+.palette-choice__check[hidden] {
+  display: none;
+}
+
+.palette-choice__label {
+  min-width: 0;
+  color: #45635d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
 }
 
 .result-fragrance-section {
@@ -1636,7 +1659,6 @@ noscript {
     display: grid;
   }
 
-  .result-palette-options,
   .result-fragrance-candidates {
     grid-template-columns: 1fr;
   }

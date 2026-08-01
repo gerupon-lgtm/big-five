@@ -38,6 +38,25 @@ test("T-005/T-006 result-history navigation uses the same button treatment as ot
   );
 });
 
+test("T-008B F-018 lays out three equal Palette choices without a narrow-screen override", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+  const narrowStyles = styles.slice(styles.indexOf("@media (max-width: 380px)"));
+
+  assert.match(
+    styles,
+    /\.result-palette-options\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s,
+  );
+  assert.match(
+    styles,
+    /\.palette-choice\[aria-pressed="true"\]\s+\.palette-choice__swatch\s*\{[^}]*box-shadow:\s*0 0 0 3px var\(--surface\),\s*0 0 0 6px var\(--accent-strong\)/s,
+  );
+  assert.match(
+    styles,
+    /\.palette-choice__check\s*\{[^}]*position:\s*absolute[^}]*inset:\s*50% auto auto 50%[^}]*transform:\s*translate\(-50%,\s*-50%\)/s,
+  );
+  assert.doesNotMatch(narrowStyles, /\.result-palette-options/);
+});
+
 test("T-008A keeps sticky header behavior without redefining brand geometry", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
   const stickyHeader = styles.match(/\.app-header\.is-sticky\s*\{([^}]*)\}/)?.[1] ?? "";

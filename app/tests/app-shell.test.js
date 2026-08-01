@@ -831,7 +831,7 @@ test("T-005 S-002 renders an answer-free live preview with the exact notice when
   );
 });
 
-test("T-005 F-018 selects and persists one of the current title's three result-card colors", () => {
+test("T-008B F-018 selects and persists one of the current title's three result-card colors", () => {
   let raw = null;
   const { host, navigateHash } = createAppHarness({
     storage: {
@@ -844,18 +844,18 @@ test("T-005 F-018 selects and persists one of the current title's three result-c
   for (let index = 0; index < 20; index += 1) answerCurrent(host);
   clickButton(host, "20問の簡易プレビューを見る");
 
-  const paletteButtons = collectElements(host).filter(({ className }) =>
-    className === "result-palette-option");
-  assert.equal(paletteButtons.length, 3);
-  const alternativeId = paletteButtons[1].attributes.get("data-palette-id");
-  paletteButtons[1].dispatch("click");
+  const paletteChoices = collectElements(host).filter(({ tagName, attributes }) =>
+    tagName === "button" && attributes.has("data-palette-id"));
+  assert.equal(paletteChoices.length, 3);
+  const alternativeId = paletteChoices[1].attributes.get("data-palette-id");
+  paletteChoices[1].dispatch("click");
 
   assert.equal(JSON.parse(raw).results[0].selectedPaletteId, alternativeId);
-  const rerendered = collectElements(host).filter(({ className }) =>
-    className === "result-palette-option");
-  const paletteDisclosure = collectElements(host).find(({ className }) =>
+  const rerendered = collectElements(host).filter(({ tagName, attributes }) =>
+    tagName === "button" && attributes.has("data-palette-id"));
+  const palette = collectElements(host).find(({ className }) =>
     className === "result-palette-selector");
-  assert.equal(paletteDisclosure.open, true);
+  assert.equal(palette.tagName, "section");
   assert.equal(
     rerendered.find(({ attributes }) =>
       attributes.get("data-palette-id") === alternativeId)
@@ -883,11 +883,11 @@ test("T-005 F-018 keeps the selected card color in memory when its history updat
   clickButton(host, "20問の簡易プレビューを見る");
 
   const initialPaletteId = JSON.parse(raw).results[0].selectedPaletteId;
-  const paletteButtons = collectElements(host).filter(({ className }) =>
-    className === "result-palette-option");
-  const alternativeId = paletteButtons[2].attributes.get("data-palette-id");
+  const paletteChoices = collectElements(host).filter(({ tagName, attributes }) =>
+    tagName === "button" && attributes.has("data-palette-id"));
+  const alternativeId = paletteChoices[2].attributes.get("data-palette-id");
   failPaletteWrite = true;
-  paletteButtons[2].dispatch("click");
+  paletteChoices[2].dispatch("click");
 
   assert.equal(JSON.parse(raw).results[0].selectedPaletteId, initialPaletteId);
   assert.match(
@@ -895,12 +895,43 @@ test("T-005 F-018 keeps the selected card color in memory when its history updat
     /色はこの画面に反映しましたが、履歴には保存できませんでした。/,
   );
   assert.equal(
-    collectElements(host).find(({ className, attributes }) =>
-      className === "result-palette-option"
+    collectElements(host).find(({ tagName, attributes }) =>
+      tagName === "button"
       && attributes.get("data-palette-id") === alternativeId)
       .attributes.get("aria-pressed"),
     "true",
   );
+});
+
+test("T-008B F-018 keeps the open Aroma panel visible after Palette selection", () => {
+  let raw = null;
+  const { host } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+
+  const aromaTrigger = collectElements(host).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-trigger"));
+  aromaTrigger.dispatch("click");
+  assert.equal(aromaTrigger.attributes.get("aria-expanded"), "true");
+  const paletteChoice = collectElements(host).find(({ tagName, className, attributes }) =>
+    tagName === "button"
+    && attributes.has("data-palette-id")
+    && className.includes("palette-choice--selected") === false);
+  paletteChoice.dispatch("click");
+
+  const rerenderedAromaTrigger = collectElements(host).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-trigger"));
+  const rerenderedAromaPanel = collectElements(host).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-panel"));
+  assert.equal(rerenderedAromaTrigger.attributes.get("aria-expanded"), "true");
+  assert.equal(rerenderedAromaPanel.hidden, false);
 });
 
 test("T-005 S-002 discarding is cancelled without writes, succeeds to start, and preserves the flow on deletion failure", () => {

@@ -576,7 +576,7 @@ export function startApp({
     persistenceFailed,
     previewProgress = null,
     historyDetail = false,
-    presentationState = {},
+    openResultDisclosureId = null,
   ) {
     const definitionRegistration = resolveRegisteredDiagnosticDefinition(
       snapshot.versionTuple,
@@ -661,7 +661,7 @@ export function startApp({
       } : {}),
     } : {};
     const paletteActions = presentation ? {
-      onSelectPalette(paletteId) {
+      onSelectPalette(paletteId, { openResultDisclosureId } = {}) {
         let selectedSnapshot;
         try {
           selectedSnapshot = selectResultPalette(
@@ -699,7 +699,7 @@ export function startApp({
           persistenceFailed,
           previewProgress,
           historyDetail,
-          { paletteExpanded: true },
+          openResultDisclosureId,
         );
       },
     } : {};
@@ -750,7 +750,7 @@ export function startApp({
       observeViewport: effectiveObserveViewport,
       historyDetail,
       presentation,
-      paletteExpanded: presentationState.paletteExpanded === true,
+      openResultDisclosureId,
       definitionSupported: definitionRegistration !== null,
       ...(definitionRegistration ? {
         questionComposition:

@@ -89,21 +89,16 @@ function renderResultHero(parent, snapshot, labels, dependencies) {
   parent.append(hero);
 }
 
-function drawPaletteSwatch(canvas, baseColors) {
+function drawPaletteSwatch(canvas, primaryColor) {
   try {
     const context = canvas.getContext?.("2d");
     if (!context) return;
-    const colors = [
-      baseColors.primary,
-      baseColors.secondary,
-      baseColors.accent,
-    ];
-    colors.forEach((color, index) => {
-      context.fillStyle = color;
-      context.fillRect(index * 100, 0, 100, 32);
-    });
+    context.beginPath();
+    context.arc(36, 36, 32, 0, Math.PI * 2);
+    context.fillStyle = primaryColor;
+    context.fill();
   } catch {
-    // The palette name remains available when Canvas drawing is unavailable.
+    // The Palette choice remains available when Canvas drawing is unavailable.
   }
 }
 
@@ -127,17 +122,21 @@ function registerExclusiveDisclosure(
   group.push({ disclosure, onClose });
 }
 
-function createExclusiveResultPanelGroup() {
+function createExclusiveResultPanelGroup(initialOpenId = null) {
   const members = [];
 
   return {
     register(member) {
       members.push(member);
+      if (member.id === initialOpenId) member.open();
     },
     closeOthers(activeMember) {
       for (const member of members) {
         if (member !== activeMember && member.isOpen()) member.close();
       }
+    },
+    openId() {
+      return members.find((member) => member.isOpen())?.id ?? null;
     },
   };
 }
@@ -168,67 +167,89 @@ function renderPaletteSelector(
     return;
   }
 
-  const section = parent.ownerDocument.createElement("details");
+  const section = parent.ownerDocument.createElement("section");
   section.className = "result-palette-selector";
-  const summary = parent.ownerDocument.createElement("summary");
-  summary.className = "result-presentation-summary";
+  section.setAttribute("data-palette-selector", "");
   appendTextElement(
-    summary,
-    "span",
+    section,
+    "h2",
     "ココロパレット",
     "result-presentation-title",
   );
   appendTextElement(
-    summary,
-    "span",
+    section,
+    "p",
     "～あなたらしさから着想した色～",
     "result-presentation-subtitle",
   );
   appendTextElement(
-    summary,
-    "span",
-    "3つの色から、結果カードの雰囲気を選べます。",
-    "result-presentation-description",
-  );
-  section.append(summary);
-  appendTextElement(
     section,
     "p",
-    "選んだ色は、画像として共有・保存する結果カードに反映されます。",
-    "result-palette-share-note",
+    "選んだ色は、共有カードの色合いに反映されます。",
+    "result-presentation-description",
   );
   const group = parent.ownerDocument.createElement("div");
   group.className = "result-palette-options";
   group.setAttribute("role", "group");
   group.setAttribute("aria-label", "結果カードの色を選ぶ");
-  const positionLabels = ["標準", "代替1", "代替2"];
+  const choices = [];
+
+  function setSelectedChoice(selectedPaletteId) {
+    for (const choice of choices) {
+      const selected = choice.paletteId === selectedPaletteId;
+      choice.button.className = selected
+        ? "palette-choice palette-choice--selected"
+        : "palette-choice";
+      choice.button.setAttribute("aria-pressed", String(selected));
+      choice.button.setAttribute(
+        "aria-label",
+        `${choice.label}${selected ? "、選択中" : ""}`,
+      );
+      choice.check.hidden = !selected;
+    }
+  }
 
   options.forEach((palette, index) => {
     const selected = palette.paletteId === snapshot.selectedPaletteId;
     const button = parent.ownerDocument.createElement("button");
-    button.className = "result-palette-option";
+    button.className = selected
+      ? "palette-choice palette-choice--selected"
+      : "palette-choice";
     button.setAttribute("type", "button");
     button.setAttribute("data-palette-id", palette.paletteId);
     button.setAttribute("aria-pressed", String(selected));
+    const visibleLabel = `パレット${index + 1}`;
+    button.setAttribute(
+      "aria-label",
+      `${visibleLabel}${selected ? "、選択中" : ""}`,
+    );
     const swatch = parent.ownerDocument.createElement("canvas");
-    swatch.className = "result-palette-swatch";
+    swatch.className = "palette-choice__swatch";
     swatch.setAttribute("aria-hidden", "true");
-    swatch.setAttribute("width", "300");
-    swatch.setAttribute("height", "32");
-    drawPaletteSwatch(swatch, palette.baseColors);
+    swatch.setAttribute("width", "72");
+    swatch.setAttribute("height", "72");
+    drawPaletteSwatch(swatch, palette.baseColors.primary);
     button.append(swatch);
-    appendTextElement(
+    const check = appendTextElement(button, "span", "✓", "palette-choice__check");
+    check.setAttribute("aria-hidden", "true");
+    check.hidden = !selected;
+    const label = appendTextElement(
       button,
       "span",
-      `${positionLabels[index]} ${palette.label}${selected ? " 選択中" : ""}`,
-      "result-palette-label",
+      visibleLabel,
+      "palette-choice__label",
     );
-    button.addEventListener("click", () =>
-      actions.onSelectPalette?.(palette.paletteId));
+    label.setAttribute("data-palette-option-label", "");
+    choices.push({ button, check, label: visibleLabel, paletteId: palette.paletteId });
+    button.addEventListener("click", () => {
+      setSelectedChoice(palette.paletteId);
+      actions.onSelectPalette?.(palette.paletteId, {
+        openResultDisclosureId: dependencies.getOpenResultDisclosureId?.() ?? null,
+      });
+    });
     group.append(button);
   });
   section.append(group);
-  section.open = dependencies.paletteExpanded === true;
   parent.append(section);
 }
 
@@ -330,8 +351,13 @@ function renderFragranceIdeas(parent, dependencies, panelGroup) {
     "result-fragrance-disclaimer",
   );
   const member = {
+    id: "aroma",
     isOpen() {
       return !panel.hidden;
+    },
+    open() {
+      trigger.setAttribute("aria-expanded", "true");
+      panel.hidden = false;
     },
     close() {
       trigger.setAttribute("aria-expanded", "false");
@@ -345,8 +371,7 @@ function renderFragranceIdeas(parent, dependencies, panelGroup) {
     member.close();
     if (!isOpen) {
       panelGroup.closeOthers(member);
-      trigger.setAttribute("aria-expanded", "true");
-      panel.hidden = false;
+      member.open();
     }
     trigger.scrollIntoView?.({ block: "nearest" });
   });
@@ -485,8 +510,18 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar, panelGroup) 
       panel.append(categorySection);
     }
     const member = {
+      id: `factor:${factor.factorId}`,
       isOpen() {
         return !panel.hidden;
+      },
+      open() {
+        trigger.setAttribute("aria-expanded", "true");
+        trigger.setAttribute(
+          "aria-label",
+          `${factor.label}、スコア${factor.displayScore}点、詳しい結果を閉じる`,
+        );
+        hint.textContent = "閉じる";
+        panel.hidden = false;
       },
       close() {
         trigger.setAttribute("aria-expanded", "false");
@@ -504,13 +539,7 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar, panelGroup) 
       member.close();
       if (!isOpen) {
         panelGroup.closeOthers(member);
-        trigger.setAttribute("aria-expanded", "true");
-        trigger.setAttribute(
-          "aria-label",
-          `${factor.label}、スコア${factor.displayScore}点、詳しい結果を閉じる`,
-        );
-        hint.textContent = "閉じる";
-        panel.hidden = false;
+        member.open();
       }
       trigger.scrollIntoView?.({ block: "nearest" });
     });
@@ -723,12 +752,19 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
     notice.setAttribute("role", "alert");
   }
   renderResultHero(main, savedSnapshot, labels, dependencies);
-  const resultPanelGroup = createExclusiveResultPanelGroup();
+  const resultPanelGroup = createExclusiveResultPanelGroup(
+    dependencies.openResultDisclosureId,
+  );
   renderPaletteSelector(
     main,
     savedSnapshot,
     actions,
-    dependencies,
+    {
+      ...dependencies,
+      getOpenResultDisclosureId() {
+        return resultPanelGroup.openId();
+      },
+    },
   );
   renderFragranceIdeas(main, dependencies, resultPanelGroup);
   renderTitleReason(main, savedSnapshot);
