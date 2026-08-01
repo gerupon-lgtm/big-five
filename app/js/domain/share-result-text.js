@@ -20,13 +20,31 @@ function isNonEmptyString(value) {
   return typeof value === "string" && value.length > 0;
 }
 
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isValidFactor(value) {
+  return isRecord(value) &&
+    isNonEmptyString(value.label) &&
+    Number.isInteger(value.displayScore) &&
+    value.displayScore >= 0 &&
+    value.displayScore <= 100;
+}
+
+function isValidFragrance(value) {
+  return isRecord(value) &&
+    isNonEmptyString(value.sceneLabel) &&
+    isNonEmptyString(value.accordLabel);
+}
+
 function validateHttpsShareUrl(value) {
   if (typeof value !== "string") {
     invalidShareResultText();
   }
 
   const trimmedUrl = value.trim();
-  if (trimmedUrl.length === 0) {
+  if (trimmedUrl.length === 0 || /\s/u.test(trimmedUrl)) {
     invalidShareResultText();
   }
 
@@ -44,29 +62,30 @@ function validateHttpsShareUrl(value) {
   return trimmedUrl;
 }
 
-export function createShareResultText({
-  brandName,
-  modeLabel,
-  titleLabel,
-  titleSubtitle,
-  titleReason,
-  factors,
-  fragrances,
-  disclaimer,
-  shareUrl = "",
-} = {}) {
+export function createShareResultText(input) {
+  if (!isRecord(input)) {
+    invalidShareResultText();
+  }
+
+  const {
+    brandName,
+    modeLabel,
+    titleLabel,
+    titleSubtitle,
+    titleReason,
+    factors,
+    fragrances,
+    disclaimer,
+    shareUrl = "",
+  } = input;
+
   if (![brandName, modeLabel, titleLabel, titleSubtitle, titleReason, disclaimer].every(isNonEmptyString) ||
     !Array.isArray(factors) ||
     factors.length !== 5 ||
-    !factors.every(({ label, displayScore }) =>
-      isNonEmptyString(label) &&
-      Number.isInteger(displayScore) &&
-      displayScore >= 0 &&
-      displayScore <= 100) ||
+    !factors.every(isValidFactor) ||
     !Array.isArray(fragrances) ||
     fragrances.length !== 3 ||
-    !fragrances.every(({ sceneLabel, accordLabel }) =>
-      isNonEmptyString(sceneLabel) && isNonEmptyString(accordLabel))) {
+    !fragrances.every(isValidFragrance)) {
     invalidShareResultText();
   }
 

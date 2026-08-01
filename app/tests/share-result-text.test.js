@@ -142,6 +142,10 @@ test("T-008C F-011 appends only a trimmed HTTPS share URL as a final block", () 
     createShareResultText({ ...shareTextInput, shareUrl: "  https://example.test/kokoroparea  " }),
     `${expectedShareText}\n\nhttps://example.test/kokoroparea`,
   );
+  assert.equal(
+    createShareResultText({ ...shareTextInput, shareUrl: "https://example.test/a%20b" }),
+    `${expectedShareText}\n\nhttps://example.test/a%20b`,
+  );
 });
 
 test("T-008C F-011 rejects invalid share URL values with the domain error", () => {
@@ -150,6 +154,8 @@ test("T-008C F-011 rejects invalid share URL values with the domain error", () =
     "http://example.test",
     "https://user:password@example.test",
     "mailto:hello@example.test",
+    "https://example.test/a b",
+    "https://example.test/a\nb",
   ]) {
     assert.throws(
       () => createShareResultText({ ...shareTextInput, shareUrl }),
@@ -165,6 +171,34 @@ test("T-008C F-011 requires the approved title subtitle and reason", () => {
 
     assert.throws(
       () => createShareResultText(input),
+      { name: "TypeError", message: "INVALID_SHARE_RESULT_TEXT" },
+    );
+  }
+});
+
+test("T-008C F-011 rejects null, undefined, and non-object inputs with the domain error", () => {
+  for (const input of [null, undefined, 42, true, "share text"]) {
+    assert.throws(
+      () => createShareResultText(input),
+      { name: "TypeError", message: "INVALID_SHARE_RESULT_TEXT" },
+    );
+  }
+});
+
+test("T-008C F-011 rejects malformed factor and fragrance members with the domain error", () => {
+  for (const invalidMember of [null, undefined, 42, true, "entry"]) {
+    assert.throws(
+      () => createShareResultText({
+        ...shareTextInput,
+        factors: [invalidMember, ...shareTextInput.factors.slice(1)],
+      }),
+      { name: "TypeError", message: "INVALID_SHARE_RESULT_TEXT" },
+    );
+    assert.throws(
+      () => createShareResultText({
+        ...shareTextInput,
+        fragrances: [invalidMember, ...shareTextInput.fragrances.slice(1)],
+      }),
       { name: "TypeError", message: "INVALID_SHARE_RESULT_TEXT" },
     );
   }
