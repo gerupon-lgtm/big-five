@@ -10,6 +10,7 @@ const ASSET_NAMES = Object.freeze([
   "aroma-pause-v1.png",
   "aroma-quiet-focus-v1.png",
   "aroma-reset-v1.png",
+  "kokoro-wreath-v1.png",
 ]);
 const ASSET_HASHES = Object.freeze({
   "aroma-pause-v1.png":
@@ -18,9 +19,11 @@ const ASSET_HASHES = Object.freeze({
     "ea8f49dd9851805c715dcce9d6f7c4ecc45d4290eb13105d9611112603b267e8",
   "aroma-reset-v1.png":
     "9c71df1c5ed8bce2315166ee1708e154107b7f1f2f96a4221825aee828f73e7f",
+  "kokoro-wreath-v1.png":
+    "8e0794410984f52c2f3b2772d856ffc317ae133bf5dd16bb5082c638a6fc95c8",
 });
 
-test("T-007 F-011 keeps the three aroma illustrations as high-resolution transparent PNGs", async () => {
+test("T-007 F-011 keeps the approved share illustrations as high-resolution transparent PNGs", async () => {
   assert.deepEqual((await readdir(ASSET_DIRECTORY)).sort(), ASSET_NAMES);
 
   for (const name of ASSET_NAMES) {

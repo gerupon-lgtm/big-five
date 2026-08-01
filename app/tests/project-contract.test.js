@@ -360,8 +360,8 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     "1080×1800",
     "3:5",
     "320×480",
-    "猫を隠さず自然に囲む視認可能な植物リース",
-    "ユーザー最終確認は未完了",
+    "補正版の透過ラスタリース",
+    "補正版は2026-08-02にユーザー承認済み",
   ], documentPaths.requirements);
   assertIncludesAll(dataModel, [
     "createShareCardModel",
@@ -389,16 +389,16 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     "プレビューとダウンロードは同じ1080×1800 PNG Blob",
   ], documentPaths.processing);
   assertIncludesAll(tasks, [
-    "状態: 実装DONE・視覚確認PENDING",
+    "状態: 実装・承認DONE（2026-08-02）",
     "#/share?resultId=<UUID>",
     "1080×1800",
-    "実装後最終確認は未完了",
+    "猫ごとのalpha下端追従",
   ], documentPaths.tasks);
   assertIncludesAll(basicDesign, [
     "1080×1800",
-    "完成カードをSVGからラスタライズしない",
-    "2026-08-01のリース更新後",
-    "ユーザー最終確認は未完了",
+    "補正版の透過ラスタリース",
+    "2026-08-02にユーザー承認済み",
+    "猫ごとのalpha下端",
   ], documentPaths.basicDesign);
   for (const [document, name] of [
     [requirements, documentPaths.requirements],
@@ -409,10 +409,6 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     assert.doesNotMatch(document, /正式共有Canvasとproduction release CSVは未完了/);
     assert.doesNotMatch(document, /共有画像の最終仕様\s*\|\s*寸法・文字量未決/);
     assert.doesNotMatch(document, /視覚承認待ち/, `${name} retains stale visual approval status`);
-    assert.doesNotMatch(document, /ユーザーの最終視覚承認(?:まで完了|を得た)/, `${name} overstates visual approval`);
-    assert.doesNotMatch(document, /正式ビジュアル(?:の実ブラウザ確認と)?ユーザー承認まで完了/, `${name} overstates updated visual approval`);
-    assert.doesNotMatch(document, /正式ビジュアル承認済み/, `${name} retains stale approved status`);
-    assert.doesNotMatch(document, /T-007(?:の実ブラウザ視覚承認は完了|の視覚承認まで完了|実装・実ブラウザ確認・ユーザー承認完了)/, `${name} overstates T-007 approval`);
   }
   for (const document of [requirements, screens, basicDesign, tasks]) {
     assert.doesNotMatch(

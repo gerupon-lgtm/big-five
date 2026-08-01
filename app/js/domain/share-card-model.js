@@ -235,9 +235,10 @@ function buildModel(input, buildShareResultText) {
   const disclaimer = snapshot.mode === "preview20"
     ? `${DISCLAIMER}\n${PREVIEW_DISCLAIMER}`
     : DISCLAIMER;
-  const shareFragrances = fragrances.map(({ sceneLabel, accordLabel }) => ({
+  const shareFragrances = fragrances.map(({ sceneLabel, accordLabel, materialNames }) => ({
     sceneLabel,
     accordLabel,
+    materialNames: [...materialNames],
   }));
   const shareText = buildShareResultText({
     brandName: brand.name,

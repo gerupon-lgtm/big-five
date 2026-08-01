@@ -19,6 +19,7 @@ const REQUIRED_FILES = new Set([
   "assets/share-card/aroma-pause-v1.png",
   "assets/share-card/aroma-quiet-focus-v1.png",
   "assets/share-card/aroma-reset-v1.png",
+  "assets/share-card/kokoro-wreath-v1.png",
   "index.html",
   "manifest/app.webmanifest",
   "robots.txt",

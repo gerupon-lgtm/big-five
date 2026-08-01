@@ -702,7 +702,7 @@ test("T-007 S-005 opens one generated share card and revokes it when returning",
   for (let index = 0; index < 20; index += 1) answerCurrent(host);
   clickButton(host, "20問の簡易プレビューを見る");
   const resultId = JSON.parse(raw).results[0].resultId;
-  clickButton(host, "結果を共有する");
+  clickButton(host, "称号カードを見る");
   assert.equal(
     windowObject.location.hash,
     `#/share?resultId=${encodeURIComponent(resultId)}`,
@@ -1394,7 +1394,7 @@ test("T-005 S-003 reloads a saved preview into question 21 only with its compati
     && textContent === "履歴一覧に戻る").length, 2);
   assert.doesNotMatch(
     resultText,
-    /中断してトップへ|簡易プレビューで終了する|結果を共有する/,
+    /中断してトップへ|簡易プレビューで終了する|称号カードを見る/,
   );
   clickButton(host, "50問へ進む");
   assert.equal(windowObject.location.hash, "#/answer");
@@ -1422,7 +1422,7 @@ test("T-008B S-003 reopens a live preview from history with history-only actions
   assert.match(text, /50問へ進む/);
   assert.doesNotMatch(
     text,
-    /中断してトップへ|簡易プレビューで終了する|結果を共有する/,
+    /中断してトップへ|簡易プレビューで終了する|称号カードを見る/,
   );
 });
 

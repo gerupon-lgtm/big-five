@@ -291,15 +291,19 @@ test("T-007 result sharing uses one primary normal-flow CTA with approved copy",
   const shareSections = elements.filter(({ className }) =>
     className === "result-share-call-to-action");
   assert.equal(shareSections.length, 1);
-  assert.match(collectText(shareSections[0]), /今回の結果を残してみませんか/);
+  assert.match(collectText(shareSections[0]), /今回の称号カードを見てみませんか/);
   assert.doesNotMatch(collectText(shareSections[0]), /画像やテキストで共有できます/);
+  const brandIcon = collectElements(shareSections[0]).find(({ tagName, className }) =>
+    tagName === "img" && className === "result-share-call-to-action__icon");
+  assert.equal(brandIcon?.getAttribute("src"), "./assets/brand/kokoro-parea-icon-512.png");
+  assert.equal(brandIcon?.getAttribute("alt"), "");
   const shareButtons = collectElements(shareSections[0]).filter(({ tagName, textContent }) =>
-    tagName === "button" && textContent === "結果を共有する");
+    tagName === "button" && textContent === "称号カードを見る");
   assert.equal(shareButtons.length, 1);
   assert.equal(shareButtons[0].className, "primary-button");
   assert.equal(
     elements.filter(({ tagName, textContent }) =>
-      tagName === "button" && textContent === "結果を共有する").length,
+      tagName === "button" && textContent === "称号カードを見る").length,
     1,
   );
 });
@@ -402,7 +406,7 @@ test("T-005 S-003 renders the complete saved preview with factor help and the 30
 
   const buttons = collectElements(host).filter(({ tagName }) => tagName === "button");
   buttons.find(({ textContent }) => textContent === "50問へ進む").dispatch("click");
-  buttons.find(({ textContent }) => textContent === "結果を共有する").dispatch("click");
+  buttons.find(({ textContent }) => textContent === "称号カードを見る").dispatch("click");
   assert.deepEqual(calls, [
     ["continue", snapshot],
     ["share", snapshot],
@@ -474,7 +478,7 @@ test("T-006 S-004 history detail returns to the history list without fresh-resul
   assert.equal(elements.some(({ tagName, textContent }) =>
     tagName === "button" && textContent === "もう一度診断する"), false);
   assert.equal(elements.some(({ tagName, textContent }) =>
-    tagName === "button" && textContent === "結果を共有する"), true);
+    tagName === "button" && textContent === "称号カードを見る"), true);
   assert.doesNotMatch(collectText(host), /結果履歴を見る/);
 });
 
@@ -508,7 +512,7 @@ test("T-008B S-003 history preview keeps only continuation and history return ac
     && textContent === "履歴一覧に戻る").length, 2);
   assert.doesNotMatch(
     collectText(host),
-    /中断してトップへ|簡易プレビューで終了する|結果を共有する/,
+    /中断してトップへ|簡易プレビューで終了する|称号カードを見る/,
   );
 });
 

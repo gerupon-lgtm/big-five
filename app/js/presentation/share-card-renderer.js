@@ -24,6 +24,16 @@ const AROMA_ASSET_PATHS = Object.freeze({
   reset: "./assets/share-card/aroma-reset-v1.png",
   "quiet-focus": "./assets/share-card/aroma-quiet-focus-v1.png",
 });
+const WREATH_ASSET_PATH = "./assets/share-card/kokoro-wreath-v1.png";
+const WREATH_RENDER_SPEC = Object.freeze({
+  x: 90,
+  width: 900,
+  height: 760,
+  sourceHeight: 1254,
+  sourceVisibleBottom: 1078,
+  bottomOffset: 8,
+});
+const CHARACTER_BOTTOM_ALPHA_THRESHOLD = 32;
 const AROMA_SUBTITLE = "～あなたらしさから着想した香り～";
 const AROMA_NOTE = "香りをイメージするための素材例です";
 
@@ -189,88 +199,6 @@ function drawSprig(
   });
 }
 
-function drawBotanicalLeaf(
-  context,
-  x,
-  y,
-  length,
-  angle,
-  color,
-  alpha = 0.58,
-) {
-  drawLeaf(context, x, y, length, angle, color, alpha);
-  const directionX = Math.cos(angle);
-  const directionY = Math.sin(angle);
-  context.save();
-  context.strokeStyle = color;
-  context.globalAlpha = Math.max(0.16, alpha * 0.42);
-  context.lineWidth = 1.2;
-  context.beginPath();
-  context.moveTo(x + directionX * 3, y + directionY * 3);
-  context.lineTo(
-    x + directionX * length * 0.82,
-    y + directionY * length * 0.82,
-  );
-  context.stroke();
-  context.restore();
-}
-
-function drawBotanicalSprig(
-  context,
-  x,
-  y,
-  length,
-  angle,
-  colors,
-  direction = 1,
-) {
-  const directionX = Math.cos(angle);
-  const directionY = Math.sin(angle);
-  const endX = x + directionX * length;
-  const endY = y + directionY * length;
-  const stemColor = colors[0];
-
-  context.save();
-  context.strokeStyle = stemColor;
-  context.globalAlpha = 0.52;
-  context.lineWidth = 2.2;
-  context.beginPath();
-  context.moveTo(x, y);
-  context.bezierCurveTo(
-    x + directionX * length * 0.32,
-    y + directionY * length * 0.32 - 10 * direction,
-    x + directionX * length * 0.72,
-    y + directionY * length * 0.72 + 7 * direction,
-    endX,
-    endY,
-  );
-  context.stroke();
-  context.restore();
-
-  [0.18, 0.31, 0.44, 0.57, 0.7, 0.82].forEach((progress, index) => {
-    const leafX = x + directionX * length * progress;
-    const leafY = y + directionY * length * progress;
-    const side = index % 2 === 0 ? direction : -direction;
-    drawBotanicalLeaf(
-      context,
-      leafX,
-      leafY,
-      40 - index * 1.8,
-      angle + side * (0.78 + index * 0.025),
-      colors[index % colors.length],
-      0.52 + (index % 3) * 0.045,
-    );
-  });
-  drawDot(
-    context,
-    endX,
-    endY,
-    4.2,
-    colors.at(-1),
-    0.66,
-  );
-}
-
 function drawDot(context, x, y, radius, color, alpha = 0.8) {
   context.save();
   context.fillStyle = color;
@@ -300,39 +228,32 @@ function drawHeaderDecoration(context, model) {
   drawDot(context, 540, 154, 5, model.palette.accent, 0.72);
 }
 
-function drawWreath(context, model, templateVersion) {
+function drawWreath(
+  context,
+  model,
+  templateVersion,
+  wreathImage = null,
+  characterVisibleBottom = null,
+) {
   const legacy = templateVersion === "card-template-v1";
 
   if (!legacy) {
-    const archSprigs = [
-      { x: 350, y: 850, length: 225, angle: -2.08, side: "left" },
-      { x: 285, y: 680, length: 205, angle: -1.53, side: "left" },
-      { x: 315, y: 505, length: 170, angle: -1.22, side: "left" },
-      { x: 730, y: 850, length: 225, angle: -1.06, side: "right" },
-      { x: 795, y: 680, length: 205, angle: -1.61, side: "right" },
-      { x: 765, y: 505, length: 170, angle: -1.92, side: "right" },
-    ];
-    const mutedColors = [
-      ["#8198A0", "#D2A25A"],
-      ["#8198A0", "#92A58D"],
-      ["#92A58D", "#9A8DA9"],
-    ];
-
-    archSprigs.forEach((sprig, index) => {
-      const sideIndex = index % 3;
-      drawBotanicalSprig(
-        context,
-        sprig.x,
-        sprig.y,
-        sprig.length,
-        sprig.angle,
-        [
-          sprig.side === "left" ? model.palette.chart : model.palette.accent,
-          ...mutedColors[sideIndex],
-        ],
-        sprig.side === "left" ? 1 : -1,
+    if (wreathImage) {
+      const visibleBottom = Number.isFinite(characterVisibleBottom)
+        ? characterVisibleBottom
+        : 880;
+      const y = visibleBottom + WREATH_RENDER_SPEC.bottomOffset -
+        WREATH_RENDER_SPEC.height *
+          (WREATH_RENDER_SPEC.sourceVisibleBottom /
+            WREATH_RENDER_SPEC.sourceHeight);
+      context.drawImage(
+        wreathImage,
+        WREATH_RENDER_SPEC.x,
+        y,
+        WREATH_RENDER_SPEC.width,
+        WREATH_RENDER_SPEC.height,
       );
-    });
+    }
     return;
   }
 
@@ -370,7 +291,7 @@ function normalizeCharacterTreatment(treatment, templateVersion) {
     : treatment;
 }
 
-function drawContainedImage(context, image, character, treatment) {
+function containedImageLayout(character) {
   const box = { x: 225, y: 330, width: 630, height: 630 };
   const ratio = Math.min(
     box.width / character.width,
@@ -380,6 +301,11 @@ function drawContainedImage(context, image, character, treatment) {
   const height = character.height * ratio;
   const x = box.x + (box.width - width) / 2;
   const y = box.y + (box.height - height) / 2;
+  return { x, y, width, height };
+}
+
+function drawContainedImage(context, image, treatment, layout) {
+  const { x, y, width, height } = layout;
 
   if (treatment === "shadow" || treatment === "neutral-plate") {
     context.save();
@@ -407,7 +333,7 @@ function analyzeCharacter(image, character, dependencies) {
   try {
     const canvas = dependencies.createCanvas(64, 64);
     const context = canvas?.getContext?.("2d", { willReadFrequently: true });
-    if (!context) return "neutral-plate";
+    if (!context) return { treatment: "neutral-plate", opaqueBottomRatio: 1 };
     context.clearRect(0, 0, 64, 64);
     const ratio = Math.min(64 / character.width, 64 / character.height);
     const width = character.width * ratio;
@@ -420,12 +346,25 @@ function analyzeCharacter(image, character, dependencies) {
       height,
     );
     const imageData = context.getImageData(0, 0, 64, 64);
-    return chooseCharacterTreatment({
-      edgePixels: collectOpaqueEdgePixels(imageData),
-      backgroundHex: dependencies.backgroundHex,
-    });
+    let opaqueBottom = -1;
+    for (let offset = 3; offset < imageData.data.length; offset += 4) {
+      if (imageData.data[offset] < CHARACTER_BOTTOM_ALPHA_THRESHOLD) continue;
+      opaqueBottom = Math.max(
+        opaqueBottom,
+        Math.floor((offset - 3) / 4 / imageData.width),
+      );
+    }
+    return {
+      treatment: chooseCharacterTreatment({
+        edgePixels: collectOpaqueEdgePixels(imageData),
+        backgroundHex: dependencies.backgroundHex,
+      }),
+      opaqueBottomRatio: opaqueBottom >= 0
+        ? (opaqueBottom + 1) / imageData.height
+        : 1,
+    };
   } catch {
-    return "neutral-plate";
+    return { treatment: "neutral-plate", opaqueBottomRatio: 1 };
   }
 }
 
@@ -736,13 +675,26 @@ function drawCard(context, model, assets) {
     characterTreatment,
     templateVersion,
   );
-  drawWreath(context, model, templateVersion);
+  const characterLayout = assets.character
+    ? containedImageLayout(model.character)
+    : null;
+  const characterVisibleBottom = characterLayout
+    ? characterLayout.y + characterLayout.height *
+      assets.character.opaqueBottomRatio
+    : null;
+  drawWreath(
+    context,
+    model,
+    templateVersion,
+    assets.wreath,
+    characterVisibleBottom,
+  );
   if (assets.character) {
     drawContainedImage(
       context,
       assets.character.image,
-      model.character,
       characterTreatment,
+      characterLayout,
     );
   }
   drawFactors(context, model);
@@ -808,6 +760,9 @@ export async function renderShareCard(model, dependencies) {
   }
 
   const icon = await loadOptionalImage(model.brand.cardIconPath, dependencies);
+  const wreath = model.versions.cardTemplateVersion === "card-template-v2"
+    ? await loadOptionalImage(WREATH_ASSET_PATH, dependencies)
+    : null;
   const aromas = new Map();
   for (const [sceneId, path] of Object.entries(AROMA_ASSET_PATHS)) {
     aromas.set(sceneId, await loadOptionalImage(path, dependencies));
@@ -817,12 +772,14 @@ export async function renderShareCard(model, dependencies) {
   if (model.character) {
     try {
       const image = await dependencies.loadImage(model.character.path);
+      const analysis = analyzeCharacter(image, model.character, {
+        ...dependencies,
+        backgroundHex: model.palette.background,
+      });
       character = {
         image,
-        treatment: analyzeCharacter(image, model.character, {
-          ...dependencies,
-          backgroundHex: model.palette.background,
-        }),
+        treatment: analysis.treatment,
+        opaqueBottomRatio: analysis.opaqueBottomRatio,
       };
     } catch {
       character = null;
@@ -830,7 +787,7 @@ export async function renderShareCard(model, dependencies) {
   }
 
   try {
-    drawCard(context, model, { icon, aromas, character });
+    drawCard(context, model, { icon, wreath, aromas, character });
   } catch {
     return errorResult("SHARE_CANVAS_UNAVAILABLE");
   }

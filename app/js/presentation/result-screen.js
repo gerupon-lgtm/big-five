@@ -1,3 +1,5 @@
+import { appMeta } from "../config/app-meta.js";
+import { resultShareCallToActionCopy } from "../config/ui-copy.js";
 import { validateResultSnapshot } from "../domain/result-snapshot.js";
 import {
   createResultDisclosureModel,
@@ -689,15 +691,19 @@ function renderShareCallToAction(parent, snapshot, actions) {
   if (typeof actions.onShare !== "function") return;
   const section = parent.ownerDocument.createElement("section");
   section.className = "result-share-call-to-action";
-  const decoration = appendTextElement(
+  const icon = parent.ownerDocument.createElement("img");
+  icon.className = "result-share-call-to-action__icon";
+  icon.setAttribute("src", appMeta.brand.cardIconPath);
+  icon.setAttribute("alt", "");
+  icon.setAttribute("aria-hidden", "true");
+  section.append(icon);
+  appendTextElement(section, "h2", resultShareCallToActionCopy.heading);
+  const button = appendTextElement(
     section,
-    "span",
-    "☘",
-    "result-share-call-to-action__decoration",
+    "button",
+    resultShareCallToActionCopy.action,
+    "primary-button",
   );
-  decoration.setAttribute("aria-hidden", "true");
-  appendTextElement(section, "h2", "今回の結果を残してみませんか");
-  const button = appendTextElement(section, "button", "結果を共有する", "primary-button");
   button.setAttribute("type", "button");
   button.addEventListener("click", () => actions.onShare(snapshot));
   parent.append(section);

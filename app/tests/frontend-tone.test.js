@@ -38,17 +38,25 @@ test("T-005/T-006 result-history navigation uses the same button treatment as ot
   );
 });
 
-test("T-005/T-007 keeps the result share CTA and boundary notices as normal-flow white cards", async () => {
+test("T-005/T-007 gives the title-card CTA the approved invitation treatment without making it sticky", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
   const shareCard = styles.match(/\.result-share-call-to-action\s*\{([^}]*)\}/)?.[1] ?? "";
 
   assert.match(shareCard, /margin-top:\s*28px/);
-  assert.match(shareCard, /border:\s*1px solid #bed4cc/);
-  assert.match(shareCard, /background:\s*rgb\(255 255 255 \/ 88%\)/);
+  assert.match(shareCard, /border:\s*2px solid #8fb9aa/);
+  assert.match(shareCard, /background:\s*linear-gradient\(/);
   assert.doesNotMatch(shareCard, /position:\s*(?:sticky|fixed)/);
   assert.match(
     styles,
+    /\.result-share-call-to-action__icon\s*\{[^}]*width:\s*44px[^}]*height:\s*44px[^}]*border-radius:\s*12px/s,
+  );
+  assert.match(
+    styles,
     /\.boundary-notices\s*\{[^}]*margin-top:\s*28px[^}]*border:\s*1px solid #bed4cc[^}]*background:\s*rgb\(255 255 255 \/ 88%\)/s,
+  );
+  assert.match(
+    styles,
+    /\.result-fragrance-section\s*\{[^}]*border:\s*2px solid #8fb9aa/s,
   );
 });
 

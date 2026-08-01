@@ -35,7 +35,11 @@ function isValidFactor(value) {
 function isValidFragrance(value) {
   return isRecord(value) &&
     isNonEmptyString(value.sceneLabel) &&
-    isNonEmptyString(value.accordLabel);
+    isNonEmptyString(value.accordLabel) &&
+    Array.isArray(value.materialNames) &&
+    value.materialNames.length >= 1 &&
+    value.materialNames.length <= 2 &&
+    value.materialNames.every(isNonEmptyString);
 }
 
 function validateHttpsShareUrl(value) {
@@ -92,8 +96,14 @@ export function createShareResultText(input) {
   const blocks = [
     [brandName, modeLabel, `称号：${titleLabel}`, titleSubtitle, titleReason],
     factors.map(({ label, displayScore }) => `${label}：${displayScore}`),
-    ["ココロアロマ", ...fragrances.map(({ sceneLabel, accordLabel }) =>
-      `${sceneLabel}：${accordLabel}`)],
+    ["ココロアロマ", ...fragrances.flatMap(({
+      sceneLabel,
+      accordLabel,
+      materialNames,
+    }) => [
+      `${sceneLabel}：${accordLabel}`,
+      `香りの素材例：${materialNames.join("・")}`,
+    ])],
     [disclaimer],
   ];
 

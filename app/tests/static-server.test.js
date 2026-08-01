@@ -56,11 +56,14 @@ test("the formal app serves share-card raster assets with image MIME types", asy
   const origin = await listen(server);
 
   const png = await fetch(`${origin}/assets/share-card/aroma-pause-v1.png`);
+  const wreath = await fetch(`${origin}/assets/share-card/kokoro-wreath-v1.png`);
   const webp = await fetch(
     `${origin}/assets/characters/character-balanced.webp`,
   );
   assert.equal(png.status, 200);
   assert.equal(png.headers.get("content-type"), "image/png");
+  assert.equal(wreath.status, 200);
+  assert.equal(wreath.headers.get("content-type"), "image/png");
   assert.equal(webp.status, 200);
   assert.equal(webp.headers.get("content-type"), "image/webp");
 });

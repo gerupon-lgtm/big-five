@@ -183,8 +183,11 @@ test("T-007 F-011 creates the exact immutable 1080 by 1800 detail card model", (
 
 ココロアロマ
 ひと息つきたい：まろやかな甘みの草花の香調
+香りの素材例：ローマンカモミール
 気持ちを切り替えたい：ほろ苦く明るい柑橘の香調
+香りの素材例：グレープフルーツ・ジンジャー
 静かに取り組みたい：静かな樹脂の輪郭を含む木質の香調
+香りの素材例：ヒノキ・フランキンセンス
 
 これは性格の優劣や心理学上の正式なタイプを示すものではありません。`);
   assert.doesNotMatch(
@@ -242,9 +245,9 @@ test("T-008C F-011 sends only share-safe fragrance labels to the text builder", 
 
   assert.equal(model.shareText, "共有テキスト");
   assert.deepEqual(shareTextInput.fragrances, [
-    { sceneLabel: "ひと息つきたい", accordLabel: "まろやかな甘みの草花の香調" },
-    { sceneLabel: "気持ちを切り替えたい", accordLabel: "ほろ苦く明るい柑橘の香調" },
-    { sceneLabel: "静かに取り組みたい", accordLabel: "静かな樹脂の輪郭を含む木質の香調" },
+    { sceneLabel: "ひと息つきたい", accordLabel: "まろやかな甘みの草花の香調", materialNames: ["ローマンカモミール"] },
+    { sceneLabel: "気持ちを切り替えたい", accordLabel: "ほろ苦く明るい柑橘の香調", materialNames: ["グレープフルーツ", "ジンジャー"] },
+    { sceneLabel: "静かに取り組みたい", accordLabel: "静かな樹脂の輪郭を含む木質の香調", materialNames: ["ヒノキ", "フランキンセンス"] },
   ]);
   assert.deepEqual(model.fragrances[0].materialNames, ["ローマンカモミール"]);
   assert.notStrictEqual(shareTextInput.fragrances[0], model.fragrances[0]);

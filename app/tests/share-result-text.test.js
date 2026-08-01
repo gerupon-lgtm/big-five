@@ -86,9 +86,9 @@ const shareTextInput = {
     { factorId: "emotionalStability", label: "情緒安定性", displayScore: 28 },
   ],
   fragrances: [
-    { sceneId: "pause", sceneLabel: "ひと息つきたい", accordLabel: "透明感のある花と柑橘の香調", materialLabels: ["非共有素材"] },
-    { sceneId: "reset", sceneLabel: "気持ちを切り替えたい", accordLabel: "透明感のある葉の香調", materialLabels: ["非共有素材"] },
-    { sceneId: "quiet-focus", sceneLabel: "静かに取り組みたい", accordLabel: "ほろ苦く端正な柑橘の香調", materialLabels: ["非共有素材"] },
+    { sceneId: "pause", sceneLabel: "ひと息つきたい", accordLabel: "透明感のある花と柑橘の香調", materialNames: ["ネロリ"] },
+    { sceneId: "reset", sceneLabel: "気持ちを切り替えたい", accordLabel: "透明感のある葉の香調", materialNames: ["ユーカリ", "ラディアータ"] },
+    { sceneId: "quiet-focus", sceneLabel: "静かに取り組みたい", accordLabel: "ほろ苦く端正な柑橘の香調", materialNames: ["ベルガモット"] },
   ],
   disclaimer: "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
   shareUrl: "",
@@ -111,8 +111,11 @@ const expectedShareText = `ココロパレア
 
 ココロアロマ
 ひと息つきたい：透明感のある花と柑橘の香調
+香りの素材例：ネロリ
 気持ちを切り替えたい：透明感のある葉の香調
+香りの素材例：ユーカリ・ラディアータ
 静かに取り組みたい：ほろ苦く端正な柑橘の香調
+香りの素材例：ベルガモット
 
 これは性格の優劣や心理学上の正式なタイプを示すものではありません。`;
 
@@ -120,7 +123,7 @@ test("T-008C F-011 builds the approved URL-free share text exactly", () => {
   const text = createShareResultText(shareTextInput);
 
   assert.equal(text, expectedShareText);
-  assert.doesNotMatch(text, /この称号になった理由|共有してはいけない振り返り文|非共有素材|result-text-v2|1,2,3,4,5/);
+  assert.doesNotMatch(text, /この称号になった理由|共有してはいけない振り返り文|result-text-v2|1,2,3,4,5/);
   assert.equal(Object.isFrozen(shareTextInput), false);
 });
 

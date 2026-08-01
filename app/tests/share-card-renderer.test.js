@@ -78,7 +78,9 @@ function recordingDependencies({
   pngBlob = new Blob(["png"], { type: "image/png" }),
   throwImageData = false,
   failCharacter = false,
+  failWreath = false,
   failCanvas = false,
+  opaqueBottomRow = 63,
 } = {}) {
   const operations = [];
   let canvasCount = 0;
@@ -143,10 +145,11 @@ function recordingDependencies({
         if (throwImageData) throw new Error("tainted");
         const data = new Uint8ClampedArray(64 * 64 * 4);
         for (let offset = 0; offset < data.length; offset += 4) {
+          const row = Math.floor(offset / 4 / 64);
           data[offset] = 238;
           data[offset + 1] = 238;
           data[offset + 2] = 238;
-          data[offset + 3] = 255;
+          data[offset + 3] = row <= opaqueBottomRow ? 255 : 0;
         }
         return { data, width: 64, height: 64 };
       },
@@ -164,6 +167,9 @@ function recordingDependencies({
   const loadImage = async (path) => {
     operations.push(["loadImage", path]);
     if (failCharacter && path.endsWith(".webp")) throw new Error("cat missing");
+    if (failWreath && path.endsWith("kokoro-wreath-v1.png")) {
+      throw new Error("wreath missing");
+    }
     return { path, naturalWidth: 1024, naturalHeight: 1024 };
   };
   return {
@@ -171,62 +177,6 @@ function recordingDependencies({
     operations,
     pngBlob,
   };
-}
-
-function collectPaintedPathBounds(operations) {
-  const paths = [];
-  let points = null;
-
-  for (const operation of operations) {
-    if (operation[0] === "beginPath") {
-      points = [];
-      continue;
-    }
-    if (!points) continue;
-    if (operation[0] === "moveTo" || operation[0] === "lineTo") {
-      points.push({ x: operation[2], y: operation[3] });
-      continue;
-    }
-    if (operation[0] === "bezierCurveTo") {
-      points.push(
-        { x: operation[2], y: operation[3] },
-        { x: operation[4], y: operation[5] },
-        { x: operation[6], y: operation[7] },
-      );
-      continue;
-    }
-    if (operation[0] === "arc") {
-      const [, , x, y, radius] = operation;
-      points.push(
-        { x: x - radius, y: y - radius },
-        { x: x + radius, y: y + radius },
-      );
-      continue;
-    }
-    if ((operation[0] === "fill" || operation[0] === "stroke") && points.length > 0) {
-      const xs = points.map(({ x }) => x);
-      const ys = points.map(({ y }) => y);
-      paths.push({
-        paint: operation[0],
-        left: Math.min(...xs),
-        right: Math.max(...xs),
-        top: Math.min(...ys),
-        bottom: Math.max(...ys),
-      });
-      points = null;
-    }
-  }
-
-  return paths;
-}
-
-function intersects(bounds, rectangle) {
-  return !(
-    bounds.right < rectangle.left ||
-    bounds.left > rectangle.right ||
-    bounds.bottom < rectangle.top ||
-    bounds.top > rectangle.bottom
-  );
 }
 
 test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and contained cat", async () => {
@@ -341,6 +291,68 @@ test("T-007 F-011 reproduces the legacy v1 layout for v1 history", async () => {
     && operation[4] === 4));
 });
 
+test("T-007 F-011 composites the approved v2 wreath asset behind the cat", async () => {
+  const { dependencies, operations } = recordingDependencies();
+
+  const result = await renderShareCard(makeModel(), dependencies);
+
+  assert.equal(result.status, "ok");
+  assert.ok(operations.some((operation) =>
+    operation[0] === "loadImage" &&
+    operation[1] === "./assets/share-card/kokoro-wreath-v1.png"));
+  const wreathDrawIndex = operations.findIndex((operation) =>
+    operation[0] === "drawImage" &&
+    operation[1] === "main" &&
+    operation[2] === "./assets/share-card/kokoro-wreath-v1.png");
+  const catDrawIndex = operations.findIndex((operation) =>
+    operation[0] === "drawImage" &&
+    operation[1] === "main" &&
+    operation[2].endsWith(".webp"));
+  assert.ok(wreathDrawIndex >= 0);
+  assert.ok(wreathDrawIndex < catDrawIndex);
+});
+
+test("T-007 F-011 anchors the v2 wreath near each cat image's lowest visible item", async () => {
+  const fullHeight = recordingDependencies({ opaqueBottomRow: 63 });
+  const raisedBottom = recordingDependencies({ opaqueBottomRow: 47 });
+
+  assert.equal((await renderShareCard(makeModel(), fullHeight.dependencies)).status, "ok");
+  assert.equal((await renderShareCard(makeModel(), raisedBottom.dependencies)).status, "ok");
+
+  const findWreathDraw = (operations) => operations.find((operation) =>
+    operation[0] === "drawImage" &&
+    operation[1] === "main" &&
+    operation[2] === "./assets/share-card/kokoro-wreath-v1.png");
+  const fullHeightDraw = findWreathDraw(fullHeight.operations);
+  const raisedBottomDraw = findWreathDraw(raisedBottom.operations);
+  assert.ok(fullHeightDraw[4] > raisedBottomDraw[4]);
+  assert.ok(Math.abs((fullHeightDraw[4] - raisedBottomDraw[4]) - 157.5) < 0.001);
+
+  const visibleWreathBottom = fullHeightDraw[4] + 760 * (1078 / 1254);
+  const visibleCatBottom = 330 + 630;
+  assert.ok(Math.abs(visibleWreathBottom - visibleCatBottom - 8) < 0.001);
+});
+
+test("T-007 F-015 keeps the title card usable when the optional wreath asset fails", async () => {
+  const { dependencies, operations } = recordingDependencies({ failWreath: true });
+
+  const result = await renderShareCard(makeModel(), dependencies);
+
+  assert.equal(result.status, "ok");
+  assert.equal(operations.some((operation) =>
+    operation[0] === "drawImage" &&
+    operation[1] === "main" &&
+    operation[2] === "./assets/share-card/kokoro-wreath-v1.png"), false);
+  assert.ok(operations.some((operation) =>
+    operation[0] === "drawImage" &&
+    operation[1] === "main" &&
+    operation[2].endsWith(".webp")));
+  assert.ok(operations.some((operation) =>
+    operation[0] === "fillText" &&
+    operation[1] === "main" &&
+    operation[2] === "五つの風を見渡す観測者"));
+});
+
 test("T-007 F-015 rejects an unsupported historical card template safely", async () => {
   const { dependencies } = recordingDependencies();
 
@@ -354,7 +366,7 @@ test("T-007 F-015 rejects an unsupported historical card template safely", async
   });
 });
 
-test("T-008C F-011 renders the v2 plant-only open arch outside the protected cat center", async () => {
+test("T-008C F-011 renders only the approved open raster wreath for v2", async () => {
   const { dependencies, operations } = recordingDependencies({
     throwImageData: true,
   });
@@ -369,60 +381,20 @@ test("T-008C F-011 renders the v2 plant-only open arch outside the protected cat
     operation[3] === 650 &&
     operation[4] === 270), false);
 
+  const wreathDraw = operations.find((operation) =>
+    operation[0] === "drawImage" &&
+    operation[1] === "main" &&
+    operation[2] === "./assets/share-card/kokoro-wreath-v1.png");
+  assert.ok(wreathDraw);
+  assert.equal(wreathDraw[3], 90);
+  assert.equal(wreathDraw[5], 900);
+  assert.equal(wreathDraw[6], 760);
+
   const firstCharacterDraw = operations.findIndex((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
     operation[2].endsWith(".webp"));
-  const expectedAnchors = [
-    [350, 850],
-    [285, 680],
-    [315, 505],
-    [730, 850],
-    [795, 680],
-    [765, 505],
-  ];
-  const expectedAnchorKeys = new Set(expectedAnchors.map(([x, y]) => `${x}:${y}`));
-  const actualAnchors = operations
-    .slice(0, firstCharacterDraw)
-    .filter((operation) =>
-      operation[0] === "moveTo" &&
-      operation[1] === "main" &&
-      expectedAnchorKeys.has(`${operation[2]}:${operation[3]}`))
-    .map((operation) => operation.slice(2));
-  assert.deepEqual(actualAnchors, expectedAnchors);
-
-  const firstArchAnchor = operations.findIndex((operation) =>
-    operation[0] === "moveTo" &&
-    operation[1] === "main" &&
-    operation[2] === expectedAnchors[0][0] &&
-    operation[3] === expectedAnchors[0][1]);
-  assert.ok(firstArchAnchor > 0);
-  const archOperations = operations.slice(firstArchAnchor - 1, firstCharacterDraw);
-  const botanicalFills = archOperations.filter((operation) =>
-    operation[0] === "fill" && operation[1] === "main");
-  assert.ok(botanicalFills.length >= 36);
-
-  const botanicalPaths = collectPaintedPathBounds(archOperations);
-  const leftPaths = botanicalPaths.filter(({ right }) => right < 400);
-  const rightPaths = botanicalPaths.filter(({ left }) => left > 680);
-  assert.ok(leftPaths.filter(({ paint }) => paint === "fill").length >= 18);
-  assert.ok(rightPaths.filter(({ paint }) => paint === "fill").length >= 18);
-
-  const protectedCatCenter = { left: 390, right: 690, top: 430, bottom: 900 };
-  assert.equal(
-    botanicalPaths.some((bounds) => intersects(bounds, protectedCatCenter)),
-    false,
-  );
-  const openCenterCorridor = { left: 400, right: 680, top: 330, bottom: 900 };
-  assert.equal(
-    botanicalPaths.some((bounds) => intersects(bounds, openCenterCorridor)),
-    false,
-  );
-
-  assert.ok(Math.min(...botanicalPaths.map(({ left }) => left)) <= 250);
-  assert.ok(Math.max(...botanicalPaths.map(({ right }) => right)) >= 830);
-  assert.ok(Math.min(...botanicalPaths.map(({ top }) => top)) <= 350);
-  assert.ok(Math.max(...botanicalPaths.map(({ bottom }) => bottom)) >= 850);
+  assert.ok(operations.indexOf(wreathDraw) < firstCharacterDraw);
 
   const backdropArc = operations.findIndex((operation) =>
     operation[0] === "arc" &&
