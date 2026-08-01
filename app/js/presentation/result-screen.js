@@ -127,12 +127,26 @@ function registerExclusiveDisclosure(
   group.push({ disclosure, onClose });
 }
 
+function createExclusiveResultPanelGroup() {
+  const members = [];
+
+  return {
+    register(member) {
+      members.push(member);
+    },
+    closeOthers(activeMember) {
+      for (const member of members) {
+        if (member !== activeMember && member.isOpen()) member.close();
+      }
+    },
+  };
+}
+
 function renderPaletteSelector(
   parent,
   snapshot,
   actions,
   dependencies,
-  disclosureGroup,
 ) {
   const paletteSet = dependencies.presentation?.palettes;
   const options = paletteSet && Array.isArray(paletteSet.alternatives)
@@ -215,11 +229,10 @@ function renderPaletteSelector(
   });
   section.append(group);
   section.open = dependencies.paletteExpanded === true;
-  registerExclusiveDisclosure(section, disclosureGroup);
   parent.append(section);
 }
 
-function renderFragranceIdeas(parent, dependencies, disclosureGroup) {
+function renderFragranceIdeas(parent, dependencies, panelGroup) {
   const scenes = dependencies.presentation?.fragranceScenes;
   if (
     !Array.isArray(scenes)
@@ -244,23 +257,32 @@ function renderFragranceIdeas(parent, dependencies, disclosureGroup) {
     return;
   }
 
-  const section = parent.ownerDocument.createElement("details");
+  const section = parent.ownerDocument.createElement("section");
   section.className = "result-fragrance-section";
-  const summary = parent.ownerDocument.createElement("summary");
-  summary.className = "result-presentation-summary";
+  const trigger = parent.ownerDocument.createElement("button");
+  trigger.className = "result-presentation-summary";
+  trigger.setAttribute("type", "button");
+  trigger.setAttribute("data-fragrance-disclosure-trigger", "");
+  trigger.setAttribute("aria-expanded", "false");
   appendTextElement(
-    summary,
+    trigger,
     "span",
     "ココロアロマ",
     "result-presentation-title",
   );
   appendTextElement(
-    summary,
+    trigger,
     "span",
     "～あなたらしさから着想した香り～",
     "result-presentation-subtitle",
   );
-  section.append(summary);
+  section.append(trigger);
+  const panel = parent.ownerDocument.createElement("div");
+  panel.className = "result-fragrance-panel";
+  panel.id = "fragrance-disclosure";
+  panel.hidden = true;
+  panel.setAttribute("data-fragrance-disclosure-panel", "");
+  trigger.setAttribute("aria-controls", panel.id);
 
   const sceneDisclosures = [];
   for (const scene of scenes) {
@@ -293,25 +315,42 @@ function renderFragranceIdeas(parent, dependencies, disclosureGroup) {
     }
     sceneSection.append(candidates);
     registerExclusiveDisclosure(sceneSection, sceneDisclosures);
-    section.append(sceneSection);
+    panel.append(sceneSection);
   }
   appendTextElement(
-    section,
+    panel,
     "p",
     "香りをイメージするための素材例です。",
     "result-fragrance-note",
   );
   appendTextElement(
-    section,
+    panel,
     "p",
     "あなたらしさから着想した雰囲気の候補であり、現在の心理状態や効果を示すものではありません。実際の使用方法を案内するものではありません。",
     "result-fragrance-disclaimer",
   );
-  registerExclusiveDisclosure(section, disclosureGroup, {
-    onClose() {
+  const member = {
+    isOpen() {
+      return !panel.hidden;
+    },
+    close() {
+      trigger.setAttribute("aria-expanded", "false");
+      panel.hidden = true;
       for (const scene of sceneDisclosures) scene.disclosure.open = false;
     },
+  };
+  panelGroup.register(member);
+  trigger.addEventListener("click", () => {
+    const isOpen = member.isOpen();
+    member.close();
+    if (!isOpen) {
+      panelGroup.closeOthers(member);
+      trigger.setAttribute("aria-expanded", "true");
+      panel.hidden = false;
+    }
+    trigger.scrollIntoView?.({ block: "nearest" });
   });
+  section.append(panel);
   parent.append(section);
 }
 
@@ -369,7 +408,7 @@ function renderTitleReflection(parent, snapshot) {
   parent.append(section);
 }
 
-function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
+function renderRadarAndFactors(parent, snapshot, labels, drawRadar, panelGroup) {
   const section = parent.ownerDocument.createElement("section");
   section.className = "result-factors";
   appendTextElement(section, "h2", "5因子のスコア");
@@ -399,28 +438,6 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
   const factorList = section.ownerDocument.createElement("div");
   factorList.className = "factor-result-list";
   const disclosure = createResultDisclosureModel(snapshot, labels);
-  let openFactor = null;
-  let openCategory = null;
-
-  function closeCategory() {
-    if (!openCategory) return;
-    openCategory.trigger.setAttribute("aria-expanded", "false");
-    openCategory.panel.hidden = true;
-    openCategory = null;
-  }
-
-  function closeFactor() {
-    if (!openFactor) return;
-    closeCategory();
-    openFactor.trigger.setAttribute("aria-expanded", "false");
-    openFactor.trigger.setAttribute(
-      "aria-label",
-      `${openFactor.label}、スコア${openFactor.displayScore}点、詳しい結果を見る`,
-    );
-    openFactor.hint.textContent = "詳しく見る";
-    openFactor.panel.hidden = true;
-    openFactor = null;
-  }
 
   for (const factor of disclosure) {
     const row = section.ownerDocument.createElement("section");
@@ -432,6 +449,7 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
       "aria-label",
       `${factor.label}、スコア${factor.displayScore}点、詳しい結果を見る`,
     );
+    trigger.setAttribute("data-factor-disclosure-trigger", factor.factorId);
     trigger.setAttribute("aria-expanded", "false");
     appendTextElement(trigger, "span", factor.label, "factor-score-name");
     const bar = row.ownerDocument.createElement("progress");
@@ -451,54 +469,41 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
     panel.className = "factor-disclosure-panel";
     panel.id = `factor-disclosure-${factor.factorId}`;
     panel.hidden = true;
+    panel.setAttribute("data-factor-disclosure-panel", factor.factorId);
     trigger.setAttribute("aria-controls", panel.id);
     appendTextElement(panel, "p", factor.description, "factor-description");
 
     for (const category of factor.categories) {
       const categorySection = panel.ownerDocument.createElement("section");
       categorySection.className = "factor-category";
+      categorySection.setAttribute("data-factor-category", category.categoryId);
       const categoryHeading = categorySection.ownerDocument.createElement("h4");
       categoryHeading.className = "factor-category-label";
-      const categoryTrigger = appendTextElement(
-        categoryHeading,
-        "button",
-        category.label,
-        "category-disclosure-trigger",
-      );
-      categoryTrigger.setAttribute("type", "button");
-      categoryTrigger.setAttribute("aria-expanded", "false");
-      appendTextElement(
-        categoryTrigger,
-        "span",
-        "⌄",
-        "category-disclosure-chevron",
-      ).setAttribute("aria-hidden", "true");
+      categoryHeading.textContent = category.label;
       categorySection.append(categoryHeading);
-      const categoryPanel = categorySection.ownerDocument.createElement("div");
-      categoryPanel.className = "category-disclosure-panel";
-      categoryPanel.id = `category-disclosure-${factor.factorId}-${category.categoryId}`;
-      categoryPanel.hidden = true;
-      categoryTrigger.setAttribute("aria-controls", categoryPanel.id);
-      for (const record of category.records) appendRenderedText(categoryPanel, record);
-      categorySection.append(categoryPanel);
-      categoryTrigger.addEventListener("click", () => {
-        const isOpen = openCategory?.trigger === categoryTrigger;
-        closeCategory();
-        if (!isOpen) {
-          categoryTrigger.setAttribute("aria-expanded", "true");
-          categoryPanel.hidden = false;
-          openCategory = {
-            trigger: categoryTrigger,
-            panel: categoryPanel,
-          };
-        }
-      });
+      for (const record of category.records) appendRenderedText(categorySection, record);
       panel.append(categorySection);
     }
+    const member = {
+      isOpen() {
+        return !panel.hidden;
+      },
+      close() {
+        trigger.setAttribute("aria-expanded", "false");
+        trigger.setAttribute(
+          "aria-label",
+          `${factor.label}、スコア${factor.displayScore}点、詳しい結果を見る`,
+        );
+        hint.textContent = "詳しく見る";
+        panel.hidden = true;
+      },
+    };
+    panelGroup.register(member);
     trigger.addEventListener("click", () => {
-      const isOpen = openFactor?.trigger === trigger;
-      closeFactor();
+      const isOpen = member.isOpen();
+      member.close();
       if (!isOpen) {
+        panelGroup.closeOthers(member);
         trigger.setAttribute("aria-expanded", "true");
         trigger.setAttribute(
           "aria-label",
@@ -506,20 +511,8 @@ function renderRadarAndFactors(parent, snapshot, labels, drawRadar) {
         );
         hint.textContent = "閉じる";
         panel.hidden = false;
-        openFactor = {
-          trigger,
-          panel,
-          label: factor.label,
-          displayScore: factor.displayScore,
-          hint,
-        };
-        trigger.scrollIntoView?.({ block: "nearest" });
-      } else {
-        trigger.setAttribute(
-          "aria-label",
-          `${factor.label}、スコア${factor.displayScore}点、詳しい結果を見る`,
-        );
       }
+      trigger.scrollIntoView?.({ block: "nearest" });
     });
     row.append(panel);
     factorList.append(row);
@@ -730,18 +723,23 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
     notice.setAttribute("role", "alert");
   }
   renderResultHero(main, savedSnapshot, labels, dependencies);
-  const presentationDisclosures = [];
+  const resultPanelGroup = createExclusiveResultPanelGroup();
   renderPaletteSelector(
     main,
     savedSnapshot,
     actions,
     dependencies,
-    presentationDisclosures,
   );
-  renderFragranceIdeas(main, dependencies, presentationDisclosures);
+  renderFragranceIdeas(main, dependencies, resultPanelGroup);
   renderTitleReason(main, savedSnapshot);
   renderTitleReflection(main, savedSnapshot);
-  renderRadarAndFactors(main, savedSnapshot, labels, dependencies.drawRadar ?? drawResultRadar);
+  renderRadarAndFactors(
+    main,
+    savedSnapshot,
+    labels,
+    dependencies.drawRadar ?? drawResultRadar,
+    resultPanelGroup,
+  );
   const completed = appendTextElement(main, "time", formatCompletedAt(savedSnapshot.completedAt), "result-completed-at");
   completed.setAttribute("datetime", savedSnapshot.completedAt);
   if (

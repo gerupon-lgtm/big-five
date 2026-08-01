@@ -473,10 +473,16 @@ test("T-005 F-018 shows six fragrance ideas in the fixed three-scene order", () 
   const text = collectText(host);
   const fragranceDisclosure = collectElements(host).find(({ className }) =>
     className === "result-fragrance-section");
-  assert.equal(fragranceDisclosure.tagName, "details");
-  assert.equal(fragranceDisclosure.open, false);
+  assert.equal(fragranceDisclosure.tagName, "section");
+  const fragranceTrigger = collectElements(fragranceDisclosure).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-trigger"));
+  const fragrancePanel = collectElements(fragranceDisclosure).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-panel"));
+  assert.equal(fragranceTrigger.tagName, "button");
+  assert.equal(fragranceTrigger.attributes.get("aria-expanded"), "false");
+  assert.equal(fragrancePanel.hidden, true);
   assert.match(
-    collectText(fragranceDisclosure.children[0]),
+    collectText(fragranceTrigger),
     /ココロアロマ.*～あなたらしさから着想した香り～/,
   );
   assert.match(text, /ココロアロマ/);
@@ -513,7 +519,7 @@ test("T-005 F-018 shows six fragrance ideas in the fixed three-scene order", () 
   assert.doesNotMatch(text, /fragrance-|material-/);
 });
 
-test("T-008B F-018 keeps palette, aroma, and aroma scenes mutually exclusive", () => {
+test("T-008B F-018 keeps Palette independent while Aroma scenes remain mutually exclusive", () => {
   const { host } = createFakeScreen();
   renderSavedResultScreen(
     host,
@@ -536,13 +542,6 @@ test("T-008B F-018 keeps palette, aroma, and aroma scenes mutually exclusive", (
   const scenes = elements.filter(({ className }) =>
     className === "result-fragrance-scene");
 
-  palette.open = true;
-  palette.dispatch("toggle");
-  aroma.open = true;
-  aroma.dispatch("toggle");
-  assert.equal(palette.open, false);
-  assert.equal(aroma.open, true);
-
   scenes[0].open = true;
   scenes[0].dispatch("toggle");
   scenes[1].open = true;
@@ -552,12 +551,61 @@ test("T-008B F-018 keeps palette, aroma, and aroma scenes mutually exclusive", (
 
   palette.open = true;
   palette.dispatch("toggle");
-  assert.equal(aroma.open, false);
-  assert.deepEqual(scenes.map(({ open }) => open), [false, false, false]);
+  assert.equal(palette.open, true);
+  assert.equal(aroma.hidden, false);
+  assert.deepEqual(scenes.map(({ open }) => open), [false, true, false]);
+});
 
-  aroma.open = true;
-  aroma.dispatch("toggle");
-  assert.deepEqual(scenes.map(({ open }) => open), [false, false, false]);
+test("T-008B F-005/F-018 keeps all factor and Aroma disclosures closed and mutually exclusive", () => {
+  const { host } = createFakeScreen();
+  renderSavedResultScreen(
+    host,
+    createTestResultSnapshot({
+      resultId: "00000000-0000-4000-8000-000000000076",
+    }),
+    labels,
+    { onSelectPalette() {} },
+    {
+      presentation,
+      drawRadar: () => ({ drawn: true, errorCode: null }),
+    },
+  );
+
+  const factorTriggers = collectElements(host).filter(({ attributes }) =>
+    attributes.has("data-factor-disclosure-trigger"));
+  const factorPanels = collectElements(host).filter(({ attributes }) =>
+    attributes.has("data-factor-disclosure-panel"));
+  const aromaTrigger = collectElements(host).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-trigger"));
+  const aromaPanel = collectElements(host).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-panel"));
+
+  assert.equal(factorTriggers.length, 5);
+  assert.equal(factorPanels.length, 5);
+  assert.ok(factorTriggers.every(({ attributes }) =>
+    attributes.get("aria-expanded") === "false"));
+  assert.ok(factorPanels.every(({ hidden }) => hidden));
+  assert.equal(aromaTrigger.attributes.get("aria-expanded"), "false");
+  assert.equal(aromaPanel.hidden, true);
+
+  factorTriggers[0].dispatch("click");
+  assert.equal(factorPanels[0].hidden, false);
+  aromaTrigger.dispatch("click");
+  assert.equal(factorPanels[0].hidden, true);
+  assert.equal(aromaPanel.hidden, false);
+  assert.equal(factorTriggers[0].attributes.get("aria-expanded"), "false");
+  assert.equal(aromaTrigger.attributes.get("aria-expanded"), "true");
+  let aromaScrollCalls = 0;
+  aromaTrigger.scrollIntoView = (options) => {
+    assert.deepEqual(options, { block: "nearest" });
+    aromaScrollCalls += 1;
+  };
+  factorTriggers[1].dispatch("click");
+  assert.equal(aromaPanel.hidden, true);
+  assert.equal(aromaTrigger.attributes.get("aria-expanded"), "false");
+  aromaTrigger.dispatch("click");
+  assert.equal(aromaPanel.hidden, false);
+  assert.equal(aromaScrollCalls, 1);
 });
 
 test("T-005 F-006 keeps every text and factor reachable when radar drawing fails", () => {
@@ -969,7 +1017,7 @@ test("T-008A F-006 rejects a persisted snapshot with a partial reflection group"
   );
 });
 
-test("T-008A F-005 keeps detail text behind factor then category disclosure", () => {
+test("T-008A F-005 opens every detail category for a factor in one action", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000071",
@@ -981,8 +1029,6 @@ test("T-008A F-005 keeps detail text behind factor then category disclosure", ()
 
   const factorTriggers = collectElements(host)
     .filter(({ className }) => className === "factor-disclosure-trigger");
-  const categoryTriggers = collectElements(host)
-    .filter(({ className }) => className === "category-disclosure-trigger");
   const categoryLabels = collectElements(host)
     .filter(({ className }) => className === "factor-category-label");
   const categorySummaries = collectElements(host)
@@ -991,8 +1037,6 @@ test("T-008A F-005 keeps detail text behind factor then category disclosure", ()
     .filter(({ className }) => className === "result-evidence");
   const factorPanels = collectElements(host)
     .filter(({ className }) => className === "factor-disclosure-panel");
-  const categoryPanels = collectElements(host)
-    .filter(({ className }) => className === "category-disclosure-panel");
   const scoreRows = collectElements(host)
     .filter(({ className }) => className === "factor-score-row");
   const bars = collectElements(host)
@@ -1001,7 +1045,6 @@ test("T-008A F-005 keeps detail text behind factor then category disclosure", ()
   assert.equal(scoreRows.length, 5);
   assert.equal(bars.length, 5);
   assert.equal(factorTriggers.length, 5);
-  assert.equal(categoryTriggers.length, 35);
   assert.equal(evidenceDisclosures.length, 0);
   assert.deepEqual(
     factorTriggers.map(({ attributes }) => attributes.get("aria-label")),
@@ -1011,11 +1054,7 @@ test("T-008A F-005 keeps detail text behind factor then category disclosure", ()
       ),
   );
   assert.deepEqual(
-    factorTriggers.map((trigger) => collectText(trigger).includes("詳しく見る")),
-    Array(5).fill(true),
-  );
-  assert.deepEqual(
-    categoryLabels.slice(0, 7).map(({ children }) => children[0].textContent),
+    categoryLabels.slice(0, 7).map(({ textContent }) => textContent),
     [
       "今の傾向",
       "活かしやすい強み",
@@ -1027,21 +1066,12 @@ test("T-008A F-005 keeps detail text behind factor then category disclosure", ()
     ],
   );
   assert.equal(categoryLabels.length, 35);
-  assert.equal(categoryPanels.length, 35);
   assert.equal(categorySummaries.length, 0);
-  assert.deepEqual(
-    categoryTriggers.slice(0, 7).map(({ textContent }) => textContent),
-    [
-      "今の傾向",
-      "活かしやすい強み",
-      "強みの裏返り",
-      "仕事での現れ方",
-      "人間関係での現れ方",
-      "ストレス時の傾向",
-      "振り返りと行動ヒント",
-    ],
+  assert.equal(
+    collectElements(host).filter(({ className }) =>
+      className === "category-disclosure-trigger").length,
+    0,
   );
-  assert.ok(categoryPanels.every(({ hidden }) => hidden));
   assert.equal(
     collectElements(host).filter(({ textContent }) =>
       textContent === "因子を選ぶと、詳しい結果を確認できます。").length,
@@ -1059,6 +1089,7 @@ test("T-008A F-005 keeps detail text behind factor then category disclosure", ()
     assert.equal(trigger.attributes.get("type"), "button");
     assert.equal(trigger.attributes.get("aria-expanded"), "false");
     assert.ok(trigger.attributes.get("aria-controls"));
+    assert.ok(trigger.attributes.get("data-factor-disclosure-trigger"));
   }
   for (const bar of bars) {
     assert.equal(bar.tagName, "progress");
@@ -1075,32 +1106,26 @@ test("T-008A F-005 keeps detail text behind factor then category disclosure", ()
   factorTriggers[0].dispatch("click");
   assert.equal(factorTriggers[0].attributes.get("aria-expanded"), "true");
   assert.equal(factorPanels[0].hidden, false);
-  assert.ok(categoryPanels.slice(0, 7).every(({ hidden }) => hidden));
-  assert.ok(categoryTriggers.slice(0, 7).every(({ attributes }) =>
-    attributes.get("aria-expanded") === "false"));
-  categoryTriggers[0].dispatch("click");
-  assert.equal(categoryTriggers[0].attributes.get("aria-expanded"), "true");
-  assert.equal(categoryPanels[0].hidden, false);
   assert.equal(
-    collectElements(categoryPanels[0]).filter(({ className }) =>
-      className === "result-text-record").length,
-    1,
+    collectElements(factorPanels[0]).filter(({ className }) =>
+      className === "factor-category").length,
+    7,
   );
-  categoryTriggers[1].dispatch("click");
-  assert.equal(categoryTriggers[0].attributes.get("aria-expanded"), "false");
-  assert.equal(categoryPanels[0].hidden, true);
-  assert.equal(categoryTriggers[1].attributes.get("aria-expanded"), "true");
-  assert.equal(categoryPanels[1].hidden, false);
+  assert.equal(
+    collectElements(factorPanels[0]).filter(({ className }) =>
+      className === "result-text-record").length,
+    8,
+  );
   assert.equal(scrolled, 1);
   factorTriggers[1].dispatch("click");
   assert.equal(factorTriggers[0].attributes.get("aria-expanded"), "false");
   assert.equal(factorPanels[0].hidden, true);
   assert.equal(factorTriggers[1].attributes.get("aria-expanded"), "true");
-  assert.equal(categoryTriggers[1].attributes.get("aria-expanded"), "false");
-  assert.equal(categoryPanels[1].hidden, true);
+  assert.equal(factorPanels[1].hidden, false);
+  assert.doesNotMatch(collectText(host), /拡大して見る/);
 });
 
-test("T-008A F-005 keeps preview observation behind factor then current-trend disclosure", () => {
+test("T-008A F-005 opens the saved preview observation with its factor", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000072",
@@ -1111,8 +1136,6 @@ test("T-008A F-005 keeps preview observation behind factor then current-trend di
     drawRadar: () => ({ drawn: true, errorCode: null }),
   });
 
-  const categoryTriggers = collectElements(host)
-    .filter(({ className }) => className === "category-disclosure-trigger");
   const categoryLabels = collectElements(host)
     .filter(({ className }) => className === "factor-category-label");
   const factorTriggers = collectElements(host)
@@ -1121,15 +1144,12 @@ test("T-008A F-005 keeps preview observation behind factor then current-trend di
     .filter(({ className }) => className === "factor-category-summary");
   const factorPanels = collectElements(host)
     .filter(({ className }) => className === "factor-disclosure-panel");
-  const categoryPanels = collectElements(host)
-    .filter(({ className }) => className === "category-disclosure-panel");
-  assert.equal(categoryTriggers.length, 5);
   assert.equal(categorySummaries.length, 0);
-  assert.deepEqual(categoryTriggers.map(({ textContent }) => textContent), Array(5).fill("今の傾向"));
-  assert.deepEqual(categoryLabels.map(({ children }) => children[0].textContent), Array(5).fill("今の傾向"));
-  assert.deepEqual(
-    factorTriggers.map((trigger) => collectText(trigger).includes("詳しく見る")),
-    Array(5).fill(true),
+  assert.deepEqual(categoryLabels.map(({ textContent }) => textContent), Array(5).fill("今の傾向"));
+  assert.equal(
+    collectElements(host).filter(({ className }) =>
+      className === "category-disclosure-trigger").length,
+    0,
   );
   assert.equal(
     collectElements(host).filter(({ textContent }) =>
@@ -1142,12 +1162,8 @@ test("T-008A F-005 keeps preview observation behind factor then current-trend di
   );
   factorTriggers[0].dispatch("click");
   assert.equal(factorPanels[0].hidden, false);
-  assert.equal(categoryPanels[0].hidden, true);
-  categoryTriggers[0].dispatch("click");
-  assert.equal(categoryTriggers[0].attributes.get("aria-expanded"), "true");
-  assert.equal(categoryPanels[0].hidden, false);
   assert.equal(
-    collectElements(categoryPanels[0]).filter(({ className }) =>
+    collectElements(factorPanels[0]).filter(({ className }) =>
       className === "result-text-record").length,
     1,
   );
