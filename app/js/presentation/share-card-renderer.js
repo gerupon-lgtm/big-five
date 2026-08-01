@@ -189,6 +189,88 @@ function drawSprig(
   });
 }
 
+function drawBotanicalLeaf(
+  context,
+  x,
+  y,
+  length,
+  angle,
+  color,
+  alpha = 0.58,
+) {
+  drawLeaf(context, x, y, length, angle, color, alpha);
+  const directionX = Math.cos(angle);
+  const directionY = Math.sin(angle);
+  context.save();
+  context.strokeStyle = color;
+  context.globalAlpha = Math.max(0.16, alpha * 0.42);
+  context.lineWidth = 1.2;
+  context.beginPath();
+  context.moveTo(x + directionX * 3, y + directionY * 3);
+  context.lineTo(
+    x + directionX * length * 0.82,
+    y + directionY * length * 0.82,
+  );
+  context.stroke();
+  context.restore();
+}
+
+function drawBotanicalSprig(
+  context,
+  x,
+  y,
+  length,
+  angle,
+  colors,
+  direction = 1,
+) {
+  const directionX = Math.cos(angle);
+  const directionY = Math.sin(angle);
+  const endX = x + directionX * length;
+  const endY = y + directionY * length;
+  const stemColor = colors[0];
+
+  context.save();
+  context.strokeStyle = stemColor;
+  context.globalAlpha = 0.52;
+  context.lineWidth = 2.2;
+  context.beginPath();
+  context.moveTo(x, y);
+  context.bezierCurveTo(
+    x + directionX * length * 0.32,
+    y + directionY * length * 0.32 - 10 * direction,
+    x + directionX * length * 0.72,
+    y + directionY * length * 0.72 + 7 * direction,
+    endX,
+    endY,
+  );
+  context.stroke();
+  context.restore();
+
+  [0.18, 0.31, 0.44, 0.57, 0.7, 0.82].forEach((progress, index) => {
+    const leafX = x + directionX * length * progress;
+    const leafY = y + directionY * length * progress;
+    const side = index % 2 === 0 ? direction : -direction;
+    drawBotanicalLeaf(
+      context,
+      leafX,
+      leafY,
+      40 - index * 1.8,
+      angle + side * (0.78 + index * 0.025),
+      colors[index % colors.length],
+      0.52 + (index % 3) * 0.045,
+    );
+  });
+  drawDot(
+    context,
+    endX,
+    endY,
+    4.2,
+    colors.at(-1),
+    0.66,
+  );
+}
+
 function drawDot(context, x, y, radius, color, alpha = 0.8) {
   context.save();
   context.fillStyle = color;
@@ -222,32 +304,76 @@ function drawWreath(context, model, templateVersion) {
   const legacy = templateVersion === "card-template-v1";
   context.save();
   context.strokeStyle = model.palette.chart;
-  context.globalAlpha = legacy ? 0.16 : 0.56;
-  context.lineWidth = legacy ? 4 : 5.5;
+  context.globalAlpha = legacy ? 0.16 : 0.14;
+  context.lineWidth = legacy ? 4 : 2.8;
   context.beginPath();
   context.arc(540, 650, 270, 0, Math.PI * 2);
   context.stroke();
   context.restore();
 
-  const sprigAlpha = legacy ? 0.48 : 0.66;
-  drawSprig(context, 322, 777, 128, -2.18, model.palette.chart, 1, sprigAlpha);
-  drawSprig(context, 300, 610, 92, -1.72, model.palette.chart, -1, legacy ? 0.45 : 0.62);
-  drawSprig(context, 758, 790, 132, -0.95, model.palette.accent, -1, legacy ? 0.47 : 0.65);
-  drawSprig(context, 785, 610, 94, -1.42, model.palette.accent, 1, legacy ? 0.44 : 0.61);
+  if (!legacy) {
+    drawBotanicalSprig(
+      context,
+      304,
+      626,
+      118,
+      -1.72,
+      [model.palette.chart, "#8198A0", "#92A58D"],
+      -1,
+    );
+    drawBotanicalSprig(
+      context,
+      329,
+      794,
+      154,
+      -2.18,
+      [model.palette.chart, "#8198A0", "#D2A25A"],
+      1,
+    );
+    drawBotanicalSprig(
+      context,
+      776,
+      628,
+      120,
+      -1.42,
+      [model.palette.accent, "#9A8DA9", "#8198A0"],
+      1,
+    );
+    drawBotanicalSprig(
+      context,
+      751,
+      796,
+      156,
+      -0.95,
+      [model.palette.accent, "#8198A0", "#D2A25A"],
+      -1,
+    );
+    return;
+  }
+
+  drawSprig(context, 322, 777, 128, -2.18, model.palette.chart, 1, 0.48);
+  drawSprig(context, 300, 610, 92, -1.72, model.palette.chart, -1, 0.45);
+  drawSprig(context, 758, 790, 132, -0.95, model.palette.accent, -1, 0.47);
+  drawSprig(context, 785, 610, 94, -1.42, model.palette.accent, 1, 0.44);
   drawDot(context, 308, 718, 4, "#EB8A3A", 0.75);
   drawDot(context, 772, 713, 4, "#EB8A3A", 0.75);
 }
 
 function drawCharacterBackdrop(context, model, treatment, templateVersion) {
+  if (templateVersion !== "card-template-v1") return;
   context.save();
   context.fillStyle = model.palette.surface;
-  context.globalAlpha = templateVersion === "card-template-v1"
-    ? treatment === "neutral-plate" ? 0.82 : 0.38
-    : treatment === "neutral-plate" ? 0.14 : 0.04;
+  context.globalAlpha = treatment === "neutral-plate" ? 0.82 : 0.38;
   context.beginPath();
   context.arc(540, 650, 244, 0, Math.PI * 2);
   context.fill();
   context.restore();
+}
+
+function normalizeCharacterTreatment(treatment, templateVersion) {
+  return templateVersion !== "card-template-v1" && treatment === "neutral-plate"
+    ? "shadow"
+    : treatment;
 }
 
 function drawContainedImage(context, image, character, treatment) {
@@ -600,6 +726,10 @@ function drawFooter(context, model, templateVersion) {
 
 function drawCard(context, model, assets) {
   const templateVersion = model.versions.cardTemplateVersion;
+  const characterTreatment = normalizeCharacterTreatment(
+    assets.character?.treatment ?? "neutral-plate",
+    templateVersion,
+  );
   context.fillStyle = model.palette.background;
   context.fillRect(0, 0, model.width, model.height);
   drawPaperTexture(context, model.palette.text);
@@ -609,7 +739,7 @@ function drawCard(context, model, assets) {
   drawCharacterBackdrop(
     context,
     model,
-    assets.character?.treatment ?? "neutral-plate",
+    characterTreatment,
     templateVersion,
   );
   drawWreath(context, model, templateVersion);
@@ -618,7 +748,7 @@ function drawCard(context, model, assets) {
       context,
       assets.character.image,
       model.character,
-      assets.character.treatment,
+      characterTreatment,
     );
   }
   drawFactors(context, model);

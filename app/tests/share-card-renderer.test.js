@@ -292,7 +292,7 @@ test("T-007 F-015 rejects an unsupported historical card template safely", async
   });
 });
 
-test("T-007 F-011 keeps the approved wreath visible without an opaque white cover", async () => {
+test("T-007 F-011 renders the approved airy botanical wreath without a white disc", async () => {
   const { dependencies, operations } = recordingDependencies({
     throwImageData: true,
   });
@@ -309,8 +309,18 @@ test("T-007 F-011 keeps the approved wreath visible without an opaque white cove
   assert.ok(wreathArc >= 0);
   const wreathStroke = operations.slice(wreathArc).find((operation) =>
     operation[0] === "stroke" && operation[1] === "main");
-  assert.ok(wreathStroke[3] >= 0.5);
-  assert.ok(wreathStroke[4] >= 5);
+  assert.ok(wreathStroke[3] >= 0.12 && wreathStroke[3] <= 0.24);
+  assert.ok(wreathStroke[4] >= 2 && wreathStroke[4] <= 3.5);
+
+  const firstCharacterDraw = operations.findIndex((operation) =>
+    operation[0] === "drawImage" &&
+    operation[1] === "main" &&
+    operation[2].endsWith(".webp"));
+  const botanicalFills = operations
+    .slice(wreathArc, firstCharacterDraw)
+    .filter((operation) =>
+      operation[0] === "fill" && operation[1] === "main");
+  assert.ok(botanicalFills.length >= 28);
 
   const backdropArc = operations.findIndex((operation) =>
     operation[0] === "arc" &&
@@ -318,9 +328,7 @@ test("T-007 F-011 keeps the approved wreath visible without an opaque white cove
     operation[2] === 540 &&
     operation[3] === 650 &&
     operation[4] === 244);
-  const backdropFill = operations.slice(backdropArc).find((operation) =>
-    operation[0] === "fill" && operation[1] === "main");
-  assert.ok(backdropFill[3] <= 0.18);
+  assert.equal(backdropArc, -1);
 });
 
 test("T-007 F-011 fills aroma whitespace without overlapping footer copy", async () => {
@@ -470,13 +478,13 @@ test("T-007 F-011 keeps the detailed title reason out of the approved compact ca
     operation[2] === "五つの風を見渡す観測者"), true);
 });
 
-test("T-007 F-016 falls back to a circular neutral wash without a rectangular cat plate", async () => {
+test("T-007 F-016 uses cat shadow separation without adding a white backdrop", async () => {
   const { dependencies, operations } = recordingDependencies({ throwImageData: true });
 
   const result = await renderShareCard(makeModel(), dependencies);
 
   assert.equal(result.status, "ok");
-  const catIndex = operations.findIndex((operation) =>
+  const catDraws = operations.filter((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
     operation[2].endsWith(".webp"));
@@ -489,9 +497,11 @@ test("T-007 F-016 falls back to a circular neutral wash without a rectangular ca
     operation[0] === "arc" &&
     operation[1] === "main" &&
     operation[2] === 540 &&
-    operation[3] === 650);
+    operation[3] === 650 &&
+    operation[4] === 244);
   assert.equal(legacyPlateIndex, -1);
-  assert.ok(circularWashIndex >= 0 && circularWashIndex < catIndex);
+  assert.equal(circularWashIndex, -1);
+  assert.equal(catDraws.length, 2);
 });
 
 test("T-007 F-015 returns stable renderer errors", async () => {
