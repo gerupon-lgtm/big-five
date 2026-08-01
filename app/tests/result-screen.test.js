@@ -467,7 +467,75 @@ test("T-008B F-018 does not accept a Palette disclosure state", () => {
   assert.equal(fragranceDisclosure.tagName, "section");
 });
 
-test("T-005 F-018 shows six fragrance ideas in the fixed three-scene order", () => {
+test("T-005 F-018 keeps Aroma closed with three local scene teasers", () => {
+  const { host } = createFakeScreen();
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000064",
+  });
+
+  renderSavedResultScreen(host, snapshot, labels, {
+    onSelectPalette() {},
+  }, {
+    presentation,
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+  });
+
+  const fragranceDisclosure = collectElements(host).find(({ className }) =>
+    className === "result-fragrance-section");
+  assert.equal(fragranceDisclosure.tagName, "section");
+  const fragranceTrigger = collectElements(fragranceDisclosure).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-trigger"));
+  const fragrancePanel = collectElements(fragranceDisclosure).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-panel"));
+  assert.equal(fragranceTrigger.tagName, "button");
+  assert.equal(fragranceTrigger.attributes.get("aria-expanded"), "false");
+  assert.equal(fragrancePanel.hidden, true);
+  assert.match(
+    collectText(fragranceTrigger),
+    /ココロアロマ.*～あなたらしさから着想した香り～/,
+  );
+  const teasers = collectElements(fragranceTrigger).filter(({ tagName }) =>
+    tagName === "img");
+  assert.equal(teasers.length, 3);
+  assert.deepEqual(
+    teasers.map(({ attributes }) => ({
+      src: attributes.get("src"),
+      width: attributes.get("width"),
+      height: attributes.get("height"),
+      loading: attributes.get("loading"),
+    })),
+    [
+      {
+        src: "./assets/share-card/aroma-pause-v1.png",
+        width: "994",
+        height: "857",
+        loading: "lazy",
+      },
+      {
+        src: "./assets/share-card/aroma-reset-v1.png",
+        width: "1243",
+        height: "848",
+        loading: "lazy",
+      },
+      {
+        src: "./assets/share-card/aroma-quiet-focus-v1.png",
+        width: "875",
+        height: "960",
+        loading: "lazy",
+      },
+    ],
+  );
+  assert.deepEqual(
+    teasers.map(({ attributes }) => attributes.get("alt")),
+    [
+      "ひと息つきたいをイメージした香り",
+      "気持ちを切り替えたいをイメージした香り",
+      "静かに取り組みたいをイメージした香り",
+    ],
+  );
+});
+
+test("T-005 F-018 opens all six Aroma candidates in the fixed three-scene order", () => {
   const { host } = createFakeScreen();
   const snapshot = createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000064",
@@ -483,28 +551,17 @@ test("T-005 F-018 shows six fragrance ideas in the fixed three-scene order", () 
   const text = collectText(host);
   const fragranceDisclosure = collectElements(host).find(({ className }) =>
     className === "result-fragrance-section");
-  assert.equal(fragranceDisclosure.tagName, "section");
   const fragranceTrigger = collectElements(fragranceDisclosure).find(({ attributes }) =>
     attributes.has("data-fragrance-disclosure-trigger"));
   const fragrancePanel = collectElements(fragranceDisclosure).find(({ attributes }) =>
     attributes.has("data-fragrance-disclosure-panel"));
-  assert.equal(fragranceTrigger.tagName, "button");
-  assert.equal(fragranceTrigger.attributes.get("aria-expanded"), "false");
-  assert.equal(fragrancePanel.hidden, true);
-  assert.match(
-    collectText(fragranceTrigger),
-    /ココロアロマ.*～あなたらしさから着想した香り～/,
-  );
-  assert.match(text, /ココロアロマ/);
-  assert.match(text, /～あなたらしさから着想した香り～/);
-  const scenes = collectElements(host).filter(({ className }) =>
+  fragranceTrigger.dispatch("click");
+  assert.equal(fragranceTrigger.attributes.get("aria-expanded"), "true");
+  assert.equal(fragrancePanel.hidden, false);
+  const scenes = collectElements(fragrancePanel).filter(({ className }) =>
     className === "result-fragrance-scene");
   assert.equal(scenes.length, 3);
-  assert.deepEqual(scenes.map(({ tagName, open }) => [tagName, open]), [
-    ["details", false],
-    ["details", false],
-    ["details", false],
-  ]);
+  assert.ok(scenes.every(({ tagName }) => tagName === "section"));
   assert.deepEqual(
     scenes.map((scene) => scene.attributes.get("data-scene-id")),
     ["pause", "reset", "quiet-focus"],
@@ -527,9 +584,18 @@ test("T-005 F-018 shows six fragrance ideas in the fixed three-scene order", () 
   assert.match(text, /香りをイメージするための素材例です/);
   assert.match(text, /現在の心理状態や効果を示すものではありません/);
   assert.doesNotMatch(text, /fragrance-|material-/);
+  assert.equal(
+    collectElements(fragrancePanel).filter(({ tagName }) => tagName === "details").length,
+    0,
+  );
+  assert.equal(
+    collectElements(fragrancePanel).filter(({ attributes }) =>
+      attributes.has("data-scene-disclosure-trigger")).length,
+    0,
+  );
 });
 
-test("T-008B F-018 keeps Palette independent while Aroma scenes remain mutually exclusive", () => {
+test("T-008B F-018 keeps Palette independent while Aroma remains open", () => {
   const { host } = createFakeScreen();
   renderSavedResultScreen(
     host,
@@ -549,19 +615,16 @@ test("T-008B F-018 keeps Palette independent while Aroma scenes remain mutually 
     tagName === "button" && attributes.has("data-palette-id"));
   const aroma = elements.find(({ className }) =>
     className === "result-fragrance-section");
-  const scenes = elements.filter(({ className }) =>
-    className === "result-fragrance-scene");
-
-  scenes[0].open = true;
-  scenes[0].dispatch("toggle");
-  scenes[1].open = true;
-  scenes[1].dispatch("toggle");
-  assert.equal(scenes[0].open, false);
-  assert.equal(scenes[1].open, true);
+  const aromaTrigger = elements.find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-trigger"));
+  const aromaPanel = elements.find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-panel"));
+  aromaTrigger.dispatch("click");
 
   paletteChoice.dispatch("click");
-  assert.equal(aroma.hidden, false);
-  assert.deepEqual(scenes.map(({ open }) => open), [false, true, false]);
+  assert.equal(aroma.tagName, "section");
+  assert.equal(aromaPanel.hidden, false);
+  assert.equal(aromaTrigger.attributes.get("aria-expanded"), "true");
 });
 
 test("T-008B F-005/F-018 keeps all factor and Aroma disclosures closed and mutually exclusive", () => {

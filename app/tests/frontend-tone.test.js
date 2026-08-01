@@ -61,6 +61,33 @@ test("T-008B F-018 lays out three equal Palette choices without a narrow-screen 
   assert.doesNotMatch(narrowStyles, /\.result-palette-options/);
 });
 
+test("T-005 F-018 keeps Aroma teasers contained and candidate copy safe at 320px", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+
+  assert.match(
+    styles,
+    /\.result-fragrance-teasers\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)[^}]*min-width:\s*0/s,
+  );
+  assert.match(
+    styles,
+    /\.result-fragrance-teaser-image\s*\{[^}]*display:\s*block[^}]*width:\s*100%[^}]*height:\s*auto[^}]*object-fit:\s*contain/s,
+  );
+  assert.match(
+    styles,
+    /\.result-fragrance-scene\s*\{[^}]*min-width:\s*0/s,
+  );
+  assert.match(
+    styles,
+    /\.result-fragrance-candidate\s*\{[^}]*min-width:\s*0/s,
+  );
+  assert.match(
+    styles,
+    /\.result-fragrance-description\s*\{[^}]*overflow-wrap:\s*anywhere/s,
+  );
+  assert.doesNotMatch(styles, /\.result-fragrance-scene\s*>\s*summary/);
+  assert.doesNotMatch(styles, /\.result-fragrance-scene\[open\]/);
+});
+
 test("T-008A keeps sticky header behavior without redefining brand geometry", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
   const stickyHeader = styles.match(/\.app-header\.is-sticky\s*\{([^}]*)\}/)?.[1] ?? "";

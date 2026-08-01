@@ -1239,6 +1239,7 @@ details[open] > .result-presentation-summary::after {
 }
 
 .result-fragrance-section {
+  min-width: 0;
   margin-top: 28px;
   padding: 20px;
   border: 1px solid #d6e4df;
@@ -1248,40 +1249,36 @@ details[open] > .result-presentation-summary::after {
 
 .result-fragrance-scene {
   margin-top: 20px;
-  border: 1px solid #d6e4df;
-  border-radius: 14px;
-  background: #fff;
-  overflow: hidden;
+  min-width: 0;
 }
 
-.result-fragrance-scene > summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.result-fragrance-scene > summary::-webkit-details-marker {
-  display: none;
-}
-
-.result-fragrance-scene > summary::after {
-  content: "＋";
-  flex: 0 0 auto;
-  color: #26705c;
-  font-weight: 700;
-}
-
-.result-fragrance-scene[open] > summary::after {
-  content: "−";
-}
-
-.result-fragrance-scene > summary h3 {
+.result-fragrance-scene h3 {
   margin: 0;
   font-size: 1rem;
+}
+
+.result-fragrance-teasers {
+  display: grid;
+  grid-column: 1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+  margin-top: 12px;
+}
+
+.result-fragrance-teaser {
+  display: grid;
+  min-width: 0;
+  aspect-ratio: 1;
+  place-items: center;
+}
+
+.result-fragrance-teaser-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .result-fragrance-candidates {
@@ -1292,6 +1289,7 @@ details[open] > .result-presentation-summary::after {
 }
 
 .result-fragrance-candidate {
+  min-width: 0;
   padding: 14px;
   border: 1px solid #d6e4df;
   border-radius: 14px;
@@ -1319,6 +1317,7 @@ details[open] > .result-presentation-summary::after {
   color: #526b66;
   font-size: 0.85rem;
   line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 
 .result-fragrance-note,

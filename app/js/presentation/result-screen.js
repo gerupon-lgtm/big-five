@@ -9,6 +9,24 @@ import { appendBottomSheetLauncher } from "./bottom-sheet.js";
 import { appendScreenHeading } from "./screen-heading.js";
 import { appendTextElement, formatCompletedAt } from "./screen-helpers.js";
 
+const FRAGRANCE_TEASER_ASSETS = Object.freeze({
+  pause: Object.freeze({
+    src: "./assets/share-card/aroma-pause-v1.png",
+    width: 994,
+    height: 857,
+  }),
+  reset: Object.freeze({
+    src: "./assets/share-card/aroma-reset-v1.png",
+    width: 1243,
+    height: 848,
+  }),
+  "quiet-focus": Object.freeze({
+    src: "./assets/share-card/aroma-quiet-focus-v1.png",
+    width: 875,
+    height: 960,
+  }),
+});
+
 function appendRenderedText(parent, record) {
   const article = parent.ownerDocument.createElement("article");
   article.className = "result-text-item";
@@ -300,6 +318,24 @@ function renderFragranceIdeas(parent, dependencies, panelGroup) {
     "～あなたらしさから着想した香り～",
     "result-presentation-subtitle",
   );
+  const teasers = parent.ownerDocument.createElement("span");
+  teasers.className = "result-fragrance-teasers";
+  for (const scene of scenes) {
+    const asset = FRAGRANCE_TEASER_ASSETS[scene.sceneId];
+    if (!asset) return;
+    const teaser = parent.ownerDocument.createElement("span");
+    teaser.className = "result-fragrance-teaser";
+    const image = parent.ownerDocument.createElement("img");
+    image.className = "result-fragrance-teaser-image";
+    image.setAttribute("src", asset.src);
+    image.setAttribute("alt", `${scene.label}をイメージした香り`);
+    image.setAttribute("loading", "lazy");
+    image.setAttribute("width", String(asset.width));
+    image.setAttribute("height", String(asset.height));
+    teaser.append(image);
+    teasers.append(teaser);
+  }
+  trigger.append(teasers);
   section.append(trigger);
   const panel = parent.ownerDocument.createElement("div");
   panel.className = "result-fragrance-panel";
@@ -308,15 +344,12 @@ function renderFragranceIdeas(parent, dependencies, panelGroup) {
   panel.setAttribute("data-fragrance-disclosure-panel", "");
   trigger.setAttribute("aria-controls", panel.id);
 
-  const sceneDisclosures = [];
   for (const scene of scenes) {
-    const sceneSection = parent.ownerDocument.createElement("details");
+    const sceneSection = parent.ownerDocument.createElement("section");
     sceneSection.className = "result-fragrance-scene";
     sceneSection.setAttribute("data-scene-id", scene.sceneId);
     sceneSection.setAttribute("data-icon-id", scene.iconId);
-    const sceneSummary = parent.ownerDocument.createElement("summary");
-    appendTextElement(sceneSummary, "h3", scene.label);
-    sceneSection.append(sceneSummary);
+    appendTextElement(sceneSection, "h3", scene.label);
     const candidates = parent.ownerDocument.createElement("div");
     candidates.className = "result-fragrance-candidates";
     for (const candidate of scene.candidates) {
@@ -338,7 +371,6 @@ function renderFragranceIdeas(parent, dependencies, panelGroup) {
       candidates.append(article);
     }
     sceneSection.append(candidates);
-    registerExclusiveDisclosure(sceneSection, sceneDisclosures);
     panel.append(sceneSection);
   }
   appendTextElement(
@@ -365,7 +397,6 @@ function renderFragranceIdeas(parent, dependencies, panelGroup) {
     close() {
       trigger.setAttribute("aria-expanded", "false");
       panel.hidden = true;
-      for (const scene of sceneDisclosures) scene.disclosure.open = false;
     },
   };
   panelGroup.register(member);
