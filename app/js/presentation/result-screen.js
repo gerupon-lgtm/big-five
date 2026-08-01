@@ -800,6 +800,15 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
   const resultPanelGroup = createExclusiveResultPanelGroup(
     dependencies.openResultDisclosureId,
   );
+  renderTitleReason(main, savedSnapshot);
+  renderTitleReflection(main, savedSnapshot);
+  renderRadarAndFactors(
+    main,
+    savedSnapshot,
+    labels,
+    dependencies.drawRadar ?? drawResultRadar,
+    resultPanelGroup,
+  );
   if (!historyPreviewInProgress) {
     renderPaletteSelector(
       main,
@@ -814,15 +823,6 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
     );
   }
   renderFragranceIdeas(main, dependencies, resultPanelGroup);
-  renderTitleReason(main, savedSnapshot);
-  renderTitleReflection(main, savedSnapshot);
-  renderRadarAndFactors(
-    main,
-    savedSnapshot,
-    labels,
-    dependencies.drawRadar ?? drawResultRadar,
-    resultPanelGroup,
-  );
   const completed = appendTextElement(main, "time", formatCompletedAt(savedSnapshot.completedAt), "result-completed-at");
   completed.setAttribute("datetime", savedSnapshot.completedAt);
   if (

@@ -771,6 +771,33 @@ test("T-008B F-018 keeps Palette independent while Aroma remains open", () => {
   assert.equal(aromaTrigger.attributes.get("aria-expanded"), "true");
 });
 
+test("T-006 F-018 places factors before Palette and Aroma", () => {
+  const { host } = createFakeScreen();
+  renderSavedResultScreen(
+    host,
+    createTestResultSnapshot({
+      resultId: "00000000-0000-4000-8000-000000000082",
+    }),
+    labels,
+    { onSelectPalette() {} },
+    {
+      presentation,
+      drawRadar: () => ({ drawn: true, errorCode: null }),
+    },
+  );
+
+  const elements = collectElements(host);
+  const radar = elements.find(({ className }) => className === "result-radar");
+  const palette = elements.find(({ className }) =>
+    className === "result-palette-selector");
+  const aroma = elements.find(({ className }) =>
+    className === "result-fragrance-section");
+
+  assert.ok(elements.indexOf(radar) < elements.indexOf(palette));
+  assert.ok(elements.indexOf(palette) < elements.indexOf(aroma));
+  assert.doesNotMatch(collectText(radar), /拡大して見る/);
+});
+
 test("T-008B F-005/F-018 keeps all factor and Aroma disclosures closed and mutually exclusive", () => {
   const { host } = createFakeScreen();
   renderSavedResultScreen(
