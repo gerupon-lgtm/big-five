@@ -1170,7 +1170,7 @@ dd {
   font-weight: 700;
 }
 
-details[open] > .result-presentation-summary::after {
+.result-presentation-summary[aria-expanded="true"]::after {
   content: "−";
 }
 

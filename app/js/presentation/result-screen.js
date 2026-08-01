@@ -120,26 +120,6 @@ function drawPaletteSwatch(canvas, primaryColor) {
   }
 }
 
-function registerExclusiveDisclosure(
-  disclosure,
-  group,
-  { onClose = () => {} } = {},
-) {
-  disclosure.addEventListener("toggle", () => {
-    if (!disclosure.open) {
-      onClose();
-      return;
-    }
-    for (const other of group) {
-      if (other.disclosure !== disclosure && other.disclosure.open) {
-        other.disclosure.open = false;
-        other.onClose();
-      }
-    }
-  });
-  group.push({ disclosure, onClose });
-}
-
 function createExclusiveResultPanelGroup(initialOpenId = null) {
   const members = [];
 
@@ -157,6 +137,15 @@ function createExclusiveResultPanelGroup(initialOpenId = null) {
       return members.find((member) => member.isOpen())?.id ?? null;
     },
   };
+}
+
+function findPaletteChoice(root, paletteId) {
+  if (root?.getAttribute?.("data-palette-id") === paletteId) return root;
+  for (const child of root?.children ?? []) {
+    const match = findPaletteChoice(child, paletteId);
+    if (match) return match;
+  }
+  return null;
 }
 
 function renderPaletteSelector(
@@ -267,6 +256,8 @@ function renderPaletteSelector(
       actions.onSelectPalette?.(palette.paletteId, {
         openResultDisclosureId: dependencies.getOpenResultDisclosureId?.() ?? null,
       });
+      const focusRoot = parent.ownerDocument.getElementById?.("app") ?? parent;
+      findPaletteChoice(focusRoot, palette.paletteId)?.focus?.();
     });
     group.append(button);
   });

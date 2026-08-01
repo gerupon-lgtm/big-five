@@ -102,6 +102,16 @@ test("T-005 F-018 keeps Aroma teasers contained and candidate copy safe at 320px
   assert.doesNotMatch(styles, /\.result-fragrance-scene\[open\]/);
 });
 
+test("T-008B F-018 shows the Aroma open indicator from its button state", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+
+  assert.match(
+    styles,
+    /\.result-presentation-summary\[aria-expanded="true"\]::after\s*\{[^}]*content:\s*"−"/s,
+  );
+  assert.doesNotMatch(styles, /details\[open\]\s*>\s*\.result-presentation-summary::after/);
+});
+
 test("T-008A keeps sticky header behavior without redefining brand geometry", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
   const stickyHeader = styles.match(/\.app-header\.is-sticky\s*\{([^}]*)\}/)?.[1] ?? "";

@@ -639,6 +639,7 @@ function createAppHarness({
     ...appOptions,
   });
   return {
+    documentObject,
     host,
     windowObject,
     navigateHash(nextHash) {
@@ -932,6 +933,40 @@ test("T-008B F-018 keeps the open Aroma panel visible after Palette selection", 
     attributes.has("data-fragrance-disclosure-panel"));
   assert.equal(rerenderedAromaTrigger.attributes.get("aria-expanded"), "true");
   assert.equal(rerenderedAromaPanel.hidden, false);
+});
+
+test("T-008B F-018 restores focus to the selected Palette choice after rerender", () => {
+  let raw = null;
+  const { documentObject, host } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+
+  const aromaTrigger = collectElements(host).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-trigger"));
+  aromaTrigger.dispatch("click");
+  const paletteChoice = collectElements(host).find(({ tagName, className, attributes }) =>
+    tagName === "button"
+    && attributes.has("data-palette-id")
+    && className.includes("palette-choice--selected") === false);
+  const paletteId = paletteChoice.attributes.get("data-palette-id");
+  paletteChoice.focus();
+  paletteChoice.dispatch("click");
+
+  const selectedChoice = collectElements(host).find(({ tagName, attributes }) =>
+    tagName === "button"
+    && attributes.get("data-palette-id") === paletteId);
+  const rerenderedAromaTrigger = collectElements(host).find(({ attributes }) =>
+    attributes.has("data-fragrance-disclosure-trigger"));
+  assert.strictEqual(documentObject.activeElement, selectedChoice);
+  assert.equal(selectedChoice.attributes.get("aria-pressed"), "true");
+  assert.equal(rerenderedAromaTrigger.attributes.get("aria-expanded"), "true");
 });
 
 test("T-005 S-002 discarding is cancelled without writes, succeeds to start, and preserves the flow on deletion failure", () => {
