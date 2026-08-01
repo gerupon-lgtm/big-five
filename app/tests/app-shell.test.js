@@ -1156,11 +1156,51 @@ test("T-005 S-004 renders detail after fifty answers and atomically clears progr
   assert.doesNotMatch(JSON.stringify(envelope.results[0]), /answers/);
 });
 
-function createShownPreviewProgress() {
+test("preview20 snapshot reuses the active progressId", () => {
+  let raw = null;
+  const { host } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  const progressId = JSON.parse(raw).progressByDiagnosis[DiagnosticDefinition.diagnosisId].progressId;
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "20問の簡易プレビューを見る");
+
+  const [snapshot] = JSON.parse(raw).results;
+  assert.equal(snapshot.mode, "preview20");
+  assert.equal(snapshot.resultId, progressId);
+});
+
+test("detail50 snapshot gets a new resultId", () => {
+  let raw = null;
+  const { host } = createAppHarness({
+    storage: {
+      getItem: () => raw,
+      setItem(_key, value) { raw = value; },
+    },
+  });
+
+  clickButton(host, "診断を始める");
+  const progressId = JSON.parse(raw).progressByDiagnosis[DiagnosticDefinition.diagnosisId].progressId;
+  for (let index = 0; index < 20; index += 1) answerCurrent(host);
+  clickButton(host, "結果を見ずに、あと30問続ける");
+  for (let index = 0; index < 30; index += 1) answerCurrent(host);
+
+  const snapshot = JSON.parse(raw).results.find(({ mode }) => mode === "detail50");
+  assert.notEqual(snapshot.resultId, progressId);
+});
+
+function createShownPreviewProgress({
+  progressId = "00000000-0000-4000-8000-000000000091",
+} = {}) {
   let progress = createProgressRecord({
     definition: DiagnosticDefinition,
     meta: appMeta,
-    progressId: "00000000-0000-4000-8000-000000000091",
+    progressId,
     now: "2026-07-27T12:00:00.000Z",
   });
   for (const questionId of DiagnosticDefinition.previewQuestionIds) {
@@ -1177,10 +1217,60 @@ function createShownPreviewProgress() {
   }).progress;
 }
 
-test("T-005 S-003 reloads a saved preview into question 21 only with its compatible shown-preview progress", () => {
-  const progress = createShownPreviewProgress();
+test("history preview resumes only the progress with the same ID", () => {
+  const progress = createShownPreviewProgress({
+    progressId: "00000000-0000-4000-8000-000000000101",
+  });
   const snapshot = createTestResultSnapshot({
-    resultId: "00000000-0000-4000-8000-000000000092",
+    resultId: progress.progressId,
+    questionCount: 20,
+    versionTuple: progress.versionTuple,
+  });
+  const { host } = createAppHarness({
+    hash: "#/history",
+    storage: { getItem: () => JSON.stringify({
+      schemaVersion: 1,
+      updatedAt: "2026-07-27T12:00:00.000Z",
+      progressByDiagnosis: { [DiagnosticDefinition.diagnosisId]: progress },
+      results: [snapshot],
+    }) },
+  });
+
+  clickButton(host, "結果を見る");
+  assert.equal(collectElements(host).filter(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "あと30問続ける").length, 1);
+});
+
+test("legacy unrelated IDs are not relinked by answer count and version", () => {
+  const progress = createShownPreviewProgress({
+    progressId: "00000000-0000-4000-8000-000000000102",
+  });
+  const snapshot = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000103",
+    questionCount: 20,
+    versionTuple: progress.versionTuple,
+  });
+  const { host } = createAppHarness({
+    hash: "#/history",
+    storage: { getItem: () => JSON.stringify({
+      schemaVersion: 1,
+      updatedAt: "2026-07-27T12:00:00.000Z",
+      progressByDiagnosis: { [DiagnosticDefinition.diagnosisId]: progress },
+      results: [snapshot],
+    }) },
+  });
+
+  clickButton(host, "結果を見る");
+  assert.equal(collectElements(host).filter(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "あと30問続ける").length, 0);
+});
+
+test("T-005 S-003 reloads a saved preview into question 21 only with its compatible shown-preview progress", () => {
+  const progress = createShownPreviewProgress({
+    progressId: "00000000-0000-4000-8000-000000000092",
+  });
+  const snapshot = createTestResultSnapshot({
+    resultId: progress.progressId,
     questionCount: 20,
     versionTuple: progress.versionTuple,
   });

@@ -263,8 +263,9 @@ export function startApp({
   }
 
   function isShownPreviewProgressForSnapshot(progress, snapshot) {
-    return progress && snapshot.mode === "preview20" &&
-      progress.mode === "preview20" &&
+    if (!progress || snapshot.mode !== "preview20") return false;
+    if (progress.progressId !== snapshot.resultId) return false;
+    return progress.mode === "preview20" &&
       progress.previewDecision === "showPreview" &&
       Object.keys(progress.answers).length === 20 &&
       Object.keys(snapshot.versionTuple).length === Object.keys(progress.versionTuple).length &&
@@ -294,13 +295,18 @@ export function startApp({
     return outcome;
   }
 
-  function createSnapshot({ answers, questionCount, mode }) {
+  function createSnapshot({
+    answers,
+    questionCount,
+    mode,
+    resultId = uuidProvider(),
+  }) {
     if (!currentProgress) throw new Error("APP_PROGRESS_MISSING");
     return createDiagnosticResultSnapshot({
       answers,
       questionCount,
       mode,
-      resultId: uuidProvider(),
+      resultId,
       completedAt: nowProvider(),
       versionTuple: currentProgress.versionTuple,
       questionDefinitions: QuestionDefinitions,
@@ -416,6 +422,7 @@ export function startApp({
             answers: currentProgress.answers,
             questionCount: 20,
             mode: "preview20",
+            resultId: currentProgress.progressId,
           });
           const persisted = saveResultSnapshot({
             storage: getStorage(),
