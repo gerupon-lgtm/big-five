@@ -302,54 +302,48 @@ function drawHeaderDecoration(context, model) {
 
 function drawWreath(context, model, templateVersion) {
   const legacy = templateVersion === "card-template-v1";
+
+  if (!legacy) {
+    const archSprigs = [
+      { x: 350, y: 850, length: 225, angle: -2.08, side: "left" },
+      { x: 285, y: 680, length: 205, angle: -1.53, side: "left" },
+      { x: 315, y: 505, length: 170, angle: -1.22, side: "left" },
+      { x: 730, y: 850, length: 225, angle: -1.06, side: "right" },
+      { x: 795, y: 680, length: 205, angle: -1.61, side: "right" },
+      { x: 765, y: 505, length: 170, angle: -1.92, side: "right" },
+    ];
+    const mutedColors = [
+      ["#8198A0", "#D2A25A"],
+      ["#8198A0", "#92A58D"],
+      ["#92A58D", "#9A8DA9"],
+    ];
+
+    archSprigs.forEach((sprig, index) => {
+      const sideIndex = index % 3;
+      drawBotanicalSprig(
+        context,
+        sprig.x,
+        sprig.y,
+        sprig.length,
+        sprig.angle,
+        [
+          sprig.side === "left" ? model.palette.chart : model.palette.accent,
+          ...mutedColors[sideIndex],
+        ],
+        sprig.side === "left" ? 1 : -1,
+      );
+    });
+    return;
+  }
+
   context.save();
   context.strokeStyle = model.palette.chart;
-  context.globalAlpha = legacy ? 0.16 : 0.14;
-  context.lineWidth = legacy ? 4 : 2.8;
+  context.globalAlpha = 0.16;
+  context.lineWidth = 4;
   context.beginPath();
   context.arc(540, 650, 270, 0, Math.PI * 2);
   context.stroke();
   context.restore();
-
-  if (!legacy) {
-    drawBotanicalSprig(
-      context,
-      304,
-      626,
-      118,
-      -1.72,
-      [model.palette.chart, "#8198A0", "#92A58D"],
-      -1,
-    );
-    drawBotanicalSprig(
-      context,
-      329,
-      794,
-      154,
-      -2.18,
-      [model.palette.chart, "#8198A0", "#D2A25A"],
-      1,
-    );
-    drawBotanicalSprig(
-      context,
-      776,
-      628,
-      120,
-      -1.42,
-      [model.palette.accent, "#9A8DA9", "#8198A0"],
-      1,
-    );
-    drawBotanicalSprig(
-      context,
-      751,
-      796,
-      156,
-      -0.95,
-      [model.palette.accent, "#8198A0", "#D2A25A"],
-      -1,
-    );
-    return;
-  }
 
   drawSprig(context, 322, 777, 128, -2.18, model.palette.chart, 1, 0.48);
   drawSprig(context, 300, 610, 92, -1.72, model.palette.chart, -1, 0.45);

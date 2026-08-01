@@ -173,6 +173,62 @@ function recordingDependencies({
   };
 }
 
+function collectPaintedPathBounds(operations) {
+  const paths = [];
+  let points = null;
+
+  for (const operation of operations) {
+    if (operation[0] === "beginPath") {
+      points = [];
+      continue;
+    }
+    if (!points) continue;
+    if (operation[0] === "moveTo" || operation[0] === "lineTo") {
+      points.push({ x: operation[2], y: operation[3] });
+      continue;
+    }
+    if (operation[0] === "bezierCurveTo") {
+      points.push(
+        { x: operation[2], y: operation[3] },
+        { x: operation[4], y: operation[5] },
+        { x: operation[6], y: operation[7] },
+      );
+      continue;
+    }
+    if (operation[0] === "arc") {
+      const [, , x, y, radius] = operation;
+      points.push(
+        { x: x - radius, y: y - radius },
+        { x: x + radius, y: y + radius },
+      );
+      continue;
+    }
+    if ((operation[0] === "fill" || operation[0] === "stroke") && points.length > 0) {
+      const xs = points.map(({ x }) => x);
+      const ys = points.map(({ y }) => y);
+      paths.push({
+        paint: operation[0],
+        left: Math.min(...xs),
+        right: Math.max(...xs),
+        top: Math.min(...ys),
+        bottom: Math.max(...ys),
+      });
+      points = null;
+    }
+  }
+
+  return paths;
+}
+
+function intersects(bounds, rectangle) {
+  return !(
+    bounds.right < rectangle.left ||
+    bounds.left > rectangle.right ||
+    bounds.bottom < rectangle.top ||
+    bounds.top > rectangle.bottom
+  );
+}
+
 test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and contained cat", async () => {
   const { dependencies, operations, pngBlob } = recordingDependencies();
 
@@ -273,6 +329,12 @@ test("T-007 F-011 reproduces the legacy v1 layout for v1 history", async () => {
     && operation[2].length === 1
     && "ココロパレア".includes(operation[2])), false);
   assert.ok(operations.some((operation) =>
+    operation[0] === "arc"
+    && operation[1] === "main"
+    && operation[2] === 540
+    && operation[3] === 650
+    && operation[4] === 270));
+  assert.ok(operations.some((operation) =>
     operation[0] === "stroke"
     && operation[1] === "main"
     && operation[3] === 0.16
@@ -292,7 +354,7 @@ test("T-007 F-015 rejects an unsupported historical card template safely", async
   });
 });
 
-test("T-007 F-011 renders the approved airy botanical wreath without a white disc", async () => {
+test("T-008C F-011 renders the v2 plant-only open arch outside the protected cat center", async () => {
   const { dependencies, operations } = recordingDependencies({
     throwImageData: true,
   });
@@ -300,27 +362,67 @@ test("T-007 F-011 renders the approved airy botanical wreath without a white dis
   const result = await renderShareCard(makeModel(), dependencies);
 
   assert.equal(result.status, "ok");
-  const wreathArc = operations.findIndex((operation) =>
+  assert.equal(operations.some((operation) =>
     operation[0] === "arc" &&
     operation[1] === "main" &&
     operation[2] === 540 &&
     operation[3] === 650 &&
-    operation[4] === 270);
-  assert.ok(wreathArc >= 0);
-  const wreathStroke = operations.slice(wreathArc).find((operation) =>
-    operation[0] === "stroke" && operation[1] === "main");
-  assert.ok(wreathStroke[3] >= 0.12 && wreathStroke[3] <= 0.24);
-  assert.ok(wreathStroke[4] >= 2 && wreathStroke[4] <= 3.5);
+    operation[4] === 270), false);
 
   const firstCharacterDraw = operations.findIndex((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
     operation[2].endsWith(".webp"));
-  const botanicalFills = operations
-    .slice(wreathArc, firstCharacterDraw)
+  const expectedAnchors = [
+    [350, 850],
+    [285, 680],
+    [315, 505],
+    [730, 850],
+    [795, 680],
+    [765, 505],
+  ];
+  const expectedAnchorKeys = new Set(expectedAnchors.map(([x, y]) => `${x}:${y}`));
+  const actualAnchors = operations
+    .slice(0, firstCharacterDraw)
     .filter((operation) =>
-      operation[0] === "fill" && operation[1] === "main");
-  assert.ok(botanicalFills.length >= 28);
+      operation[0] === "moveTo" &&
+      operation[1] === "main" &&
+      expectedAnchorKeys.has(`${operation[2]}:${operation[3]}`))
+    .map((operation) => operation.slice(2));
+  assert.deepEqual(actualAnchors, expectedAnchors);
+
+  const firstArchAnchor = operations.findIndex((operation) =>
+    operation[0] === "moveTo" &&
+    operation[1] === "main" &&
+    operation[2] === expectedAnchors[0][0] &&
+    operation[3] === expectedAnchors[0][1]);
+  assert.ok(firstArchAnchor > 0);
+  const archOperations = operations.slice(firstArchAnchor - 1, firstCharacterDraw);
+  const botanicalFills = archOperations.filter((operation) =>
+    operation[0] === "fill" && operation[1] === "main");
+  assert.ok(botanicalFills.length >= 36);
+
+  const botanicalPaths = collectPaintedPathBounds(archOperations);
+  const leftPaths = botanicalPaths.filter(({ right }) => right < 400);
+  const rightPaths = botanicalPaths.filter(({ left }) => left > 680);
+  assert.ok(leftPaths.filter(({ paint }) => paint === "fill").length >= 18);
+  assert.ok(rightPaths.filter(({ paint }) => paint === "fill").length >= 18);
+
+  const protectedCatCenter = { left: 390, right: 690, top: 430, bottom: 900 };
+  assert.equal(
+    botanicalPaths.some((bounds) => intersects(bounds, protectedCatCenter)),
+    false,
+  );
+  const openCenterCorridor = { left: 400, right: 680, top: 330, bottom: 900 };
+  assert.equal(
+    botanicalPaths.some((bounds) => intersects(bounds, openCenterCorridor)),
+    false,
+  );
+
+  assert.ok(Math.min(...botanicalPaths.map(({ left }) => left)) <= 250);
+  assert.ok(Math.max(...botanicalPaths.map(({ right }) => right)) >= 830);
+  assert.ok(Math.min(...botanicalPaths.map(({ top }) => top)) <= 350);
+  assert.ok(Math.max(...botanicalPaths.map(({ bottom }) => bottom)) >= 850);
 
   const backdropArc = operations.findIndex((operation) =>
     operation[0] === "arc" &&
