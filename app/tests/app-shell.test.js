@@ -722,7 +722,8 @@ test("T-007 S-005 opens one generated share card and revokes it when returning",
   shareButton.dispatch("click");
   downloadButton.dispatch("click");
   await new Promise((resolve) => setImmediate(resolve));
-  assert.deepEqual(sharedBlobSources, [blob]);
+  assert.equal(sharedBlobSources.length, 1);
+  assert.strictEqual(sharedBlobSources[0], blob);
   assert.deepEqual(urlBlobs, [blob, blob]);
   assert.deepEqual(revoked, ["blob:card-2"]);
   clickButton(host, "結果へ戻る");
