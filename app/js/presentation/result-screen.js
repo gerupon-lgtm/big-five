@@ -223,16 +223,19 @@ function renderPaletteSelector(
       "aria-label",
       `${visibleLabel}${selected ? "、選択中" : ""}`,
     );
+    const swatchFrame = parent.ownerDocument.createElement("span");
+    swatchFrame.className = "palette-choice__swatch-frame";
     const swatch = parent.ownerDocument.createElement("canvas");
     swatch.className = "palette-choice__swatch";
     swatch.setAttribute("aria-hidden", "true");
     swatch.setAttribute("width", "72");
     swatch.setAttribute("height", "72");
     drawPaletteSwatch(swatch, palette.baseColors.primary);
-    button.append(swatch);
-    const check = appendTextElement(button, "span", "✓", "palette-choice__check");
+    swatchFrame.append(swatch);
+    const check = appendTextElement(swatchFrame, "span", "✓", "palette-choice__check");
     check.setAttribute("aria-hidden", "true");
     check.hidden = !selected;
+    button.append(swatchFrame);
     const label = appendTextElement(
       button,
       "span",

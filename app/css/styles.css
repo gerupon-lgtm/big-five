@@ -1188,10 +1188,18 @@ details[open] > .result-presentation-summary::after {
   background: #f3f8f6;
 }
 
-.palette-choice__swatch {
-  display: block;
+.palette-choice__swatch-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
   width: clamp(48px, 16vw, 72px);
   height: clamp(48px, 16vw, 72px);
+}
+
+.palette-choice__swatch {
+  display: block;
+  width: 100%;
+  height: 100%;
   border: 2px solid #fff;
   border-radius: 50%;
   box-shadow: 0 0 0 1px rgb(25 51 47 / 24%);

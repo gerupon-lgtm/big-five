@@ -415,11 +415,14 @@ test("T-008B F-018 renders three always-visible circular Palette choices", () =>
   assert.match(paletteChoices[0].attributes.get("aria-label"), /パレット1、選択中/);
   assert.match(paletteChoices[1].attributes.get("aria-label"), /パレット2/);
   assert.doesNotMatch(collectText(host), /若葉の余白|朝空のリズム|木陰の灯り/);
-  const swatch = paletteChoices[0].children[0];
+  const swatchFrame = paletteChoices[0].children[0];
+  assert.equal(swatchFrame.className, "palette-choice__swatch-frame");
+  const swatch = swatchFrame.children[0];
   assert.equal(swatch.tagName, "canvas");
   assert.equal(swatch.className, "palette-choice__swatch");
   assert.equal(swatch.attributes.get("width"), "72");
   assert.equal(swatch.attributes.get("height"), "72");
+  assert.equal(swatchFrame.children[1].className, "palette-choice__check");
 
   const factorTrigger = collectElements(host).find(({ attributes }) =>
     attributes.has("data-factor-disclosure-trigger"));
@@ -430,8 +433,8 @@ test("T-008B F-018 renders three always-visible circular Palette choices", () =>
   assert.deepEqual(selected, ["palette-alternative-1"]);
   assert.equal(paletteChoices[1].attributes.get("aria-pressed"), "true");
   assert.match(paletteChoices[1].className, /palette-choice--selected/);
-  assert.equal(paletteChoices[1].children[1].textContent, "✓");
-  assert.equal(paletteChoices[1].children[1].hidden, false);
+  assert.equal(paletteChoices[1].children[0].children[1].textContent, "✓");
+  assert.equal(paletteChoices[1].children[0].children[1].hidden, false);
   assert.equal(factorPanel.hidden, false);
   assert.equal(factorTrigger.attributes.get("aria-expanded"), "true");
   assert.equal(snapshot.selectedPaletteId, "palette-default");

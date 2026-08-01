@@ -52,6 +52,10 @@ test("T-008B F-018 lays out three equal Palette choices without a narrow-screen 
   );
   assert.match(
     styles,
+    /\.palette-choice__swatch-frame\s*\{[^}]*position:\s*relative/s,
+  );
+  assert.match(
+    styles,
     /\.palette-choice__check\s*\{[^}]*position:\s*absolute[^}]*inset:\s*50% auto auto 50%[^}]*transform:\s*translate\(-50%,\s*-50%\)/s,
   );
   assert.doesNotMatch(narrowStyles, /\.result-palette-options/);
