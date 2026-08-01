@@ -78,7 +78,7 @@ test("T-008B F-018 lays out three equal Palette choices without a narrow-screen 
   );
   assert.match(
     styles,
-    /\.palette-choice__check\s*\{[^}]*position:\s*absolute[^}]*inset:\s*50% auto auto 50%[^}]*transform:\s*translate\(-50%,\s*-50%\)/s,
+    /\.palette-choice__check\s*\{[^}]*position:\s*absolute[^}]*inset:\s*50% auto auto 50%[^}]*transform:\s*translate\(-50%,\s*-50%\)[^}]*border:\s*2px solid #fff[^}]*background:\s*#26705c[^}]*color:\s*#fff/s,
   );
   assert.doesNotMatch(narrowStyles, /\.result-palette-options/);
 });
@@ -110,14 +110,40 @@ test("T-005 F-018 keeps Aroma teasers contained and candidate copy safe at 320px
   assert.doesNotMatch(styles, /\.result-fragrance-scene\[open\]/);
 });
 
-test("T-008B F-018 shows the Aroma open indicator from its button state", async () => {
+test("T-008B F-018 makes Aroma inviting and uses the shared chevron language", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
 
   assert.match(
     styles,
-    /\.result-presentation-summary\[aria-expanded="true"\]::after\s*\{[^}]*content:\s*"−"/s,
+    /\.result-presentation-summary\s*\{[^}]*width:\s*calc\(100% \+ 40px\)[^}]*margin:\s*-20px -20px 0[^}]*padding:\s*20px[^}]*border:\s*0[^}]*background:\s*linear-gradient\(/s,
   );
+  assert.match(
+    styles,
+    /\.result-presentation-summary\[aria-expanded="false"\]\s*\{[^}]*margin-bottom:\s*-20px/s,
+  );
+  assert.match(
+    styles,
+    /\.result-presentation-summary::after\s*\{[^}]*content:\s*"›"[^}]*transition:\s*transform 160ms ease/s,
+  );
+  assert.match(
+    styles,
+    /\.result-presentation-summary\[aria-expanded="true"\]::after\s*\{[^}]*transform:\s*rotate\(90deg\)/s,
+  );
+  assert.doesNotMatch(styles, /\.result-presentation-summary::after\s*\{[^}]*content:\s*"[＋−]"/s);
   assert.doesNotMatch(styles, /details\[open\]\s*>\s*\.result-presentation-summary::after/);
+});
+
+test("T-008C F-005/F-018 keeps expanded factor and Aroma headings off their borders", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+
+  assert.match(
+    styles,
+    /\.factor-category-label\s*\{[^}]*margin:\s*0[^}]*padding:\s*10px 12px 8px/s,
+  );
+  assert.match(
+    styles,
+    /\.result-fragrance-scene\s*\{[^}]*margin-top:\s*14px/s,
+  );
 });
 
 test("T-008A keeps sticky header behavior without redefining brand geometry", async () => {

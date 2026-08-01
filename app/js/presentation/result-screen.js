@@ -830,10 +830,10 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
     appendTextElement(main, "p", "20項目版は、独立した日本語版としての妥当性検証を受けていません。50問では、スコア・仮称号・仮キャラクターが変わり得ます。", "notice preview-validation-notice").setAttribute("role", "note");
   }
   renderBoundaryNotices(main, savedSnapshot.boundaryFlags, labels);
-  renderMethodInformation(main, savedSnapshot, labels, dependencies);
   if (!historyPreviewInProgress) {
     renderShareCallToAction(main, savedSnapshot, actions);
   }
+  renderMethodInformation(main, savedSnapshot, labels, dependencies);
   renderActions(main, savedSnapshot, actions, {
     historyDetail,
     historyPreviewInProgress,

@@ -45,9 +45,13 @@ test("T-007 S-005 starts with one fitted card and only available actions", () =>
   assert.equal(image.getAttribute("width"), "1080");
   assert.equal(image.getAttribute("height"), "1800");
   assert.ok(findButton(host, "共有内容を見る"));
-  assert.ok(findButton(host, "拡大して見る"));
+  assert.equal(findButton(host, "拡大して見る").className, "secondary-button");
   assert.ok(findButton(host, "画像を共有する"));
   assert.ok(findButton(host, "PNGを保存する"));
+  assert.equal(
+    findButton(host, "結果へ戻る").className,
+    "secondary-button share-back-button",
+  );
   assert.equal(findButton(host, "テキストをコピーする"), undefined);
 
   findButton(host, "画像を共有する").dispatch("click");

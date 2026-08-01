@@ -106,7 +106,7 @@ export function renderShareScreen(host, model, actions = {}, dependencies = {}) 
       viewActions.className = "share-view-actions";
       appendButton(viewActions, "共有内容を見る", "secondary-button", () =>
         show("details"));
-      appendButton(viewActions, "拡大して見る", "text-button", () =>
+      appendButton(viewActions, "拡大して見る", "secondary-button", () =>
         show("zoom"));
       pane.append(viewActions);
     } else if (view === "zoom") {
@@ -124,7 +124,7 @@ export function renderShareScreen(host, model, actions = {}, dependencies = {}) 
     main.append(pane);
     appendDeliveryActions(main, model, actions, capabilities, imageUrl !== null);
     if (typeof actions.onBackToResult === "function") {
-      appendButton(main, "結果へ戻る", "text-button share-back-button", () =>
+      appendButton(main, "結果へ戻る", "secondary-button share-back-button", () =>
         actions.onBackToResult());
     }
     host.replaceChildren(main);

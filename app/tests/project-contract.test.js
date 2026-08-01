@@ -361,7 +361,7 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     "3:5",
     "320×480",
     "補正版の透過ラスタリース",
-    "補正版は2026-08-02にユーザー承認済み",
+    "上下位置の中央付近が外側へ膨らみ過ぎて見える点の形状調整は保留",
   ], documentPaths.requirements);
   assertIncludesAll(dataModel, [
     "createShareCardModel",
@@ -378,6 +378,7 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     "zoom",
     "320×480",
     "完成カードをSVGからラスタライズしない",
+    "同じ副ボタンのトンマナ",
   ], documentPaths.screens);
   assertIncludesAll(processing, [
     "createShareCardModel",
@@ -387,9 +388,10 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
     "SHARE_FONT_UNAVAILABLE",
     "SHARE_PNG_UNAVAILABLE",
     "プレビューとダウンロードは同じ1080×1800 PNG Blob",
+    "通常結果画面は境界注意の後に単一の称号カードCTA",
   ], documentPaths.processing);
   assertIncludesAll(tasks, [
-    "状態: 実装・承認DONE（2026-08-02）",
+    "状態: IMPLEMENTED_WITH_VISUAL_FOLLOW_UP（2026-08-02）",
     "#/share?resultId=<UUID>",
     "1080×1800",
     "猫ごとのalpha下端追従",
@@ -397,7 +399,7 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
   assertIncludesAll(basicDesign, [
     "1080×1800",
     "補正版の透過ラスタリース",
-    "2026-08-02にユーザー承認済み",
+    "上下中央付近の膨らみを抑える形状調整は保留",
     "猫ごとのalpha下端",
   ], documentPaths.basicDesign);
   for (const [document, name] of [

@@ -285,6 +285,12 @@ test("T-007 result sharing uses one primary normal-flow CTA with approved copy",
     onShare() {},
   }, {
     drawRadar: () => ({ drawn: true, errorCode: null }),
+    questionComposition: [{
+      factorId: "intellectImagination",
+      positiveCount: 5,
+      negativeCount: 5,
+    }],
+    methodInfo: [{ id: "scale", title: "測定の土台", body: "説明" }],
   });
 
   const elements = collectElements(host);
@@ -305,6 +311,13 @@ test("T-007 result sharing uses one primary normal-flow CTA with approved copy",
     elements.filter(({ tagName, textContent }) =>
       tagName === "button" && textContent === "称号カードを見る").length,
     1,
+  );
+  const methodInformation = elements.find(({ className }) =>
+    className === "result-method-information");
+  assert.ok(methodInformation);
+  assert.ok(
+    elements.indexOf(shareSections[0]) < elements.indexOf(methodInformation),
+    "title-card CTA precedes the supporting method card",
   );
 });
 
