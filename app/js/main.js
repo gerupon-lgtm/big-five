@@ -626,11 +626,6 @@ export function startApp({
         resultActionNotice = null;
         setRoute("#/answer");
       },
-      onPausePreview() {
-        currentProgress = previewProgress;
-        resultActionNotice = null;
-        pauseCurrentProgress();
-      },
       ...(canFinishPreview ? {
         onFinishPreview() {
           const storedPreview = loadPreviewContinuation(snapshot);
@@ -749,6 +744,7 @@ export function startApp({
       loadCharacterImage,
       observeViewport: effectiveObserveViewport,
       historyDetail,
+      historyPreviewInProgress: historyDetail && previewProgress !== null,
       presentation,
       openResultDisclosureId,
       definitionSupported: definitionRegistration !== null,

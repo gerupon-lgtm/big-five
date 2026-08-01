@@ -158,6 +158,152 @@ function createReflectionSnapshot({
   return snapshot;
 }
 
+test("T-005/T-006 result states follow the approved five-state action matrix", () => {
+  const states = [
+    {
+      name: "50 direct",
+      questionCount: 50,
+      historyDetail: false,
+      historyPreviewInProgress: false,
+      bottomActions: ["トップへ戻る", "もう一度診断する"],
+      bottomActionClasses: ["secondary-button", "secondary-button"],
+      palette: true,
+      share: true,
+      historyReturns: 0,
+    },
+    {
+      name: "50 history",
+      questionCount: 50,
+      historyDetail: true,
+      historyPreviewInProgress: false,
+      bottomActions: ["履歴一覧に戻る"],
+      bottomActionClasses: ["secondary-button"],
+      palette: true,
+      share: true,
+      historyReturns: 2,
+    },
+    {
+      name: "20 direct",
+      questionCount: 20,
+      historyDetail: false,
+      historyPreviewInProgress: false,
+      bottomActions: ["50問へ進む", "簡易プレビューで終了する"],
+      bottomActionClasses: ["primary-button", "secondary-button"],
+      palette: true,
+      share: true,
+      historyReturns: 0,
+    },
+    {
+      name: "20 history in progress",
+      questionCount: 20,
+      historyDetail: true,
+      historyPreviewInProgress: true,
+      bottomActions: ["50問へ進む", "履歴一覧に戻る"],
+      bottomActionClasses: ["primary-button", "secondary-button"],
+      palette: false,
+      share: false,
+      historyReturns: 2,
+    },
+    {
+      name: "20 history finalized",
+      questionCount: 20,
+      historyDetail: true,
+      historyPreviewInProgress: false,
+      bottomActions: ["履歴一覧に戻る"],
+      bottomActionClasses: ["secondary-button"],
+      palette: true,
+      share: true,
+      historyReturns: 2,
+    },
+  ];
+
+  for (const [index, state] of states.entries()) {
+    const { host } = createFakeScreen();
+    const snapshot = createTestResultSnapshot({
+      resultId: `00000000-0000-4000-8000-${String(200 + index).padStart(12, "0")}`,
+      questionCount: state.questionCount,
+    });
+    renderSavedResultScreen(host, snapshot, labels, {
+      onContinueDetail() {},
+      onFinishPreview() {},
+      onPausePreview() {},
+      onReturnToStart() {},
+      onRetry() {},
+      onShare() {},
+      onSelectPalette() {},
+    }, {
+      presentation,
+      historyDetail: state.historyDetail,
+      historyPreviewInProgress: state.historyPreviewInProgress,
+      drawRadar: () => ({ drawn: true, errorCode: null }),
+    });
+
+    const elements = collectElements(host);
+    const bottomActions = elements.find(({ className }) => className === "result-actions");
+    assert.deepEqual(
+      bottomActions.children.map(({ textContent }) => textContent),
+      state.bottomActions,
+      `${state.name}: bottom actions`,
+    );
+    assert.deepEqual(
+      bottomActions.children.map(({ className }) => className),
+      state.bottomActionClasses,
+      `${state.name}: button hierarchy`,
+    );
+    assert.equal(
+      elements.filter(({ className }) => className === "result-palette-selector").length,
+      state.palette ? 1 : 0,
+      `${state.name}: Palette visibility`,
+    );
+    assert.equal(
+      elements.filter(({ className }) => className === "result-fragrance-section").length,
+      1,
+      `${state.name}: Aroma visibility`,
+    );
+    assert.equal(
+      elements.filter(({ className }) => className === "result-share-call-to-action").length,
+      state.share ? 1 : 0,
+      `${state.name}: share visibility`,
+    );
+    assert.equal(
+      elements.filter(({ tagName, attributes, textContent }) =>
+        tagName === "a"
+        && attributes.get("href") === "#/history"
+        && textContent === "履歴一覧に戻る").length,
+      state.historyReturns,
+      `${state.name}: history returns`,
+    );
+    assert.doesNotMatch(collectText(host), /あと30問続ける|中断してトップへ/);
+  }
+});
+
+test("T-007 result sharing uses one primary normal-flow CTA with approved copy", () => {
+  const { host } = createFakeScreen();
+  renderSavedResultScreen(host, createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000210",
+  }), labels, {
+    onShare() {},
+  }, {
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+  });
+
+  const elements = collectElements(host);
+  const shareSections = elements.filter(({ className }) =>
+    className === "result-share-call-to-action");
+  assert.equal(shareSections.length, 1);
+  assert.match(collectText(shareSections[0]), /今回の結果を残してみませんか/);
+  assert.doesNotMatch(collectText(shareSections[0]), /画像やテキストで共有できます/);
+  const shareButtons = collectElements(shareSections[0]).filter(({ tagName, textContent }) =>
+    tagName === "button" && textContent === "結果を共有する");
+  assert.equal(shareButtons.length, 1);
+  assert.equal(shareButtons[0].className, "primary-button");
+  assert.equal(
+    elements.filter(({ tagName, textContent }) =>
+      tagName === "button" && textContent === "結果を共有する").length,
+    1,
+  );
+});
+
 test("T-008A S-003/S-004 renders mode-specific result headings without header actions", () => {
   for (const [questionCount, kicker, title] of [
     [20, "PREVIEW RESULT", "20問簡易プレビュー"],
@@ -255,7 +401,7 @@ test("T-005 S-003 renders the complete saved preview with factor help and the 30
   }
 
   const buttons = collectElements(host).filter(({ tagName }) => tagName === "button");
-  buttons.find(({ textContent }) => textContent === "あと30問続ける").dispatch("click");
+  buttons.find(({ textContent }) => textContent === "50問へ進む").dispatch("click");
   buttons.find(({ textContent }) => textContent === "結果を共有する").dispatch("click");
   assert.deepEqual(calls, [
     ["continue", snapshot],
@@ -292,11 +438,8 @@ test("T-005 S-004 renders all 42 saved detail texts exactly once", () => {
   assert.match(text, /50問詳細結果/);
   assert.match(text, /称号.*五つの風を見渡す観測者/);
   assert.doesNotMatch(text, /仮称号|あと30問|20問だけでは/);
-  assert.ok(collectElements(host).some(({ tagName, attributes, className, textContent }) =>
-    tagName === "a"
-    && attributes.get("href") === "#/history"
-    && className === "secondary-button"
-    && textContent === "結果履歴を見る"));
+  assert.equal(collectElements(host).some(({ tagName, attributes }) =>
+    tagName === "a" && attributes.get("href") === "#/history"), false);
 
   collectElements(host).find(({ tagName, textContent }) =>
     tagName === "button" && textContent === "もう一度診断する").dispatch("click");
@@ -349,6 +492,7 @@ test("T-008B S-003 history preview keeps only continuation and history return ac
     onShare() {},
   }, {
     historyDetail: true,
+    historyPreviewInProgress: true,
     drawRadar: () => ({ drawn: true, errorCode: null }),
   });
 
@@ -357,7 +501,7 @@ test("T-008B S-003 history preview keeps only continuation and history return ac
   const buttons = collectElements(actions)
     .filter(({ tagName }) => tagName === "button")
     .map(({ textContent }) => textContent);
-  assert.deepEqual(buttons, ["あと30問続ける"]);
+  assert.deepEqual(buttons, ["50問へ進む"]);
   assert.equal(elements.filter(({ tagName, attributes, textContent }) =>
     tagName === "a"
     && attributes.get("href") === "#/history"
@@ -732,7 +876,7 @@ test("T-005 S-003/S-004 omits action buttons whose callbacks were not provided",
     assert.equal(
       collectElements(host).some(({ tagName, attributes }) =>
         tagName === "a" && attributes.get("href") === "#/history"),
-      questionCount === 50,
+      false,
     );
   }
 });
@@ -917,8 +1061,8 @@ test("T-005 F-016 keeps approved alt and the complete result when decode fails",
   collectElements(host).find(({ tagName, textContent }) =>
     tagName === "button" && textContent === "もう一度診断する").dispatch("click");
   assert.equal(retryCalls, 1);
-  assert.ok(collectElements(host).some(({ tagName, attributes }) =>
-    tagName === "a" && attributes.get("href") === "#/history"));
+  assert.equal(collectElements(host).some(({ tagName, attributes }) =>
+    tagName === "a" && attributes.get("href") === "#/history"), false);
 });
 
 test("T-008A F-005 renders the hero before the title reason and five factor rows without internal character metadata", () => {

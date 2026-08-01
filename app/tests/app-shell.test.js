@@ -1020,7 +1020,7 @@ test("T-005 S-003 continues a shown preview at question 21 with showPreview pres
   clickButton(host, "診断を始める");
   for (let index = 0; index < 20; index += 1) answerCurrent(host);
   clickButton(host, "20問の簡易プレビューを見る");
-  clickButton(host, "あと30問続ける");
+  clickButton(host, "50問へ進む");
   assert.match(collectText(host), /21 \/ 50問/);
   assert.equal(JSON.parse(raw).progressByDiagnosis[DiagnosticDefinition.diagnosisId].previewDecision, "showPreview");
 });
@@ -1095,7 +1095,7 @@ test("T-008A F-004 confirms before replacing the most recent progress", () => {
 
 test("T-008A F-004 finishes a saved preview without deleting its result", () => {
   let raw = null;
-  const { host, windowObject } = createAppHarness({
+  const { host, windowObject, navigateHash } = createAppHarness({
     storage: {
       getItem: () => raw,
       setItem(_key, value) { raw = value; },
@@ -1112,6 +1112,14 @@ test("T-008A F-004 finishes a saved preview without deleting its result", () => 
   assert.equal(windowObject.location.hash, "#/start");
   assert.deepEqual(envelope.progressByDiagnosis, {});
   assert.equal(envelope.results[0].resultId, resultId);
+
+  navigateHash("#/history");
+  clickButton(host, "結果を見る");
+  assert.equal(collectElements(host).filter(({ className }) =>
+    className === "result-palette-selector").length, 1);
+  assert.equal(collectElements(host).filter(({ className }) =>
+    className === "result-share-call-to-action").length, 1);
+  assert.doesNotMatch(collectText(host), /50問へ進む|簡易プレビューで終了する/);
 });
 
 test("T-008A F-015 keeps preview progress and result when finish deletion fails", () => {
@@ -1269,7 +1277,9 @@ test("history preview resumes only the progress with the same ID", () => {
 
   clickButton(host, "結果を見る");
   assert.equal(collectElements(host).filter(({ tagName, textContent }) =>
-    tagName === "button" && textContent === "あと30問続ける").length, 1);
+    tagName === "button" && textContent === "50問へ進む").length, 1);
+  assert.equal(collectElements(host).filter(({ className }) =>
+    className === "result-palette-selector").length, 0);
 });
 
 test("legacy unrelated IDs are not relinked by answer count and version", () => {
@@ -1293,7 +1303,7 @@ test("legacy unrelated IDs are not relinked by answer count and version", () => 
 
   clickButton(host, "結果を見る");
   assert.equal(collectElements(host).filter(({ tagName, textContent }) =>
-    tagName === "button" && textContent === "あと30問続ける").length, 0);
+    tagName === "button" && textContent === "50問へ進む").length, 0);
 });
 
 test("T-005 S-003 reloads a saved preview into question 21 only with its compatible shown-preview progress", () => {
@@ -1325,7 +1335,7 @@ test("T-005 S-003 reloads a saved preview into question 21 only with its compati
     resultText,
     /中断してトップへ|簡易プレビューで終了する|結果を共有する/,
   );
-  clickButton(host, "あと30問続ける");
+  clickButton(host, "50問へ進む");
   assert.equal(windowObject.location.hash, "#/answer");
   assert.match(collectText(host), /21 \/ 50問/);
   assert.equal(JSON.parse(raw).progressByDiagnosis[DiagnosticDefinition.diagnosisId].previewDecision, "showPreview");
@@ -1343,13 +1353,12 @@ test("T-008B S-003 reopens a live preview from history with history-only actions
   clickButton(host, "診断を始める");
   for (let index = 0; index < 20; index += 1) answerCurrent(host);
   clickButton(host, "20問の簡易プレビューを見る");
-  clickButton(host, "中断してトップへ");
   navigateHash("#/history");
   clickButton(host, "結果を見る");
 
   const text = collectText(host);
   assert.match(text, /履歴一覧に戻る/);
-  assert.match(text, /あと30問続ける/);
+  assert.match(text, /50問へ進む/);
   assert.doesNotMatch(
     text,
     /中断してトップへ|簡易プレビューで終了する|結果を共有する/,
@@ -1373,7 +1382,7 @@ test("T-005 S-003 hides saved preview continuation without a matching compatible
     }) },
   });
   assert.equal(collectElements(host).filter(({ tagName, textContent }) =>
-    tagName === "button" && textContent === "あと30問続ける").length, 0);
+    tagName === "button" && textContent === "50問へ進む").length, 0);
 });
 
 test("T-005 F-016 does not duplicate result observers when a hashchange follows an internal route update", () => {

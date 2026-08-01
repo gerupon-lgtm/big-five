@@ -694,30 +694,48 @@ function renderMethodInformation(parent, snapshot, labels, dependencies) {
   parent.append(section);
 }
 
-function renderActions(parent, snapshot, actions, { historyDetail = false } = {}) {
+function renderShareCallToAction(parent, snapshot, actions) {
+  if (typeof actions.onShare !== "function") return;
+  const section = parent.ownerDocument.createElement("section");
+  section.className = "result-share-call-to-action";
+  const decoration = appendTextElement(
+    section,
+    "span",
+    "☘",
+    "result-share-call-to-action__decoration",
+  );
+  decoration.setAttribute("aria-hidden", "true");
+  appendTextElement(section, "h2", "今回の結果を残してみませんか");
+  const button = appendTextElement(section, "button", "結果を共有する", "primary-button");
+  button.setAttribute("type", "button");
+  button.addEventListener("click", () => actions.onShare(snapshot));
+  parent.append(section);
+}
+
+function renderActions(
+  parent,
+  snapshot,
+  actions,
+  { historyDetail = false, historyPreviewInProgress = false } = {},
+) {
   const controls = parent.ownerDocument.createElement("nav");
   controls.className = "result-actions";
   controls.setAttribute("aria-label", "診断結果の操作");
-  if (snapshot.mode === "preview20" && typeof actions.onContinueDetail === "function") {
-    const button = appendTextElement(controls, "button", "あと30問続ける", "primary-button");
+  if (
+    snapshot.mode === "preview20"
+    && (!historyDetail || historyPreviewInProgress)
+    && typeof actions.onContinueDetail === "function"
+  ) {
+    const button = appendTextElement(controls, "button", "50問へ進む", "primary-button");
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onContinueDetail?.(snapshot));
   }
   if (
     !historyDetail
     && snapshot.mode === "preview20"
-    && typeof actions.onPausePreview === "function"
-  ) {
-    const button = appendTextElement(controls, "button", "中断してトップへ", "secondary-button");
-    button.setAttribute("type", "button");
-    button.addEventListener("click", () => actions.onPausePreview?.());
-  }
-  if (
-    !historyDetail
-    && snapshot.mode === "preview20"
     && typeof actions.onFinishPreview === "function"
   ) {
-    const button = appendTextElement(controls, "button", "簡易プレビューで終了する", "text-button");
+    const button = appendTextElement(controls, "button", "簡易プレビューで終了する", "secondary-button");
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onFinishPreview?.());
   }
@@ -726,7 +744,7 @@ function renderActions(parent, snapshot, actions, { historyDetail = false } = {}
     && snapshot.mode === "detail50"
     && typeof actions.onReturnToStart === "function"
   ) {
-    const button = appendTextElement(controls, "button", "トップへ戻る", "text-button");
+    const button = appendTextElement(controls, "button", "トップへ戻る", "secondary-button");
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onReturnToStart?.());
   }
@@ -739,22 +757,14 @@ function renderActions(parent, snapshot, actions, { historyDetail = false } = {}
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onRetry?.());
   }
-  if (snapshot.mode === "detail50" || historyDetail) {
+  if (historyDetail) {
     const historyLink = appendTextElement(
       controls,
       "a",
-      historyDetail ? "履歴一覧に戻る" : "結果履歴を見る",
+      "履歴一覧に戻る",
       "secondary-button",
     );
     historyLink.setAttribute("href", "#/history");
-  }
-  if (
-    !(historyDetail && snapshot.mode === "preview20")
-    && typeof actions.onShare === "function"
-  ) {
-    const button = appendTextElement(controls, "button", "結果を共有する", "secondary-button");
-    button.setAttribute("type", "button");
-    button.addEventListener("click", () => actions.onShare(snapshot));
   }
   parent.append(controls);
 }
@@ -770,6 +780,7 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
   const main = documentObject.createElement("main");
   main.className = `app-shell result-screen ${savedSnapshot.mode}`;
   const historyDetail = dependencies.historyDetail === true;
+  const historyPreviewInProgress = dependencies.historyPreviewInProgress === true;
   appendAppHeader(main, historyDetail ? {
     action: {
       label: "履歴一覧に戻る",
@@ -789,17 +800,19 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
   const resultPanelGroup = createExclusiveResultPanelGroup(
     dependencies.openResultDisclosureId,
   );
-  renderPaletteSelector(
-    main,
-    savedSnapshot,
-    actions,
-    {
-      ...dependencies,
-      getOpenResultDisclosureId() {
-        return resultPanelGroup.openId();
+  if (!historyPreviewInProgress) {
+    renderPaletteSelector(
+      main,
+      savedSnapshot,
+      actions,
+      {
+        ...dependencies,
+        getOpenResultDisclosureId() {
+          return resultPanelGroup.openId();
+        },
       },
-    },
-  );
+    );
+  }
   renderFragranceIdeas(main, dependencies, resultPanelGroup);
   renderTitleReason(main, savedSnapshot);
   renderTitleReflection(main, savedSnapshot);
@@ -821,6 +834,12 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
   }
   renderBoundaryNotices(main, savedSnapshot.boundaryFlags, labels);
   renderMethodInformation(main, savedSnapshot, labels, dependencies);
-  renderActions(main, savedSnapshot, actions, { historyDetail });
+  if (!historyPreviewInProgress) {
+    renderShareCallToAction(main, savedSnapshot, actions);
+  }
+  renderActions(main, savedSnapshot, actions, {
+    historyDetail,
+    historyPreviewInProgress,
+  });
   host.replaceChildren(main);
 }

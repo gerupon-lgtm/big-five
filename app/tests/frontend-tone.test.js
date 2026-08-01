@@ -38,6 +38,20 @@ test("T-005/T-006 result-history navigation uses the same button treatment as ot
   );
 });
 
+test("T-005/T-007 keeps the result share CTA and boundary notices as normal-flow white cards", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+  const shareCard = styles.match(/\.result-share-call-to-action\s*\{([^}]*)\}/)?.[1] ?? "";
+
+  assert.match(shareCard, /margin-top:\s*28px/);
+  assert.match(shareCard, /border:\s*1px solid #bed4cc/);
+  assert.match(shareCard, /background:\s*rgb\(255 255 255 \/ 88%\)/);
+  assert.doesNotMatch(shareCard, /position:\s*(?:sticky|fixed)/);
+  assert.match(
+    styles,
+    /\.boundary-notices\s*\{[^}]*margin-top:\s*28px[^}]*border:\s*1px solid #bed4cc[^}]*background:\s*rgb\(255 255 255 \/ 88%\)/s,
+  );
+});
+
 test("T-008B F-018 lays out three equal Palette choices without a narrow-screen override", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
   const narrowStyles = styles.slice(styles.indexOf("@media (max-width: 380px)"));
