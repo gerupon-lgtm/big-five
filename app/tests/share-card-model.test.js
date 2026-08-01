@@ -231,6 +231,25 @@ test("T-008C F-011 appends an optional HTTPS URL only to share text", () => {
   assert.doesNotMatch(JSON.stringify({ ...model, shareText: "" }), /https?:\/\//);
 });
 
+test("T-008C F-011 sends only share-safe fragrance labels to the text builder", () => {
+  let shareTextInput;
+  const model = createShareCardModel(createInput(), {
+    createShareResultText(input) {
+      shareTextInput = input;
+      return "共有テキスト";
+    },
+  });
+
+  assert.equal(model.shareText, "共有テキスト");
+  assert.deepEqual(shareTextInput.fragrances, [
+    { sceneLabel: "ひと息つきたい", accordLabel: "まろやかな甘みの草花の香調" },
+    { sceneLabel: "気持ちを切り替えたい", accordLabel: "ほろ苦く明るい柑橘の香調" },
+    { sceneLabel: "静かに取り組みたい", accordLabel: "静かな樹脂の輪郭を含む木質の香調" },
+  ]);
+  assert.deepEqual(model.fragrances[0].materialNames, ["ローマンカモミール"]);
+  assert.notStrictEqual(shareTextInput.fragrances[0], model.fragrances[0]);
+});
+
 test("T-008C F-011 rejects missing or duplicate selected-title subtitle and reason", () => {
   for (const section of ["titleSubtitle", "titleReason"]) {
     const missingInput = createInput();

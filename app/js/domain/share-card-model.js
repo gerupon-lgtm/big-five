@@ -192,7 +192,16 @@ function selectExactlyOneShareableText(shareableTexts, section) {
   return matches[0];
 }
 
-function buildModel(input) {
+function resolveShareTextBuilder(dependencies) {
+  if (dependencies === undefined) return createShareResultText;
+  if (!hasExactFields(dependencies, ["createShareResultText"]) ||
+    typeof dependencies.createShareResultText !== "function") {
+    invalidModel();
+  }
+  return dependencies.createShareResultText;
+}
+
+function buildModel(input, buildShareResultText) {
   if (!hasExactFields(input, INPUT_FIELDS) ||
     !isNonEmptyString(input.titleLabel) ||
     !validateLabels(input.factorLabels)) {
@@ -226,14 +235,18 @@ function buildModel(input) {
   const disclaimer = snapshot.mode === "preview20"
     ? `${DISCLAIMER}\n${PREVIEW_DISCLAIMER}`
     : DISCLAIMER;
-  const shareText = createShareResultText({
+  const shareFragrances = fragrances.map(({ sceneLabel, accordLabel }) => ({
+    sceneLabel,
+    accordLabel,
+  }));
+  const shareText = buildShareResultText({
     brandName: brand.name,
     modeLabel,
     titleLabel: input.titleLabel,
     titleSubtitle: titleSubtitle.text,
     titleReason: titleReason.text,
     factors,
-    fragrances,
+    fragrances: shareFragrances,
     disclaimer: DISCLAIMER,
     shareUrl: input.brand.shareUrl,
   });
@@ -263,9 +276,9 @@ function buildModel(input) {
   });
 }
 
-export function createShareCardModel(input) {
+export function createShareCardModel(input, dependencies) {
   try {
-    return buildModel(input);
+    return buildModel(input, resolveShareTextBuilder(dependencies));
   } catch {
     invalidModel();
   }
