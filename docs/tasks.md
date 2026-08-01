@@ -25,7 +25,7 @@
 | F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A, T-008B | 同一0〜100表示軸、二段の差表示、固定桁、版情報のラベル化、ヘッダー`履歴一覧に戻る`まで実装済み |
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007, T-008C | 共有画像の`拡大して見る`は維持。結果画面の因子領域へ同操作を追加しない |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007, T-008C | 結果通常フローには単一の`結果を共有する` CTAだけを表示。プレビューと共有・保存で同じPNG Blobを使用 |
-| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。全削除成功時は保存値と画面内再開状態を同時に破棄する |
+| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A, T-008C | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。T-008Cでは20問preview終了時にResultSnapshotを残して対応ProgressRecordだけを削除する状態を追跡する |
 | F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | `mvp-1.0.0`を正典とし、開始画面・共有物を含む版契約へ反映済み |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A, T-008C | 保存失敗時の中断・preview終了、live結果維持、ID不一致の履歴継続を安全側で無効化、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
@@ -61,7 +61,7 @@
 | T-007 | 共有カード・保存・コピー | F-011, F-012, F-014, F-015, F-018 | 完了。1080×1800正式カード、透過素材、S-005、共有・保存・コピー・段階代替、実ブラウザ確認済み。2026-08-01リース更新後のユーザー最終確認待ち |
 | T-008A | 結果・履歴・中断再開UI再整理 | F-001, F-003〜F-006, F-008〜F-010, F-013, F-015, F-018 | `titleReflection`の文面承認、runtime、snapshot、結果画面接続、全体回帰、320／360／960pxのローカル実ブラウザQAまで完了 |
 | T-008B | 結果履歴・比較・色香りUI追補 | F-005, F-006, F-009, F-010, F-018 | 履歴previewの操作、比較軸と版情報、色香りの相互排他的な段階展開を実ブラウザで確認 |
-| T-008C | 結果・履歴状態と共有導線の追補 | F-004〜F-006, F-008, F-009, F-011, F-012, F-015, F-018 | 実装・文書同期済み。5状態行列、厳密ID継続、因子一回開閉、常時パレット、アロマティーザー、単一共有CTAを回帰テストで確認。未解決のcontent/release gateを変更しない |
+| T-008C | 結果・履歴状態と共有導線の追補 | F-004, F-005, F-006, F-008, F-009, F-011, F-012, F-013, F-015, F-018 | 実装・文書同期済み。5状態行列、厳密ID継続、preview終了、因子一回開閉、常時パレット、アロマティーザー、単一共有CTAを回帰テストで確認。未解決のcontent/release gateを変更しない |
 | T-008 | 全画面統合・レスポンシブ・a11y | F-001〜F-016, F-018 | 主要フローを360px・PC・キーボードで完結 |
 | T-009 | 説明・プライバシー・CSP | F-001, F-002, F-007, F-014, F-015 | 限界、非送信、削除、版、CSPを確認可能 |
 | T-010 | ベータ匿名集計API・DB・事前説明 | F-017 | OCIへ匿名集計し、二重送信・通信失敗でも診断結果を維持 |
@@ -427,7 +427,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 ### T-008C 結果・履歴状態と共有導線の追補
 
 - 依存: T-005、T-006、T-007、T-008A、T-008B
-- 対応機能: F-004、F-005、F-006、F-008、F-009、F-011、F-012、F-015、F-018
+- 対応機能: F-004、F-005、F-006、F-008、F-009、F-011、F-012、F-013、F-015、F-018
 - 状態: COMPLETED（2026-08-01）
 - 作業:
   - 20問`showPreview`の`ResultSnapshot.resultId`を対応`ProgressRecord.progressId`と同一にし、履歴継続をmode、20回答、VersionTuple、IDの完全一致へ限定する。

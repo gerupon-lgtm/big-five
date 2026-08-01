@@ -8,7 +8,7 @@
 
 **Tech Stack:** HTML, CSS, JavaScript ES Modules, browser `localStorage`, Canvas palette swatches, Node.js `node:test`.
 
-**Task/feature traceability:** Implement as `T-008C` against `F-005`, `F-006`, `F-007`, `F-009`, `F-010`, `F-011`, `F-012`, and `F-013`. Do not mark Q-006, Q-012, Q-013, or any presentation release as newly approved.
+**Task/feature traceability:** Correcting the prior plan typo, implement as `T-008C` against exactly `F-004`, `F-005`, `F-006`, `F-008`, `F-009`, `F-011`, `F-012`, `F-013`, `F-015`, and `F-018`. Do not mark Q-006, Q-012, Q-013, or any presentation release as newly approved.
 
 ## Global Constraints
 
