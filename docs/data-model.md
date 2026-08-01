@@ -356,9 +356,13 @@ schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし�
 - `ProgressRecord` は `response-state` が exact schema、固定設問順、`VersionTuple`、ISO日時、回答値 `1..5` を検証してから遷移・保存する。`currentIndex` は保存時に `0..49` とする。
 - `continueHidden` は `mode: detail50`、`currentIndex: 20`、`previewDecision: continueHidden` にだけ遷移し、20問のスコア、称号、キャラクター、結果、共有モデルを生成しない。
 - `showPreview` 後の継続は `mode: detail50`、`currentIndex: 20`、`previewDecision: showPreview` として記録する。表示済みの事実を `continueHidden` へ変更しない。
+- 20問の`showPreview`で作る`ResultSnapshot.resultId`は、新規UUIDを追加発行せず、その時点の`ProgressRecord.progressId`と同じ値にする。履歴から追加30問を継続できるのは、`preview20`、`showPreview`、回答数20、VersionTuple一致に加えて、`progress.progressId === snapshot.resultId`を満たす場合だけである。
+- 50問の`detail50`完答では、新しい`resultId`を発行し、20問snapshotと別の履歴として保存する。旧保存値で`progressId`と`resultId`が異なるものを、回答数・時刻・版から推測して再リンクしない。開始画面からの通常再開は維持し、履歴結果からの継続だけを安全側で無効にする。
 - `StorageEnvelope` は schema 1 の正確な外側構造を検証する。対象診断の進捗だけを現在の定義・版で再検証し、save/discard時は無関係進捗・結果も基本schemaで検証して壊れたレコードだけを除去する。
 - `progressId` と `resultId` はRFC 4122 UUID形状、日時は実在するISO 8601日時とする。時刻生成は呼出側で行い、保存・遷移関数は現在時刻を暗黙に生成しない。
 - 将来 `schemaVersion`、壊れたJSON、壊れた対象進捗、版不一致は保存値を上書きしない。保存または削除の失敗はメモリ上の診断進行を破棄しない。
+
+この一対一対応のためのフィールド追加・既存フィールドの意味変更・`StorageEnvelope.schemaVersion`更新は行わない。`progressId`を20問snapshotの既存`resultId`として再利用するだけである。
 
 ### 3.5 ResultSnapshot
 
@@ -378,7 +382,7 @@ schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし�
 | selectedPaletteId | string | ○ | 未選択時も標準ID |
 | cardTemplateVersion | string | ○ | 再生成用 |
 
-`app/js/domain/result-snapshot.js`の`createResultSnapshot`が上記13フィールドのexact schemaを生成する。`resultId`は`crypto.randomUUID()`で生成するRFC 4122 UUID形状とする。`answers`、`diagnosisId`、`resultModel` wrapper、結果定義、DOM・Canvas状態は持たない。`renderedTexts`は結果文更新後も診断時の表示文と根拠参照を維持するため深く複製する。`result-text-v1`はpreview 7件／detail 42件、`result-text-v2`は通常preview 8件／detail 45件を保持し、完全な振り返り組を得られない場合だけpreview 7件／detail 42件のゼロ-reflection fallbackを許可する。部分的な振り返り組は無効である。snapshot全体はdeep freezeされ、入力の後続変更から隔離される。
+`app/js/domain/result-snapshot.js`の`createResultSnapshot`が上記13フィールドのexact schemaを生成する。`resultId`はRFC 4122 UUID形状で、20問`showPreview`では対応する`ProgressRecord.progressId`を使用し、50問`detail50`では新しいUUIDを使用する。`answers`、`diagnosisId`、`resultModel` wrapper、結果定義、DOM・Canvas状態は持たない。`renderedTexts`は結果文更新後も診断時の表示文と根拠参照を維持するため深く複製する。`result-text-v1`はpreview 7件／detail 42件、`result-text-v2`は通常preview 8件／detail 45件を保持し、完全な振り返り組を得られない場合だけpreview 7件／detail 42件のゼロ-reflection fallbackを許可する。部分的な振り返り組は無効である。snapshot全体はdeep freezeされ、入力の後続変更から隔離される。
 
 `VersionTuple.characterManifestVersion`はmanifest全体の版、`characterAssetVersion`は選択された1体の`CharacterManifestEntry.assetVersion`であり、互いに独立して保存する。
 

@@ -4,8 +4,8 @@
 |---|---|
 | 設計版 | 0.9 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-31 |
-| 入力要件 | 要件定義書v1.29 |
+| 更新日 | 2026-08-01 |
+| 入力要件 | 要件定義書v1.30 |
 | 実行方式 | 通常版はブラウザ内完結。ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -77,7 +77,7 @@
 1. 回答画面の`中断してトップへ`は新しいドメイン状態を作らず、直近の保存結果を確認して開始画面へ遷移する。保存失敗が既知の場合は、離脱で回答を失うことを確認してから遷移する。
 2. 1〜19問と21〜49問は最初の未回答設問、20問完答・`undecided`は20問分岐へ再開する。
 3. `preview20`・`showPreview`・20回答の互換ProgressRecordは、開始画面で`残り30問を再開する`と表示し、`continueAfterPreview`を1回適用して21問目へ進める。
-4. 簡易プレビューの`簡易プレビューで終了する`は、保存済みResultSnapshotを維持し、対応する互換ProgressRecordだけを削除する。削除失敗時は結果画面に留まり、終了済みと誤表示せず、再試行できる通知を出す。ResultSnapshotが履歴へ保存できていないlive結果ではこの操作を有効化せず、結果を失わない`中断してトップへ`または`あと30問続ける`を案内する。
+4. 簡易プレビューの`簡易プレビューで終了する`は、保存済みResultSnapshotを維持し、対応する完全一致ProgressRecordだけを削除する。削除失敗時は結果画面に留まり、終了済みと誤表示せず、再試行できる通知を出す。ResultSnapshotが履歴へ保存できていないlive結果ではこの操作を有効化せず、結果を失わない`50問へ進む`を案内する。
 5. 互換ProgressRecordがある新規開始は、利用者の確認後だけ同じ診断種別の進捗を新規ProgressRecordへ置き換える。取消では書込みを行わず、ResultSnapshotには触れない。
 
 ### 3.3 T-004の公開シーム
@@ -264,24 +264,17 @@ displayScore = round((rawMean - 1) / 4 * 100)
 | 対象進捗が破損・版不一致 | 追加しない | 上書き・削除しない | 維持 | `STORAGE_CORRUPT`または`PROGRESS_INCOMPATIBLE` |
 | resultId衝突（内容不一致） | 追加しない | modeに従い完答時だけ削除を試行 | 維持 | `STORAGE_CORRUPT` |
 
-live controllerは`#/answer`を正規routeとし、ResultSnapshotをメモリ上にも1件だけ保持できる。結果保存失敗時はlive snapshotを履歴より先に解決して結果画面を成立させ、`結果は表示できましたが、この端末の履歴には保存できませんでした。`を表示する。再読込後はlive snapshotを復元せず、保存履歴にないresultIdは既存の欠落結果フォールバックへ送る。保存済みpreviewは、互換ProgressRecordが`preview20`・`showPreview`・20回答で、snapshotとVersionTupleが完全一致する場合だけ追加30問へ進める。対応進捗がない場合は無反応の継続ボタンを描画しない。
+live controllerは`#/answer`を正規routeとし、ResultSnapshotをメモリ上にも1件だけ保持できる。結果保存失敗時はlive snapshotを履歴より先に解決して結果画面を成立させ、`結果は表示できましたが、この端末の履歴には保存できませんでした。`を表示する。再読込後はlive snapshotを復元せず、保存履歴にないresultIdは既存の欠落結果フォールバックへ送る。20問`showPreview`では`ResultSnapshot.resultId`へ対応`ProgressRecord.progressId`を渡す。保存済みpreviewは、`preview20`・`showPreview`・20回答・VersionTuple完全一致に加え、`progress.progressId === snapshot.resultId`を満たす場合だけ追加30問へ進める。50問`detail50`は新しい`resultId`を発行する。旧保存値の異なるIDを回答数、時刻、版から推測して再リンクせず、履歴からの継続を安全側で無効にする。これに伴う保存フィールド追加、既存フィールドの再解釈、`StorageEnvelope.schemaVersion`の更新は行わない。
 
-履歴から保存済みpreviewを開き、上記の互換ProgressRecordがある場合は、診断直後のlive previewとは別の操作モデルを使う。ヘッダーと結果操作へ`履歴一覧に戻る`を設定し、結果操作は追加30問の継続と履歴一覧への復帰だけを返す。`中断してトップへ`と`簡易プレビューで終了する`のcallbackは渡さない。
+履歴から保存済みpreviewを開き、上記の完全一致ProgressRecordがある場合は、診断直後のlive previewとは別の操作モデルを使う。ヘッダーと結果操作へ`履歴一覧に戻る`を設定し、結果操作は`50問へ進む`と履歴一覧への復帰だけを返す。パレットと通常フロー内の共有CTAは表示せず、`中断してトップへ`と`簡易プレビューで終了する`のcallbackは渡さない。完全一致ProgressRecordがない履歴previewは確定済みとして、パレットと共有CTAを表示し、継続操作を返さない。
 
-結果画面の表示状態は永続化しない。開いている因子IDと詳細sectionはpresentation層の一時状態とし、次の規則で更新する。
-
-- `openFactorId`は`null`または既知のFactorId 1件。
-- `openSection`は`null`または`{ factorId, section }` 1件で、factorIdは`openFactorId`と一致する。
-- 別因子を開くと以前の因子と詳細sectionを閉じる。
-- 別sectionを開くと同じ因子内の以前のsectionを閉じる。
-- 20問ではResultSnapshotに存在しないdetail sectionを生成・補完しない。
-- 開閉後は対象見出しへフォーカスを奪わず、見出しがviewport内に残る最小限のスクロール調整だけを行う。
+結果画面の開閉状態は永続化しない。開いている因子またはアロマはpresentation層の一時状態とし、`null`または既知の因子ID／`aroma`を1件だけ持つ。因子を1回開くと、保存済みの全カテゴリ本文を1枚のカードへ一括表示し、20問結果に存在しない本文を生成・補完しない。別の因子またはアロマを開くと先の領域を閉じる。パレットは常時表示であり、この相互排他グループへ含めない。閉鎖により位置が変わる場合も、操作した見出しがviewport内に残る最小限のスクロール調整だけを行い、フォーカスを奪わない。
 
 現行presentationは、称号・猫heroと`titleReason`を独立sectionにし、その直後へ`titleReflection`を置き、名前付きレーダーの下へ固定順5因子のコンパクトな行・棒・数値を表示する。完全なv2結果はpreview20の8件、detail50の45件を保存順を変えず表示モデルへ投影する。ゼロ-reflection fallbackでは従来どおり7件／42件を表示し、称号・因子結果を維持する。部分的な振り返り組を画面だけで補完または表示しない。
 
 称号別`titleReflection`の開閉はpresentation層の一時状態とする。1件目は常時表示し、50問だけ残り2件を1つの`ほかのヒントを見る`で一括開閉する。因子詳細の開閉状態とは独立させ、第三階層を作らない。
 
-ResultSnapshotの因子文（preview 5件／detail 40件）はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。因子行を1回展開すると、カテゴリ見出しと元の`RenderedResultText`を直接表示する。カテゴリごとの汎用サマリ、二段目の開閉、文章ごとの内部`evidenceRefs`表示は作らず、尺度・採点・限界・出典は最下部の「結果の根拠と見方」へ集約する。スコア棒はCSPで無効になるインラインstyleへ依存せず、`progress`の`value`へ0〜100の表示整数を渡す。
+ResultSnapshotの因子文（preview 5件／detail 40件）はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。因子行を1回展開すると、カテゴリ名と元の`RenderedResultText`を1枚のカードへ直接表示する。カテゴリごとの汎用サマリ、二段目の開閉、文章ごとの内部`evidenceRefs`表示、5因子スコア領域の`拡大して見る`は作らず、尺度・採点・限界・出典は最下部の「結果の根拠と見方」へ集約する。共有プレビューの画像拡大は別機能として維持する。スコア棒はCSPで無効になるインラインstyleへ依存せず、`progress`の`value`へ0〜100の表示整数を渡す。
 
 `因子ごとの設問構成を見る`はDiagnosticDefinitionとQuestionDefinitionから、現在modeの固定questionId集合を因子・`keyedDirection`別に件数集計する純粋モデルを使う。設問本文、回答、スコア、称号を出力へ含めない。測定の土台等の固定説明は診断定義版とmodeだけを入力とし、ResultSnapshotの称号・数値で分岐しない。
 
@@ -365,7 +358,7 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 
 - `selectPresentation`はTitleProfileDefinitionとPresentationDefinitionSetだけを受け取る純粋関数とし、生回答、得点、因子band、猫色、DOM、Canvas、localStorage、ネットワークを受け取らない。
 - 結果モデルは`standard`に標準1件、`alternatives`に代替2件を分けて保持し、画面では標準、代替1、代替2の固定順で表示する。
-- presentation層は`openSuggestionPanel`を`null`、`palette`、`aroma`のいずれかとして一時保持する。初期値は`null`とし、`ココロパレット`を開いた時だけ3候補を縦1列で描画する。色選択による同一結果の再描画では`palette`を維持し、別パネルを開いた場合は従来どおり相互排他で閉じる。開閉状態はResultSnapshotへ保存しない。
+- パレットは外側アコーディオンにせず、通常結果では常時3候補を描画する。候補は`パレット1`、`パレット2`、`パレット3`の円形見本とし、選択中を外枠、中央`✓`、`aria-pressed`で示す。色選択後もパレット領域を閉じず、開閉状態はResultSnapshotへ保存しない。
 - 利用者選択はpresentation stateとselectedPaletteIdだけを更新。
 - `resolvePaletteUsage`で主・副・差の3基調色を背景、表面、アクセント、文字、グラフへ決定的に展開し、コントラストと猫用の分離補助を確認する。
 - 不正パレットは標準へ戻す。
@@ -374,7 +367,7 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 ### 香り
 
 - `pause`、`reset`、`quiet-focus`の固定順で、各2件、合計6件を持つ。
-- `ココロアロマ`の初期状態は外側を閉じる。外側を開いた直後は3場面をすべて閉じ、`openAromaSceneId`は`null`とする。場面を開くと同時に以前の場面を閉じる。`ココロパレット`を開くとアロマ外側と場面を閉じる。
+- `ココロアロマ`の初期状態は閉じる。閉じた状態でも固定3場面の代表素材画像を各1件表示し、開く操作1回で3場面×各2候補の計6候補と共通注記を一括表示する。場面ごとの内側開閉は持たない。アロマは因子開閉と相互排他で、因子を開くとアロマを閉じ、アロマを開くと開いている因子を閉じる。パレットはこの排他対象に含めない。
 - 共有は各場面の`shareFragranceId`を1件、合計3件へ要約する。
 - `scenes.csv`の固定`icon_id`、`fragrances.csv`の8値`family_id`、`fragrance-material-examples.csv`の素材ID 1〜2件をcompilerで結合する。
 - selectorは素材IDから表示名を解決し、結果用6候補と共有カード用代表3件を生成する。共有カード画像には素材名と短い印象を含めるが、共有テキストには素材名を含めない。
@@ -396,7 +389,7 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 3. `renderShareCard`が`cardTemplateVersion`を検証し、履歴互換の`card-template-v1`は旧配置、現行`card-template-v2`は調整後配置へ振り分ける。未対応版は画像を生成せず、共有画面の選択可能テキストへフォールバックする。対応版では1080×1800のCanvasを作成し、日本語フォントの準備を待つ。
 4. 選択パレットを変更せず背景へ適用し、副色由来の表面色を十分に白へ混ぜた淡い右上装飾へ適用する。右上装飾を暗色の面にはしない。
 5. 猫と隣接背景の分離状態を評価し、必要なら明暗二重縁取りまたは影を決定的に適用する。現行`card-template-v2`では猫の背後へ白色・ニュートラル色の円形面や矩形プレートを描かず、内部の`neutral-plate`判定も影による分離へ変換する。
-6. 背景と二重枠、中央ブランド、称号ラベルと称号、猫を隠さず自然に囲む視認可能な植物リース、猫、固定順5因子の棒、`ココロアロマ`の見出しと副題、透過素材画付き代表3件（場面、素材例、短い印象）、素材例と短い印象の間の可変装飾点、共通注記、注意、モード、アプリ版を描画する。装飾点、注記、版は隣接文字や枠線と重ねない。
+6. 背景と二重枠、中央ブランド、称号ラベルと称号、猫を隠さない左右の植物枝による開いたアーチ、猫、固定順5因子の棒、`ココロアロマ`の見出しと副題、透過素材画付き代表3件（場面、素材例、短い印象）、素材例と短い印象の間の可変装飾点、共通注記、注意、モード、アプリ版を描画する。現行テンプレートでは猫周囲に円形線・白色またはニュートラルな円形面を描かず、上中央と下中央を開ける。装飾点、注記、版は隣接文字や枠線と重ねない。
 7. 猫は同一オリジンの静的アセットだけを使い、再配色・トリミングをしない。
 8. PNG Blobへ変換し、S-005の表示と共有操作へ同じBlobを渡す。
 9. 素材例と`titleReflection`を含めない共有テキストを同じカードモデルへ保持する。

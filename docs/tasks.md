@@ -4,8 +4,8 @@
 |---|---|
 | 設計版 | 0.11 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-31 |
-| 要件正典 | 要件定義書v1.29 |
+| 更新日 | 2026-08-01 |
+| 要件正典 | 要件定義書v1.30 |
 | 初期リリース | `mvp-0.1.0` |
 | 現在リリース | `mvp-1.0.0` |
 
@@ -16,21 +16,21 @@
 | F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008A, T-008 | 共通ヘッダー、`SELF CHECK`／`自分のことを知る`、承認済みBig Five・IPIP説明、初期状態で見出しだけを示す愛猫もなか紹介文の段階展開、同幅の開始・再開操作、現在版表示を実装・browser smoke済み |
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approvalは2026-07-28に完了 |
 | F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 他画面と同じ通常の共通ヘッダー、緑の進捗／設問`h1`、折り返さない`中断してトップへ`、設問20px・回答文字16px・回答ボタン高56pxを実装・320／360／414px browser smoke済み |
-| F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A | 状態別再開、preview終了、新規置換確認、全削除成功時の画面内再開状態破棄を保存成功・失敗・取消まで実装済み |
-| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 現行`result-text-v2`で称号別ヒント1件を含む8件を表示・保存。不完全なヒント組は全件省略して7件へフォールバックし、称号・因子を維持 |
-| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A | 現行`result-text-v2`で称号別ヒント3件を含む45件を表示・保存し、1件＋追加2件を展開。不完全なヒント組は全件省略して42件へフォールバック |
+| F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A, T-008C | 20問`showPreview`のsnapshot `resultId`は`progressId`と同じ値。履歴継続は両ID、mode、20回答、VersionTupleの完全一致だけを許可し、旧異IDを推測再リンクしない。schema field/version追加なし |
+| F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A, T-008C | 20問・診断直後／履歴・回答継続中／履歴・確定済みの操作と可視性を分離。因子は一回で保存済み本文を全カテゴリ表示 |
+| F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A, T-008C | 50問・診断直後／履歴の操作を分離。因子は一回で保存済み本文を全カテゴリ表示 |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
-| F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A | 名前付きレーダー、CSP下でも実スコアを反映する固定順5因子行・棒、同時1因子／1カテゴリの二段階開閉、最下部の設問構成sheetと4つの固定方法sheetを実装済み |
-| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A, T-008B | 履歴から再開可能な20問結果はヘッダーを`履歴一覧に戻る`とし、継続＋履歴一覧復帰だけを表示する追補まで実装済み |
+| F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A, T-008C | 名前付きレーダー、CSP下でも実スコアを反映する固定順5因子行・棒、因子／アロマ相互排他の一回開閉、因子領域に`拡大して見る`を置かないことを実装・テスト済み |
+| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A, T-008B, T-008C | 履歴20問を厳密ID一致の回答継続中と確定済みに分離。どちらもヘッダー・下部の`履歴一覧に戻る`を表示 |
 | F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A, T-008B | 同一0〜100表示軸、二段の差表示、固定桁、版情報のラベル化、ヘッダー`履歴一覧に戻る`まで実装済み |
-| F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007 | 完了。正式ビジュアル実装・実ブラウザ確認済み。2026-08-01リース更新後のユーザー最終確認待ち |
-| F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007 | 完了。プレビューと共有・保存で同じPNG Blobを使用 |
+| F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007, T-008C | 共有画像の`拡大して見る`は維持。結果画面の因子領域へ同操作を追加しない |
+| F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007, T-008C | 結果通常フローには単一の`結果を共有する` CTAだけを表示。プレビューと共有・保存で同じPNG Blobを使用 |
 | F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。全削除成功時は保存値と画面内再開状態を同時に破棄する |
 | F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | `mvp-1.0.0`を正典とし、開始画面・共有物を含む版契約へ反映済み |
-| F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A | 保存失敗時の中断・preview終了、live結果維持、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
+| F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A, T-008C | 保存失敗時の中断・preview終了、live結果維持、ID不一致の履歴継続を安全側で無効化、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
-| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-010 | Q-013データ、結果DOM、共有Canvas、色選択後も維持する`ココロパレット`／`ココロアロマ`の相互排他的な段階展開UIまで実装済み |
+| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-008C, T-010 | `ココロパレット`は常時3候補、`ココロアロマ`は閉じた3画像ティーザーから1回で6候補。アロマだけが因子と相互排他 |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -61,6 +61,7 @@
 | T-007 | 共有カード・保存・コピー | F-011, F-012, F-014, F-015, F-018 | 完了。1080×1800正式カード、透過素材、S-005、共有・保存・コピー・段階代替、実ブラウザ確認済み。2026-08-01リース更新後のユーザー最終確認待ち |
 | T-008A | 結果・履歴・中断再開UI再整理 | F-001, F-003〜F-006, F-008〜F-010, F-013, F-015, F-018 | `titleReflection`の文面承認、runtime、snapshot、結果画面接続、全体回帰、320／360／960pxのローカル実ブラウザQAまで完了 |
 | T-008B | 結果履歴・比較・色香りUI追補 | F-005, F-006, F-009, F-010, F-018 | 履歴previewの操作、比較軸と版情報、色香りの相互排他的な段階展開を実ブラウザで確認 |
+| T-008C | 結果・履歴状態と共有導線の追補 | F-004〜F-006, F-008, F-009, F-011, F-012, F-015, F-018 | 実装・文書同期済み。5状態行列、厳密ID継続、因子一回開閉、常時パレット、アロマティーザー、単一共有CTAを回帰テストで確認。未解決のcontent/release gateを変更しない |
 | T-008 | 全画面統合・レスポンシブ・a11y | F-001〜F-016, F-018 | 主要フローを360px・PC・キーボードで完結 |
 | T-009 | 説明・プライバシー・CSP | F-001, F-002, F-007, F-014, F-015 | 限界、非送信、削除、版、CSPを確認可能 |
 | T-010 | ベータ匿名集計API・DB・事前説明 | F-017 | OCIへ匿名集計し、二重送信・通信失敗でも診断結果を維持 |
@@ -391,6 +392,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 対応機能: F-005、F-006、F-009、F-010、F-018
 - 優先度: 低。T-007の共有カード接続後に実装
 - 状態: COMPLETED（2026-07-31）
+- 注記: 本節の履歴preview、パレット、アロマの表示規則は当時の実装記録である。現行の結果・履歴表示規則はT-008Cが置き換える。
 - 作業:
   - 履歴から再開可能な20問結果を開いた場合、ヘッダーに`履歴一覧に戻る`を表示し、結果操作を`あと30問続ける`と`履歴一覧に戻る`の2件だけにする。
   - 比較画面の前回・今回・差を同じ0〜100表示軸へ統一し、差の数値と状態文を二段に分ける。整数は`±0`形式と固定桁数字を使い、将来小数を採用する場合は`±0.00`へ統一する。
@@ -421,6 +423,28 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 全削除成功時に保存領域とcontrollerの`currentProgress`／`liveResult`を同時に初期化し、開始画面へ紹介文と現在版を追加した。共有カードQA成果物へ香りの透過PNG3件を同梱し、リース、余白、ブランド文字間、footerを調整して`card-template-v2`へ更新した。
   - 開始紹介文を見出しだけの閉状態から展開するnative disclosureへ変更した。パレット展開後に選択色が共有・保存画像へ反映される説明を置き、色選択による再描画後もパレットだけを開いたまま維持した。共有カードの初回追補では白い円に見えていたニュートラル面を低濃度化し、2026-08-01のT-007視覚追補で円形面自体を廃止した。アロマ行は香調説明を拡大し、素材名との可変空白へ装飾点を配置し、共通注記とアプリ版を隣接枠線から離した。
   - ローカル実ブラウザで320pxの全削除後トップ・比較、360px／960pxの共有カードを確認し、横overflow、文字重複、console warning／errorがないことを確認した。追加UI確認では360pxの紹介文開閉と色選択後のパレット展開維持、960pxのリース・アロマ装飾点・footer非重複を確認した。`npm.cmd test`は681件成功・失敗0件、`npm.cmd run check`は60 JavaScript files・canonical runtime version 1件、`npm.cmd run content:validate`は警告657件・エラー0件、`npm.cmd run qa:preview:build`は121 files・10,359,380 bytesで成功した。
+
+### T-008C 結果・履歴状態と共有導線の追補
+
+- 依存: T-005、T-006、T-007、T-008A、T-008B
+- 対応機能: F-004、F-005、F-006、F-008、F-009、F-011、F-012、F-015、F-018
+- 状態: COMPLETED（2026-08-01）
+- 作業:
+  - 20問`showPreview`の`ResultSnapshot.resultId`を対応`ProgressRecord.progressId`と同一にし、履歴継続をmode、20回答、VersionTuple、IDの完全一致へ限定する。
+  - 50問`detail50`には新しい`resultId`を発行し、旧保存値の異なるIDを回答数・時刻・版から推測して再リンクしない。保存フィールドと`StorageEnvelope.schemaVersion`は変更しない。
+  - 50問直後、50問履歴、20問直後、20問履歴・回答継続中、20問履歴・確定済みの5状態について、下部操作、履歴復帰、パレット、共有CTAを固定する。
+  - 因子は1回の操作で保存済み全カテゴリ本文を表示し、因子とアロマを相互排他にする。パレットは常時3候補、アロマは閉じた3画像ティーザーから1回で6候補を表示する。
+  - 結果通常フローの共有CTAを1箇所へ統一する。5因子領域に`拡大して見る`を追加せず、S-005の共有画像拡大は維持する。
+- 完了条件:
+  - 厳密ID一致の履歴20問だけが`50問へ進む`を表示し、異なるIDの旧履歴は確定済みとして扱う。
+  - 5状態それぞれの操作、パレット、共有CTA、履歴一覧復帰が実装済みの行列と一致する。
+  - 因子の二段階開閉、パレット外側開閉、アロマの場面別内側開閉、因子領域の`拡大して見る`が残らない。
+- 検証方法・根拠:
+  - `app/tests/app-shell.test.js`で20問snapshotの`resultId === progressId`、50問の新規resultId、ID不一致の旧履歴を再リンクしないことを回帰検証する。
+  - `app/tests/result-screen.test.js`で5状態行列、因子一回開閉、常時パレット、アロマティーザー、共有CTAの単一性を回帰検証する。
+  - `npm.cmd run check`、`npm.cmd test`、対象文書の旧表現検索、`git diff --check`を実行する。
+- 非対象:
+  - Q-006、Q-012、Q-013、E-1〜E-5、P-0〜P-6、presentation releaseの承認事実・release gateを変更しない。
 
 ### T-008 全画面統合・レスポンシブ・アクセシビリティ
 
