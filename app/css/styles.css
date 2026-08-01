@@ -1150,7 +1150,7 @@ dd {
   --surface: #fff;
   --accent-strong: #26705c;
   margin-top: 28px;
-  padding: 20px;
+  padding: 16px 20px 15px;
   border: 1px solid #d6e4df;
   border-radius: 18px;
   background: rgb(255 255 255 / 82%);
@@ -1158,13 +1158,15 @@ dd {
 
 .result-presentation-summary {
   display: grid;
-  width: calc(100% + 40px);
-  grid-template-columns: minmax(0, 1fr) auto;
-  margin: -20px -20px 0;
-  padding: 20px;
+  width: calc(100% + 32px);
+  grid-template-columns: minmax(0, 1fr) 40px;
+  margin: -16px -16px 0;
+  padding: 15px 0 13px 16px;
   border: 0;
   border-radius: 16px 16px 12px 12px;
-  background: linear-gradient(135deg, #fff 0%, #f3f8f6 100%);
+  background:
+    linear-gradient(#c5ddd4, #c5ddd4) calc(100% - 40px) 0 / 1px 100% no-repeat,
+    linear-gradient(135deg, #fff 0%, #f3f8f6 100%);
   cursor: pointer;
   list-style: none;
   text-align: left;
@@ -1172,7 +1174,7 @@ dd {
 }
 
 .result-presentation-summary[aria-expanded="false"] {
-  margin-bottom: -20px;
+  margin-bottom: -16px;
   border-radius: 16px;
 }
 
@@ -1191,6 +1193,7 @@ dd {
   content: "›";
   grid-area: 1 / 2 / 4;
   align-self: center;
+  justify-self: center;
   color: #26705c;
   font-size: 1.45rem;
   font-weight: 700;
@@ -1199,6 +1202,10 @@ dd {
 
 .result-presentation-summary[aria-expanded="true"]::after {
   transform: rotate(90deg);
+}
+
+.result-presentation-summary .result-presentation-subtitle {
+  font-size: 0.82rem;
 }
 
 .result-presentation-title {
@@ -1221,9 +1228,10 @@ dd {
 }
 
 .result-presentation-description {
-  margin: 8px 0 0;
-  font-size: 0.84rem;
-  line-height: 1.7;
+  margin: 9px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  text-align: right;
 }
 
 .result-palette-options {
@@ -1238,8 +1246,8 @@ dd {
   display: grid;
   justify-items: center;
   min-width: 0;
-  gap: 7px;
-  padding: 6px 4px 8px;
+  gap: 6px;
+  padding: 4px 4px 2px;
   border-color: transparent;
   background: transparent;
   text-align: center;
@@ -1305,7 +1313,7 @@ dd {
 .result-fragrance-section {
   min-width: 0;
   margin-top: 28px;
-  padding: 20px;
+  padding: 16px;
   border: 2px solid #8fb9aa;
   border-radius: 18px;
   background: rgb(255 255 255 / 82%);
@@ -1327,22 +1335,33 @@ dd {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   min-width: 0;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .result-fragrance-teaser {
   display: grid;
   min-width: 0;
-  aspect-ratio: 1;
+  min-height: 62px;
+  align-content: start;
+  gap: 3px;
   place-items: center;
 }
 
 .result-fragrance-teaser-image {
   display: block;
-  width: 100%;
+  width: 50%;
+  max-width: 46px;
   height: auto;
-  max-height: 100%;
   object-fit: contain;
+}
+
+.result-fragrance-teaser-label {
+  min-width: 0;
+  color: #45635d;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
 }
 
 .result-fragrance-candidates {

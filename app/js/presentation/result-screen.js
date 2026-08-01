@@ -188,14 +188,8 @@ function renderPaletteSelector(
   appendTextElement(
     section,
     "p",
-    "～あなたらしさから着想した色～",
+    "〜あなたらしさから着想した色の選択〜",
     "result-presentation-subtitle",
-  );
-  appendTextElement(
-    section,
-    "p",
-    "選んだ色は、共有カードの色合いに反映されます。",
-    "result-presentation-description",
   );
   const group = parent.ownerDocument.createElement("div");
   group.className = "result-palette-options";
@@ -264,6 +258,12 @@ function renderPaletteSelector(
     group.append(button);
   });
   section.append(group);
+  appendTextElement(
+    section,
+    "p",
+    "選んだ色は、共有カードの色合いに反映されます。",
+    "result-presentation-description",
+  );
   parent.append(section);
 }
 
@@ -308,7 +308,7 @@ function renderFragranceIdeas(parent, dependencies, panelGroup) {
   appendTextElement(
     trigger,
     "span",
-    "～あなたらしさから着想した香り～",
+    "〜あなたらしさから着想した香りの提案〜",
     "result-presentation-subtitle",
   );
   const teasers = parent.ownerDocument.createElement("span");
@@ -326,6 +326,12 @@ function renderFragranceIdeas(parent, dependencies, panelGroup) {
     image.setAttribute("width", String(asset.width));
     image.setAttribute("height", String(asset.height));
     teaser.append(image);
+    appendTextElement(
+      teaser,
+      "span",
+      scene.label,
+      "result-fragrance-teaser-label",
+    );
     teasers.append(teaser);
   }
   trigger.append(teasers);

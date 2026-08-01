@@ -81,6 +81,10 @@ test("T-008B F-018 lays out three equal Palette choices without a narrow-screen 
     /\.palette-choice__check\s*\{[^}]*position:\s*absolute[^}]*inset:\s*50% auto auto 50%[^}]*transform:\s*translate\(-50%,\s*-50%\)[^}]*border:\s*2px solid #fff[^}]*background:\s*#26705c[^}]*color:\s*#fff/s,
   );
   assert.doesNotMatch(narrowStyles, /\.result-palette-options/);
+  assert.match(
+    styles,
+    /\.result-presentation-description\s*\{[^}]*margin:\s*9px 0 0[^}]*font-size:\s*0\.75rem[^}]*line-height:\s*1\.45[^}]*text-align:\s*right/s,
+  );
 });
 
 test("T-005 F-018 keeps Aroma teasers contained and candidate copy safe at 320px", async () => {
@@ -92,8 +96,10 @@ test("T-005 F-018 keeps Aroma teasers contained and candidate copy safe at 320px
   );
   assert.match(
     styles,
-    /\.result-fragrance-teaser-image\s*\{[^}]*display:\s*block[^}]*width:\s*100%[^}]*height:\s*auto[^}]*object-fit:\s*contain/s,
+    /\.result-fragrance-teaser-image\s*\{[^}]*display:\s*block[^}]*width:\s*50%[^}]*max-width:\s*46px[^}]*height:\s*auto[^}]*object-fit:\s*contain/s,
   );
+  const teaserImage = styles.match(/\.result-fragrance-teaser-image\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.doesNotMatch(teaserImage, /max-height:/);
   assert.match(
     styles,
     /\.result-fragrance-scene\s*\{[^}]*min-width:\s*0/s,
@@ -115,11 +121,11 @@ test("T-008B F-018 makes Aroma inviting and uses the shared chevron language", a
 
   assert.match(
     styles,
-    /\.result-presentation-summary\s*\{[^}]*width:\s*calc\(100% \+ 40px\)[^}]*margin:\s*-20px -20px 0[^}]*padding:\s*20px[^}]*border:\s*0[^}]*background:\s*linear-gradient\(/s,
+    /\.result-presentation-summary\s*\{[^}]*width:\s*calc\(100% \+ 32px\)[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\) 40px[^}]*margin:\s*-16px -16px 0[^}]*padding:\s*15px 0 13px 16px[^}]*border:\s*0[^}]*background:\s*linear-gradient\(/s,
   );
   assert.match(
     styles,
-    /\.result-presentation-summary\[aria-expanded="false"\]\s*\{[^}]*margin-bottom:\s*-20px/s,
+    /\.result-presentation-summary\[aria-expanded="false"\]\s*\{[^}]*margin-bottom:\s*-16px/s,
   );
   assert.match(
     styles,

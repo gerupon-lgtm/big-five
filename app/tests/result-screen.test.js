@@ -551,8 +551,17 @@ test("T-008B F-018 renders three always-visible circular Palette choices", () =>
   assert.notEqual(palette.tagName, "details");
   assert.equal(palette.attributes.has("data-palette-selector"), true);
   assert.match(collectText(palette), /ココロパレット/);
-  assert.match(collectText(palette), /～あなたらしさから着想した色～/);
+  assert.match(collectText(palette), /〜あなたらしさから着想した色の選択〜/);
   assert.match(collectText(palette), /共有カードの色合いに反映されます/);
+  assert.deepEqual(
+    palette.children.map(({ className }) => className),
+    [
+      "result-presentation-title",
+      "result-presentation-subtitle",
+      "result-palette-options",
+      "result-presentation-description",
+    ],
+  );
   assert.deepEqual(
     collectElements(palette)
       .filter(({ attributes }) => attributes.has("data-palette-option-label"))
@@ -653,7 +662,7 @@ test("T-005 F-018 keeps Aroma closed with three local scene teasers", () => {
   assert.equal(fragrancePanel.hidden, true);
   assert.match(
     collectText(fragranceTrigger),
-    /ココロアロマ.*～あなたらしさから着想した香り～/,
+    /ココロアロマ.*〜あなたらしさから着想した香りの提案〜/,
   );
   const teasers = collectElements(fragranceTrigger).filter(({ tagName }) =>
     tagName === "img");
@@ -685,6 +694,12 @@ test("T-005 F-018 keeps Aroma closed with three local scene teasers", () => {
         loading: "lazy",
       },
     ],
+  );
+  assert.deepEqual(
+    collectElements(fragranceTrigger)
+      .filter(({ className }) => className === "result-fragrance-teaser-label")
+      .map(({ textContent }) => textContent),
+    ["ひと息つきたい", "気持ちを切り替えたい", "静かに取り組みたい"],
   );
   assert.deepEqual(
     teasers.map(({ attributes }) => attributes.get("alt")),
