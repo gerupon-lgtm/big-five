@@ -788,6 +788,7 @@ test("T-006 F-018 places factors before Palette and Aroma", () => {
 
   const elements = collectElements(host);
   const radar = elements.find(({ className }) => className === "result-radar");
+  const factors = elements.find(({ className }) => className === "result-factors");
   const palette = elements.find(({ className }) =>
     className === "result-palette-selector");
   const aroma = elements.find(({ className }) =>
@@ -795,7 +796,7 @@ test("T-006 F-018 places factors before Palette and Aroma", () => {
 
   assert.ok(elements.indexOf(radar) < elements.indexOf(palette));
   assert.ok(elements.indexOf(palette) < elements.indexOf(aroma));
-  assert.doesNotMatch(collectText(radar), /拡大して見る/);
+  assert.doesNotMatch(collectText(factors), /拡大して見る/);
 });
 
 test("T-008B F-005/F-018 keeps all factor and Aroma disclosures closed and mutually exclusive", () => {

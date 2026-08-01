@@ -40,7 +40,7 @@ node --test app/tests/result-screen.test.js app/tests/share-screen.test.js
 
 Result after the minimal render-call reorder: 34 passed, 0 failed.
 
-The new fake-DOM test verifies `radar < palette < aroma` and that the factor radar area contains no `拡大して見る` action. The existing share test verifies that `拡大して見る` enters zoom mode, retains the image URL, and returns to the fitted card.
+The new fake-DOM test verifies `radar < palette < aroma` and that the complete `.result-factors` subtree contains no `拡大して見る` action. The existing share test verifies that `拡大して見る` enters zoom mode, retains the image URL, and returns to the fitted card.
 
 ## Full verification
 
@@ -62,3 +62,11 @@ Result: 694 passed, 0 failed.
 ## Concerns
 
 None.
+
+## Fix round 1
+
+- Narrowed only the factor-area negative assertion from the radar canvas to the complete `.result-factors` root, covering the radar, score rows, and expandable factor details.
+- Kept the `radar < palette < aroma` order assertions unchanged. The share-screen zoom regression test and production implementation were not changed.
+- Files: `app/tests/result-screen.test.js`, `.superpowers/sdd/2026-08-01-result-history-ui-implementation/task-6-report.md`.
+- Command: `node --test app/tests/result-screen.test.js app/tests/share-screen.test.js`.
+- Passing output: 34 passed, 0 failed.
