@@ -5,7 +5,7 @@
 | 設計版 | 0.9 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-08-01 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.30 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.31 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -44,6 +44,10 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つの
 | deploymentMode | `normal` \| `beta` | ○ | 通常版とベータ版を分離 |
 | betaAggregationEnabled | boolean | ○ | 通常版は必ずfalse |
 | betaApiBaseUrl | string \| null | ○ | ベータ版だけ公開API URL。秘密を含めない |
+
+#### ブランド共有設定
+
+`AppMeta.brand.publicOrigin`はデプロイメント用の公開originであり、共有文へ暗黙に転用しない。`AppMeta.brand.shareUrl`は共有文専用の任意設定で、既定値は空文字とする。空文字はURL行も余分な空行も生成しない。有効値は空白・資格情報を含まないHTTPS URLだけであり、結果画面とカード画像には投影しない。
 
 #### DiagnosticVersionRegistry
 
@@ -422,9 +426,9 @@ schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし�
 
 - カード画像は中央ブランド、称号ラベルと称号、猫を隠さず自然に囲む視認可能な植物リース、透過猫、固定順5因子、`ココロアロマ`の見出しと副題、20問／50問のモード、アプリ版、注意書き、透過素材画付き代表3件を持つ。ブランドの画面用`iconPath`とカード用高解像度`cardIconPath`を分離し、共有モデルは後者を描画へ渡す。詳細な称号理由と内部版IDは画像へ表示しない。
 - 各アロマは場面名、香調名、`materialNames`、短い印象を持ち、画像では透過素材画とともに3件を縦に描画する。
-- 共有テキストは同じモデルから生成するが、香りの素材名と`titleReflection`を含めない。
-- `resultId`、生回答、端末情報、公開結果URL、未知フィールドをモデルへ投影しない。
-- 共有物は保存しない。ResultSnapshotだけを永続的な再生成元とし、PNG BlobとObject URLは共有画面の生存期間に限って保持・解放する。rendererは`card-template-v1`の旧配置と`card-template-v2`の現行配置を版で振り分け、未対応版では誤った画像を生成せずテキスト共有へフォールバックする。
+- 共有テキストは同じモデルから、ブランド、モード、`称号：...`、称号副題、見出しなしの称号理由、固定順5因子、`ココロアロマ`の場面／香調、標準注意書き、任意URLの順で生成する。生回答、香りの素材名、`titleReflection`、内部版ID、`この称号になった理由`見出しは含めない。
+- `shareUrl`は共有テキストにだけ投影する。空文字ならURLブロックを省略し、有効HTTPS URLだけを注意書きの後の1空行を挟んで追加する。`publicOrigin`、`resultId`、端末情報、公開結果URL、未知フィールドをモデルへ投影しない。
+- 共有物は保存しない。ResultSnapshotだけを永続的な再生成元とし、PNG BlobとObject URLは共有画面の生存期間に限って保持・解放する。プレビュー、Web Share、ダウンロードは同じPNG Blobを再利用する。rendererは`card-template-v1`の旧円形リースと`card-template-v2`の植物だけの開いたアーチを版で振り分け、未対応版では誤った画像を生成せずテキスト共有へフォールバックする。
 
 ## 4. 比較互換性
 

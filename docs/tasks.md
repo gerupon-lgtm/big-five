@@ -5,7 +5,7 @@
 | 設計版 | 0.11 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-08-01 |
-| 要件正典 | 要件定義書v1.30 |
+| 要件正典 | 要件定義書v1.31 |
 | 初期リリース | `mvp-0.1.0` |
 | 現在リリース | `mvp-1.0.0` |
 
@@ -23,14 +23,14 @@
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A, T-008C | 名前付きレーダー、CSP下でも実スコアを反映する固定順5因子行・棒、因子／アロマ相互排他の一回開閉、因子領域に`拡大して見る`を置かないことを実装・テスト済み |
 | F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A, T-008B, T-008C | 履歴20問を厳密ID一致の回答継続中と確定済みに分離。どちらもヘッダー・下部の`履歴一覧に戻る`を表示 |
 | F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A, T-008B | 同一0〜100表示軸、二段の差表示、固定桁、版情報のラベル化、ヘッダー`履歴一覧に戻る`まで実装済み |
-| F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007, T-008C | 共有画像の`拡大して見る`は維持。結果画面の因子領域へ同操作を追加しない |
-| F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007, T-008C | 結果通常フローには単一の`結果を共有する` CTAだけを表示。プレビューと共有・保存で同じPNG Blobを使用 |
-| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A, T-008C | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。T-008Cでは20問preview終了時にResultSnapshotを残して対応ProgressRecordだけを削除する状態を追跡する |
+| F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007, T-008C | `card-template-v2`の植物だけの開いたアーチ、透明素材、画像拡大、プレビュー／Web Share／保存の同一PNG Blobを回帰確認。結果画面の因子領域へ同操作を追加しない |
+| F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007, T-008C | ブランド→モード→称号→副題→見出しなし理由→固定順因子→アロマ→注意→任意URLの共有文、単一CTA、同一PNG Blob、コピー／選択可能テキストの代替を回帰確認 |
+| F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A, T-008C | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。T-008C共有追補では共有物を永続化せず、PNG BlobとObject URLを共有画面の生存期間だけ保持する |
 | F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | `mvp-1.0.0`を正典とし、開始画面・共有物を含む版契約へ反映済み |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A, T-008C | 保存失敗時の中断・preview終了、live結果維持、ID不一致の履歴継続を安全側で無効化、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
-| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-008C, T-010 | `ココロパレット`は常時3候補、`ココロアロマ`は閉じた3画像ティーザーから1回で6候補。アロマだけが因子と相互排他 |
+| F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-008C, T-010 | 共有カードは透過素材画の代表3件を維持し、共有テキストには香りの素材名を含めない。`card-template-v2`では6本の植物枝アーチが透過猫を隠さない |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -61,7 +61,7 @@
 | T-007 | 共有カード・保存・コピー | F-011, F-012, F-014, F-015, F-018 | 完了。1080×1800正式カード、透過素材、S-005、共有・保存・コピー・段階代替、実ブラウザ確認済み。2026-08-01リース更新後のユーザー最終確認待ち |
 | T-008A | 結果・履歴・中断再開UI再整理 | F-001, F-003〜F-006, F-008〜F-010, F-013, F-015, F-018 | `titleReflection`の文面承認、runtime、snapshot、結果画面接続、全体回帰、320／360／960pxのローカル実ブラウザQAまで完了 |
 | T-008B | 結果履歴・比較・色香りUI追補 | F-005, F-006, F-009, F-010, F-018 | 履歴previewの操作、比較軸と版情報、色香りの相互排他的な段階展開を実ブラウザで確認 |
-| T-008C | 結果・履歴状態と共有導線の追補 | F-004, F-005, F-006, F-008, F-009, F-011, F-012, F-013, F-015, F-018 | 実装・文書同期済み。5状態行列、厳密ID継続、preview終了、因子一回開閉、常時パレット、アロマティーザー、単一共有CTAを回帰テストで確認。未解決のcontent/release gateを変更しない |
+| T-008C | 結果・履歴状態と共有導線の追補 | F-004, F-005, F-006, F-008, F-009, F-011, F-012, F-013, F-015, F-018 | 実装・文書同期済み。5状態行列、厳密ID継続、preview終了、因子一回開閉、常時パレット、アロマティーザー、単一共有CTAに加え、共有追補の任意HTTPS URL、v2植物アーチ、同一PNG Blobと代替を回帰テストで確認。未解決のcontent/release gateを変更しない |
 | T-008 | 全画面統合・レスポンシブ・a11y | F-001〜F-016, F-018 | 主要フローを360px・PC・キーボードで完結 |
 | T-009 | 説明・プライバシー・CSP | F-001, F-002, F-007, F-014, F-015 | 限界、非送信、削除、版、CSPを確認可能 |
 | T-010 | ベータ匿名集計API・DB・事前説明 | F-017 | OCIへ匿名集計し、二重送信・通信失敗でも診断結果を維持 |
@@ -308,7 +308,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - Canvas `toBlob`失敗、フォント未準備、ユーザーキャンセル。
   - PNG内のモード、称号、数値、注意、版、選択色を目視・自動確認。
   - 共有モデルの禁止フィールド検査。
-- 実装記録（2026-07-31）: `selectShareableResultTexts`、`createShareCardModel`、`renderShareCard`、`renderShareScreen`と共有deliveryを接続した。正式カードは中央ブランド、称号ラベルと称号、共通円形リース内の透過猫、固定順5因子、`ココロアロマ`の見出しと副題、透過素材画付き代表3件、注記・モード・アプリ版を縦に表示する。詳細な称号理由と内部版IDは画像へ表示せず、共有テキストからは素材名と`titleReflection`を除外する。同じPNG Blobをプレビューと操作へ渡し、ルート離脱時にObject URLを解放する。猫は既存1024×1024透過WebP、香り画は短辺800px以上の透過PNG、ブランドは512px PNGとし、枠・リース・棒・文字はCanvasへ直接描画する。
+- 実装記録（2026-07-31、2026-08-01共有追補）: `selectShareableResultTexts`、`createShareCardModel`、`renderShareCard`、`renderShareScreen`と共有deliveryを接続した。正式カードは中央ブランド、称号ラベルと称号、`card-template-v2`では6本のCanvas植物枝だけの開いたアーチと透過猫、固定順5因子、`ココロアロマ`の見出しと副題、透過素材画付き代表3件、注記・モード・アプリ版を縦に表示する。v2は円形ストローク、白色・ニュートラル色の円、背面プレートを置かず、v1の旧円形リースは維持する。詳細な称号理由と内部版IDは画像へ表示せず、共有テキストからは素材名と`titleReflection`を除外する。同じPNG Blobをプレビュー、Web Share、ダウンロードへ渡し、ルート離脱時にObject URLを解放する。猫は既存1024×1024透過WebP、香り画は短辺800px以上の透過PNG、ブランドは512px PNGとし、枠・植物枝・棒・文字はCanvasへ直接描画する。
 - 共有カード視覚追補（2026-08-01）: 最終参考画像に合わせ、`card-template-v2`の太い一周線と低濃度円形面を廃止した。現在の実装は淡い円形ガイドと4本の多色植物枝で、猫を隠さず自然に囲む視認可能なリースを構成する。猫の視認性は透過WebPを維持したまま縁取り・影で確保する。枝数は実装詳細であり、要件上は固定しない。`card-template-v1`の履歴再現配置は変更しない。
 - 実ブラウザ検証（2026-07-31）: 1080×1800 PNGの自然寸法、1280×720と320×480の初期`card`、`details`と`zoom`、同一画像URL再利用、文書全体の縦横スクロールなし、全操作領域、ブラウザログ0件を確認した。正式ビジュアルの縦構成は、標準的な座り猫、動きのある猫、小物を含む横幅の広い猫の3体で全身・小物の無切り抜き、リース領域との位置関係、アロマ3行とフッターの非重複を確認した。猫周囲のリースは後から再調整対象となったため、この確認を更新後デザインの最終承認とは扱わない。透過素材の寸法・alpha・透明四隅・キー色残存なしも自動検証する。2026-08-01の更新後は360px幅の代表1体カードで、白色・ニュートラル色の円形面がなく葉が猫の周囲に見えることを実画像確認した。更新後の代表3体・960px画面・ユーザー最終確認は未完了である。
 - 確認用先行物（2026-07-30、F-011・F-018）: `docs/palette-preview.html`は配色・情報量確認用の簡略カードとして履歴に残す。現在の正式共有出力はS-005の1080×1800 Canvasを正とし、簡略カードの香り横並びを正式レイアウトへ持ち込まない。
@@ -435,14 +435,26 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 50問直後、50問履歴、20問直後、20問履歴・回答継続中、20問履歴・確定済みの5状態について、下部操作、履歴復帰、パレット、共有CTAを固定する。
   - 因子は1回の操作で保存済み全カテゴリ本文を表示し、因子とアロマを相互排他にする。パレットは常時3候補、アロマは閉じた3画像ティーザーから1回で6候補を表示する。
   - 結果通常フローの共有CTAを1箇所へ統一する。5因子領域に`拡大して見る`を追加せず、S-005の共有画像拡大は維持する。
+- 共有追補（F-011、F-012、F-013、F-018）:
+  - 共有テキストを、ブランド、モード、`称号：...`、称号副題、見出しなしの称号理由、固定順5因子、`ココロアロマ`の場面／香調、標準注意書き、任意URLの順へ固定する。
+  - `APP_META.brand.shareUrl`を空文字既定の任意設定とし、空白・資格情報のないHTTPS URLだけを受理する。空文字ではURL行と余分な空行を出さず、`publicOrigin`を共有URLの暗黙値にしない。URLは結果画面とカード画像へ表示しない。
+  - `card-template-v2`を、透明猫より先に描く6本のCanvas植物枝だけの大きく空いたアーチにする。円形ストローク、白色・ニュートラル色の円、背面プレートを置かず、顔・胴体・尻尾を隠さない。`card-template-v1`の旧円形リースを維持する。
+  - 猫・香り画をローカルの高解像度透過ラスタアセットのまま使い、SVGや完成カードをラスタライズせず、白い円形カバーを追加しない。プレビュー、Web Share、PNGダウンロードは同じ生成済みBlobを使い、失敗時はコピーまたは選択可能テキストへ到達させる。
 - 完了条件:
   - 厳密ID一致の履歴20問だけが`50問へ進む`を表示し、異なるIDの旧履歴は確定済みとして扱う。
   - 5状態それぞれの操作、パレット、共有CTA、履歴一覧復帰が実装済みの行列と一致する。
   - 因子の二段階開閉、パレット外側開閉、アロマの場面別内側開閉、因子領域の`拡大して見る`が残らない。
+- 共有追補（F-011、F-012、F-013、F-018）:
+  - 共有テキストが指定順、固定因子順、見出しなし理由、標準注意書きと一致し、禁止情報を含まない。
+  - URLの空値・有効HTTPS・不正値が契約どおりに扱われ、結果画面とカード画像がURLで変化しない。
+  - v2に円形線・円形面・背面プレートがなく、v1の旧円形リース、透過素材、顔・胴体・尻尾を避ける6本の植物枝、同一Blob利用とテキスト代替が維持される。
 - 検証方法・根拠:
   - `app/tests/app-shell.test.js`で20問snapshotの`resultId === progressId`、50問の新規resultId、ID不一致の旧履歴を再リンクしないことを回帰検証する。
   - `app/tests/result-screen.test.js`で5状態行列、因子一回開閉、常時パレット、アロマティーザー、共有CTAの単一性を回帰検証する。
-  - `npm.cmd run check`、`npm.cmd test`、対象文書の旧表現検索、`git diff --check`を実行する。
+- 共有追補（F-011、F-012、F-013、F-018）:
+  - `app/tests/share-result-text.test.js`、`app/tests/share-card-model.test.js`、`app/tests/share-card-renderer.test.js`で共有文、URL、v1/v2描画契約を回帰検証する。
+  - `app/tests/app-shell.test.js`、`app/tests/share-screen.test.js`、`app/tests/share-delivery.test.js`で同一Blob、画像共有・保存、コピー／選択可能テキストの代替を回帰検証する。
+  - `npm.cmd run check`、対象文書の旧表現検索、対象ファイルの`git diff --check`を実行する。
 - 非対象:
   - Q-006、Q-012、Q-013、E-1〜E-5、P-0〜P-6、presentation releaseの承認事実・release gateを変更しない。
 
