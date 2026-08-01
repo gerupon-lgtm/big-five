@@ -653,6 +653,8 @@ test("T-007 S-005 opens one generated share card and revokes it when returning",
   let raw = null;
   const blob = new Blob(["png"], { type: "image/png" });
   const urls = [];
+  const urlBlobs = [];
+  const sharedBlobSources = [];
   const revoked = [];
   const { host, windowObject } = createAppHarness({
     storage: {
@@ -669,19 +671,30 @@ test("T-007 S-005 opens one generated share card and revokes it when returning",
         constructor(parts, name, options) {
           super(parts, options);
           this.name = name;
+          this.sourceBlob = parts[0];
         }
       },
-      navigator: {},
+      navigator: {
+        canShare: () => true,
+        async share({ files }) {
+          sharedBlobSources.push(files[0].sourceBlob);
+        },
+      },
       URL: {
         createObjectURL(value) {
           assert.strictEqual(value, blob);
+          urlBlobs.push(value);
           const url = `blob:card-${urls.length + 1}`;
           urls.push(url);
           return url;
         },
         revokeObjectURL(url) { revoked.push(url); },
       },
-      document: {},
+      document: {
+        createElement() {
+          return { click() {}, remove() {} };
+        },
+      },
     },
   });
 
@@ -700,12 +713,24 @@ test("T-007 S-005 opens one generated share card and revokes it when returning",
     className.includes("share-screen"));
   assert.equal(shareScreen.getAttribute("data-share-view"), "card");
   assert.deepEqual(urls, ["blob:card-1"]);
+  const shareButton = collectElements(host).find(({ className }) =>
+    className === "primary-button");
+  const downloadButton = collectElements(host).find(({ tagName, textContent }) =>
+    tagName === "button" && textContent.startsWith("PNG"));
+  assert.ok(shareButton);
+  assert.ok(downloadButton);
+  shareButton.dispatch("click");
+  downloadButton.dispatch("click");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(sharedBlobSources, [blob]);
+  assert.deepEqual(urlBlobs, [blob, blob]);
+  assert.deepEqual(revoked, ["blob:card-2"]);
   clickButton(host, "結果へ戻る");
   assert.equal(
     windowObject.location.hash,
     `#/result?resultId=${encodeURIComponent(resultId)}`,
   );
-  assert.deepEqual(revoked, ["blob:card-1"]);
+  assert.deepEqual(revoked, ["blob:card-2", "blob:card-1"]);
 });
 
 test("T-007 S-005 returns a missing share result to history without storage mutation", async () => {
