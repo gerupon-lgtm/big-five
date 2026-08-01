@@ -52,6 +52,7 @@ const BRAND_FIELDS = Object.freeze([
   "subtitle",
   "cardSubtitle",
   "publicOrigin",
+  "shareUrl",
   "iconPath",
   "cardIconPath",
 ]);
@@ -185,6 +186,12 @@ function projectBrand(brand) {
   };
 }
 
+function selectExactlyOneShareableText(shareableTexts, section) {
+  const matches = shareableTexts.filter((text) => text.section === section);
+  if (matches.length !== 1) invalidModel();
+  return matches[0];
+}
+
 function buildModel(input) {
   if (!hasExactFields(input, INPUT_FIELDS) ||
     !isNonEmptyString(input.titleLabel) ||
@@ -194,9 +201,11 @@ function buildModel(input) {
 
   const snapshot = validateResultSnapshot(input.snapshot);
   const shareableTexts = selectShareableResultTexts(snapshot.renderedTexts);
-  const titleReasons = shareableTexts.filter(({ section }) =>
-    section === "titleReason");
-  if (titleReasons.length !== 1) invalidModel();
+  const titleSubtitle = selectExactlyOneShareableText(
+    shareableTexts,
+    "titleSubtitle",
+  );
+  const titleReason = selectExactlyOneShareableText(shareableTexts, "titleReason");
 
   const brand = projectBrand(input.brand);
   const character = projectCharacter(input.characterEntry, snapshot);
@@ -221,9 +230,12 @@ function buildModel(input) {
     brandName: brand.name,
     modeLabel,
     titleLabel: input.titleLabel,
+    titleSubtitle: titleSubtitle.text,
+    titleReason: titleReason.text,
     factors,
     fragrances,
-    disclaimer,
+    disclaimer: DISCLAIMER,
+    shareUrl: input.brand.shareUrl,
   });
 
   return deepFreeze({
@@ -234,7 +246,7 @@ function buildModel(input) {
     brand,
     modeLabel,
     titleLabel: input.titleLabel,
-    titleReason: titleReasons[0].text,
+    titleReason: titleReason.text,
     character,
     factors,
     fragrances,

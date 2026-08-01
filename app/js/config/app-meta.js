@@ -13,6 +13,7 @@ const brand = Object.freeze({
   subtitle: "Big Five 自己理解支援ツール",
   cardSubtitle: "～Big Five 自己理解支援ツール～",
   publicOrigin: "https://kokoroparea.gerupon.uk",
+  shareUrl: "",
   iconPath: "./assets/brand/kokoro-parea-mark.svg",
   cardIconPath: "./assets/brand/kokoro-parea-icon-512.png",
 });

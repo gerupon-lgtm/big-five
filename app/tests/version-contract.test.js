@@ -23,10 +23,21 @@ test("AppMeta is the canonical mvp-1.0.0 normal-build metadata", () => {
     subtitle: "Big Five 自己理解支援ツール",
     cardSubtitle: "～Big Five 自己理解支援ツール～",
     publicOrigin: "https://kokoroparea.gerupon.uk",
+    shareUrl: "",
     iconPath: "./assets/brand/kokoro-parea-mark.svg",
     cardIconPath: "./assets/brand/kokoro-parea-icon-512.png",
   });
   assert.equal(Object.isFrozen(appMeta.brand), true);
+  assert.deepEqual(Object.keys(appMeta.brand).sort(), [
+    "cardIconPath",
+    "cardSubtitle",
+    "iconPath",
+    "name",
+    "publicOrigin",
+    "shareUrl",
+    "subtitle",
+    "version",
+  ]);
 });
 
 test("diagnostic, start, and share models read the same canonical version registry", () => {

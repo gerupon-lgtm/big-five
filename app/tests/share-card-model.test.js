@@ -62,6 +62,7 @@ const BRAND = Object.freeze({
   subtitle: "Big Five 自己理解支援ツール",
   cardSubtitle: "～Big Five 自己理解支援ツール～",
   publicOrigin: "https://kokoroparea.gerupon.uk",
+  shareUrl: "",
   iconPath: "./assets/brand/kokoro-parea-mark.svg",
   cardIconPath: "./assets/brand/kokoro-parea-icon-512.png",
 });
@@ -79,6 +80,7 @@ const CHARACTER_ENTRY = Object.freeze({
 function createInput({
   questionCount = 50,
   characterEntry = CHARACTER_ENTRY,
+  brand = BRAND,
 } = {}) {
   const snapshot = createTestResultSnapshot({
     resultId: questionCount === 20
@@ -94,7 +96,7 @@ function createInput({
     palette: PALETTE,
     paletteUsage: PALETTE_USAGE,
     fragranceSummary: FRAGRANCE_SUMMARY,
-    brand: BRAND,
+    brand,
   };
 }
 
@@ -167,13 +169,24 @@ test("T-007 F-011 creates the exact immutable 1080 by 1800 detail card model", (
     text: "#252A2D",
     chart: "#7799AA",
   });
-  assert.match(model.shareText, /ココロパレア\n50問 詳細結果\n五つの風を見渡す観測者/);
-  assert.match(model.shareText, /知性・想像力：50/);
-  assert.match(model.shareText, /ひと息つきたい：まろやかな甘みの草花の香調/);
-  assert.match(
-    model.shareText,
-    /これは性格の優劣や心理学上の正式なタイプを示すものではありません。$/,
-  );
+  assert.equal(model.shareText, `ココロパレア
+50問 詳細結果
+称号：五つの風を見渡す観測者
+五つの風を見渡す観測者の副題
+五つの因子を見渡した結果です。
+
+知性・想像力：50
+勤勉性：50
+外向性：50
+協調性：50
+情緒安定性：50
+
+ココロアロマ
+ひと息つきたい：まろやかな甘みの草花の香調
+気持ちを切り替えたい：ほろ苦く明るい柑橘の香調
+静かに取り組みたい：静かな樹脂の輪郭を含む木質の香調
+
+これは性格の優劣や心理学上の正式なタイプを示すものではありません。`);
   assert.doesNotMatch(
     JSON.stringify(model),
     /answers|titleReflection|materialIds|publicOrigin|resultId|https?:\/\//,
@@ -197,6 +210,48 @@ test("T-007 F-011 creates preview and no-cat variants without changing the resul
     "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
     "20問の簡易プレビューであり、50問で結果が変わることがあります。",
   ].join("\n"));
+  assert.equal(
+    model.shareText.endsWith(
+      "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
+    ),
+    true,
+  );
+  assert.equal(model.shareText.includes("20問の簡易プレビューであり、50問で結果が変わることがあります。"), false);
+});
+
+test("T-008C F-011 appends an optional HTTPS URL only to share text", () => {
+  const model = createShareCardModel(createInput({
+    brand: { ...BRAND, shareUrl: "https://example.test/kokoroparea" },
+  }));
+
+  assert.equal(
+    model.shareText.endsWith("\n\nhttps://example.test/kokoroparea"),
+    true,
+  );
+  assert.doesNotMatch(JSON.stringify({ ...model, shareText: "" }), /https?:\/\//);
+});
+
+test("T-008C F-011 rejects missing or duplicate selected-title subtitle and reason", () => {
+  for (const section of ["titleSubtitle", "titleReason"]) {
+    const missingInput = createInput();
+    missingInput.snapshot = {
+      ...missingInput.snapshot,
+      renderedTexts: missingInput.snapshot.renderedTexts.filter((text) => text.section !== section),
+    };
+    const duplicateInput = createInput();
+    const selectedText = duplicateInput.snapshot.renderedTexts.find((text) => text.section === section);
+    duplicateInput.snapshot = {
+      ...duplicateInput.snapshot,
+      renderedTexts: [...duplicateInput.snapshot.renderedTexts, { ...selectedText, id: `${selectedText.id}-duplicate` }],
+    };
+
+    for (const input of [missingInput, duplicateInput]) {
+      assert.throws(
+        () => createShareCardModel(input),
+        { name: "TypeError", message: "SHARE_CARD_MODEL_INVALID" },
+      );
+    }
+  }
 });
 
 test("T-007 F-011 rejects malformed or contaminated card inputs with one stable error", () => {
