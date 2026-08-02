@@ -38,6 +38,33 @@ test("T-005/T-006 result-history navigation uses the same button treatment as ot
   );
 });
 
+test("T-008B S-007 centers the two-line integer delta in a fixed right column", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+  const comparisonNarrowStyles = styles.slice(
+    styles.indexOf("@media (max-width: 410px)"),
+    styles.indexOf("@media (max-width: 380px)"),
+  );
+
+  assert.match(
+    styles,
+    /\.comparison-factor-list li\s*\{[^}]*grid-template-columns:\s*minmax\(10rem,\s*1fr\) auto 94px/s,
+  );
+  assert.match(
+    styles,
+    /\.display-delta\s*\{[^}]*width:\s*94px[^}]*min-width:\s*94px[^}]*justify-items:\s*center[^}]*text-align:\s*center/s,
+  );
+  assert.match(
+    comparisonNarrowStyles,
+    /\.comparison-factor-list li\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\) 94px/s,
+  );
+  assert.match(
+    comparisonNarrowStyles,
+    /\.comparison-factor-list li h2\s*\{[^}]*grid-column:\s*1 \/ -1/s,
+  );
+  assert.match(comparisonNarrowStyles, /\.raw-mean-transition\s*\{[^}]*grid-column:\s*1/s);
+  assert.match(comparisonNarrowStyles, /\.display-delta\s*\{[^}]*grid-column:\s*2/s);
+});
+
 test("T-005/T-007 gives the title-card CTA the approved invitation treatment without making it sticky", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
   const shareCard = styles.match(/\.result-share-call-to-action\s*\{([^}]*)\}/)?.[1] ?? "";

@@ -715,7 +715,7 @@ dd {
 
 .comparison-factor-list li {
   display: grid;
-  grid-template-columns: minmax(10rem, 1fr) auto auto;
+  grid-template-columns: minmax(10rem, 1fr) auto 94px;
   align-items: center;
   gap: 12px;
   padding: 16px;
@@ -768,11 +768,12 @@ dd {
 
 .display-delta {
   display: grid;
-  min-width: 7.5em;
-  justify-items: end;
+  width: 94px;
+  min-width: 94px;
+  justify-items: center;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: center;
 }
 
 .display-delta-value,
@@ -1675,6 +1676,25 @@ noscript {
   color: #6f1f1f;
 }
 
+@media (max-width: 410px) {
+  .comparison-factor-list li {
+    grid-template-columns: minmax(0, 1fr) 94px;
+    gap: 6px 12px;
+  }
+
+  .comparison-factor-list li h2 {
+    grid-column: 1 / -1;
+  }
+
+  .raw-mean-transition {
+    grid-column: 1;
+  }
+
+  .display-delta {
+    grid-column: 2;
+  }
+}
+
 @media (max-width: 380px) {
   .app-shell {
     width: min(100% - 24px, 720px);
@@ -1686,11 +1706,6 @@ noscript {
 
   .comparison-dates {
     grid-template-columns: 1fr;
-  }
-
-  .comparison-factor-list li {
-    grid-template-columns: 1fr;
-    gap: 6px;
   }
 
   .app-header {
