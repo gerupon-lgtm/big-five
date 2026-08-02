@@ -368,6 +368,16 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
+.start-footer {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid #d6e4df;
+  color: #899691;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
 .status-card h2 {
   margin: 0;
   font-size: clamp(1.2rem, 4vw, 1.6rem);

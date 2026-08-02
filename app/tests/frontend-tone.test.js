@@ -26,6 +26,7 @@ test("T-008C S-001 gives the start screen the approved card, sprout, and disable
   assert.match(styles, /\.start-history-link\s*\{[^}]*width:\s*100%[^}]*justify-content:\s*center/s);
   assert.match(styles, /\.start-history-link:disabled\s*\{[^}]*background:\s*#edf1ef[^}]*color:\s*#899691/s);
   assert.match(styles, /\.start-main-panel \.start-secondary-navigation\s*\{[^}]*margin-top:\s*12px[^}]*padding-top:\s*0[^}]*border-top:\s*0/s);
+  assert.match(styles, /\.start-footer\s*\{[^}]*border-top:\s*1px solid #d6e4df[^}]*color:\s*#899691[^}]*font-size:\s*0\.72rem[^}]*text-align:\s*center/s);
 });
 
 test("T-008C S-006 aligns history management controls and compacts diagnostic metadata", async () => {

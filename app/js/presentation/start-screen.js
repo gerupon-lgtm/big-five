@@ -157,5 +157,11 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
   }
   diagnosticVersion.append(diagnosticVersionList);
   main.append(diagnosticVersion);
+  appendTextElement(
+    main,
+    "footer",
+    "© 2026 SIKUMI LAB",
+    "start-footer",
+  );
   host.replaceChildren(main);
 }

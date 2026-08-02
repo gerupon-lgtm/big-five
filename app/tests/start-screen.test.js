@@ -61,6 +61,10 @@ test("T-005 S-001 offers a new diagnosis action and accurate available-flow copy
   const visibleVersion = collectElements(host).find(({ className }) =>
     className === "start-app-version");
   assert.equal(visibleVersion.textContent, "バージョン mvp-1.0.0");
+  const footer = collectElements(host).find(({ className }) =>
+    className === "start-footer");
+  assert.equal(footer.tagName, "footer");
+  assert.equal(collectText(footer).trim(), "© 2026 SIKUMI LAB");
 });
 
 test("T-005 S-001 offers resume only when the caller provides a compatible progress callback", () => {
