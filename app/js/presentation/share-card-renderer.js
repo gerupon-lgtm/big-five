@@ -24,7 +24,7 @@ const AROMA_ASSET_PATHS = Object.freeze({
   reset: "./assets/share-card/aroma-reset-v1.png",
   "quiet-focus": "./assets/share-card/aroma-quiet-focus-v1.png",
 });
-const WREATH_ASSET_PATH = "./assets/share-card/kokoro-wreath-v1.png";
+const WREATH_ASSET_PATH = "./assets/share-card/kokoro-wreath-v2.png";
 const WREATH_RENDER_SPEC = Object.freeze({
   x: 90,
   width: 900,

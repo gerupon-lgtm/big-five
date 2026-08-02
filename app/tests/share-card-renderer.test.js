@@ -167,7 +167,7 @@ function recordingDependencies({
   const loadImage = async (path) => {
     operations.push(["loadImage", path]);
     if (failCharacter && path.endsWith(".webp")) throw new Error("cat missing");
-    if (failWreath && path.endsWith("kokoro-wreath-v1.png")) {
+    if (failWreath && path.endsWith("kokoro-wreath-v2.png")) {
       throw new Error("wreath missing");
     }
     return { path, naturalWidth: 1024, naturalHeight: 1024 };
@@ -299,11 +299,11 @@ test("T-007 F-011 composites the approved v2 wreath asset behind the cat", async
   assert.equal(result.status, "ok");
   assert.ok(operations.some((operation) =>
     operation[0] === "loadImage" &&
-    operation[1] === "./assets/share-card/kokoro-wreath-v1.png"));
+    operation[1] === "./assets/share-card/kokoro-wreath-v2.png"));
   const wreathDrawIndex = operations.findIndex((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
-    operation[2] === "./assets/share-card/kokoro-wreath-v1.png");
+    operation[2] === "./assets/share-card/kokoro-wreath-v2.png");
   const catDrawIndex = operations.findIndex((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
@@ -322,7 +322,7 @@ test("T-007 F-011 anchors the v2 wreath near each cat image's lowest visible ite
   const findWreathDraw = (operations) => operations.find((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
-    operation[2] === "./assets/share-card/kokoro-wreath-v1.png");
+    operation[2] === "./assets/share-card/kokoro-wreath-v2.png");
   const fullHeightDraw = findWreathDraw(fullHeight.operations);
   const raisedBottomDraw = findWreathDraw(raisedBottom.operations);
   assert.ok(fullHeightDraw[4] > raisedBottomDraw[4]);
@@ -342,7 +342,7 @@ test("T-007 F-015 keeps the title card usable when the optional wreath asset fai
   assert.equal(operations.some((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
-    operation[2] === "./assets/share-card/kokoro-wreath-v1.png"), false);
+    operation[2] === "./assets/share-card/kokoro-wreath-v2.png"), false);
   assert.ok(operations.some((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
@@ -384,7 +384,7 @@ test("T-008C F-011 renders only the approved open raster wreath for v2", async (
   const wreathDraw = operations.find((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
-    operation[2] === "./assets/share-card/kokoro-wreath-v1.png");
+    operation[2] === "./assets/share-card/kokoro-wreath-v2.png");
   assert.ok(wreathDraw);
   assert.equal(wreathDraw[3], 90);
   assert.equal(wreathDraw[5], 900);

@@ -11,6 +11,7 @@ const ASSET_NAMES = Object.freeze([
   "aroma-quiet-focus-v1.png",
   "aroma-reset-v1.png",
   "kokoro-wreath-v1.png",
+  "kokoro-wreath-v2.png",
 ]);
 const ASSET_HASHES = Object.freeze({
   "aroma-pause-v1.png":
@@ -21,6 +22,8 @@ const ASSET_HASHES = Object.freeze({
     "9c71df1c5ed8bce2315166ee1708e154107b7f1f2f96a4221825aee828f73e7f",
   "kokoro-wreath-v1.png":
     "8e0794410984f52c2f3b2772d856ffc317ae133bf5dd16bb5082c638a6fc95c8",
+  "kokoro-wreath-v2.png":
+    "de8f2356396f482ab79d05fc76ded3e383575b7095f9f2dc284a7ea8a47b0d9b",
 });
 
 test("T-007 F-011 keeps the approved share illustrations as high-resolution transparent PNGs", async () => {

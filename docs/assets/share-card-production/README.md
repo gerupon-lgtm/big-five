@@ -6,9 +6,8 @@
 - 機能: F-011、F-012、F-013、F-018
 - カード: 1080×1800 PNG（3:5）
 - 縦構成イメージ承認日: 2026-07-31
-- 補正版リース（後者）の採用承認日: 2026-08-02
-- 実画像確認: 2026-08-02に異なる小物構成の猫3体で各1080×1800 PNGを生成し、背面合成、下端追従、上下中央の開放、横overflowなし、console warning／error 0件を確認
-- 形状フォローアップ: 上下位置の中央付近が外側へ膨らみ過ぎて見える点は保留。現行素材・配置を一旦維持し、今回の結果画面／共有画面UI追補では変更しない
+- 最終リース`kokoro-wreath-v2.png`の採用承認日: 2026-08-02
+- 実画像確認: 2026-08-02に標準、籠と木の実、手帳と札の猫3体で実Canvas合成し、共通の円弧形状、背面合成、下端追従、上下中央の開放、基線と枝葉の接続、透過縁を確認
 
 F-013は、20問プレビュー完了時にResultSnapshotを残して対応ProgressRecordを削除し、共有可能な完了状態を確定する範囲だけで関係する。PNG Blob／Object URLの生成・再利用・解放はF-011／F-012の責務であり、F-013へ分類しない。
 
@@ -19,9 +18,10 @@ F-013は、20問プレビュー完了時にResultSnapshotを残して対応Progr
 | ひと息つきたい | `app/assets/share-card/aroma-pause-v1.png` | 994×857 | alpha付きPNG | `d946e8cb15fb64f52791001c97afdc76e66e9b339b4f479b60d85a2c4f45c31a` |
 | 気持ちを切り替えたい | `app/assets/share-card/aroma-reset-v1.png` | 1243×848 | alpha付きPNG | `9c71df1c5ed8bce2315166ee1708e154107b7f1f2f96a4221825aee828f73e7f` |
 | 静かに取り組みたい | `app/assets/share-card/aroma-quiet-focus-v1.png` | 875×960 | alpha付きPNG | `ea8f49dd9851805c715dcce9d6f7c4ecc45d4290eb13105d9611112603b267e8` |
-| 猫の背面リース | `app/assets/share-card/kokoro-wreath-v1.png` | 1254×1254 | alpha付きPNG | `8e0794410984f52c2f3b2772d856ffc317ae133bf5dd16bb5082c638a6fc95c8` |
+| 猫の背面リース（ロールバック用） | `app/assets/share-card/kokoro-wreath-v1.png` | 1254×1254 | alpha付きPNG | `8e0794410984f52c2f3b2772d856ffc317ae133bf5dd16bb5082c638a6fc95c8` |
+| 猫の背面リース（現行） | `app/assets/share-card/kokoro-wreath-v2.png` | 1254×1254 | alpha付きPNG | `de8f2356396f482ab79d05fc76ded3e383575b7095f9f2dc284a7ea8a47b0d9b` |
 
-猫はQ-012の1024×1024透過WebP、ブランドは`app/assets/brand/kokoro-parea-icon-512.png`を使う。`card-template-v2`は補正版の透過ラスタリースを猫より先にCanvasへ合成する。リースは淡い暖色の円弧線と左右の植物で猫を囲み、上部・下部の中央を開放する。猫ごとの透明画素を解析し、リースの見える下端を猫画像内の最下部アイテム付近へ合わせる。白色・ニュートラル色の円形面や背面プレートは置かない。`card-template-v1`の旧円形リースは維持する。枠、紙調テクスチャ、5因子の棒、文字はCanvasへ直接描画する。
+猫はQ-012の1024×1024透過WebP、ブランドは`app/assets/brand/kokoro-parea-icon-512.png`を使う。`card-template-v2`は`kokoro-wreath-v2.png`を猫より先にCanvasへ合成する。リースは左右それぞれ1本の淡い暖色円弧基線から水彩植物が伸び、上部・下部の中央を開放する。承認済み形状の1254px素材座標は、左が起点`(368,352)`・最大幅`(245,688)`・終点`(460,1035)`、右はその反転である。猫ごとの透明画素を解析し、リースの見える下端を猫画像内の最下部アイテム付近へ合わせる。白色・ニュートラル色の円形面や背面プレートは置かない。`kokoro-wreath-v1.png`と`card-template-v1`の旧円形リースはロールバック・履歴互換用として維持する。枠、紙調テクスチャ、5因子の棒、文字はCanvasへ直接描画する。
 
 ## 品質方針
 

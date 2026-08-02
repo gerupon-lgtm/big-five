@@ -266,6 +266,7 @@ test("generated QA artifact serves the shell, brand resources, and one character
     "aroma-reset-v1.png",
     "aroma-quiet-focus-v1.png",
     "kokoro-wreath-v1.png",
+    "kokoro-wreath-v2.png",
   ]) {
     assert.equal(
       audit.files.includes(`assets/share-card/${name}`),
@@ -296,6 +297,7 @@ test("generated QA artifact serves the shell, brand resources, and one character
     "/assets/share-card/aroma-reset-v1.png",
     "/assets/share-card/aroma-quiet-focus-v1.png",
     "/assets/share-card/kokoro-wreath-v1.png",
+    "/assets/share-card/kokoro-wreath-v2.png",
     "/manifest/app.webmanifest",
   ]) {
     assert.equal((await fetch(`http://127.0.0.1:${port}${path}`)).status, 200);
