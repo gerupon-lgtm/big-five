@@ -279,9 +279,17 @@ test("T-005/T-006 result states follow the approved five-state action matrix", (
 
 test("T-007 result sharing uses one primary normal-flow CTA with approved copy", () => {
   const { host } = createFakeScreen();
-  renderSavedResultScreen(host, createTestResultSnapshot({
+  const snapshot = structuredClone(createTestResultSnapshot({
     resultId: "00000000-0000-4000-8000-000000000210",
-  }), labels, {
+  }));
+  snapshot.boundaryFlags = [{
+    type: "factor-near-band-boundary",
+    factorId: "conscientiousness",
+    boundary: 3.5,
+    threshold: 0.1,
+    questionCount: 50,
+  }];
+  renderSavedResultScreen(host, snapshot, labels, {
     onShare() {},
   }, {
     drawRadar: () => ({ drawn: true, errorCode: null }),
@@ -314,11 +322,54 @@ test("T-007 result sharing uses one primary normal-flow CTA with approved copy",
   );
   const methodInformation = elements.find(({ className }) =>
     className === "result-method-information");
+  const boundaryNotices = elements.find(({ className }) =>
+    className === "boundary-notices");
   assert.ok(methodInformation);
+  assert.ok(boundaryNotices);
   assert.ok(
-    elements.indexOf(shareSections[0]) < elements.indexOf(methodInformation),
-    "title-card CTA precedes the supporting method card",
+    elements.indexOf(shareSections[0]) < elements.indexOf(boundaryNotices)
+      && elements.indexOf(boundaryNotices) < elements.indexOf(methodInformation),
+    "title-card CTA, current-result notice, and method card follow the approved order",
   );
+});
+
+test("T-008C S-003/S-004 places the completed time below the page heading and keeps the approved card sequence", () => {
+  const { host } = createFakeScreen();
+  const snapshot = structuredClone(createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000219",
+  }));
+  snapshot.boundaryFlags = [{
+    type: "factor-near-band-boundary",
+    factorId: "conscientiousness",
+    boundary: 3.5,
+    threshold: 0.1,
+    questionCount: 50,
+  }];
+
+  renderSavedResultScreen(host, snapshot, labels, {
+    onShare() {},
+    onSelectPalette() {},
+  }, {
+    presentation,
+    drawRadar: () => ({ drawn: true, errorCode: null }),
+    questionComposition: [{
+      factorId: "intellectImagination",
+      positiveCount: 5,
+      negativeCount: 5,
+    }],
+    methodInfo: [{ id: "scale", title: "測定の土台", body: "説明" }],
+  });
+
+  const main = host.children[0];
+  assert.equal(main.children[1].className, "screen-heading");
+  assert.equal(main.children[2].className, "result-completed-at");
+  const classes = main.children.map(({ className }) => className);
+  const palette = classes.indexOf("result-palette-selector");
+  const aroma = classes.indexOf("result-fragrance-section");
+  const share = classes.indexOf("result-share-call-to-action");
+  const boundary = classes.indexOf("boundary-notices");
+  const method = classes.indexOf("result-method-information");
+  assert.ok(palette < aroma && aroma < share && share < boundary && boundary < method);
 });
 
 test("T-008A S-003/S-004 renders mode-specific result headings without header actions", () => {
@@ -1142,7 +1193,8 @@ test("T-008A F-005 renders the hero before the title reason and five factor rows
   const factorsIndex = sectionClasses.indexOf("result-factors");
   assert.deepEqual([heroIndex, reasonIndex, factorsIndex].map((index) => index >= 0), [true, true, true]);
   assert.ok(heroIndex < reasonIndex && reasonIndex < factorsIndex);
-  assert.match(collectText(main.children[heroIndex]), /称号：/);
+  assert.match(collectText(main.children[heroIndex]), /あなたの称号/);
+  assert.match(collectText(main.children[heroIndex]), /五つの風を見渡す観測者/);
   assert.match(collectText(main.children[reasonIndex]), /この称号になった理由/);
   assert.doesNotMatch(collectText(host), /キャラクターID/);
 });

@@ -2,6 +2,40 @@ import { appendAppHeader } from "./app-header.js";
 import { appendScreenHeading } from "./screen-heading.js";
 import { appendTextElement } from "./screen-helpers.js";
 
+function appendSproutIcon(parent) {
+  const documentObject = parent.ownerDocument;
+  const createSvgElement = (tagName) => documentObject.createElementNS
+    ? documentObject.createElementNS("http://www.w3.org/2000/svg", tagName)
+    : documentObject.createElement(tagName);
+  const medallion = documentObject.createElement("span");
+  medallion.className = "start-introduction-icon";
+  medallion.setAttribute("aria-hidden", "true");
+  const svg = createSvgElement("svg");
+  svg.setAttribute("viewBox", "0 0 48 48");
+  svg.setAttribute("data-icon", "sprout");
+  const stem = createSvgElement("path");
+  stem.setAttribute("d", "M24 40V20");
+  stem.setAttribute("fill", "none");
+  stem.setAttribute("stroke", "#5f8f70");
+  stem.setAttribute("stroke-width", "3");
+  stem.setAttribute("stroke-linecap", "round");
+  svg.append(stem);
+  const leftLeaf = createSvgElement("path");
+  leftLeaf.setAttribute("d", "M23 22C13 22 8 16 7 8c10-1 17 3 18 12");
+  leftLeaf.setAttribute("fill", "#9fc8a7");
+  leftLeaf.setAttribute("stroke", "#6d987a");
+  leftLeaf.setAttribute("stroke-width", "1.2");
+  svg.append(leftLeaf);
+  const rightLeaf = createSvgElement("path");
+  rightLeaf.setAttribute("d", "M25 24c10-1 16-7 16-16-10 0-17 5-18 14");
+  rightLeaf.setAttribute("fill", "#7fb48f");
+  rightLeaf.setAttribute("stroke", "#5f8f70");
+  rightLeaf.setAttribute("stroke-width", "1.2");
+  svg.append(rightLeaf);
+  medallion.append(svg);
+  parent.append(medallion);
+}
+
 export function renderStartScreen(host, versionModel, actions = {}, options = {}) {
   const documentObject = host.ownerDocument ?? document;
   const main = documentObject.createElement("main");
@@ -23,11 +57,20 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
 
   const introduction = documentObject.createElement("details");
   introduction.className = "start-introduction";
-  appendTextElement(
-    introduction,
-    "summary",
-    "自分を知る。自分と付き合う。そのためのツール。",
-  );
+  const introductionSummary = documentObject.createElement("summary");
+  appendSproutIcon(introductionSummary);
+  const introductionTitle = documentObject.createElement("span");
+  introductionTitle.className = "start-introduction-title";
+  for (const phrase of ["自分を知る。", "自分と付き合う。", "そのためのツール。"]) {
+    appendTextElement(
+      introductionTitle,
+      "span",
+      phrase,
+      "start-introduction-phrase",
+    );
+  }
+  introductionSummary.append(introductionTitle);
+  introduction.append(introductionSummary);
   appendTextElement(
     introduction,
     "p",
@@ -77,13 +120,20 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
 
   const secondaryNavigation = documentObject.createElement("nav");
   secondaryNavigation.className = "start-secondary-navigation";
-  const historyLink = appendTextElement(
+  const hasHistory = options.hasHistory === true;
+  const historyControl = appendTextElement(
     secondaryNavigation,
-    "a",
+    hasHistory ? "a" : "button",
     "診断結果の履歴を見る",
-    "text-link start-history-link",
+    "secondary-button start-history-link",
   );
-  historyLink.setAttribute("href", "#/history");
+  if (hasHistory) {
+    historyControl.setAttribute("href", "#/history");
+  } else {
+    historyControl.setAttribute("type", "button");
+    historyControl.setAttribute("aria-disabled", "true");
+    historyControl.disabled = true;
+  }
   main.append(secondaryNavigation);
   appendTextElement(
     main,

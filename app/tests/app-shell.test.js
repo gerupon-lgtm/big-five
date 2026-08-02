@@ -50,7 +50,11 @@ test("startApp renders the start heading and canonical version from a hash route
   assert.match(renderedText, /ipip-ja-50-v1/);
   assert.match(renderedText, /ipip-ja-50-question-set-v1/);
   assert.match(renderedText, /ipip-ja-50-scoring-v1/);
-  assert.ok(collectElements(host).some((element) => element.attributes.get("href") === "#/history"));
+  const historyButton = collectElements(host).find(({ className }) =>
+    className === "secondary-button start-history-link");
+  assert.equal(historyButton.tagName, "button");
+  assert.equal(historyButton.disabled, true);
+  assert.equal(historyButton.attributes.get("aria-disabled"), "true");
 });
 
 test("T-006 S-006 startApp renders the empty history state from browser storage", () => {
@@ -590,7 +594,8 @@ test("T-005 F-016 preserves a saved result when its character ID is absent from 
 
   const text = collectText(host);
   assert.match(text, /50問詳細結果/);
-  assert.match(text, /称号：五つの風を見渡す観測者/);
+  assert.match(text, /あなたの称号/);
+  assert.match(text, /五つの風を見渡す観測者/);
   assert.doesNotMatch(text, /診断時の選択色ID|palette-default/);
   assert.match(text, /画像を利用できない場合も診断結果は有効です/);
   assert.equal(

@@ -35,7 +35,7 @@ test("T-005 S-001 offers a new diagnosis action and accurate available-flow copy
   assert.doesNotMatch(collectText(host), /正式版MVPを準備中です/);
   assert.match(
     collectText(host),
-    /自分を知る。自分と付き合う。そのためのツール。/,
+    /自分を知る。.*自分と付き合う。.*そのためのツール。/,
   );
   assert.match(
     collectText(host),
@@ -50,7 +50,8 @@ test("T-005 S-001 offers a new diagnosis action and accurate available-flow copy
   assert.equal(introduction.tagName, "details");
   assert.equal(introduction.open, false);
   assert.equal(
-    introduction.children.find(({ tagName }) => tagName === "summary").textContent,
+    collectText(introduction.children.find(({ tagName }) => tagName === "summary"))
+      .replace(/\s+/g, ""),
     "自分を知る。自分と付き合う。そのためのツール。",
   );
   assert.equal(
@@ -81,7 +82,7 @@ test("T-005 S-001 offers resume only when the caller provides a compatible progr
 test("T-008A S-001 renders the shared official app header, start heading, and secondary history navigation", () => {
   const { host } = createFakeScreen();
 
-  renderStartScreen(host, versionModel, {});
+  renderStartScreen(host, versionModel, {}, { hasHistory: true });
 
   assert.equal(host.children[0].children[0].className, "app-header");
   assert.equal(
@@ -101,7 +102,7 @@ test("T-008A S-001 renders the shared official app header, start heading, and se
   assert.ok(secondaryNavigation);
   assert.equal(
     collectElements(secondaryNavigation)
-      .find(({ className }) => className === "text-link start-history-link")
+      .find(({ className }) => className === "secondary-button start-history-link")
       .attributes.get("href"),
     "#/history",
   );
@@ -110,6 +111,40 @@ test("T-008A S-001 renders the shared official app header, start heading, and se
     collectElements(host)
       .filter(({ className }) => className === "app-header-action").length,
     0,
+  );
+});
+
+test("T-008C S-001 disables the history button when no result history exists", () => {
+  const { host } = createFakeScreen();
+
+  renderStartScreen(host, versionModel, {}, { hasHistory: false });
+
+  const historyButton = collectElements(host)
+    .find(({ className }) => className === "secondary-button start-history-link");
+  assert.equal(historyButton.tagName, "button");
+  assert.equal(historyButton.disabled, true);
+  assert.equal(historyButton.attributes.get("aria-disabled"), "true");
+  assert.equal(historyButton.attributes.has("href"), false);
+});
+
+test("T-008C S-001 uses the approved sprout without soil in the introduction disclosure", () => {
+  const { host } = createFakeScreen();
+
+  renderStartScreen(host, versionModel, {});
+
+  const icon = collectElements(host)
+    .find(({ className }) => className === "start-introduction-icon");
+  assert.ok(icon);
+  const sprout = collectElements(icon)
+    .find(({ attributes }) => attributes.get("data-icon") === "sprout");
+  assert.equal(sprout?.tagName, "svg");
+  assert.equal(collectElements(icon).some(({ attributes }) =>
+    attributes.get("data-part") === "soil"), false);
+  assert.deepEqual(
+    collectElements(host)
+      .filter(({ className }) => className === "start-introduction-phrase")
+      .map(({ textContent }) => textContent),
+    ["自分を知る。", "自分と付き合う。", "そのためのツール。"],
   );
 });
 

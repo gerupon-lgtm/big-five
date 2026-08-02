@@ -85,8 +85,8 @@ export function renderShareScreen(host, model, actions = {}, dependencies = {}) 
     main.setAttribute("data-share-view", view);
     appendAppHeader(main);
     appendScreenHeading(main, {
-      kicker: "SHARE PREVIEW",
-      title: "共有内容を確認",
+      kicker: "TITLE CARD",
+      title: "称号カード",
     });
 
     if (!imageUrl) {

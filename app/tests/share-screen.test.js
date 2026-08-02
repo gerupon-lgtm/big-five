@@ -39,6 +39,8 @@ test("T-007 S-005 starts with one fitted card and only available actions", () =>
   const main = collectElements(host).find(({ className }) =>
     className.includes("share-screen"));
   assert.equal(main.getAttribute("data-share-view"), "card");
+  assert.match(collectText(host), /TITLE CARD/);
+  assert.match(collectText(host), /称号カード/);
   const image = collectElements(host).find(({ className }) =>
     className === "share-card-preview");
   assert.equal(image.getAttribute("src"), "blob:share-card");

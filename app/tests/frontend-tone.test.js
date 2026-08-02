@@ -13,7 +13,31 @@ test("T-008A S-001 applies the approved shared frontend tone", async () => {
   assert.match(styles, /\.app-brand-copy\s*\{[^}]*min-width:\s*0/s);
   assert.match(styles, /\.app-header-action\s*\{[^}]*white-space:\s*nowrap/s);
   assert.match(styles, /\.screen-kicker\s*\{[^}]*color:\s*#26705c[^}]*font-size:\s*0\.75rem/s);
-  assert.match(styles, /\.screen-title\s*\{[^}]*font-size:\s*clamp\(1\.375rem,\s*1\.25rem \+ 0\.6vw,\s*1\.5rem\)/s);
+  assert.match(styles, /\.screen-title\s*\{[^}]*font-size:\s*1\.5rem/s);
+});
+
+test("T-008C S-001 gives the start screen the approved card, sprout, and disabled-history treatment", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+
+  assert.match(styles, /\.start-main-panel\s*\{[^}]*border-radius:\s*28px/s);
+  assert.match(styles, /\.start-introduction summary\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*56px minmax\(0,\s*1fr\) 20px/s);
+  assert.match(styles, /\.start-introduction-icon\s*\{[^}]*width:\s*56px[^}]*height:\s*56px[^}]*border-radius:\s*50%/s);
+  assert.match(styles, /\.start-introduction-phrase\s*\{[^}]*white-space:\s*nowrap/s);
+  assert.match(styles, /\.start-history-link\s*\{[^}]*width:\s*100%[^}]*justify-content:\s*center/s);
+  assert.match(styles, /\.start-history-link:disabled\s*\{[^}]*background:\s*#edf1ef[^}]*color:\s*#899691/s);
+});
+
+test("T-008C S-003/S-005 softens result typography and keeps the share back control at a standard gap", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+
+  assert.match(styles, /\.result-screen-title\s*\{[^}]*color:\s*#29433d[^}]*font-size:\s*1\.5rem[^}]*font-weight:\s*650/s);
+  assert.match(styles, /\.result-completed-at\s*\{[^}]*margin-top:\s*4px[^}]*font-size:\s*0\.72rem/s);
+  assert.match(styles, /\.result-title-label\s*\{[^}]*color:\s*#668078[^}]*font-size:\s*0\.78rem/s);
+  assert.match(styles, /\.result-hero-title\s*\{[^}]*color:\s*#29433d[^}]*font-weight:\s*650/s);
+  assert.match(styles, /\.title-disclaimer\s*\{[^}]*font-size:\s*0\.75rem/s);
+  assert.match(styles, /\.title-reflection-trigger\s*\{[^}]*font-size:\s*0\.8rem/s);
+  assert.match(styles, /\.boundary-notices li\s*\{[^}]*font-size:\s*0\.84rem/s);
+  assert.match(styles, /\.share-back-button\s*\{[^}]*margin-top:\s*10px/s);
 });
 
 test("T-008A S-001 aligns start and resume actions with an equal-width responsive grid", async () => {

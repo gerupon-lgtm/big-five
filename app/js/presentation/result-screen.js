@@ -96,15 +96,21 @@ function appendCharacterFrame(parent, snapshot, dependencies) {
 function renderResultHero(parent, snapshot, labels, dependencies) {
   const hero = parent.ownerDocument.createElement("section");
   hero.className = "result-hero";
-  const prefix = snapshot.mode === "preview20" ? "仮称号" : "称号";
-  appendTextElement(hero, "h2", `${prefix}：${labels.titleLabels[snapshot.titleId] ?? snapshot.titleId}`);
+  const prefix = snapshot.mode === "preview20" ? "あなたの仮称号" : "あなたの称号";
+  appendTextElement(hero, "p", prefix, "result-title-label");
+  appendTextElement(
+    hero,
+    "h2",
+    labels.titleLabels[snapshot.titleId] ?? snapshot.titleId,
+    "result-hero-title",
+  );
   appendCharacterFrame(hero, snapshot, dependencies);
   appendRenderedText(hero, snapshot.renderedTexts[0]);
   appendTextElement(
     hero,
     "p",
     "この称号は自己理解を助ける独自のプロフィール表現であり、心理学上の正式なタイプではありません。",
-    "notice title-disclaimer",
+    "title-disclaimer",
   ).setAttribute("role", "note");
   parent.append(hero);
 }
@@ -795,6 +801,8 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
     title: savedSnapshot.mode === "preview20" ? "20問簡易プレビュー" : "50問詳細結果",
     titleClassName: "result-screen-title",
   });
+  const completed = appendTextElement(main, "time", formatCompletedAt(savedSnapshot.completedAt), "result-completed-at");
+  completed.setAttribute("datetime", savedSnapshot.completedAt);
   if (typeof dependencies.notice === "string" && dependencies.notice.length > 0) {
     const notice = appendTextElement(main, "p", dependencies.notice, "notice error-notice result-storage-error");
     notice.setAttribute("role", "alert");
@@ -826,8 +834,9 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
     );
   }
   renderFragranceIdeas(main, dependencies, resultPanelGroup);
-  const completed = appendTextElement(main, "time", formatCompletedAt(savedSnapshot.completedAt), "result-completed-at");
-  completed.setAttribute("datetime", savedSnapshot.completedAt);
+  if (!historyPreviewInProgress) {
+    renderShareCallToAction(main, savedSnapshot, actions);
+  }
   if (
     savedSnapshot.mode === "preview20"
     && dependencies.definitionSupported !== false
@@ -836,9 +845,6 @@ export function renderSavedResultScreen(host, snapshot, labels, actions = {}, de
     appendTextElement(main, "p", "20項目版は、独立した日本語版としての妥当性検証を受けていません。50問では、スコア・仮称号・仮キャラクターが変わり得ます。", "notice preview-validation-notice").setAttribute("role", "note");
   }
   renderBoundaryNotices(main, savedSnapshot.boundaryFlags, labels);
-  if (!historyPreviewInProgress) {
-    renderShareCallToAction(main, savedSnapshot, actions);
-  }
   renderMethodInformation(main, savedSnapshot, labels, dependencies);
   renderActions(main, savedSnapshot, actions, {
     historyDetail,

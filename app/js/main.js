@@ -955,6 +955,9 @@ export function startApp({
     const resumeFromMemory = currentProgress !== null;
     const resumeProgress = currentProgress
       ?? (loaded.status === "ok" ? loaded.progress : null);
+    const historyState = loadResultHistory({
+      storage: getStorage(), now: nowProvider(),
+    });
     renderStartScreen(screenHost, createStartVersionViewModel(appMeta), {
       onStartNew() {
         if (
@@ -989,6 +992,7 @@ export function startApp({
         },
       } : {}),
     }, {
+      hasHistory: historyState.status === "ok" && historyState.results.length > 0,
       resumeLabel: resumeProgress?.mode === "preview20"
           && resumeProgress.previewDecision === "showPreview"
         ? "残り30問を再開する"
