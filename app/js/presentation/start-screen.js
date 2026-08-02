@@ -134,7 +134,7 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
     historyControl.setAttribute("aria-disabled", "true");
     historyControl.disabled = true;
   }
-  main.append(secondaryNavigation);
+  overview.append(secondaryNavigation);
   appendTextElement(
     main,
     "p",

@@ -25,6 +25,17 @@ test("T-008C S-001 gives the start screen the approved card, sprout, and disable
   assert.match(styles, /\.start-introduction-phrase\s*\{[^}]*white-space:\s*nowrap/s);
   assert.match(styles, /\.start-history-link\s*\{[^}]*width:\s*100%[^}]*justify-content:\s*center/s);
   assert.match(styles, /\.start-history-link:disabled\s*\{[^}]*background:\s*#edf1ef[^}]*color:\s*#899691/s);
+  assert.match(styles, /\.start-main-panel \.start-secondary-navigation\s*\{[^}]*margin-top:\s*12px[^}]*padding-top:\s*0[^}]*border-top:\s*0/s);
+});
+
+test("T-008C S-006 aligns history management controls and compacts diagnostic metadata", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+
+  assert.match(styles, /\.history-management-toggle\s*\{[^}]*border:\s*1px solid #26705c[^}]*border-radius:\s*12px[^}]*background:\s*#fff[^}]*color:\s*#1f6955/s);
+  assert.match(styles, /\.history-management-close\s*\{[^}]*min-height:\s*44px[^}]*border:\s*1px solid #26705c[^}]*background:\s*#fff[^}]*color:\s*#1f6955/s);
+  assert.match(styles, /\.history-management-list \.history-delete-button,[^}]*\.history-management-list > \.danger-button\s*\{[^}]*background:\s*#fff8f7[^}]*font-size:\s*0\.82rem/s);
+  assert.match(styles, /\.history-information summary\s*\{[^}]*min-height:\s*44px[^}]*font-size:\s*0\.8rem/s);
+  assert.match(styles, /\.history-information dl\s*\{[^}]*font-size:\s*0\.7rem[^}]*line-height:\s*1\.55/s);
 });
 
 test("T-008C S-003/S-005 softens result typography and keeps the share back control at a standard gap", async () => {

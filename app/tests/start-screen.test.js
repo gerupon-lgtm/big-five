@@ -201,8 +201,9 @@ test("T-008A S-001 groups primary start content into one panel without nesting a
     0,
   );
   assert.equal(panel.children.includes(secondaryNavigation), false);
+  assert.equal(overview.children.includes(secondaryNavigation), true);
   assert.equal(panel.children.includes(diagnosticVersion), false);
-  assert.equal(main.children.includes(secondaryNavigation), true);
+  assert.equal(main.children.includes(secondaryNavigation), false);
   assert.equal(main.children.includes(diagnosticVersion), true);
 });
 
