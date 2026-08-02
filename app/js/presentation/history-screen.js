@@ -182,14 +182,17 @@ function renderComparisonBar(
     enter.setAttribute("type", "button");
     enter.addEventListener("click", actions.onEnter);
   } else {
+    bar.className = "history-comparison-bar history-comparison-bar--selecting";
     appendTextElement(
       bar,
       "p",
       `${selectedCount}件選択中`,
       "history-comparison-count",
     );
+    const actionGroup = bar.ownerDocument.createElement("div");
+    actionGroup.className = "history-comparison-actions";
     const cancel = appendTextElement(
-      bar,
+      actionGroup,
       "button",
       "キャンセル",
       "secondary-button",
@@ -197,7 +200,7 @@ function renderComparisonBar(
     cancel.setAttribute("type", "button");
     cancel.addEventListener("click", actions.onCancel);
     const compare = appendTextElement(
-      bar,
+      actionGroup,
       "button",
       "選択した2件を比較",
       "primary-button",
@@ -205,6 +208,7 @@ function renderComparisonBar(
     compare.setAttribute("type", "button");
     compare.disabled = selectedCount !== 2;
     compare.addEventListener("click", actions.onExecute);
+    bar.append(actionGroup);
   }
   parent.append(bar);
 }
@@ -234,14 +238,17 @@ function renderHistoryHeader(parent, historyState, actions) {
   const menu = dialog.ownerDocument.createElement("div");
   menu.className = "history-management-content";
   dialog.append(menu);
+  const heading = menu.ownerDocument.createElement("div");
+  heading.className = "history-management-heading";
+  appendTextElement(heading, "h2", "履歴を管理する", "history-management-title");
   const closeButton = appendTextElement(
-    menu,
+    heading,
     "button",
     "閉じる",
     "history-management-close",
   );
   closeButton.setAttribute("type", "button");
-  appendTextElement(menu, "h2", "履歴を管理する", "history-management-title");
+  menu.append(heading);
   appendTextElement(
     menu,
     "p",

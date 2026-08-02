@@ -506,25 +506,32 @@ h1 {
   overflow: auto;
 }
 
-.history-management-close {
+.history-management-heading {
   position: sticky;
   z-index: 1;
   top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #fff;
+}
+
+.history-management-close {
+  flex: 0 0 auto;
   min-height: 44px;
-  margin-inline-start: auto;
-  padding: 6px 12px;
+  padding: 10px 16px;
   border: 1px solid #26705c;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
   color: #1f6955;
-  font-size: 0.78rem;
   font-weight: 700;
 }
 
 .history-management-title {
   margin: 0;
   color: #315f54;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 650;
 }
 
@@ -746,8 +753,30 @@ h1 {
 }
 
 .history-comparison-count {
-  margin: 0 auto 0 0;
+  margin: 0;
   font-weight: 700;
+  text-align: center;
+}
+
+.history-comparison-bar--selecting {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.history-comparison-actions {
+  display: grid;
+  grid-template-columns: minmax(88px, auto) minmax(0, 1fr);
+  gap: 10px;
+  width: min(100%, 390px);
+  margin-inline: auto;
+}
+
+.history-comparison-actions > button {
+  width: 100%;
+  padding-inline: 10px;
+  font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 .history-card h2,
@@ -1033,6 +1062,14 @@ dd {
   color: #71857f;
   font-size: 0.75rem;
   line-height: 1.65;
+}
+
+.character-availability-note {
+  margin-top: 16px;
+}
+
+.character-availability-note + .title-disclaimer {
+  margin-top: 4px;
 }
 
 .title-reflection-trigger {
@@ -1964,10 +2001,6 @@ noscript {
 
   .history-character-frame {
     width: 72px;
-  }
-
-  .history-comparison-bar {
-    flex-wrap: wrap;
   }
 
   .questionnaire-screen {

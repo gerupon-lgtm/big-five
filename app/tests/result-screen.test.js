@@ -431,6 +431,10 @@ test("T-005 S-003 renders the complete saved preview with factor help and the 30
   assert.match(text, /独自のプロフィール表現であり、心理学上の正式なタイプではありません/);
   assert.doesNotMatch(text, /character-balanced/);
   assert.match(text, /画像を利用できない場合も診断結果は有効です/);
+  assert.ok(
+    text.indexOf("画像を利用できない場合も診断結果は有効です。")
+      < text.indexOf("この称号は自己理解を助ける独自のプロフィール表現"),
+  );
   assert.doesNotMatch(text, /palette-default|選択色ID/);
   assert.doesNotMatch(text, /rawMean|answers/);
 

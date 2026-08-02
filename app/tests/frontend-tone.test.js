@@ -32,7 +32,9 @@ test("T-008C S-006 aligns history management controls and compacts diagnostic me
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
 
   assert.match(styles, /\.history-management-toggle\s*\{[^}]*border:\s*1px solid #26705c[^}]*border-radius:\s*12px[^}]*background:\s*#fff[^}]*color:\s*#1f6955/s);
-  assert.match(styles, /\.history-management-close\s*\{[^}]*min-height:\s*44px[^}]*border:\s*1px solid #26705c[^}]*background:\s*#fff[^}]*color:\s*#1f6955/s);
+  assert.match(styles, /\.history-management-heading\s*\{[^}]*display:\s*flex[^}]*align-items:\s*center[^}]*justify-content:\s*space-between/s);
+  assert.match(styles, /\.history-management-close\s*\{[^}]*min-height:\s*44px[^}]*padding:\s*10px 16px[^}]*border:\s*1px solid #26705c[^}]*border-radius:\s*12px[^}]*background:\s*#fff[^}]*color:\s*#1f6955/s);
+  assert.match(styles, /\.history-management-title\s*\{[^}]*font-size:\s*1\.2rem/s);
   assert.match(styles, /\.history-management-list \.history-delete-button,[^}]*\.history-management-list > \.danger-button\s*\{[^}]*background:\s*#fff8f7[^}]*font-size:\s*0\.82rem/s);
   assert.match(styles, /\.history-information summary\s*\{[^}]*min-height:\s*44px[^}]*font-size:\s*0\.8rem/s);
   assert.match(styles, /\.history-information dl\s*\{[^}]*font-size:\s*0\.7rem[^}]*line-height:\s*1\.55/s);
@@ -46,9 +48,20 @@ test("T-008C S-003/S-005 softens result typography and keeps the share back cont
   assert.match(styles, /\.result-title-label\s*\{[^}]*color:\s*#668078[^}]*font-size:\s*0\.78rem/s);
   assert.match(styles, /\.result-hero-title\s*\{[^}]*color:\s*#29433d[^}]*font-weight:\s*650/s);
   assert.match(styles, /\.title-disclaimer\s*\{[^}]*font-size:\s*0\.75rem/s);
+  assert.match(styles, /\.character-availability-note\s*\{[^}]*margin-top:\s*16px/s);
+  assert.match(styles, /\.character-availability-note \+ \.title-disclaimer\s*\{[^}]*margin-top:\s*4px/s);
   assert.match(styles, /\.title-reflection-trigger\s*\{[^}]*font-size:\s*0\.8rem/s);
   assert.match(styles, /\.boundary-notices li\s*\{[^}]*font-size:\s*0\.84rem/s);
   assert.match(styles, /\.share-back-button\s*\{[^}]*margin-top:\s*10px/s);
+});
+
+test("T-008C S-006 keeps comparison selection controls in two mobile-safe rows", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+
+  assert.match(styles, /\.history-comparison-bar--selecting\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*1fr/s);
+  assert.match(styles, /\.history-comparison-count\s*\{[^}]*text-align:\s*center/s);
+  assert.match(styles, /\.history-comparison-actions\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*minmax\(88px,\s*auto\) minmax\(0,\s*1fr\)/s);
+  assert.match(styles, /\.history-comparison-actions > button\s*\{[^}]*font-size:\s*0\.875rem[^}]*white-space:\s*nowrap/s);
 });
 
 test("T-008A S-001 aligns start and resume actions with an equal-width responsive grid", async () => {

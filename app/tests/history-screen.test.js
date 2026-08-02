@@ -273,9 +273,16 @@ test("T-008A F-013 opens the management modal with focus on its close control", 
   const close = collectElements(modal).find(
     ({ className }) => className === "history-management-close",
   );
+  const heading = collectElements(modal).find(
+    ({ className }) => className === "history-management-heading",
+  );
   assert.equal(modal.open, true);
   assert.equal(launcher.attributes.get("aria-expanded"), "true");
   assert.equal(modal.attributes.get("aria-label"), "履歴の管理");
+  assert.deepEqual(
+    heading.children.map(({ className }) => className),
+    ["history-management-title", "history-management-close"],
+  );
   assert.equal(host.ownerDocument.activeElement, close);
 });
 
@@ -597,6 +604,12 @@ test("T-008A F-010 selects at most two compatible cards and compares only on exp
   );
 
   clickButton(host, "結果を比較する");
+  assert.ok(collectElements(host).some(
+    ({ className }) => className === "history-comparison-bar history-comparison-bar--selecting",
+  ));
+  assert.ok(collectElements(host).some(
+    ({ className }) => className === "history-comparison-actions",
+  ));
   let toggles = collectElements(host).filter(
     ({ className }) => className === "history-card-select-toggle",
   );

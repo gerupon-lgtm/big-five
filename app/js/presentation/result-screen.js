@@ -53,7 +53,6 @@ function appendCharacterFrame(parent, snapshot, dependencies) {
     typeof loadCharacterImage !== "function" ||
     typeof observeViewport !== "function"
   ) {
-    appendTextElement(parent, "p", "画像を利用できない場合も診断結果は有効です。", "character-fallback");
     return;
   }
 
@@ -90,7 +89,6 @@ function appendCharacterFrame(parent, snapshot, dependencies) {
   } catch {
     frame.setAttribute("data-character-state", "unavailable");
   }
-  appendTextElement(parent, "p", "画像を利用できない場合も診断結果は有効です。", "character-availability-note");
 }
 
 function renderResultHero(parent, snapshot, labels, dependencies) {
@@ -106,6 +104,12 @@ function renderResultHero(parent, snapshot, labels, dependencies) {
   );
   appendCharacterFrame(hero, snapshot, dependencies);
   appendRenderedText(hero, snapshot.renderedTexts[0]);
+  appendTextElement(
+    hero,
+    "p",
+    "画像を利用できない場合も診断結果は有効です。",
+    "character-availability-note title-disclaimer",
+  ).setAttribute("role", "note");
   appendTextElement(
     hero,
     "p",
