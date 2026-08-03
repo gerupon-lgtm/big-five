@@ -44,6 +44,52 @@ test("QA artifact contains only the approved runtime allowlist", async (t) => {
   );
 });
 
+test("QA artifact derives every cache buster from the canonical app version", async (t) => {
+  const parent = await tempDirectory(t, "big-five-qa-cache-version-");
+  const output = join(parent, "site");
+  await assembleQaPreview({
+    appDir: resolve("app"),
+    outputDir: output,
+    allowedParentDir: parent,
+  });
+
+  const version = "mvp-1.0.1";
+  const html = await readFile(join(output, "index.html"), "utf8");
+  assert.match(html, new RegExp(`href="\\./css/styles\\.css\\?v=${version}"`));
+  assert.match(html, new RegExp(`src="\\./js/main\\.js\\?v=${version}"`));
+  assert.match(html, new RegExp(`href="\\./manifest/app\\.webmanifest\\?v=${version}"`));
+  assert.match(html, new RegExp(`href="\\./assets/brand/kokoro-parea-mark\\.svg\\?v=${version}"`));
+
+  const main = await readFile(join(output, "js", "main.js"), "utf8");
+  assert.match(main, new RegExp(`from "\\./config/app-meta\\.js\\?v=${version}"`));
+  const storage = await readFile(join(output, "js", "infrastructure", "progress-storage.js"), "utf8");
+  assert.match(storage, new RegExp(`from "\\.\\./domain/iso-timestamp\\.js\\?v=${version}"`));
+  const resultScreen = await readFile(join(output, "js", "presentation", "result-screen.js"), "utf8");
+  assert.match(resultScreen, new RegExp(`aroma-pause-v1\\.png\\?v=${version}`));
+
+  const manifest = await readFile(join(output, "manifest", "app.webmanifest"), "utf8");
+  assert.match(manifest, new RegExp(`kokoro-parea-icon-192\\.png\\?v=${version}`));
+  assert.match(manifest, new RegExp(`kokoro-parea-icon-512\\.png\\?v=${version}`));
+});
+
+test("QA artifact audit rejects one stale cache buster", async (t) => {
+  const parent = await tempDirectory(t, "big-five-qa-cache-stale-");
+  const output = join(parent, "site");
+  await assembleQaPreview({
+    appDir: resolve("app"),
+    outputDir: output,
+    allowedParentDir: parent,
+  });
+  const mainPath = join(output, "js", "main.js");
+  const main = await readFile(mainPath, "utf8");
+  await writeFile(mainPath, main.replace("?v=mvp-1.0.1", "?v=mvp-1.0.0"), "utf8");
+
+  await assert.rejects(
+    () => auditQaPreviewArtifact(output),
+    (error) => error?.code === "QA_PREVIEW_ARTIFACT_INVALID",
+  );
+});
+
 test("QA artifact is byte-identical across two builds", async (t) => {
   const parent = await tempDirectory(t, "big-five-qa-repeat-");
   const first = join(parent, "first");
@@ -246,7 +292,7 @@ test("QA artifact rejects symlinks without following them", async (t) => {
   );
 });
 
-test("generated QA artifact serves the shell, module, CSS, and one character only", async (t) => {
+test("generated QA artifact serves the shell, brand resources, and one character", async (t) => {
   const parent = await tempDirectory(t, "big-five-qa-smoke-");
   const output = join(parent, "site");
   await assembleQaPreview({
@@ -261,6 +307,18 @@ test("generated QA artifact serves the shell, module, CSS, and one character onl
     audit.files.includes("assets/characters/character-balanced.webp"),
     true,
   );
+  for (const name of [
+    "aroma-pause-v1.png",
+    "aroma-reset-v1.png",
+    "aroma-quiet-focus-v1.png",
+    "kokoro-wreath-v1.png",
+    "kokoro-wreath-v2.png",
+  ]) {
+    assert.equal(
+      audit.files.includes(`assets/share-card/${name}`),
+      true,
+    );
+  }
 
   const server = createServer(async (request, response) => {
     const relative = request.url === "/" ? "index.html" : request.url.slice(1);
@@ -277,7 +335,16 @@ test("generated QA artifact serves the shell, module, CSS, and one character onl
     "/",
     "/css/styles.css",
     "/js/main.js",
+    "/assets/brand/kokoro-parea-mark.svg",
+    "/assets/brand/kokoro-parea-icon-192.png",
+    "/assets/brand/kokoro-parea-icon-512.png",
     "/assets/characters/character-balanced.webp",
+    "/assets/share-card/aroma-pause-v1.png",
+    "/assets/share-card/aroma-reset-v1.png",
+    "/assets/share-card/aroma-quiet-focus-v1.png",
+    "/assets/share-card/kokoro-wreath-v1.png",
+    "/assets/share-card/kokoro-wreath-v2.png",
+    "/manifest/app.webmanifest",
   ]) {
     assert.equal((await fetch(`http://127.0.0.1:${port}${path}`)).status, 200);
   }

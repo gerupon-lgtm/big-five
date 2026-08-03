@@ -1,6 +1,7 @@
 import { appMeta } from "./config/app-meta.js";
 import { CharacterManifest } from "./data/character-manifest.js";
 import { DiagnosticDefinition, FactorDefinitions, QuestionDefinitions } from "./data/diagnostic-definition.js";
+import { PresentationDefinitionSet } from "./data/presentation-definitions.js";
 import { ResultTextDefinitions } from "./data/result-text-definitions.js";
 import { TitleProfileDefinitions } from "./data/title-profile-definitions.js";
 import {
@@ -8,14 +9,21 @@ import {
   validateCharacterManifest,
 } from "./domain/character-manifest.js";
 import { compareResultSnapshots } from "./domain/result-comparison.js";
+import { createShareCardModel } from "./domain/share-card-model.js";
+import { summarizeFragrances } from "./domain/share-fragrance-summary.js";
+import { resolvePaletteUsage } from "./domain/palette-usage.js";
 import { createQuestionComposition } from "./domain/question-composition.js";
 import { resolveRegisteredDiagnosticDefinition } from "./domain/diagnostic-definition-registry.js";
+import { selectPresentation } from "./domain/presentation-selector.js";
+import { selectResultPalette } from "./domain/result-palette-selection.js";
 import { createStartVersionViewModel } from "./domain/version-model.js";
 import {
   choosePreviewExit,
+  completeDetail,
   continueAfterPreview,
   createProgressRecord,
   goBack,
+  isDetailReviewProgress,
 } from "./domain/response-state.js";
 import { createDiagnosticResultSnapshot } from "./domain/diagnostic-result.js";
 import {
@@ -28,12 +36,21 @@ import {
   saveProgress,
   saveResultSnapshot,
   transitionAndSave,
+  updateResultPaletteSelection,
 } from "./infrastructure/progress-storage.js";
 import { loadCharacterImage } from "./infrastructure/character-loader.js";
 import { resolveRoute } from "./infrastructure/router.js";
+import {
+  copyShareText,
+  detectShareCapabilities,
+  downloadPng,
+  sharePng,
+} from "./infrastructure/share-delivery.js";
 import { renderComparisonScreen } from "./presentation/comparison-screen.js";
 import { renderHistoryScreen } from "./presentation/history-screen.js";
 import { renderSavedResultScreen } from "./presentation/result-screen.js";
+import { renderShareCard } from "./presentation/share-card-renderer.js";
+import { renderShareScreen } from "./presentation/share-screen.js";
 import { renderStartScreen } from "./presentation/start-screen.js";
 import { renderQuestionnaireScreen } from "./presentation/questionnaire-screen.js";
 
@@ -152,19 +169,52 @@ export function startApp({
   confirmProvider,
   decodeImage,
   observeViewport,
+  renderShareCardProvider = renderShareCard,
+  shareCanvasDependencies,
+  shareDeliveryDependencies,
 } = {}) {
   const screenHost = documentObject.getElementById("app");
   let historyNotice = null;
   let currentProgress = null;
+  let detailReviewQuestionVisible = false;
   let questionnaireStorageStatus = "ok";
   let liveResult = null;
   let resultActionNotice = null;
   let pendingInternalHashChange = null;
   const effectiveDecodeImage = decodeImage ??
     createBrowserImageDecoder(windowObject);
+  const loadVersionedCharacterImage = (entry, options) => loadCharacterImage(
+    entry,
+    { ...options, cacheVersion: appMeta.appVersion },
+  );
   const baseObserveViewport = observeViewport ??
     createViewportObserver(windowObject);
   let activeViewportCleanups = [];
+  let activeShareObjectUrl = null;
+  let shareRenderGeneration = 0;
+  const effectiveShareDeliveryDependencies = shareDeliveryDependencies ?? {
+    File: windowObject.File ?? globalThis.File,
+    navigator: windowObject.navigator,
+    URL: windowObject.URL ?? globalThis.URL,
+    document: documentObject,
+  };
+  const effectiveShareCanvasDependencies = shareCanvasDependencies ?? {
+    createCanvas(width, height) {
+      const canvas = documentObject.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      return canvas;
+    },
+    async loadImage(path) {
+      const ImageConstructor = windowObject.Image ?? globalThis.Image;
+      if (typeof ImageConstructor !== "function") throw new Error("IMAGE_UNAVAILABLE");
+      const image = new ImageConstructor();
+      image.src = path;
+      if (typeof image.decode === "function") await image.decode();
+      return image;
+    },
+    fontsReady: documentObject.fonts?.ready ?? Promise.resolve(),
+  };
 
   function effectiveObserveViewport(target, onEnter) {
     const cleanup = baseObserveViewport(target, onEnter);
@@ -220,8 +270,9 @@ export function startApp({
   }
 
   function isShownPreviewProgressForSnapshot(progress, snapshot) {
-    return progress && snapshot.mode === "preview20" &&
-      progress.mode === "preview20" &&
+    if (!progress || snapshot.mode !== "preview20") return false;
+    if (progress.progressId !== snapshot.resultId) return false;
+    return progress.mode === "preview20" &&
       progress.previewDecision === "showPreview" &&
       Object.keys(progress.answers).length === 20 &&
       Object.keys(snapshot.versionTuple).length === Object.keys(progress.versionTuple).length &&
@@ -251,13 +302,18 @@ export function startApp({
     return outcome;
   }
 
-  function createSnapshot({ answers, questionCount, mode }) {
+  function createSnapshot({
+    answers,
+    questionCount,
+    mode,
+    resultId = uuidProvider(),
+  }) {
     if (!currentProgress) throw new Error("APP_PROGRESS_MISSING");
     return createDiagnosticResultSnapshot({
       answers,
       questionCount,
       mode,
-      resultId: uuidProvider(),
+      resultId,
       completedAt: nowProvider(),
       versionTuple: currentProgress.versionTuple,
       questionDefinitions: QuestionDefinitions,
@@ -283,7 +339,6 @@ export function startApp({
     }, {
       operationNotice,
       onDeleteResult(resultId) {
-        if (!requestConfirmation("この診断結果1件を削除します。削除後は復元できません。")) return;
         const outcome = deleteResultSnapshot({
           storage: effectiveStorage,
           resultId,
@@ -296,12 +351,18 @@ export function startApp({
         renderCurrentRoute();
       },
       onDeleteAll() {
-        if (!requestConfirmation("途中回答と診断結果をすべて削除します。削除後は復元できません。")) return;
         const outcome = deleteAllData({
           storage: effectiveStorage,
           confirmed: true,
           now: nowProvider(),
         });
+        if (outcome.status === "ok") {
+          currentProgress = null;
+          detailReviewQuestionVisible = false;
+          liveResult = null;
+          questionnaireStorageStatus = "ok";
+          resultActionNotice = null;
+        }
         historyNotice = outcome.status === "ok"
           ? { kind: "success", text: "端末内の途中回答と診断結果をすべて削除しました。" }
           : { kind: "error", text: "端末内データを削除できませんでした。もう一度お試しください。" };
@@ -311,6 +372,8 @@ export function startApp({
         setRoute(`#/compare?before=${encodeURIComponent(comparison.beforeResultId)}&after=${encodeURIComponent(comparison.afterResultId)}`);
       },
       onOpenResult(resultId) {
+        liveResult = null;
+        resultActionNotice = null;
         setRoute(`#/result?resultId=${encodeURIComponent(resultId)}`);
       },
     }, {
@@ -318,7 +381,7 @@ export function startApp({
         return resolveCharacterEntry(validatedCharacterManifest, characterId);
       },
       decodeImage: effectiveDecodeImage,
-      loadCharacterImage,
+      loadCharacterImage: loadVersionedCharacterImage,
       observeViewport: effectiveObserveViewport,
     });
   }
@@ -367,6 +430,7 @@ export function startApp({
             answers: currentProgress.answers,
             questionCount: 20,
             mode: "preview20",
+            resultId: currentProgress.progressId,
           });
           const persisted = saveResultSnapshot({
             storage: getStorage(),
@@ -379,15 +443,24 @@ export function startApp({
           liveResult = { snapshot, persistenceFailed: persisted.status !== "ok" };
           setRoute(`#/result?resultId=${encodeURIComponent(snapshot.resultId)}`);
         },
+        onBack() { goBackCurrentQuestion(); },
+        onPause() { pauseCurrentProgress(); },
+        onDiscard() { discardCurrentProgress(); },
+      });
+      return;
+    }
+    const isDetailReview = isDetailReviewProgress(currentProgress, {
+      definition: DiagnosticDefinition,
+      meta: appMeta,
+    }) && !detailReviewQuestionVisible;
+    if (isDetailReview) {
+      renderQuestionnaireScreen(screenHost, {
+        phase: "detail-review",
+        storageStatus: questionnaireStorageStatus,
+      }, {
+        onComplete() { completeCurrentDetail(); },
         onBack() {
-          const transition = goBack(currentProgress, {
-            definition: DiagnosticDefinition,
-            meta: appMeta,
-            now: nowProvider(),
-          });
-          const saved = transitionAndSave({ storage: getStorage(), transition, definition: DiagnosticDefinition, meta: appMeta, now: nowProvider() });
-          currentProgress = saved.progress;
-          questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
+          detailReviewQuestionVisible = true;
           renderQuestionnaireRoute();
         },
         onPause() { pauseCurrentProgress(); },
@@ -410,13 +483,7 @@ export function startApp({
       storageStatus: questionnaireStorageStatus,
     }, {
       onAnswer(answer) { answerCurrentQuestion(answer); },
-      onBack() {
-        const transition = goBack(currentProgress, { definition: DiagnosticDefinition, meta: appMeta, now: nowProvider() });
-        const saved = transitionAndSave({ storage: getStorage(), transition, definition: DiagnosticDefinition, meta: appMeta, now: nowProvider() });
-        currentProgress = saved.progress;
-        questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
-        renderQuestionnaireRoute();
-      },
+      onBack() { goBackCurrentQuestion(); },
       onPause() { pauseCurrentProgress(); },
       onDiscard() { discardCurrentProgress(); },
     });
@@ -441,6 +508,7 @@ export function startApp({
     });
     if (outcome.status === "ok") {
       currentProgress = null;
+      detailReviewQuestionVisible = false;
       questionnaireStorageStatus = "ok";
       setRoute("#/start");
       return;
@@ -455,17 +523,39 @@ export function startApp({
       definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
     });
     currentProgress = transition.progress;
+    detailReviewQuestionVisible = transition.kind === "in-progress" &&
+      isDetailReviewProgress(currentProgress, { definition: DiagnosticDefinition, meta: appMeta });
     questionnaireStorageStatus = transition.persistence.status === "ok" ? "ok" : "error";
-    if (transition.kind !== "detail-complete") {
-      renderQuestionnaireRoute();
-      return;
-    }
+    renderQuestionnaireRoute();
+  }
+
+  function goBackCurrentQuestion() {
+    const transition = goBack(currentProgress, {
+      definition: DiagnosticDefinition,
+      meta: appMeta,
+      now: nowProvider(),
+    });
+    const saved = transitionAndSave({
+      storage: getStorage(), transition, definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
+    });
+    currentProgress = saved.progress;
+    questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
+    renderQuestionnaireRoute();
+  }
+
+  function completeCurrentDetail() {
+    const transition = completeDetail(currentProgress, {
+      definition: DiagnosticDefinition,
+      meta: appMeta,
+      now: nowProvider(),
+    });
     const snapshot = createSnapshot({ answers: transition.answers, questionCount: 50, mode: "detail50" });
     const persisted = saveResultSnapshot({
       storage: getStorage(), snapshot, diagnosisId: DiagnosticDefinition.diagnosisId,
       definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
     });
     currentProgress = null;
+    detailReviewQuestionVisible = false;
     questionnaireStorageStatus = "ok";
     liveResult = { snapshot, persistenceFailed: persisted.status !== "ok" };
     setRoute(`#/result?resultId=${encodeURIComponent(snapshot.resultId)}`);
@@ -498,14 +588,52 @@ export function startApp({
       returnMissingResultToHistory();
       return;
     }
-    renderResult(snapshot, false, loadPreviewContinuation(snapshot));
+    renderResult(snapshot, false, loadPreviewContinuation(snapshot), true);
   }
 
-  function renderResult(snapshot, persistenceFailed, previewProgress = null) {
+  function clearShareResource() {
+    shareRenderGeneration += 1;
+    if (activeShareObjectUrl) {
+      try {
+        effectiveShareDeliveryDependencies.URL?.revokeObjectURL?.(
+          activeShareObjectUrl,
+        );
+      } catch {
+        // The route still changes when explicit URL cleanup is unavailable.
+      }
+      activeShareObjectUrl = null;
+    }
+  }
+
+  function renderResult(
+    snapshot,
+    persistenceFailed,
+    previewProgress = null,
+    historyDetail = false,
+    openResultDisclosureId = null,
+  ) {
     const definitionRegistration = resolveRegisteredDiagnosticDefinition(
       snapshot.versionTuple,
       diagnosticDefinitionRegistry,
     );
+    let presentation = null;
+    if (
+      snapshot.versionTuple.presentationDefinitionVersion ===
+      PresentationDefinitionSet.presentationDefinitionVersion
+    ) {
+      const titleProfile = TitleProfileDefinitions.find(({ titleId }) =>
+        titleId === snapshot.titleId);
+      if (titleProfile) {
+        try {
+          presentation = selectPresentation(
+            titleProfile,
+            PresentationDefinitionSet,
+          );
+        } catch {
+          // Historical results remain readable if their presentation cannot resolve.
+        }
+      }
+    }
     let characterEntry = null;
     try {
       characterEntry = resolveCharacterEntry(
@@ -532,11 +660,6 @@ export function startApp({
         resultActionNotice = null;
         setRoute("#/answer");
       },
-      onPausePreview() {
-        currentProgress = previewProgress;
-        resultActionNotice = null;
-        pauseCurrentProgress();
-      },
       ...(canFinishPreview ? {
         onFinishPreview() {
           const storedPreview = loadPreviewContinuation(snapshot);
@@ -545,7 +668,7 @@ export function startApp({
             || storedPreview.progressId !== previewProgress.progressId
           ) {
             resultActionNotice = "対応する途中回答を確認できないため、簡易プレビューを終了できません。";
-            renderResult(snapshot, false, null);
+            renderResult(snapshot, false, null, historyDetail);
             return;
           }
           const outcome = discardProgress({
@@ -556,15 +679,59 @@ export function startApp({
           });
           if (outcome.status !== "ok") {
             resultActionNotice = "簡易プレビューを終了できませんでした。もう一度お試しください。";
-            renderResult(snapshot, false, previewProgress);
+            renderResult(snapshot, false, previewProgress, historyDetail);
             return;
           }
           currentProgress = null;
+          detailReviewQuestionVisible = false;
           liveResult = null;
           resultActionNotice = null;
           setRoute("#/start");
         },
       } : {}),
+    } : {};
+    const paletteActions = presentation ? {
+      onSelectPalette(paletteId, { openResultDisclosureId } = {}) {
+        let selectedSnapshot;
+        try {
+          selectedSnapshot = selectResultPalette(
+            snapshot,
+            presentation.palettes,
+            paletteId,
+          );
+        } catch {
+          return;
+        }
+        const allowedPaletteIds = [
+          presentation.palettes.standard.paletteId,
+          ...presentation.palettes.alternatives.map(({ paletteId: id }) => id),
+        ];
+        const persistence = persistenceFailed
+          ? { status: "error" }
+          : updateResultPaletteSelection({
+              storage: getStorage(),
+              resultId: selectedSnapshot.resultId,
+              paletteId,
+              allowedPaletteIds,
+              now: nowProvider(),
+            });
+        if (liveResult?.snapshot?.resultId === selectedSnapshot.resultId) {
+          liveResult = {
+            ...liveResult,
+            snapshot: selectedSnapshot,
+          };
+        }
+        resultActionNotice = persistence.status === "ok"
+          ? null
+          : "色はこの画面に反映しましたが、履歴には保存できませんでした。";
+        renderResult(
+          selectedSnapshot,
+          persistenceFailed,
+          previewProgress,
+          historyDetail,
+          openResultDisclosureId,
+        );
+      },
     } : {};
     renderSavedResultScreen(screenHost, snapshot, {
       factorLabels,
@@ -572,6 +739,7 @@ export function startApp({
       titleLabels,
     }, {
       ...previewActions,
+      ...paletteActions,
       onReturnToStart() {
         if (
           persistenceFailed &&
@@ -594,6 +762,12 @@ export function startApp({
         persistProgress(progress);
         setRoute("#/answer");
       },
+      ...(presentation ? {
+        onShare() {
+          resultActionNotice = null;
+          setRoute(`#/share?resultId=${encodeURIComponent(snapshot.resultId)}`);
+        },
+      } : {}),
     }, {
       notice: resultActionNotice ?? (
         persistenceFailed
@@ -602,8 +776,12 @@ export function startApp({
       ),
       characterEntry,
       decodeImage: effectiveDecodeImage,
-      loadCharacterImage,
+      loadCharacterImage: loadVersionedCharacterImage,
       observeViewport: effectiveObserveViewport,
+      historyDetail,
+      historyPreviewInProgress: historyDetail && previewProgress !== null,
+      presentation,
+      openResultDisclosureId,
       definitionSupported: definitionRegistration !== null,
       ...(definitionRegistration ? {
         questionComposition:
@@ -616,6 +794,122 @@ export function startApp({
         methodInformationUnavailable:
           "診断時の尺度・設問・採点版に対応する説明は、このアプリでは確認できません。保存された称号・スコア・結果文は、そのまま確認できます。",
       }),
+    });
+  }
+
+  function findShareSnapshot(resultId) {
+    if (liveResult?.snapshot?.resultId === resultId) return liveResult.snapshot;
+    const historyState = loadResultHistory({
+      storage: getStorage(),
+      now: nowProvider(),
+    });
+    if (historyState.status === "error") return null;
+    return historyState.results.find((snapshot) =>
+      snapshot.resultId === resultId) ?? null;
+  }
+
+  async function renderShareRoute(route) {
+    if (!route.resultId) {
+      returnMissingResultToHistory();
+      return;
+    }
+    const snapshot = findShareSnapshot(route.resultId);
+    if (!snapshot) {
+      returnMissingResultToHistory();
+      return;
+    }
+    const titleProfile = TitleProfileDefinitions.find(({ titleId }) =>
+      titleId === snapshot.titleId);
+    if (!titleProfile ||
+      snapshot.versionTuple.presentationDefinitionVersion !==
+        PresentationDefinitionSet.presentationDefinitionVersion) {
+      returnMissingResultToHistory();
+      return;
+    }
+
+    let presentation;
+    let characterEntry = null;
+    let model;
+    try {
+      presentation = selectPresentation(titleProfile, PresentationDefinitionSet);
+      try {
+        characterEntry = resolveCharacterEntry(
+          validatedCharacterManifest,
+          snapshot.characterId,
+        );
+      } catch {
+        characterEntry = null;
+      }
+      const palettes = [
+        presentation.palettes.standard,
+        ...presentation.palettes.alternatives,
+      ];
+      const palette = palettes.find(({ paletteId }) =>
+        paletteId === snapshot.selectedPaletteId);
+      const paletteMapping = PresentationDefinitionSet.paletteUsageMappings
+        .find(({ paletteId }) => paletteId === snapshot.selectedPaletteId);
+      model = createShareCardModel({
+        snapshot,
+        titleLabel: titleLabels[snapshot.titleId],
+        factorLabels,
+        characterEntry,
+        palette,
+        paletteUsage: resolvePaletteUsage(palette, paletteMapping),
+        fragranceSummary: summarizeFragrances(presentation.fragranceScenes),
+        brand: appMeta.brand,
+      });
+    } catch {
+      returnMissingResultToHistory();
+      return;
+    }
+
+    clearShareResource();
+    const generation = shareRenderGeneration;
+    const rendered = await renderShareCardProvider(
+      model,
+      effectiveShareCanvasDependencies,
+    );
+    if (generation !== shareRenderGeneration ||
+      resolveRoute(windowObject.location.hash).id !== "share") {
+      return;
+    }
+
+    let blob = null;
+    let imageUrl = null;
+    let renderErrorCode = rendered?.errorCode ?? null;
+    if (rendered?.status === "ok" && rendered.blob) {
+      blob = rendered.blob;
+      try {
+        imageUrl = effectiveShareDeliveryDependencies.URL.createObjectURL(blob);
+        activeShareObjectUrl = imageUrl;
+      } catch {
+        renderErrorCode = "SHARE_CANVAS_UNAVAILABLE";
+      }
+    }
+    const capabilities = detectShareCapabilities(
+      effectiveShareDeliveryDependencies,
+    );
+    renderShareScreen(screenHost, model, {
+      ...(blob ? {
+        onShare: () => sharePng({
+          blob,
+          filename: model.filename,
+          text: model.shareText,
+        }, effectiveShareDeliveryDependencies),
+        onDownload: () => downloadPng({
+          blob,
+          filename: model.filename,
+        }, effectiveShareDeliveryDependencies),
+      } : {}),
+      onCopyText: (text) =>
+        copyShareText(text, effectiveShareDeliveryDependencies),
+      onBackToResult() {
+        setRoute(`#/result?resultId=${encodeURIComponent(snapshot.resultId)}`);
+      },
+    }, {
+      imageUrl,
+      renderErrorCode,
+      capabilities,
     });
   }
 
@@ -662,6 +956,7 @@ export function startApp({
   function renderCurrentRoute() {
     clearViewportObservers();
     const route = resolveRoute(windowObject.location.hash);
+    if (route.id !== "share") clearShareResource();
     if (route.id !== "result") resultActionNotice = null;
 
     if (route.didFallback) {
@@ -680,6 +975,10 @@ export function startApp({
       renderResultRoute(route);
       return;
     }
+    if (route.id === "share") {
+      void renderShareRoute(route);
+      return;
+    }
     if (route.id === "answer") {
       renderQuestionnaireRoute();
       return;
@@ -691,6 +990,9 @@ export function startApp({
     const resumeFromMemory = currentProgress !== null;
     const resumeProgress = currentProgress
       ?? (loaded.status === "ok" ? loaded.progress : null);
+    const historyState = loadResultHistory({
+      storage: getStorage(), now: nowProvider(),
+    });
     renderStartScreen(screenHost, createStartVersionViewModel(appMeta), {
       onStartNew() {
         if (
@@ -725,6 +1027,7 @@ export function startApp({
         },
       } : {}),
     }, {
+      hasHistory: historyState.status === "ok" && historyState.results.length > 0,
       resumeLabel: resumeProgress?.mode === "preview20"
           && resumeProgress.previewDecision === "showPreview"
         ? "残り30問を再開する"

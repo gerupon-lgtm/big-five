@@ -70,12 +70,12 @@ docs/
 - ベータAPIのアクセスログ・アプリログへIP、User-Agent、Referer、本文、回答値、称号ID、色ID、requestIdを残さない。
 - 通常版とベータ版の機能フラグをテストし、通常版の診断フローで外部送信0件を維持する。
 - コンテンツの人手編集正典はコミット対象の`content/source/`以下のCSVであり、生成JSONの`app/content/`は手編集・コミットしない。詳細な作成手順は`docs/content-authoring.md`を参照する。
-- CSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済み。ただしapproved releaseはなく、通常runtimeは既存ES Modulesを継続し、`connect-src 'none'`を維持する。JSON runtime/Pages activationは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
-- 初期コンテンツの人手gateはE-0のみ`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`である。Q-006、Q-012、Q-013はrelease gateとして未解決であり、承認事実を補完してはならない。
+- CSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済み。Q-013は承認済みCSVから`presentation-v2` ES Modulesを決定的に生成して通常runtimeへ接続済みで、`connect-src 'none'`を維持する。ただしapproved JSON releaseはなく、JSON runtime/Pages activationは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
+- Q-006のE-0〜E-5、F-1〜F-5、T-0〜T-4、X-1〜X-2は2026-07-28に承認済みである。現行`result-text-v2`のTR-0〜TR-4（51称号×3件）も2026-07-30までに承認・実装済みである。Q-013は2026-07-31にP-0（153パレット、正式用途色Bの背景84%・表面90%、WCAG）、P-1（固定3場面、29香調、25素材、29素材関連、安全表現）、P-2〜P-6（全51称号の標準1＋代替2パレット、3場面×各2香調、共有代表）を承認し、同日`presentation-v2` ES Modules runtimeを生成・接続済みである。approved JSON releaseの選択とQ-012の正式releaseは未完了のrelease gateとして維持し、承認事実を補完してはならない。
 
 ## バージョン管理
 
-- 現在版: `mvp-0.1.0`
+- 現在版: `mvp-1.0.0`
 - MVP: `mvp-MAJOR.MINOR.PATCH`
 - ベータ: `beta-MAJOR.MINOR.PATCH`
 - 正式版: `MAJOR.MINOR.PATCH`
@@ -107,7 +107,7 @@ T-001完了後の標準コマンド:
 - 同一集計要求は短期冪等キーハッシュで1回だけ加算し、完答集計は1トランザクションで全件成功または全件ロールバックする。
 - 51称号・猫はエンタメ表現であり、心理学上の正式タイプと表示しない。
 - 色・香りは追加質問なしで複数候補を提示する。色選択はカードの演出だけを変え、診断結果を変えない。
-- 選択色と猫が同系色でもパレットを除外・差し替え・猫を再配色せず、明暗二重縁取り、影、ニュートラル背景プレートで共有カード上の視認性を維持する。
+- 選択色と猫が同系色でもパレットを除外・差し替え・猫を再配色せず、明暗二重縁取りまたは影で共有カード上の視認性を維持する。現行`card-template-v2`では猫の背後へ白色・ニュートラル色の円形面や矩形プレートを置かない。
 - 香りについて商品、精油量、DIY配合、摂取、塗布、ディフューザー使用法や治療効果を案内しない。
 - キャラクターは該当1体だけを遅延読込し、失敗時も称号・スコア・文章・共有テキストを維持する。
 - Canvasや共有APIが失敗しても、テキストコピーまたは選択可能テキストへ到達できるようにする。

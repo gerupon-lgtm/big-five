@@ -45,6 +45,24 @@ function previewViewModel(overrides = {}) {
   };
 }
 
+function detailReviewViewModel(overrides = {}) {
+  return {
+    phase: "detail-review",
+    storageStatus: "ok",
+    ...overrides,
+  };
+}
+
+function detailReviewActions(overrides = {}) {
+  return {
+    onComplete() {},
+    onBack() {},
+    onPause() {},
+    onDiscard() {},
+    ...overrides,
+  };
+}
+
 function buttons(host) {
   return collectElements(host).filter(({ tagName }) => tagName === "button");
 }
@@ -61,6 +79,11 @@ test("T-004 S-002 renders one question with natural five-point labels and curren
   const text = collectText(host);
   assert.match(text, /7 \/ 20問/);
   assert.match(text, /にぎやかな集まりが好きだ/);
+  const heading = collectElements(host)
+    .find(({ className }) => className === "screen-heading");
+  assert.ok(heading);
+  assert.match(collectText(heading), /7 \/ 20問/);
+  assert.match(collectText(heading), /にぎやかな集まりが好きだ/);
   assert.deepEqual(
     buttons(host)
       .filter(({ className }) => className.includes("answer-option"))
@@ -165,6 +188,11 @@ test("T-004 S-002 renders the 20-question decision before exposing any result", 
   renderQuestionnaireScreen(host, previewViewModel(), previewActions());
 
   const text = collectText(host);
+  const heading = collectElements(host)
+    .find(({ className }) => className === "screen-heading");
+  assert.ok(heading);
+  assert.match(collectText(heading), /20 \/ 20問/);
+  assert.match(collectText(heading), /20問の回答が完了しました/);
   assert.match(text, /20問の回答が完了しました/);
   assert.match(text, /20問の簡易プレビューを見る/);
   assert.match(text, /結果を見ずに、あと30問続ける/);
@@ -216,10 +244,32 @@ test("T-008A F-004 delegates back, pause, and discard from the preview decision"
   assert.deepEqual(calls, ["back", "pause", "discard"]);
 });
 
+test("T-004 S-002 keeps fifty answers editable until the user explicitly views the result", () => {
+  const { host } = createFakeScreen();
+  const calls = [];
+
+  renderQuestionnaireScreen(host, detailReviewViewModel(), detailReviewActions({
+    onComplete: () => calls.push("complete"),
+    onBack: () => calls.push("back"),
+  }));
+
+  const text = collectText(host);
+  assert.match(text, /50 \/ 50問/);
+  assert.match(text, /50問の回答が完了しました/);
+  assert.match(text, /結果を見る/);
+  assert.match(text, /回答へ戻る/);
+  assert.doesNotMatch(text, /称号|スコア|猫|パレット|アロマ/);
+
+  buttons(host).find(({ textContent }) => textContent === "回答へ戻る").dispatch("click");
+  buttons(host).find(({ textContent }) => textContent === "結果を見る").dispatch("click");
+  assert.deepEqual(calls, ["back", "complete"]);
+});
+
 test("T-004 S-002 renders every control as a non-submit button", () => {
   for (const [viewModel, actions] of [
     [questionViewModel(), questionActions()],
     [previewViewModel(), previewActions()],
+    [detailReviewViewModel(), detailReviewActions()],
   ]) {
     const { host } = createFakeScreen();
     renderQuestionnaireScreen(host, viewModel, actions);
@@ -231,22 +281,28 @@ test("T-004 S-002 renders every control as a non-submit button", () => {
   }
 });
 
-test("T-008A S-002 uses the shared sticky header and keeps discard in secondary management", () => {
-  for (const [viewModel, actions, expectedLabel] of [
-    [questionViewModel(), questionActions(), "回答中"],
-    [previewViewModel(), previewActions(), "20問完了"],
+test("T-008A S-002 uses the shared standard header action and keeps discard in secondary management", () => {
+  for (const [viewModel, actions] of [
+    [questionViewModel(), questionActions()],
+    [previewViewModel(), previewActions()],
+    [detailReviewViewModel(), detailReviewActions()],
   ]) {
     const { host } = createFakeScreen();
     renderQuestionnaireScreen(host, viewModel, actions);
 
     const header = collectElements(host)
-      .find(({ className }) => className === "app-header is-sticky");
+      .find(({ className }) => className === "app-header");
     assert.ok(header);
     assert.equal(
+      collectElements(host)
+        .filter(({ className }) => className === "app-header is-sticky").length,
+      0,
+    );
+    assert.equal(
       collectElements(header)
-        .find(({ className }) => className === "app-screen-label")
+        .find(({ className }) => className === "app-header-action")
         .textContent,
-      expectedLabel,
+      "中断してトップへ",
     );
     const management = collectElements(host)
       .find(({ className }) => className === "questionnaire-management");
@@ -306,6 +362,11 @@ test("T-004 S-002 rejects malformed exact view models and action dependencies", 
       host,
       previewViewModel(),
       { ...previewActions(), onUnexpectedAction() {} },
+    ),
+    () => renderQuestionnaireScreen(
+      host,
+      detailReviewViewModel(),
+      { ...detailReviewActions(), onComplete: undefined },
     ),
   ];
 

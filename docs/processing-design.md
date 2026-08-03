@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.8 |
+| 設計版 | 0.15 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-28 |
-| 入力要件 | 要件定義書v1.13 |
+| 更新日 | 2026-08-03 |
+| 入力要件 | 要件定義書v1.40 |
 | 実行方式 | 通常版はブラウザ内完結。ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -36,7 +36,7 @@
 2. 診断定義、質問、採点鍵、結果文、称号、猫、色・香り定義を読む。
 3. definition-validatorで件数、参照、版、51分類を検証する。
 4. 保存データを読んでStorageEnvelopeを検証する。
-5. 不正レコードだけを除外し、利用可能な途中回答・履歴を画面モデルへ渡す。
+5. 不正レコードだけを除外し、利用可能な途中回答・履歴を画面モデルへ渡す。開始画面では有効な履歴が1件以上ある時だけ履歴副ボタンをリンクとして有効化し、0件または読込エラー時は同じ位置で無効化する。
 6. ルートと状態を照合し、安全な画面へ遷移する。
 
 静的定義の重大不整合は採点を続行せず、`DEFINITION_INVALID`として説明画面と再読込導線を出す。誤った結果を返すより停止を優先する。
@@ -77,23 +77,29 @@
 1. 回答画面の`中断してトップへ`は新しいドメイン状態を作らず、直近の保存結果を確認して開始画面へ遷移する。保存失敗が既知の場合は、離脱で回答を失うことを確認してから遷移する。
 2. 1〜19問と21〜49問は最初の未回答設問、20問完答・`undecided`は20問分岐へ再開する。
 3. `preview20`・`showPreview`・20回答の互換ProgressRecordは、開始画面で`残り30問を再開する`と表示し、`continueAfterPreview`を1回適用して21問目へ進める。
-4. 簡易プレビューの`簡易プレビューで終了する`は、保存済みResultSnapshotを維持し、対応する互換ProgressRecordだけを削除する。削除失敗時は結果画面に留まり、終了済みと誤表示せず、再試行できる通知を出す。ResultSnapshotが履歴へ保存できていないlive結果ではこの操作を有効化せず、結果を失わない`中断してトップへ`または`あと30問続ける`を案内する。
+4. 簡易プレビューの`簡易プレビューで終了する`は、保存済みResultSnapshotを維持し、対応する完全一致ProgressRecordだけを削除する。削除失敗時は結果画面に留まり、終了済みと誤表示せず、再試行できる通知を出す。ResultSnapshotが履歴へ保存できていないlive結果ではこの操作を有効化せず、結果を失わない`50問へ進む`を案内する。
 5. 互換ProgressRecordがある新規開始は、利用者の確認後だけ同じ診断種別の進捗を新規ProgressRecordへ置き換える。取消では書込みを行わず、ResultSnapshotには触れない。
 
-### 3.3 T-004の公開シーム
+### 3.3 50問完答確認
 
-- `response-state` はDOM・ブラウザAPIに依存しない。新規ProgressRecord、現在設問への回答、戻る、置換、20問出口、50問終端を純粋値として返す。
+1. 50問目の回答は`detail-review-required`と50回答を持つProgressRecordを返し、直ちに保存する。この時点では採点・ResultSnapshot生成・進捗削除を行わない。
+2. 完答確認と50問目は保存形式を変えず、`currentIndex: 49`と50回答を維持する。「回答へ戻る」で50問目を再表示している間だけpresentation controllerの画面内状態で区別する。さらに前へ戻った場合、回答済み設問を順に再表示し、50問目の回答後に再び完答確認へ進む。
+3. 「結果を見る」だけが`completeDetail`を呼び、50回答を結果生成callerへ渡す。ResultSnapshot保存とProgressRecord削除は従来どおり同一保存境界で行う。
+
+### 3.4 T-004の公開シーム
+
+- `response-state` はDOM・ブラウザAPIに依存しない。新規ProgressRecord、現在設問への回答、戻る、置換、20問出口、50問完答確認、明示確定を純粋値として返す。
 - 回答入力は current question ID と own data property の整数 `1..5` だけを受け入れる。未知ID、過去設問、継承値、accessor、欠損、範囲外、小数は `RESPONSE_INVALID_INPUT` として拒否する。
-- 20問完答の `showPreview` は `preview-ready` を返すだけで採点・画面生成を行わない。`continueHidden` は `detail-continued` と進捗だけを返す。50問目の `detail-complete` は保存可能な完答進捗と50件の回答地図を返し、結果画面・履歴・共有はT-005以降の責務とする。
+- 20問完答の `showPreview` は `preview-ready` を返すだけで採点・画面生成を行わない。`continueHidden` は `detail-continued` と進捗だけを返す。50問目は`detail-review-required`と完答進捗だけを返し、別操作の`completeDetail`が`detail-complete`と50件の回答地図を返す。結果画面・履歴・共有はT-005以降の責務とする。
 - `progress-storage` は注入されたストレージを使う。`STORAGE_CORRUPT`、`STORAGE_INCOMPATIBLE`、`STORAGE_UNAVAILABLE`、`STORAGE_SAVE_FAILED`、`STORAGE_DELETE_FAILED` と `PROGRESS_INCOMPATIBLE` を安定した内部コードとして返し、例外を呼出側へ漏らさない。
 - `persistTransition`、`answerAndSave`、`transitionAndSave` は遷移eventのProgressRecordを直ちに保存する。保存失敗でもeventとメモリ上の進捗を返す。50問完答後にResultSnapshotを保存してProgressRecordを削除する処理はT-005の呼出側責務とする。
-- S-002表示層は設問phaseと20問分岐phaseだけを受ける。設問phaseは5件法と現在位置、戻る、中断、破棄を、分岐phaseは`showPreview`と`continueHidden`、中断、破棄を描画する。中断はProgressRecordを保持し、破棄は確認後に削除する別callbackとする。保存失敗は両phaseで通知するが回答操作を無効化しない。分岐phaseへスコア、因子、称号、キャラクター、パレット、共有モデルを渡さない。
+- S-002表示層は設問phase、20問分岐phase、50問完答確認phaseを受ける。設問phaseは5件法と現在位置、戻る、中断、破棄を、20問分岐は`showPreview`と`continueHidden`を、50問完答確認は「結果を見る」と「回答へ戻る」を描画する。中断はProgressRecordを保持し、破棄は確認後に削除する別callbackとする。保存失敗は各phaseで通知するが操作を無効化しない。分岐・完答確認phaseへスコア、因子、称号、キャラクター、パレット、共有モデルを渡さない。
 
-### 3.4 CSVコンテンツ作成からruntimeへの移行境界
+### 3.5 CSVコンテンツ作成からruntimeへの移行境界
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤として、`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。人はCSVだけを編集し、生成`app/content/` JSONを編集・コミットしない。
 
-ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
+ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。現行ES Modules runtimeは`result-text-v2`を使い、v1の基本237件を履歴互換として残した上で、承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を反映する。v2は基本237件＋振り返り153件＝390件、結果文と根拠の対応行は267件であり、実行時の根拠定義自体は固定6件である。Q-013はP-0の153パレットと用途色B（背景84%・表面90%）およびWCAG、P-1の3場面・29香調・25素材・29素材関連、P-2〜P-6の全51称号に属する称号別選択を2026-07-31に承認し、承認済みCSVから`presentation-v2` ES Modules runtimeを決定的に生成・接続済みである。濃度は版付き`palette-usage-mappings.csv`の2列から解決し、基調色・rendererへ固定値を重複させない。approved JSON release未選択、Q-006関連行status未昇格、Q-012正式release未完了はrelease readinessを妨げる別条件として維持する。runtimeは生成済みES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 
 ## 4. 採点
 
@@ -185,9 +191,9 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 ## 6. 結果モデル生成
 
-### 6.1 `result-text-v1`定義選択
+### 6.1 版付き結果文定義の選択
 
-`ResultEvidenceDefinition`、`ResultTextDefinition`、`TitleProfileDefinition`の参照整合を起動時に検証する。`result-text-v1`はtitle 102件＋factor 135件＝237件のliteral定義であり、実行時生成しない。結果文選択へ生回答、DOM、Canvas、localStorage、ネットワーク、猫色、パレット、香りを渡さない。
+`ResultEvidenceDefinition`、`ResultTextDefinition`、`TitleProfileDefinition`の参照整合を起動時に検証する。`result-text-v1`はtitle 102件＋factor 135件＝237件の不変な履歴互換定義である。現行`result-text-v2`は基本237件と称号別`titleReflection`153件の合計390件で、基本文面のうち27件はユーザー承認済みのv2修正版である。結果文選択へ生回答、DOM、Canvas、localStorage、ネットワーク、猫色、パレット、香りを渡さない。
 
 ### 6.2 `composeResultTexts`
 
@@ -206,14 +212,14 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 1. `preview20`と20、`detail50`と50の組だけを許可する。
 2. 全定義が要求`version`と一致することを確認し、混在版を拒否する。
-3. titleは`titleId`に対する`titleSubtitle`、`titleReason`を各1件だけ選ぶ。
+3. titleは`titleId`に対する`titleSubtitle`、`titleReason`を各1件だけ選ぶ。v2の`titleReflection`は完全な固定順3件組を得られる場合に限り、previewは1件目、detailは3件すべてを選ぶ。
 4. factorは`mode`、`questionCount`、`factorId`、`band`がexact一致する定義を、必要な節ごとに各1件だけ選ぶ。
 5. 条件選択後に必要なdefinitionの欠落・重複・件数を検証する。
-6. title 2件を先頭に置き、その後をsection-first、各section内を`FACTOR_ORDER`の固定factor順にする。
+6. title 2件、選択した`titleReflection`、その後をsection-first、各section内を`FACTOR_ORDER`の固定factor順にする。
 
-`composeResultTexts`の責務はdefinitionの条件選択、欠落・重複・件数、`version`、section-first／`FACTOR_ORDER`のsection・factor順を検証し、`RenderedResultText`の5フィールド（`id`、`version`、`section`、`text`、`evidenceRefs`）だけへ投影することである。previewはtitle 2件＋5観察文の7件、detailはtitle 2件＋5因子×8節の42件である。配列、各record、複製した`evidenceRefs`をdeep freezeし、入力を変更・freezeしない。
+`composeResultTexts`の責務はdefinitionの条件選択、欠落・重複・件数、`version`、section-first／`FACTOR_ORDER`のsection・factor順を検証し、`RenderedResultText`の5フィールド（`id`、`version`、`section`、`text`、`evidenceRefs`）だけへ投影することである。v1はpreview 7件／detail 42件、v2の完全定義はpreview 8件／detail 45件である。v2の称号別振り返り定義が0〜2件、順序違い、または重複で完全な3件組にならない場合、composerは振り返りを部分表示せず3件すべてを省略し、称号・因子を維持したpreview 7件／detail 42件を返す。配列、各record、複製した`evidenceRefs`をdeep freezeし、入力を変更・freezeしない。
 
-`result-text-v2`では称号ごとの`titleReflection`を1〜3件追加する。コンパイラは専用CSVから固定順へ投影し、1件目だけをpreview許可とする。`composeResultTexts`はpreviewで1件目、detailで1〜3件を選択し、ランダム値・現在時刻・DOM・香り・色を入力にしない。既存`result-text-v1`の237件と承認状態は上書きしない。51称号分の`titleReflection`は現在も作成・Content Approval pendingであり、未承認文面をruntimeへ補完しない。
+`result-text-v2`では称号ごとの`titleReflection`を3件追加する。コンパイラは専用CSVから固定順へ投影し、1件目だけをpreview許可とする。`composeResultTexts`はpreviewで1件目、detailで3件を選択し、ランダム値・現在時刻・DOM・香り・色を入力にしない。既存`result-text-v1`の237件と承認状態は上書きしない。51称号分153件はTR-0〜TR-4でユーザー承認済みである。
 
 ### 6.3 ResultModelとResultSnapshot
 
@@ -222,18 +228,18 @@ displayScore = round((rawMean - 1) / 4 * 100)
 `createResultSnapshot`は次を実施する。
 
 1. exact 9フィールド入力、`preview20`/20または`detail50`/50、厳密ISO日時を検証する。
-2. `VersionTuple`の9フィールドと、mode別7件／42件のRenderedResultTextの`version`、section・factor順、各位置のexact production record IDをsnapshot境界で検証する。
-3. 表示した文章と根拠参照をResultSnapshotへ複製し、後の`result-text-v1`定義変更から診断時文面を隔離する。
+2. `VersionTuple`の9フィールドと、v1のmode別7件／42件、v2の通常8件／45件またはゼロ-reflection fallback 7件／42件のRenderedResultTextについて、`version`、section・factor順、各位置のexact production record IDをsnapshot境界で検証する。v2の部分的な振り返り組は拒否する。
+3. 表示した文章と根拠参照をResultSnapshotへ複製し、後の版付き結果文定義変更から診断時文面を隔離する。
 4. manifest全体の`characterManifestVersion`と、選択された1体の`characterAssetVersion`を別フィールドとして維持する。
 5. 13フィールドのResultSnapshotをdeep freezeして返す。`diagnosisId`、`answers`、結果定義、`claimKind`、DOM・Canvas状態は含めない。
 
-上記Q-006ドメイン実装と独立レビューは完了している。文面は`initial reviewed copy`として実装された後、根拠台帳の全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`progress-storage.js`へのResultSnapshot保存・履歴・削除統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。approved release未選択、Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`は後続である。
+上記Q-006ドメイン実装と独立レビューは完了している。`result-text-v1`は根拠台帳の全18 gateがapprovedとなり、Content Approvalを2026-07-28に完了した。`result-text-v2`はユーザー承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を含む現行runtime版である。Q-013のP-0〜P-6も全承認済みで、`presentation-v2` ES Modules runtime、S-003/S-004結果DOM、T-007共有Canvasまで接続済みである。`progress-storage.js`へのResultSnapshot保存・履歴・削除・対象1件のパレット更新統合、S-006/S-007初期画面、保存済みsnapshotを`#/result?resultId=...`でS-003/S-004として開く画面と履歴遷移、S-002表示層とlive controller、本番完答callerまで完了した。callerは既存の採点・称号・文面合成を再利用し、選択されたQ-012 manifest entryの`assetVersion`を`characterAssetVersion`へ、該当TitleProfileの`defaultPaletteId`を初期`selectedPaletteId`へ保存する。manifest全体版の流用や仮値を禁止する。approved JSON releaseとQ-012正式releaseは別ゲートである。
 
-`result-text-v2`を承認・有効化した後は、診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。共有モデル生成時は`titleReflection`を除外する。
+診断時に選択した`titleReflection`も同じRenderedResultTextとしてsnapshotへ複製する。後の文面・順序・採否変更で保存済み履歴を再生成しない。純粋共有候補抽出境界`selectShareableResultTexts`は`titleReflection`を除外し、その出力をT-007の共有UI・共有画像・共有テキストへ接続する。
 
 ## 7. 履歴保存
 
-`createResultSnapshot`、保存済み13フィールドを再検証する`validateResultSnapshot`、結果保存API`saveResultSnapshot({ storage, snapshot, diagnosisId, definition, meta, now })`、履歴読込API`loadResultHistory({ storage, now })`、個別削除API`deleteResultSnapshot({ storage, resultId, confirmed, now })`、全削除API`deleteAllData({ storage, confirmed, now })`は実装済みである。S-001/S-002のlive controllerは、20問`showPreview`と50問`detail-complete`から本番snapshotを生成し、この保存APIと独立結果画面へ接続する。20問`continueHidden`ではresultId割当・採点・結果保存を行わない。
+`createResultSnapshot`、保存済み13フィールドを再検証する`validateResultSnapshot`、結果保存API`saveResultSnapshot({ storage, snapshot, diagnosisId, definition, meta, now })`、履歴読込API`loadResultHistory({ storage, now })`、個別削除API`deleteResultSnapshot({ storage, resultId, confirmed, now })`、全削除API`deleteAllData({ storage, confirmed, now })`は実装済みである。S-001/S-002のlive controllerは、20問`showPreview`と50問完答確認後の`detail-complete`から本番snapshotを生成し、この保存APIと独立結果画面へ接続する。20問`continueHidden`と50問目回答直後の`detail-review-required`ではresultId割当・採点・結果保存を行わない。
 
 1. `crypto.randomUUID()`でRFC 4122 UUID形状のresultIdを生成する。
 2. ResultSnapshotの13フィールドexact schemaを検証する。`answers`と`diagnosisId`は受け付けない。
@@ -247,7 +253,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 10. 履歴読込は有効なResultSnapshotだけを返し、破損1件を除外しても残りを表示できる。読込だけではStorageEnvelopeを書き換えない。
 11. 履歴順は`completedAt`の実時刻降順、同時刻は`resultId`辞書順とする。返却配列と各snapshotはdeep freezeする。
 12. 個別削除は確認後、指定`resultId`と一致する最初の有効ResultSnapshotだけを削除する。途中回答、非対象結果、破損結果の構造と順序を保持し、対象なしでは書き込まない。
-13. 全削除は確認後、現行StorageEnvelopeの`progressByDiagnosis`と`results`だけを空にする。確認取消、壊れたJSON、将来schema、保存失敗では既存値を変更しない。
+13. 全削除は確認後、現行StorageEnvelopeの`progressByDiagnosis`と`results`を空にする。保存成功後に画面controllerの`currentProgress`、`liveResult`、保存状態通知も初期化し、開始画面へ戻った時に再開操作を表示しない。確認取消、壊れたJSON、将来schema、保存失敗では保存値・画面内状態を変更しない。
 14. S-006は履歴0件でも`データの管理`から全削除へ到達できる。通常カードは猫サムネイル、称号、実施日時、20問／50問、結果表示導線だけを投影する。比較モードは選択ResultSnapshot IDを最大2件の一時状態として持ち、1件目は取消・再選択でき、互換結果だけを2件目候補として有効化する。2件選択だけでは遷移せず、固定アクションバーの明示実行でS-007へ進む。
 
 状態遷移:
@@ -264,22 +270,17 @@ displayScore = round((rawMean - 1) / 4 * 100)
 | 対象進捗が破損・版不一致 | 追加しない | 上書き・削除しない | 維持 | `STORAGE_CORRUPT`または`PROGRESS_INCOMPATIBLE` |
 | resultId衝突（内容不一致） | 追加しない | modeに従い完答時だけ削除を試行 | 維持 | `STORAGE_CORRUPT` |
 
-live controllerは`#/answer`を正規routeとし、ResultSnapshotをメモリ上にも1件だけ保持できる。結果保存失敗時はlive snapshotを履歴より先に解決して結果画面を成立させ、`結果は表示できましたが、この端末の履歴には保存できませんでした。`を表示する。再読込後はlive snapshotを復元せず、保存履歴にないresultIdは既存の欠落結果フォールバックへ送る。保存済みpreviewは、互換ProgressRecordが`preview20`・`showPreview`・20回答で、snapshotとVersionTupleが完全一致する場合だけ追加30問へ進める。対応進捗がない場合は無反応の継続ボタンを描画しない。
+live controllerは`#/answer`を正規routeとし、ResultSnapshotをメモリ上にも1件だけ保持できる。結果保存失敗時はlive snapshotを履歴より先に解決して結果画面を成立させ、`結果は表示できましたが、この端末の履歴には保存できませんでした。`を表示する。再読込後はlive snapshotを復元せず、保存履歴にないresultIdは既存の欠落結果フォールバックへ送る。20問`showPreview`では`ResultSnapshot.resultId`へ対応`ProgressRecord.progressId`を渡す。保存済みpreviewは、`preview20`・`showPreview`・20回答・VersionTuple完全一致に加え、`progress.progressId === snapshot.resultId`を満たす場合だけ追加30問へ進める。50問`detail50`は新しい`resultId`を発行する。旧保存値の異なるIDを回答数、時刻、版から推測して再リンクせず、履歴からの継続を安全側で無効にする。これに伴う保存フィールド追加、既存フィールドの再解釈、`StorageEnvelope.schemaVersion`の更新は行わない。
 
-結果画面の表示状態は永続化しない。開いている因子IDと詳細sectionはpresentation層の一時状態とし、次の規則で更新する。
+履歴から保存済みpreviewを開き、上記の完全一致ProgressRecordがある場合は、診断直後のlive previewとは別の操作モデルを使う。ヘッダーと結果操作へ`履歴一覧に戻る`を設定し、結果操作は`50問へ進む`と履歴一覧への復帰だけを返す。パレットと通常フロー内の共有CTAは表示せず、`中断してトップへ`と`簡易プレビューで終了する`のcallbackは渡さない。完全一致ProgressRecordがない履歴previewは確定済みとして、パレットと共有CTAを表示し、継続操作を返さない。
 
-- `openFactorId`は`null`または既知のFactorId 1件。
-- `openSection`は`null`または`{ factorId, section }` 1件で、factorIdは`openFactorId`と一致する。
-- 別因子を開くと以前の因子と詳細sectionを閉じる。
-- 別sectionを開くと同じ因子内の以前のsectionを閉じる。
-- 20問ではResultSnapshotに存在しないdetail sectionを生成・補完しない。
-- 開閉後は対象見出しへフォーカスを奪わず、見出しがviewport内に残る最小限のスクロール調整だけを行う。
+結果画面の開閉状態は永続化しない。開いている因子またはアロマはpresentation層の一時状態とし、`null`または既知の因子ID／`aroma`を1件だけ持つ。因子を1回開くと、保存済みの全カテゴリ本文を1枚のカードへ一括表示し、20問結果に存在しない本文を生成・補完しない。カテゴリ見出しは枠線に接触しない内側余白を持たせる。別の因子またはアロマを開くと先の領域を閉じる。パレットは常時表示であり、この相互排他グループへ含めない。閉鎖により位置が変わる場合も、操作した見出しがviewport内に残る最小限のスクロール調整だけを行い、フォーカスを奪わない。
 
-現行presentationは、称号・猫heroと`titleReason`を独立sectionにし、名前付きレーダーの下へ固定順5因子のコンパクトな行・棒・数値を表示する。preview20の7件、detail50の42件は保存順を変えず表示モデルへ投影し、上記の同時1因子／同一因子内1詳細の規則から全件へ到達できる。`titleReflection`は未承認のため現行件数へ含めない。
+現行presentationは、称号・猫heroと`titleReason`を独立sectionにし、その直後へ`titleReflection`を置き、名前付きレーダーの下へ固定順5因子のコンパクトな行・棒・数値を表示する。完全なv2結果はpreview20の8件、detail50の45件を保存順を変えず表示モデルへ投影する。ゼロ-reflection fallbackでは従来どおり7件／42件を表示し、称号・因子結果を維持する。部分的な振り返り組を画面だけで補完または表示しない。
 
-承認済み`result-text-v2`を有効化した後は、称号別`titleReflection`の開閉もpresentation層の一時状態とする。1件目は常時表示し、50問だけ残り最大2件を1つの`ほかのヒントを見る`で一括開閉する。因子詳細の開閉状態とは独立させ、第三階層を作らない。
+称号別`titleReflection`の開閉はpresentation層の一時状態とする。1件目は常時表示し、50問だけ残り2件を1つの`ほかのヒントを見る`で一括開閉する。因子詳細の開閉状態とは独立させ、第三階層を作らない。
 
-ResultSnapshotの42件はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。カテゴリ行の短いサマリは内容を代替する固定UI説明であり、スコア別結果文を生成・要約しない。`詳しく見る`で元の`RenderedResultText`と根拠を表示する。
+ResultSnapshotの因子文（preview 5件／detail 40件）はsection-firstのhistorical copyを維持し、表示時だけ固定因子順のfactor-firstへ不変投影する。`observation`、`strength`、`tradeoff`、`work`、`relationship`、`stress`は各1record、`question`と`action`は同じ「振り返りと行動ヒント」カテゴリの2recordsとして扱う。因子行を1回展開すると、カテゴリ名と元の`RenderedResultText`を1枚のカードへ直接表示する。カテゴリごとの汎用サマリ、二段目の開閉、文章ごとの内部`evidenceRefs`表示、5因子スコア領域の`拡大して見る`は作らず、尺度・採点・限界・出典は最下部の「結果の根拠と見方」へ集約する。共有プレビューの画像拡大は別機能として維持する。スコア棒はCSPで無効になるインラインstyleへ依存せず、`progress`の`value`へ0〜100の表示整数を渡す。
 
 `因子ごとの設問構成を見る`はDiagnosticDefinitionとQuestionDefinitionから、現在modeの固定questionId集合を因子・`keyedDirection`別に件数集計する純粋モデルを使う。設問本文、回答、スコア、称号を出力へ含めない。測定の土台等の固定説明は診断定義版とmodeだけを入力とし、ResultSnapshotの称号・数値で分岐しない。
 
@@ -291,7 +292,7 @@ ResultSnapshotの42件はsection-firstのhistorical copyを維持し、表示時
 
 2026-07-28の最終実ブラウザ検証では、320px、360px、960pxの結果・履歴で横overflowなし、360×800で履歴管理dialog全体がviewport内に収まることを確認した。因子・詳細の単一開閉、設問構成sheet、4方法sheet、50問結果のトップ直接遷移、履歴から保存済み結果への直接遷移、dialogの明示close・正確なbackdrop click・Escape・focus入場／復帰を通過し、console error／warningは0件だった。追加の自動回帰検証では、未登録の履歴診断版で現行方法情報を流用しないこと、ボトムシートのインラインfallback、保存結果を含む履歴fallbackの到達可能なfocus循環と全viewport surface、承認済み結果開示ラベルを含む全465件、`npm.cmd run check`、`git diff --check`に成功した。
 
-パレット変更は該当ResultSnapshotのselectedPaletteIdだけを更新する。スコア、称号、文章、猫、版を変更しない。
+`selectResultPalette`はResultSnapshotと標準1＋代替2の許可パレットを再検証し、`selectedPaletteId`だけを変更したdeep-freeze済みsnapshotを返す。`updateResultPaletteSelection`はschema 1の保存領域から対象の有効ResultSnapshotを1件だけ特定し、他の有効・破損・将来レコードと途中回答を保持したまま同フィールドだけを更新する。保存失敗時はcontrollerが純粋関数の返却snapshotを画面内に維持して通知する。スコア、称号、文章、猫、香り候補、版を変更しない。
 
 ## 8. 比較
 
@@ -327,6 +328,9 @@ ResultSnapshotの42件はsection-firstのhistorical copyを維持し、表示時
 - completedAtが古い方をbefore、新しい方をafterとする。
 - 同時刻ならresultIdの辞書順で安定化する。
 - 差はrawMean同士で計算し、表示時だけ0〜100相当へ変換・丸める。
+- S-007表示モデルは前回と今回の`rawMean`をそれぞれ既存の0〜100表示式で整数化し、差も同じ0〜100軸の符号付き整数として表示する。比較互換判定と差の正は`rawMean`のまま維持し、表示整数をドメイン判定へ戻さない。
+- 差表示は`{ signedValue, changeLabel }`相当の別フィールドへ分け、数値行と状態行を別DOMにする。差分DOMは94px固定右列の中央へ配置し、410px以下では前回→今回と差分の左右2列を維持する。整数表示では`±0`、小数表示を将来採用する場合は小数点以下2桁固定の`±0.00`とし、CSSの固定桁数字で位置をそろえる。
+- 比較条件は連結済み文字列ではなく、`questionCount`、`scaleVersion`、`questionVersion`、`scoringVersion`を利用者向けラベル付きの4項目へ投影する。
 - 互換結果と因子差分配列はdeep freezeし、生回答、表示整数、ResultSnapshot全体を返さない。
 - 「上がった／下がった」だけでなく、「回答時の状況でも変動する」と表示する。
 - S-007は保存履歴から両IDを再検証し、欠落・削除済み・破損・非互換では差を計算しない。ID不足の直接URLはS-006へ戻す。
@@ -360,6 +364,7 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 
 - `selectPresentation`はTitleProfileDefinitionとPresentationDefinitionSetだけを受け取る純粋関数とし、生回答、得点、因子band、猫色、DOM、Canvas、localStorage、ネットワークを受け取らない。
 - 結果モデルは`standard`に標準1件、`alternatives`に代替2件を分けて保持し、画面では標準、代替1、代替2の固定順で表示する。
+- パレットは外側アコーディオンにせず、通常結果では常時3候補を描画する。候補は`パレット1`、`パレット2`、`パレット3`の円形見本とし、選択中を外枠、ブランド緑の中央`✓`、`aria-pressed`で示す。色選択後もパレット領域を閉じず、開閉状態はResultSnapshotへ保存しない。
 - 利用者選択はpresentation stateとselectedPaletteIdだけを更新。
 - `resolvePaletteUsage`で主・副・差の3基調色を背景、表面、アクセント、文字、グラフへ決定的に展開し、コントラストと猫用の分離補助を確認する。
 - 不正パレットは標準へ戻す。
@@ -367,28 +372,43 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 
 ### 香り
 
-- `pause`、`reset`、`quiet-focus`の固定順で、各2件、合計6件を同時表示する。
+- `pause`、`reset`、`quiet-focus`の固定順で、各2件、合計6件を持つ。
+- `ココロアロマ`の初期状態は閉じる。閉じた状態でも固定3場面の代表素材画像を各1件表示し、外枠、淡い面、右向き矢印で押せる領域を示す。開く操作1回で矢印を90度回転し、3場面×各2候補の計6候補と共通注記を一括表示する。場面見出しは過剰な上余白を置かず、候補カードとのまとまりを保つ。場面ごとの内側開閉は持たない。アロマは因子開閉と相互排他で、因子を開くとアロマを閉じ、アロマを開くと開いている因子を閉じる。パレットはこの排他対象に含めない。
 - 共有は各場面の`shareFragranceId`を1件、合計3件へ要約する。
-- `fragrance-materials.csv`を版付き香り素材マスタ、`fragrance-material-examples.csv`を香調と素材IDの関連表として検証する。コンパイラが香調ごとの固定順`materialIds`へ結合し、runtimeは素材マスタから表示名を解決する。通常結果だけに「香りの素材例」として表示し、共有モデルから除外する。
+- `scenes.csv`の固定`icon_id`、`fragrances.csv`の8値`family_id`、`fragrance-material-examples.csv`の素材ID 1〜2件をcompilerで結合する。
+- selectorは素材IDから表示名を解決し、結果用6候補と共有カード用代表3件を生成する。共有カード画像と共有テキストの両方へ代表3件の素材名を含める。
+- 純粋監査は`FRAGRANCE_TITLE_MATERIAL_DUPLICATE`、`FRAGRANCE_TITLE_SET_DUPLICATE`、`FRAGRANCE_SCENE_FAMILY_DUPLICATE`、`FRAGRANCE_SHARE_TRIPLE_OVERUSED`、`FRAGRANCE_USAGE_OVER_LIMIT`、`FRAGRANCE_SCENE_REUSE_OVER_LIMIT`、`FRAGRANCE_SCENE_COPY_DUPLICATE`、`FRAGRANCE_PROHIBITED_COPY`、`FRAGRANCE_SHARE_COPY_OVERFLOW`の9安定コードを返す。
 - ユーザー状態を推測する入力・処理を持たない。
 - 植物・精油名は香り素材マスタの`displayName`だけに許可する。商品、ブランド、購入URL、適合推奨、量、滴数、濃度、配合、摂取、塗布、ディフューザー等の使用法、治療・改善・能力向上効果のデータを定義スキーマで禁止する。
+- S-003/S-004では固定3場面を縦に並べ、各2件の香調名、素材名1〜2件、説明を表示する。現在の心理状態や効果を示すものではなく、使用方法を案内しない共通注記を添える。T-007では各場面の共有代表1件を正式共有Canvasへ縦に接続する。
 
 ## 12. 共有カード
 
+通常結果画面は境界注意の後に単一の称号カードCTAを描画し、その後に「結果の根拠と見方」を描画する。共有画面では`拡大して見る`、`カードへ戻る`、`結果へ戻る`を共通の副ボタン階層で描画し、文字リンクだけの見た目にしない。
+
+T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareCardModel`でカードモデルと共有テキストを構成し、`renderShareCard`でPNG Blobを生成する。S-005は同じBlobのObject URLを`card`、`details`、`zoom`で再利用し、ルート離脱時に解放する。現行`card-template-v2`は承認済み`kokoro-wreath-v2.png`を使い、`kokoro-wreath-v1.png`はロールバック用に残す。
+
+画面内のObject URL表示に限ってCSPの`img-src`へ`blob:`を追加する。外部通信能力は追加せず、通常版の`connect-src 'none'`を維持する。正式カードには称号ラベルと称号を表示し、詳細な称号理由は表示しない。
+
 ### 12.1 生成
 
-1. ResultSnapshotと選択／標準PaletteDefinitionを検証。
-2. Q-007で確定した寸法のCanvasを作成。
-3. 日本語フォントの準備を待つ。
-4. 選択パレットを変更せず背景と装飾へ適用する。
-5. 猫と隣接背景の分離状態を評価し、必要なら明暗二重縁取り、影、ニュートラル背景プレートを決定的に適用する。
-6. 背景、称号、猫、レーダー、短文、モード、香調候補、注意、版を描画。
-7. 猫は同一オリジンの静的アセットだけを使い、再配色・トリミングをしない。
-8. PNG Blobへ変換。
-9. 共有テキストを別生成。
+1. ResultSnapshotと選択／標準PaletteDefinitionを検証する。
+2. `createShareCardModel`で1080×1800のdeep-freeze済みモデルを生成する。
+3. `renderShareCard`が`cardTemplateVersion`を検証し、履歴互換の`card-template-v1`は旧円形リース、現行`card-template-v2`は`kokoro-wreath-v2.png`の高解像度透過ラスタリースへ振り分ける。v2では白色・ニュートラル色の円形面や背面プレートを描かない。未対応版は画像を生成せず、共有画面の選択可能テキストへフォールバックする。対応版では1080×1800のCanvasを作成し、日本語フォントの準備を待つ。
+4. 選択パレットを変更せず背景へ適用し、副色由来の表面色を十分に白へ混ぜた淡い右上装飾へ適用する。右上装飾を暗色の面にはしない。
+5. 猫と隣接背景の分離状態を評価し、必要なら明暗二重縁取りまたは影を決定的に適用する。同じ64×64分析Canvasでalpha 32以上の最下行を求め、猫の`contain`配置へ写像する。分析失敗時は画像枠下端を安全な既定値とする。
+6. 背景と二重枠、中央ブランド、称号ラベルと称号、v2では淡い暖色円弧線と左右植物からなる補正版リース、透過猫、固定順5因子の棒、`ココロアロマ`の見出しと副題、透過素材画付き代表3件（場面、素材例、短い印象）、素材例と短い印象の間の可変装飾点、共通注記、注意、モード、アプリ版を描画する。リースの見える下端を猫の不透明下端より約8px下へ合わせて猫より先に描き、上部・下部の中央を開放する。装飾点、注記、版は隣接文字や枠線と重ねない。
+7. 猫と香り画はローカルの高解像度透過ラスタアセットだけを使い、SVGや完成カードをラスタライズせず、再配色・トリミング・白い円形カバーの追加をしない。
+8. PNG Blobへ変換し、S-005のプレビュー、Web Share、ダウンロードへ同じBlobを渡す。
+9. 共有テキストはブランド、モード、`称号：...`、称号副題、見出しなしの称号理由、固定順5因子、`ココロアロマ`の場面／香調／`香りの素材例：...`、標準注意書き、任意URLの順に保持する。生回答、`titleReflection`、内部版ID、`この称号になった理由`見出しは含めない。
 
 生回答、氏名、端末情報、公開結果URLを受け取る引数を設けない。
 同じResultSnapshot、猫アセット版、パレット版、カードテンプレート版からは同じ視認性補助を選び、共有前プレビューと完成PNGを一致させる。
+同一称号の3候補は独立したパレットとして検証し、同じ3色のprimary／secondary／accentを循環させただけの構成を許可しない。
+
+`APP_META.brand.shareUrl`は共有テキスト専用の任意設定である。空文字ではURLと余分な空行を生成せず、空白・資格情報を含まないHTTPS URLだけを受理して、標準注意書きの後へ空行1つを挟んで追加する。`publicOrigin`はデプロイメント情報であり、`shareUrl`の暗黙値にしない。URLは結果画面とカード画像を変更しない。
+
+猫は既存の1024×1024透過WebP、香りの素材画は短辺800px以上の透過PNG、リースは1254×1254の透過PNG、ブランドは`AppMeta.brand.cardIconPath`が指す512px PNGを読み込む。枠、紙調テクスチャ、棒、文字はCanvasへ直接描画する。完成カードや低解像度SVGをラスタライズした画像は制作素材として使わず、プレビューとダウンロードは同じ1080×1800 PNG Blobを使う。リースだけの読込失敗は非致命として他要素を描画する。因子の棒とアロマ枠は装飾色、数値と香調説明は全承認パレットの背景／表面に対して4.5:1以上となる同系濃色を使う。スコア0では色棒を描画せず、1〜100は表示値に比例した幅で描画する。
 
 ### 12.2 能力判定
 
@@ -399,22 +419,21 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 | テキストコピー | Clipboard API | コピー |
 | すべて不可 | 常に可能なDOMテキスト | 手動選択 |
 
-共有キャンセルはエラー扱いせず元画面へ戻る。Blob URLは使用後に解放する。
+`detectShareCapabilities`で能力を個別判定し、`sharePng`、`downloadPng`、`copyShareText`を利用可能な時だけ提示する。返却状態は`shared`、`cancelled`、`downloaded`、`copied`、`unavailable`、`failed`である。共有キャンセルはエラー扱いせず画面を維持する。Blob URLは使用後または共有ルート離脱時に解放する。
 
 ### 12.3 安定コード
 
-- SHARE_IMAGE_GENERATION_FAILED
+- SHARE_CARD_MODEL_INVALID
+- SHARE_CARD_VISIBILITY_INVALID
+- SHARE_CANVAS_UNAVAILABLE
 - SHARE_FONT_UNAVAILABLE
-- SHARE_FILE_UNSUPPORTED
-- SHARE_CANCELLED
-- CLIPBOARD_DENIED
-- DOWNLOAD_UNAVAILABLE
+- SHARE_PNG_UNAVAILABLE
 
 ## 13. 削除
 
 - 途中回答破棄: 対象diagnosisIdのProgressRecordだけを削除。
 - 履歴個別削除: `deleteResultSnapshot`でresultId一致の有効な1件だけを削除し、確認を要求。途中回答、非対象結果、破損結果を保持する。
-- 全削除: `deleteAllData`でprogressByDiagnosisとresultsを空にし、確認を要求。
+- 全削除: `deleteAllData`でprogressByDiagnosisとresultsを空にし、成功時だけcontrollerの途中回答・live結果・保存状態通知も初期化する。確認を要求し、取消・失敗では双方を維持する。
 - 削除後の復元機能は提供しない。
 - 保存API失敗時は削除完了と表示せず、再試行または安全な戻り先を示す。
 
@@ -459,6 +478,7 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 ## 15. セキュリティとプライバシー
 
 - HTTPSと同一オリジン静的アセット。
+- Pages向け成果物の組立時に`app/js/config/app-meta.js`の`appVersion`を唯一の正典として読み、HTMLのCSS・entry module・manifest・ブランド画像、全ES Modules import、runtime画像参照、manifest iconへ同じ`?v=<appVersion>`を付ける。character manifestの保存値は変更せず、画像要求時だけ同じ版を付ける。成果物監査は欠落・旧版混在を拒否するため、以後はAppMetaの版更新だけでキャッシュバスターも同期する。
 - 秘密情報・APIキーを配布物へ置かない。
 - ユーザー入力をHTMLとして挿入しない。
 - CSPで可能な範囲の`default-src 'self'`等を適用する。正確なポリシーは実装時に全資産を列挙して決める。

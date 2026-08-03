@@ -200,11 +200,20 @@ export function answerCurrent(progress, answer, { definition, now, meta } = {}) 
   }
   const ids = activeQuestionIds(state, questionIds);
   validateCurrentAnswer(answer, ids[state.currentIndex]);
+  const wasAnswered = Object.hasOwn(state.answers, answer.questionId);
 
   const answered = cloneProgress(state, {
     answers: { ...state.answers, [answer.questionId]: answer.value },
     updatedAt: now,
   });
+  const isReviewingCompletedDetail = state.mode === "detail50" &&
+    Object.keys(state.answers).length === ids.length;
+  if (isReviewingCompletedDetail && wasAnswered && state.currentIndex + 1 < ids.length) {
+    return deepFreeze({
+      kind: "in-progress",
+      progress: cloneProgress(answered, { currentIndex: state.currentIndex + 1 }),
+    });
+  }
   const nextIndex = nextUnansweredIndex(answered, questionIds, state.currentIndex + 1);
   if (nextIndex !== null) {
     return deepFreeze({ kind: "in-progress", progress: cloneProgress(answered, { currentIndex: nextIndex }) });
@@ -213,9 +222,34 @@ export function answerCurrent(progress, answer, { definition, now, meta } = {}) 
     return deepFreeze({ kind: "preview-choice-required", progress: cloneProgress(answered, { currentIndex: 19 }) });
   }
   return deepFreeze({
-    kind: "detail-complete",
+    kind: "detail-review-required",
     progress: cloneProgress(answered, { currentIndex: 49 }),
-    answers: { ...answered.answers },
+  });
+}
+
+function isDetailReviewState(state, questionIds) {
+  return state.mode === "detail50" &&
+    state.currentIndex === questionIds.detailIds.length - 1 &&
+    Object.keys(state.answers).length === questionIds.detailIds.length;
+}
+
+export function isDetailReviewProgress(progress, { definition, meta } = {}) {
+  const questionIds = resolveQuestionIds(definition);
+  const state = validateProgressRecord(progress, { definition, meta });
+  return isDetailReviewState(state, questionIds);
+}
+
+export function completeDetail(progress, { definition, meta, now }) {
+  const questionIds = resolveQuestionIds(definition);
+  const state = validateProgressRecord(progress, { definition, meta });
+  if (!isStrictIsoTimestamp(now) || !isDetailReviewState(state, questionIds)) {
+    fail(RESPONSE_ERROR.INVALID_TRANSITION);
+  }
+  const completed = cloneProgress(state, { updatedAt: now });
+  return deepFreeze({
+    kind: "detail-complete",
+    progress: completed,
+    answers: { ...completed.answers },
   });
 }
 

@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.8 |
+| 設計版 | 0.10 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-28 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.13 |
+| 更新日 | 2026-08-02 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.35 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -20,11 +20,11 @@
 
 ### 1.1 CSVコンテンツ作成基盤（移行中）
 
-人手編集正典は`content/source/`の用途別・版付きCSVである。診断は`diagnoses/ipip-ja-50-definition-v1`、設問は`questions/ipip-ja-50-question-set-v1`、称号は`titles/title-rule-v1`、結果文は`result-texts/result-text-v1`、根拠は`evidence/result-evidence-v1`に置く。release manifest/historyは`releases/`、Q-006の別承認台帳は`approvals/result-content-approvals.csv`である。
+人手編集正典は`content/source/`の用途別・版付きCSVである。診断は`diagnoses/ipip-ja-50-definition-v1`、設問は`questions/ipip-ja-50-question-set-v1`、称号は`titles/title-rule-v1`、現行結果文は`result-texts/result-text-v2`、履歴互換用の旧結果文は`result-texts/result-text-v1`、根拠定義は`evidence/result-evidence-v1`に置く。release manifest/historyは`releases/`、Q-006の別承認台帳は`approvals/result-content-approvals.csv`である。
 
-Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。初期データは50問、固定20問、51称号、237結果文、6根拠である。E-0は`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`であり、Q-013は未作成、release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
+Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。`result-text-v1`は237件の不変な履歴互換版である。現行`result-text-v2`は基本237件にTR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済みのv1→v2修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の`ResultEvidenceDefinition`は固定6件であり、両者を同じ件数として扱わない。Q-013は`presentation-v2`の候補、compiler、監査、確認資料まで作成済みで、P-0の153パレットと用途色B（背景84%・表面90%）、P-1の3場面・29香調・25素材・29素材関連、P-2〜P-6の全51称号に属する称号別選択は承認済みである。用途色濃度は`palette-usage-mappings.csv`の2列で版管理し、基調色とruntimeロジックから分離する。approved production release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
 
-現在は既存ES Modulesがruntime compatibility authorityで、`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
+現在はES Modulesがruntime compatibility authorityであり、Q-013は承認済みCSVから生成した`presentation-v2`を使用する。`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。JSON runtime activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
 
 ## 2. 静的定義
 
@@ -34,7 +34,7 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つの
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
-| appVersion | string | ○ | `mvp-0.1.0`等 |
+| appVersion | string | ○ | `mvp-1.0.0`等 |
 | storageSchemaVersion | integer | ○ | 端末保存スキーマ版 |
 | cardTemplateVersion | string | ○ | 共有カード描画版 |
 | characterManifestVersion | string | ○ | 猫アセット対応版 |
@@ -44,6 +44,10 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つの
 | deploymentMode | `normal` \| `beta` | ○ | 通常版とベータ版を分離 |
 | betaAggregationEnabled | boolean | ○ | 通常版は必ずfalse |
 | betaApiBaseUrl | string \| null | ○ | ベータ版だけ公開API URL。秘密を含めない |
+
+#### ブランド共有設定
+
+`AppMeta.brand.publicOrigin`はデプロイメント用の公開originであり、共有文へ暗黙に転用しない。`AppMeta.brand.shareUrl`は共有文専用の任意設定で、既定値は空文字とする。空文字はURL行も余分な空行も生成しない。有効値は空白・資格情報を含まないHTTPS URLだけであり、結果画面とカード画像には投影しない。
 
 #### DiagnosticVersionRegistry
 
@@ -55,7 +59,7 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つの
 | scaleVersion | string | ○ | `ipip-ja-50-v1` |
 | questionVersion | string | ○ | `ipip-ja-50-question-set-v1` |
 | scoringVersion | string | ○ | `ipip-ja-50-scoring-v1` |
-| resultTextVersion | string | ○ | `result-text-v1` |
+| resultTextVersion | string | ○ | `result-text-v2` |
 | titleRuleVersion | string | ○ | `title-rule-v1` |
 
 ### 2.2 DiagnosticDefinition
@@ -135,7 +139,7 @@ exact schemaとして未知フィールド、空文字、空の`supportedClaims`
 | id | string | ○ | 固定テンプレートID |
 | version | string | ○ | 結果文版 |
 | appliesTo | object | ○ | 因子、方向、区分、組合せ条件 |
-| section | enum | ○ | titleSubtitle/titleReason/observation/strength/tradeoff/work/relationship/stress/question/action |
+| section | enum | ○ | titleSubtitle/titleReason/titleReflection/observation/strength/tradeoff/work/relationship/stress/question/action |
 | claimKind | enum | ○ | scaleObservation/entertainmentReason/reflectionPrompt/actionHint |
 | text | string | ○ | 表示文 |
 | evidenceRefs | string[] | ○ | 根拠対応表の参照ID |
@@ -143,9 +147,9 @@ exact schemaとして未知フィールド、空文字、空の`supportedClaims`
 
 `appliesTo`で許可する条件キーは`mode`、`questionCount`、`factorId`、`band`、`titleId`だけとする。`mode`と`questionCount`を併記する場合は`preview20`と20、`detail50`と50を対応させる。20問を明示した定義は`previewAllowed = true`を必須とし、未知フィールド、重複ID、不正な根拠参照、到達不能条件を拒否する。
 
-`claimKind`は節ごとに固定する。`titleSubtitle`と`titleReason`は`entertainmentReason`、`observation`は`scaleObservation`、`strength`から`question`までは`reflectionPrompt`、`action`は`actionHint`とする。20問で許可する節は`titleSubtitle`、`titleReason`、`observation`だけである。
+`claimKind`は節ごとに固定する。`titleSubtitle`と`titleReason`は`entertainmentReason`、`titleReflection`と`strength`から`question`までは`reflectionPrompt`、`observation`は`scaleObservation`、`action`は`actionHint`とする。20問で許可する節は`titleSubtitle`、`titleReason`、`titleReflection`の固定順1件目、`observation`である。
 
-`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件のliteral定義として実装済みである。`initial reviewed copy`として実装・独立レビューされた後、根拠台帳の全18 gateがapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。ただしapproved releaseは未選択で、Q-012正式release、Q-013 production data、`result-text-v2`の`titleReflection`も未完了である。
+`result-text-v1`は、51称号×2節のtitle定義102件と、5因子×3 bandのpreview観察15件・detail 8節120件を合わせたfactor定義135件、合計237件の不変なliteral定義として履歴互換のため保持する。根拠台帳の全18 gateはapprovedとなり、Q-006のContent Approvalを2026-07-28に完了した。現行`result-text-v2`は基本237件＋`titleReflection`153件＝390件であり、基本文面には承認済み修正27件を含む。Q-013の`presentation-v2` ES Modules runtimeは生成・接続済みである。approved JSON release未選択とQ-012正式releaseは引き続き別の未完了条件である。
 
 ### 2.7 TitleProfileDefinition
 
@@ -199,7 +203,7 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 | baseColors | object | ○ | primary/secondary/accentの大文字6桁HEX |
 | description | string | ○ | 象徴的な提案である説明 |
 
-用途色への展開、コントラスト、猫用の明暗二重縁取り、影、ニュートラル背景プレートは版付き`PaletteUsageMappingDefinition`で扱う。同系色の猫を理由にPaletteDefinitionを無効化せず、猫の再配色や候補パレットの除外を行わない。
+用途色への展開、コントラスト、猫用の明暗二重縁取りと影は版付き`PaletteUsageMappingDefinition`で扱う。同系色の猫を理由にPaletteDefinitionを無効化せず、猫の再配色や候補パレットの除外を行わない。内部の`neutral-plate`判定値は互換のため維持するが、現行`card-template-v2`では白色・ニュートラル色の円形面や矩形プレートを描かず、影による分離へ変換する。
 
 ### 2.10 FragranceSuggestion
 
@@ -208,14 +212,15 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 | fragranceId | string | ○ | 一意ID |
 | version | string | ○ | 演出定義版 |
 | sceneId | `pause` \| `reset` \| `quiet-focus` | ○ | 利用場面 |
+| familyId | `citrus` \| `floral` \| `herbal` \| `woody` \| `resinous` \| `earthy` \| `spicy` \| `fresh` | ○ | 主となる香り系統 |
 | accordLabel | string | ○ | 香調名 |
 | description | string | ○ | 雰囲気の説明 |
-| materialIds | string[1..3] | schema 2のみ○ | `FragranceMaterialDefinition`への固定順参照 |
+| materialIds | string[1..2] | schema 2のみ○ | `FragranceMaterialDefinition`への固定順参照 |
 | disclaimerId | string | ○ | 共通注意書き |
 
 商品、用量、滴数、配合、摂取、塗布、ディフューザー使用法の項目は持たない。
 
-人手編集では香り素材を`fragrance-materials.csv`へ独立マスタ化し、`fragrance-material-examples.csv`は香調と素材IDの関連だけを持つ。コンパイラが1〜3件の`materialIds`へ結合する。名称は香り素材マスタだけに保持し、商品、使用法、効果のデータを持たない。
+人手編集では香り素材を`fragrance-materials.csv`へ独立マスタ化し、`fragrance-material-examples.csv`は香調と素材IDの関連だけを持つ。コンパイラが1〜2件の`materialIds`へ結合する。名称は香り素材マスタだけに保持し、商品、使用法、効果のデータを持たない。
 
 #### 2.10.1 FragranceMaterialDefinition
 
@@ -238,13 +243,13 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 | displayOrder | integer | ○ | 香調ごとに1から連続 |
 | status | enum | ○ | `draft`／`reviewed`／`approved`／`rejected` |
 
-同じ香調に1〜3件だけを許可し、素材重複、参照切れ、版不一致、順序欠損を拒否する。このauthoring relation自体はruntime JSONへ残さず、固定順の`materialIds`へ投影する。
+同じ香調に1〜2件だけを許可し、素材重複、参照切れ、版不一致、順序欠損を拒否する。このauthoring relation自体はruntime JSONへ残さず、固定順の`materialIds`へ投影する。
 
 ### 2.11 PresentationDefinitionSet
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
-| schemaVersion | `1` \| `2` | ○ | 現行runtimeは1。素材例を有効化する`presentation-v2`は2 |
+| schemaVersion | `1` \| `2` | ○ | 現行runtimeは素材例を有効化した`presentation-v2`の2。1は履歴互換 |
 | presentationDefinitionVersion | string | ○ | 色・香り定義版 |
 | scenes | SceneDefinition[3] | ○ | pause/reset/quiet-focus固定順 |
 | palettes | PaletteDefinition[] | ○ | 版付きパレットライブラリ |
@@ -254,7 +259,9 @@ runtime正典は`app/js/data/character-manifest.js`の`CharacterManifest`であ�
 
 sceneの固定対応は`pause = ひと息つきたい`、`reset = 気持ちを切り替えたい`、`quiet-focus = 静かに取り組みたい`とする。
 
-schema 1の`presentation-v1`は素材例を持たない現行互換契約とし、schema 2の`presentation-v2`は`fragranceMaterials`と全`FragranceSuggestion.materialIds`を必須とする。Q-013のapproved release選択前に現行runtimeへschema 2を混在させない。
+各`SceneDefinition`は`sceneId`、`label`、`iconId`を持つ。`iconId`は固定順に`aroma-pause`、`aroma-reset`、`aroma-quiet-focus`とし、scene IDとの1対1対応を検証する。
+
+schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし、schema 2の`presentation-v2`は`fragranceMaterials`と全`FragranceSuggestion.materialIds`を必須とする。`presentation-v2`はP-0〜P-6と対象行の承認後にCSVから決定的生成したES Modules runtimeとして有効化済みである。正式JSON releaseは引き続き未選択であり、両者を同一視しない。
 
 #### TitlePresentationSelector
 
@@ -266,7 +273,9 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 
 標準パレットは`TitleProfileDefinition.defaultPaletteId`だけを正典とし、selectorへ重複保持しない。各FragranceSceneSelectorは同じ場面の候補2件と、その候補内の共有代表1件を持つ。未知フィールド、ID重複、版不一致、参照切れ、個数・順序違反、生回答・得点・猫色による条件を拒否する。
 
-### 2.12 TitleReflectionCommentDefinition（`result-text-v2`予定）
+`selectPresentation()`は香り素材マスタを一度だけ参照して、6候補と共有代表へ`materialNames`を解決し、各場面へ`iconId`を付与する。共有カード用`summarizeFragrances()`は固定3場面について`sceneId`、`iconId`、`label`、`materialNames`、`accordLabel`だけを返す。共有テキスト生成にはこの素材名を投影しない。
+
+### 2.12 TitleReflectionCommentDefinition（`result-text-v2`）
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
@@ -277,9 +286,9 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 | text | string | ○ | 任意の参考情報として表示する振り返りヒント |
 | status | enum | ○ | `draft`／`reviewed`／`approved`／`rejected` |
 
-人手編集正典は結果文版配下の`title-reflection-comments.csv`とする。コンパイラは`section = titleReflection`、`claimKind = reflectionPrompt`へ投影し、1件目だけ`previewAllowed = true`とする。`result-text-v1`の237件へ混在させず、`result-text-v2`の版単位で検証・承認する。
+人手編集正典は結果文版配下の`title-reflection-comments.csv`とする。コンパイラは`section = titleReflection`、`claimKind = reflectionPrompt`へ投影し、1件目だけ`previewAllowed = true`とする。`result-text-v1`の237件へ混在させず、`result-text-v2`の版単位で検証・承認する。TR-0〜TR-4はすべてユーザー承認済みで、51称号それぞれに固定順3件、合計153件を持つ。
 
-20問は固定順1件目、50問は1〜3件をRenderedResultTextとしてResultSnapshotへ複製する。後のCSV変更で保存済み履歴を再生成しない。共有モデルへは投影しない。
+20問は固定順1件目、50問は1〜3件をRenderedResultTextとしてResultSnapshotへ複製する。完全な3件組を定義から取得できない場合、composerは当該称号の振り返り3件をすべて省略し、称号・因子結果を維持した7件／42件のフォールバックを生成する。ResultSnapshotは`result-text-v2`について振り返り0件または完全な1件／3件だけを受理し、部分保存・順序違い・重複を拒否する。後のCSV変更で保存済み履歴を再生成しない。共有候補抽出境界へは投影しない。
 
 ## 3. 端末内ストレージ
 
@@ -351,9 +360,13 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 - `ProgressRecord` は `response-state` が exact schema、固定設問順、`VersionTuple`、ISO日時、回答値 `1..5` を検証してから遷移・保存する。`currentIndex` は保存時に `0..49` とする。
 - `continueHidden` は `mode: detail50`、`currentIndex: 20`、`previewDecision: continueHidden` にだけ遷移し、20問のスコア、称号、キャラクター、結果、共有モデルを生成しない。
 - `showPreview` 後の継続は `mode: detail50`、`currentIndex: 20`、`previewDecision: showPreview` として記録する。表示済みの事実を `continueHidden` へ変更しない。
+- 20問の`showPreview`で作る`ResultSnapshot.resultId`は、新規UUIDを追加発行せず、その時点の`ProgressRecord.progressId`と同じ値にする。履歴から追加30問を継続できるのは、`preview20`、`showPreview`、回答数20、VersionTuple一致に加えて、`progress.progressId === snapshot.resultId`を満たす場合だけである。
+- 50問の`detail50`完答では、新しい`resultId`を発行し、20問snapshotと別の履歴として保存する。旧保存値で`progressId`と`resultId`が異なるものを、回答数・時刻・版から推測して再リンクしない。開始画面からの通常再開は維持し、履歴結果からの継続だけを安全側で無効にする。
 - `StorageEnvelope` は schema 1 の正確な外側構造を検証する。対象診断の進捗だけを現在の定義・版で再検証し、save/discard時は無関係進捗・結果も基本schemaで検証して壊れたレコードだけを除去する。
 - `progressId` と `resultId` はRFC 4122 UUID形状、日時は実在するISO 8601日時とする。時刻生成は呼出側で行い、保存・遷移関数は現在時刻を暗黙に生成しない。
 - 将来 `schemaVersion`、壊れたJSON、壊れた対象進捗、版不一致は保存値を上書きしない。保存または削除の失敗はメモリ上の診断進行を破棄しない。
+
+この一対一対応のためのフィールド追加・既存フィールドの意味変更・`StorageEnvelope.schemaVersion`更新は行わない。`progressId`を20問snapshotの既存`resultId`として再利用するだけである。
 
 ### 3.5 ResultSnapshot
 
@@ -373,13 +386,13 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 | selectedPaletteId | string | ○ | 未選択時も標準ID |
 | cardTemplateVersion | string | ○ | 再生成用 |
 
-`app/js/domain/result-snapshot.js`の`createResultSnapshot`が上記13フィールドのexact schemaを生成する。`resultId`は`crypto.randomUUID()`で生成するRFC 4122 UUID形状とする。`answers`、`diagnosisId`、`resultModel` wrapper、結果定義、DOM・Canvas状態は持たない。`renderedTexts`は結果文更新後も診断時の表示文と根拠参照を維持するため深く複製する。snapshot全体はdeep freezeされ、入力の後続変更から隔離される。
+`app/js/domain/result-snapshot.js`の`createResultSnapshot`が上記13フィールドのexact schemaを生成する。`resultId`はRFC 4122 UUID形状で、20問`showPreview`では対応する`ProgressRecord.progressId`を使用し、50問`detail50`では新しいUUIDを使用する。`answers`、`diagnosisId`、`resultModel` wrapper、結果定義、DOM・Canvas状態は持たない。`renderedTexts`は結果文更新後も診断時の表示文と根拠参照を維持するため深く複製する。`result-text-v1`はpreview 7件／detail 42件、`result-text-v2`は通常preview 8件／detail 45件を保持し、完全な振り返り組を得られない場合だけpreview 7件／detail 42件のゼロ-reflection fallbackを許可する。部分的な振り返り組は無効である。snapshot全体はdeep freezeされ、入力の後続変更から隔離される。
 
 `VersionTuple.characterManifestVersion`はmanifest全体の版、`characterAssetVersion`は選択された1体の`CharacterManifestEntry.assetVersion`であり、互いに独立して保存する。
 
 `app/js/domain/result-snapshot.js`の`validateResultSnapshot`と`app/js/infrastructure/progress-storage.js`の`saveResultSnapshot`は、この13フィールドschemaを唯一の結果履歴契約として実装済みである。旧`diagnosisId`付きgeneric result schemaと旧section集合は置き換えた。保存APIは`storage`、`snapshot`、`diagnosisId`、`definition`、`meta`、`now`を受け、対象ProgressRecordを現行定義・版で検証してから保存する。破損・版不一致の対象進捗は上書き・削除しない。
 
-同ファイルの`loadResultHistory`は各ResultSnapshotを再検証し、破損レコードだけを除外して`completedAt`実時刻の降順、同時刻は`resultId`辞書順で返す。`deleteResultSnapshot`は確認後に指定IDと一致する最初の有効ResultSnapshotだけを削除し、途中回答と他の有効・破損結果を保持する。`deleteAllData`は確認後に途中回答と結果履歴を空にする。S-003/S-004、S-006/S-007画面統合、Q-012画像表示、回答完答からの本番caller、live S-002接続は実装済みである。Q-014の中断再開・結果段階表示・簡潔な履歴UIをT-008Aで追加する。
+同ファイルの`loadResultHistory`は各ResultSnapshotを再検証し、破損レコードだけを除外して`completedAt`実時刻の降順、同時刻は`resultId`辞書順で返す。`updateResultPaletteSelection`は対象の有効ResultSnapshot 1件だけの`selectedPaletteId`を標準1＋代替2の許可集合内で更新し、途中回答と他の有効・破損・将来結果を保持する。`deleteResultSnapshot`は確認後に指定IDと一致する最初の有効ResultSnapshotだけを削除し、途中回答と他の有効・破損結果を保持する。`deleteAllData`は確認後に途中回答と結果履歴を空にする。画面controllerは全削除成功時だけ`currentProgress`、`liveResult`、保存状態通知を同時に初期化し、開始画面の再開操作を消す。S-003/S-004、S-006/S-007画面統合、Q-012画像表示、回答完答からの本番caller、live S-002、Q-013の3パレット選択・保存とココロアロマ6候補表示、Q-014の中断再開・結果段階表示・簡潔な履歴UIは実装済みである。
 
 ### 3.6 FactorResult
 
@@ -405,7 +418,17 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 | text | string | ○ | 診断時に表示した文面 |
 | evidenceRefs | string[] | ○ | 診断時の根拠参照ID |
 
-`ResultTextDefinition`から`id`、`version`、`section`、`text`、`evidenceRefs`だけを投影するexact 5フィールドschemaである。`claimKind`、`appliesTo`、`previewAllowed`、未知フィールド、生回答を含めない。`composeResultTexts`とsnapshot生成時に深く複製し、各recordと`evidenceRefs`をdeep freezeする。
+`ResultTextDefinition`から`id`、`version`、`section`、`text`、`evidenceRefs`だけを投影するexact 5フィールドschemaである。`claimKind`、`appliesTo`、`previewAllowed`、未知フィールド、生回答を含めない。`composeResultTexts`とsnapshot生成時に深く複製し、各recordと`evidenceRefs`をdeep freezeする。T-007の共有境界`selectShareableResultTexts`は`section === "titleReflection"`を除外した候補だけを返し、共有カードモデルと共有テキストの双方でこの境界を維持する。
+
+### 3.8 ShareCardModel
+
+`createShareCardModel`は検証済みResultSnapshot、選択済みパレット、猫manifest entry、固定3場面の共有代表を受け取り、1080×1800のPNG描画と共有テキストに必要な値だけを持つdeep-freeze済みモデルを返す。
+
+- カード画像は中央ブランド、称号ラベルと称号、補正版の透過ラスタリース、透過猫、固定順5因子、`ココロアロマ`の見出しと副題、20問／50問のモード、アプリ版、注意書き、透過素材画付き代表3件を持つ。v2のリースは淡い暖色の円弧線と左右植物で上部・下部の中央を開放し、猫より先に合成する。白色・ニュートラル色の円形面や矩形プレートを置かず、顔・胴体・しっぽを隠さない。ブランドの画面用`iconPath`とカード用高解像度`cardIconPath`を分離し、共有モデルは後者を描画へ渡す。詳細な称号理由と内部版IDは画像へ表示しない。
+- 各アロマは場面名、香調名、`materialNames`、短い印象を持ち、画像では透過素材画とともに3件を縦に描画する。
+- 共有テキストは同じモデルから、ブランド、モード、`称号：...`、称号副題、見出しなしの称号理由、固定順5因子、`ココロアロマ`の場面／香調／素材例、標準注意書き、任意URLの順で生成する。生回答、`titleReflection`、内部版ID、`この称号になった理由`見出しは含めない。
+- `shareUrl`は共有テキストにだけ投影する。空文字ならURLブロックを省略し、有効HTTPS URLだけを注意書きの後の1空行を挟んで追加する。`publicOrigin`、`resultId`、端末情報、公開結果URL、未知フィールドをモデルへ投影しない。
+- 共有物は保存しない。ResultSnapshotだけを永続的な再生成元とし、PNG BlobとObject URLは共有画面の生存期間に限って保持・解放する。プレビュー、Web Share、ダウンロードは同じPNG Blobを再利用する。rendererは`card-template-v1`の旧円形リースと`card-template-v2`の補正版透過ラスタリースを版で振り分ける。v2は64×64の分析Canvasで猫の不透明下端比率を求め、`contain`配置へ写像してリースの見える下端を約8px下へ揃える。分析またはリース読込が失敗してもカード本文とテキスト共有を維持し、未対応版では誤った画像を生成せずテキスト共有へフォールバックする。
 
 ## 4. 比較互換性
 
@@ -430,7 +453,7 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 | 静的定義 | リリース時 | 新しい版を追加 | 利用中の版は削除しない | Gitで復元 |
 | 途中回答 | 新規開始時 | 回答ごと | 完答・破棄・全削除 | 提供しない |
 | 結果履歴 | 完答時 | パレット選択だけ更新可 | 個別・全削除 | 提供しない |
-| 共有物 | 明示操作時 | 再生成 | 生成物をアプリ内保持しない | 履歴から再生成 |
+| 共有物 | 明示操作時 | 再生成 | 共有物は保存しない | 履歴から再生成 |
 | ベータ集計値 | ベータ版の完答・カード利用時 | 原子的な加算だけ | Q-011に従い管理者が一括処理 | DBバックアップからの復旧。個人単位復元は非該当 |
 
 ## 6. 保存エラーと破損

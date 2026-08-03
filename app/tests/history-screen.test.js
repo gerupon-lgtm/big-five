@@ -188,10 +188,21 @@ test("T-008A F-013 exposes deletion and versions only through history management
   const toggle = collectElements(host).find(
     ({ className }) => className === "history-management-toggle",
   );
+  const headerAction = collectElements(host)
+    .find(({ className }) => className === "app-header-action");
   const menu = collectElements(host).find(
     ({ className }) => className === "history-management-modal",
   );
-  assert.equal(toggle.textContent, "…");
+  assert.equal(headerAction.tagName, "a");
+  assert.equal(headerAction.textContent, "トップ画面へ");
+  assert.equal(headerAction.attributes.get("href"), "#/start");
+  assert.equal(
+    collectElements(host).filter(({ textContent }) => textContent === "開始画面へ戻る").length,
+    0,
+  );
+  assert.match(collectText(host), /HISTORY/);
+  assert.match(collectText(host), /診断結果の履歴/);
+  assert.equal(toggle.textContent, "履歴削除");
   assert.equal(toggle.attributes.get("aria-label"), "履歴の管理");
   assert.equal(toggle.attributes.get("aria-expanded"), "false");
   assert.equal(toggle.attributes.get("aria-controls"), "history-management-modal");
@@ -201,18 +212,44 @@ test("T-008A F-013 exposes deletion and versions only through history management
 
   assert.equal(toggle.attributes.get("aria-expanded"), "true");
   assert.equal(menu.open, true);
-  assert.match(collectText(menu), /この結果を削除/);
+  assert.match(collectText(menu), /この履歴を削除/);
   assert.match(collectText(menu), /端末内データをすべて削除/);
-  assert.match(collectText(menu), /診断時のバージョン/);
+  assert.match(collectText(menu), /診断時の情報を見る/);
   assert.match(collectText(menu), /mvp-0\.1\.0/);
 
   const deleteOne = collectElements(menu).find(
     ({ tagName, textContent }) =>
-      tagName === "button" && textContent.endsWith("この結果を削除"),
+      tagName === "button" && textContent.endsWith("この履歴を削除"),
   );
   deleteOne.dispatch("click");
-  clickButton(menu, "端末内データをすべて削除");
+  assert.deepEqual(deleted, []);
+  assert.match(collectText(menu), /この診断結果1件を削除します/);
+  const confirmation = collectElements(menu).find(
+    ({ className }) => className === "history-delete-confirmation",
+  );
+  const managementList = collectElements(menu).find(
+    ({ className }) => className === "history-management-list",
+  );
+  assert.equal(
+    menu.attributes.get("aria-describedby"),
+    "history-delete-confirmation-message",
+  );
+  const cancelEvent = menu.dispatch("cancel");
+  assert.equal(cancelEvent.defaultPrevented, true);
+  assert.equal(menu.open, true);
+  assert.equal(confirmation.hidden, true);
+  assert.equal(managementList.hidden, false);
+  assert.equal(menu.attributes.get("aria-describedby"), undefined);
+  assert.equal(host.ownerDocument.activeElement, deleteOne);
+
+  deleteOne.dispatch("click");
+  clickButton(menu, "削除する");
   assert.deepEqual(deleted, [target.resultId]);
+
+  clickButton(menu, "端末内データをすべて削除");
+  assert.equal(deleteAllCalls, 0);
+  assert.match(collectText(menu), /途中回答と診断結果をすべて削除します/);
+  clickButton(menu, "すべて削除する");
   assert.equal(deleteAllCalls, 1);
 });
 
@@ -236,9 +273,16 @@ test("T-008A F-013 opens the management modal with focus on its close control", 
   const close = collectElements(modal).find(
     ({ className }) => className === "history-management-close",
   );
+  const heading = collectElements(modal).find(
+    ({ className }) => className === "history-management-heading",
+  );
   assert.equal(modal.open, true);
   assert.equal(launcher.attributes.get("aria-expanded"), "true");
   assert.equal(modal.attributes.get("aria-label"), "履歴の管理");
+  assert.deepEqual(
+    heading.children.map(({ className }) => className),
+    ["history-management-title", "history-management-close"],
+  );
   assert.equal(host.ownerDocument.activeElement, close);
 });
 
@@ -360,8 +404,8 @@ test("T-008A F-013 fallback without showModal isolates background and wraps focu
   const appHeader = collectElements(host).find(
     ({ className }) => className === "app-header",
   );
-  const backLink = collectElements(host).find(
-    ({ className }) => className === "text-link",
+  const screenHeading = collectElements(host).find(
+    ({ className }) => className === "screen-heading",
   );
   modal.showModal = undefined;
   launcher.dispatch("click");
@@ -375,7 +419,7 @@ test("T-008A F-013 fallback without showModal isolates background and wraps focu
   );
   assert.equal(appHeader.inert, true);
   assert.equal(appHeader.getAttribute("aria-hidden"), "true");
-  assert.equal(backLink.inert, true);
+  assert.equal(screenHeading.inert, true);
   assert.equal(launcher.inert, true);
 
   deleteAll.focus();
@@ -390,7 +434,7 @@ test("T-008A F-013 fallback without showModal isolates background and wraps focu
   modal.dispatch("click");
   assert.equal(appHeader.inert, false);
   assert.equal(appHeader.getAttribute("aria-hidden"), null);
-  assert.equal(backLink.inert, false);
+  assert.equal(screenHeading.inert, false);
   assert.equal(launcher.inert, false);
   assert.equal(host.ownerDocument.activeElement, launcher);
 });
@@ -424,7 +468,7 @@ test("T-008A F-013 populated fallback traps focus only among reachable controls"
   );
   const hiddenDelete = collectElements(modal).find(
     ({ tagName, textContent }) =>
-      tagName === "button" && textContent.endsWith("この結果を削除"),
+      tagName === "button" && textContent.endsWith("この履歴を削除"),
   );
   assert.equal(modal.className, "history-management-modal history-management-modal--fallback");
   assert.equal(modal.getAttribute("data-presentation"), "fallback-modal");
@@ -432,10 +476,14 @@ test("T-008A F-013 populated fallback traps focus only among reachable controls"
   close.focus();
   const backward = modal.dispatch("keydown", { key: "Tab", shiftKey: true });
   assert.equal(backward.defaultPrevented, true);
-  assert.equal(host.ownerDocument.activeElement, summary);
+  const deleteAll = collectElements(modal).find(
+    ({ tagName, textContent }) =>
+      tagName === "button" && textContent === "端末内データをすべて削除",
+  );
+  assert.equal(host.ownerDocument.activeElement, deleteAll);
   assert.notEqual(host.ownerDocument.activeElement, hiddenDelete);
 
-  summary.focus();
+  deleteAll.focus();
   const forward = modal.dispatch("keydown", { key: "Tab" });
   assert.equal(forward.defaultPrevented, true);
   assert.equal(host.ownerDocument.activeElement, close);
@@ -458,6 +506,10 @@ test("T-008A F-013 history fallback supplies a full-viewport surface and bounded
   assert.match(
     css,
     /\.history-management-modal--fallback \.history-management-content\s*\{/,
+  );
+  assert.match(
+    css,
+    /\.history-management-list\[hidden\],[^}]*\.history-delete-confirmation\[hidden\]\s*\{[^}]*display:\s*none;/s,
   );
 });
 
@@ -516,6 +568,8 @@ test("T-008A F-013 keeps all-data deletion reachable for empty history", () => {
   assert.ok(toggle);
   toggle.dispatch("click");
   clickButton(host, "端末内データをすべて削除");
+  assert.equal(deleteAllCalls, 0);
+  clickButton(host, "すべて削除する");
   assert.equal(deleteAllCalls, 1);
 });
 
@@ -550,6 +604,12 @@ test("T-008A F-010 selects at most two compatible cards and compares only on exp
   );
 
   clickButton(host, "結果を比較する");
+  assert.ok(collectElements(host).some(
+    ({ className }) => className === "history-comparison-bar history-comparison-bar--selecting",
+  ));
+  assert.ok(collectElements(host).some(
+    ({ className }) => className === "history-comparison-actions",
+  ));
   let toggles = collectElements(host).filter(
     ({ className }) => className === "history-card-select-toggle",
   );

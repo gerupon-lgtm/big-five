@@ -74,3 +74,21 @@ test("T-005 S-002 resolves the canonical answer hash without a server-side route
     didFallback: false,
   });
 });
+
+test("T-007 S-005 resolves one canonical share result route", () => {
+  assert.deepEqual(
+    resolveRoute("#/share?resultId=00000000-0000-4000-8000-000000000001"),
+    {
+      id: "share",
+      canonicalHash: "#/share?resultId=00000000-0000-4000-8000-000000000001",
+      didFallback: false,
+      resultId: "00000000-0000-4000-8000-000000000001",
+    },
+  );
+  assert.deepEqual(resolveRoute("#/share"), {
+    id: "share",
+    canonicalHash: "#/share",
+    didFallback: false,
+    resultId: null,
+  });
+});

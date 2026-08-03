@@ -1,14 +1,26 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { FactorResultTextDefinitions } from "../js/data/factor-result-text-definitions.js";
 import { ResultTextDefinitions } from "../js/data/result-text-definitions.js";
+import { TitleResultTextDefinitions } from "../js/data/title-result-text-definitions.js";
 import { composeResultTexts } from "../js/domain/result-composer.js";
 
 const TITLE_ID = "title-pair-intellectImagination-high--extraversion-low";
+const TITLE_REFLECTION_IDS = [
+  "title-reflection-pair-intellectImagination-high--extraversion-low-1",
+  "title-reflection-pair-intellectImagination-high--extraversion-low-2",
+  "title-reflection-pair-intellectImagination-high--extraversion-low-3",
+];
+const V1_DEFINITIONS = Object.freeze([
+  ...TitleResultTextDefinitions,
+  ...FactorResultTextDefinitions,
+]);
 
 const PREVIEW_IDS = [
   "title-pair-intellectImagination-high--extraversion-low-subtitle",
   "title-pair-intellectImagination-high--extraversion-low-reason",
+  TITLE_REFLECTION_IDS[0],
   "preview20-intellectImagination-high-observation",
   "preview20-conscientiousness-middle-observation",
   "preview20-extraversion-low-observation",
@@ -19,6 +31,7 @@ const PREVIEW_IDS = [
 const DETAIL_IDS = [
   "title-pair-intellectImagination-high--extraversion-low-subtitle",
   "title-pair-intellectImagination-high--extraversion-low-reason",
+  ...TITLE_REFLECTION_IDS,
   "detail50-intellectImagination-high-observation",
   "detail50-conscientiousness-middle-observation",
   "detail50-extraversion-low-observation",
@@ -92,7 +105,7 @@ function cloneDefinition(definition, version = definition.version) {
   };
 }
 
-function previewDefinitions(version = "result-text-v1") {
+function previewDefinitions(version = "result-text-v2") {
   return PREVIEW_IDS.map((id) => {
     const definition = ResultTextDefinitions.find((candidate) => candidate.id === id);
     assert.ok(definition, `missing test fixture definition: ${id}`);
@@ -103,7 +116,7 @@ function previewDefinitions(version = "result-text-v1") {
 function previewInput(overrides = {}) {
   return {
     definitions: ResultTextDefinitions,
-    version: "result-text-v1",
+    version: "result-text-v2",
     mode: "preview20",
     questionCount: 20,
     factors: makeFactors(4),
@@ -115,7 +128,7 @@ function previewInput(overrides = {}) {
 function detailInput(overrides = {}) {
   return {
     definitions: ResultTextDefinitions,
-    version: "result-text-v1",
+    version: "result-text-v2",
     mode: "detail50",
     questionCount: 50,
     factors: makeFactors(10),
@@ -138,11 +151,12 @@ function assertCompositionInvalid(input) {
 test("T-005 F-006 preview composes the production title and observations in canonical order", () => {
   const rendered = composeResultTexts(previewInput());
 
-  assert.equal(rendered.length, 7);
+  assert.equal(rendered.length, 8);
   assert.deepEqual(rendered.map(({ id }) => id), PREVIEW_IDS);
   assert.deepEqual(rendered.map(({ section }) => section), [
     "titleSubtitle",
     "titleReason",
+    "titleReflection",
     "observation",
     "observation",
     "observation",
@@ -151,18 +165,22 @@ test("T-005 F-006 preview composes the production title and observations in cano
   ]);
   assert.deepEqual(rendered[0], {
     id: "title-pair-intellectImagination-high--extraversion-low-subtitle",
-    version: "result-text-v1",
+    version: "result-text-v2",
     section: "titleSubtitle",
     text: "静かな環境で考えを深める思索派",
     evidenceRefs: ["evidence-title-rule-v1"],
   });
 });
 
-test("T-005 F-006 detail composes all forty factor records in section then factor order", () => {
+test("T-005 F-006 detail composes three title reflections before forty factor records", () => {
   const rendered = composeResultTexts(detailInput());
 
-  assert.equal(rendered.length, 42);
+  assert.equal(rendered.length, 45);
   assert.deepEqual(rendered.map(({ id }) => id), DETAIL_IDS);
+  assert.deepEqual(
+    rendered.filter(({ section }) => section === "titleReflection").map(({ id }) => id),
+    TITLE_REFLECTION_IDS,
+  );
   assert.equal(rendered.filter(({ section }) => section === "action").length, 5);
 });
 
@@ -212,15 +230,65 @@ test("T-005 F-006 renders only snapshot fields and deeply freezes copied output"
   assert.deepEqual(rendered[0].evidenceRefs, renderedEvidence);
 });
 
-test("T-005 F-006 accepts a coherent requested definition version instead of hard-coding v1", () => {
-  const version = "result-text-v2";
-  const rendered = composeResultTexts(previewInput({
-    definitions: previewDefinitions(version),
+test("T-005 F-006 preserves the historical v1 composition without reflections", () => {
+  const version = "result-text-v1";
+  const preview = composeResultTexts(previewInput({
+    definitions: V1_DEFINITIONS,
+    version,
+  }));
+  const detail = composeResultTexts(detailInput({
+    definitions: V1_DEFINITIONS,
     version,
   }));
 
-  assert.deepEqual(rendered.map(({ id }) => id), PREVIEW_IDS);
-  assert.equal(rendered.every((record) => record.version === version), true);
+  assert.deepEqual(preview.map(({ id }) => id), PREVIEW_IDS.filter(
+    (id) => !TITLE_REFLECTION_IDS.includes(id),
+  ));
+  assert.deepEqual(detail.map(({ id }) => id), DETAIL_IDS.filter(
+    (id) => !TITLE_REFLECTION_IDS.includes(id),
+  ));
+  assert.equal(preview.length, 7);
+  assert.equal(detail.length, 42);
+  assert.equal(
+    [...preview, ...detail].every((record) => record.version === version),
+    true,
+  );
+});
+
+test("T-005 T-008A incomplete title-reflection groups fail closed without hiding other content", () => {
+  for (const definitions of [
+    ResultTextDefinitions.filter(({ id }) => id !== TITLE_REFLECTION_IDS[2]),
+    ResultTextDefinitions.filter(({ id }) => !TITLE_REFLECTION_IDS.slice(1).includes(id)),
+  ]) {
+    const preview = composeResultTexts(previewInput({ definitions }));
+    const detail = composeResultTexts(detailInput({ definitions }));
+
+    assert.equal(preview.length, 7);
+    assert.equal(detail.length, 42);
+    assert.equal(preview.some(({ section }) => section === "titleReflection"), false);
+    assert.equal(detail.some(({ section }) => section === "titleReflection"), false);
+    assert.deepEqual(
+      preview.map(({ id }) => id),
+      PREVIEW_IDS.filter((id) => !TITLE_REFLECTION_IDS.includes(id)),
+    );
+    assert.deepEqual(
+      detail.map(({ id }) => id),
+      DETAIL_IDS.filter((id) => !TITLE_REFLECTION_IDS.includes(id)),
+    );
+  }
+});
+
+test("T-005 T-008A reordered title-reflection groups fail closed deterministically", () => {
+  const definitions = [...ResultTextDefinitions];
+  const indexes = TITLE_REFLECTION_IDS.map((id) =>
+    definitions.findIndex((definition) => definition.id === id));
+  [definitions[indexes[0]], definitions[indexes[1]]] =
+    [definitions[indexes[1]], definitions[indexes[0]]];
+
+  const detail = composeResultTexts(detailInput({ definitions }));
+
+  assert.equal(detail.length, 42);
+  assert.equal(detail.some(({ section }) => section === "titleReflection"), false);
 });
 
 test("T-005 F-006 rejects unknown top-level fields and mode/count mismatches", () => {
@@ -281,11 +349,11 @@ test("T-005 F-006 rejects unknown titles and missing or duplicate matched record
 
 test("T-005 F-006 rejects mismatched and mixed definition versions", () => {
   assertCompositionInvalid(previewInput({
-    definitions: previewDefinitions("result-text-v2"),
+    definitions: previewDefinitions("result-text-v1"),
   }));
 
   const mixed = previewDefinitions();
-  mixed[0].version = "result-text-v2";
+  mixed[0].version = "result-text-v1";
   assertCompositionInvalid(previewInput({ definitions: mixed }));
 });
 

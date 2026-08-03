@@ -7,6 +7,7 @@ const TITLE_SECTIONS = ["titleSubtitle", "titleReason"];
 const SECTION_ORDER = [
   "titleSubtitle",
   "titleReason",
+  "titleReflection",
   "observation",
   "strength",
   "tradeoff",
@@ -16,7 +17,7 @@ const SECTION_ORDER = [
   "question",
   "action",
 ];
-const DETAIL_FACTOR_SECTIONS = SECTION_ORDER.slice(TITLE_SECTIONS.length);
+const DETAIL_FACTOR_SECTIONS = SECTION_ORDER.slice(3);
 
 function invalidComposition() {
   throw new TypeError("RESULT_COMPOSITION_INVALID");
@@ -58,6 +59,22 @@ function toRendered({ id, version, section, text, evidenceRefs }) {
   });
 }
 
+function selectCompleteTitleReflections(definitions, version, titleId, mode) {
+  const prefix = `title-reflection-${titleId.slice("title-".length)}-`;
+  const reflections = definitions.filter((definition) =>
+    definition.version === version &&
+    definition.section === "titleReflection" &&
+    definition.appliesTo.titleId === titleId);
+  const expectedIds = [1, 2, 3].map((order) => `${prefix}${order}`);
+  if (
+    reflections.length !== expectedIds.length ||
+    !reflections.every(({ id }, index) => id === expectedIds[index])
+  ) {
+    return [];
+  }
+  return mode === "preview20" ? reflections.slice(0, 1) : reflections;
+}
+
 function compose(input) {
   if (!isExactRecord(input, INPUT_FIELDS)) invalidComposition();
   const { definitions, version, mode, questionCount, factors, titleId } = input;
@@ -88,10 +105,17 @@ function compose(input) {
     version,
     context: titleContext,
   });
+  const titleRecords = titleSelection.filter(({ section }) => section !== "titleReflection");
   const titleBySection = indexSelectionBySection(
-    titleSelection,
+    titleRecords,
     TITLE_SECTIONS,
     ({ appliesTo }) => appliesTo.titleId === titleId,
+  );
+  const titleReflections = selectCompleteTitleReflections(
+    definitions,
+    version,
+    titleId,
+    mode,
   );
 
   const factorSections = expectedFactorSections(mode);
@@ -117,6 +141,7 @@ function compose(input) {
   }
 
   const rendered = TITLE_SECTIONS.map((section) => toRendered(titleBySection.get(section)));
+  rendered.push(...titleReflections.map(toRendered));
   for (const section of factorSections) {
     for (const factorId of FACTOR_ORDER) {
       rendered.push(toRendered(factorSelections.get(factorId).get(section)));

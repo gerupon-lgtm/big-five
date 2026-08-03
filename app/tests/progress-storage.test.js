@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { appMeta } from "../js/config/app-meta.js";
 import { DiagnosticDefinition, QuestionDefinitions } from "../js/data/diagnostic-definition.js";
-import { answerCurrent, choosePreviewExit, createProgressRecord } from "../js/domain/response-state.js";
+import { answerCurrent, choosePreviewExit, completeDetail, createProgressRecord } from "../js/domain/response-state.js";
 import { createResultSnapshot } from "../js/domain/result-snapshot.js";
 import { scoreDiagnostic } from "../js/domain/scoring.js";
 import {
@@ -17,6 +17,7 @@ import {
   saveResultSnapshot,
   saveProgress,
   transitionAndSave,
+  updateResultPaletteSelection,
 } from "../js/infrastructure/progress-storage.js";
 
 const NOW = "2026-07-25T00:00:00.000Z";
@@ -70,7 +71,7 @@ function validResult(resultId = "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c003", mode = "
       boundaryFlags: [],
       renderedTexts: sections.map((section, index) => ({
         id: index === 0 ? "title-retained-subtitle" : index === 1 ? "title-retained-reason" : `${mode}-${factorIds[(index - 2) % 5]}-middle-${section}`,
-        version: "result-text-v1",
+        version: progress().versionTuple.resultTextVersion,
         section,
         text: `text-${index}`,
         evidenceRefs: [`evidence-${index}`],
@@ -78,7 +79,7 @@ function validResult(resultId = "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c003", mode = "
     },
     characterAssetVersion: "character-retained-asset-v1",
     selectedPaletteId: "palette-retained",
-    cardTemplateVersion: "card-template-v1",
+    cardTemplateVersion: progress().versionTuple.cardTemplateVersion,
   });
 }
 
@@ -178,7 +179,7 @@ test("T-004 F-013 reports deletion failure and retains the target progress", () 
   });
 });
 
-test("T-004 F-004 persists every transition including terminal completion without losing in-memory state on save failure", () => {
+test("T-004 F-004 persists the fifty-answer review before explicit completion without losing in-memory state on save failure", () => {
   const storage = memoryStorage();
   const first = answerAndSave({
     storage, progress: progress(), answer: { questionId: DiagnosticDefinition.previewQuestionIds[0], value: 2 },
@@ -196,11 +197,18 @@ test("T-004 F-004 persists every transition including terminal completion withou
   for (let index = 20; index < 50; index += 1) {
     const event = answerCurrent(state, { questionId: DiagnosticDefinition.detailQuestionIds[index], value: 3 }, { definition: DiagnosticDefinition, meta: appMeta, now: `2026-07-25T01:${String(index - 20).padStart(2, "0")}:00.000Z` });
     state = event.progress;
-    if (event.kind === "detail-complete") {
+    if (event.kind === "detail-review-required") {
       const persisted = transitionAndSave({ storage, transition: event, definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T01:30:00.000Z" });
       assert.equal(persisted.persistence.status, "ok");
       assert.equal(persisted.progress.currentIndex, 49);
       assert.equal(Object.keys(JSON.parse(storage.read()).progressByDiagnosis[DiagnosticDefinition.diagnosisId].answers).length, 50);
+      const completed = completeDetail(persisted.progress, {
+        definition: DiagnosticDefinition,
+        meta: appMeta,
+        now: "2026-07-25T01:31:00.000Z",
+      });
+      assert.equal(completed.kind, "detail-complete");
+      assert.equal(Object.keys(completed.answers).length, 50);
     }
   }
 
@@ -334,6 +342,104 @@ test("T-005 T-006 leaves a future envelope untouched and reports unsafe detail c
     cleanup: { status: "error", code: "STORAGE_DELETE_FAILED" },
   });
   assert.equal(writes, 0);
+});
+
+test("T-005 F-018 updates one result palette without rewriting surrounding records", () => {
+  const untouched = validResult(
+    "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c030",
+    "detail50",
+    "2026-07-24T00:00:00.000Z",
+  );
+  const target = validResult(
+    "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c031",
+    "detail50",
+    "2026-07-25T00:00:00.000Z",
+  );
+  const futureRecord = {
+    futureSchema: 2,
+    resultId: "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c032",
+    payload: { retained: true },
+  };
+  const initialEnvelope = {
+    schemaVersion: 1,
+    updatedAt: NOW,
+    progressByDiagnosis: {
+      "unrelated-diagnosis": { ...progress(), diagnosisId: "unrelated-diagnosis" },
+    },
+    results: [untouched, futureRecord, target],
+  };
+  const storage = memoryStorage(JSON.stringify(initialEnvelope));
+
+  const outcome = updateResultPaletteSelection({
+    storage,
+    resultId: target.resultId,
+    paletteId: "palette-alternative-1",
+    allowedPaletteIds: [
+      "palette-retained",
+      "palette-alternative-1",
+      "palette-alternative-2",
+    ],
+    now: "2026-07-25T00:01:00.000Z",
+  });
+  const persisted = JSON.parse(storage.read());
+
+  assert.equal(outcome.status, "ok");
+  assert.equal(outcome.snapshot.selectedPaletteId, "palette-alternative-1");
+  assert.deepEqual(persisted.results[0], initialEnvelope.results[0]);
+  assert.deepEqual(persisted.results[1], initialEnvelope.results[1]);
+  assert.deepEqual(
+    {
+      ...persisted.results[2],
+      selectedPaletteId: target.selectedPaletteId,
+    },
+    target,
+  );
+  assert.deepEqual(
+    persisted.progressByDiagnosis,
+    initialEnvelope.progressByDiagnosis,
+  );
+  assert.equal(persisted.updatedAt, "2026-07-25T00:01:00.000Z");
+});
+
+test("T-005 F-018 refuses invalid or absent palette targets without writing", () => {
+  const target = validResult(
+    "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c033",
+  );
+  const raw = JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: NOW,
+    progressByDiagnosis: {},
+    results: [target],
+  });
+
+  for (const input of [
+    {
+      resultId: target.resultId,
+      paletteId: "palette-unknown",
+      allowedPaletteIds: [
+        "palette-retained",
+        "palette-alternative-1",
+        "palette-alternative-2",
+      ],
+    },
+    {
+      resultId: "7b6f0a80-7b0a-4e9d-9f15-0fe3ad12c034",
+      paletteId: "palette-alternative-1",
+      allowedPaletteIds: [
+        "palette-retained",
+        "palette-alternative-1",
+        "palette-alternative-2",
+      ],
+    },
+  ]) {
+    const storage = memoryStorage(raw);
+    assert.equal(updateResultPaletteSelection({
+      storage,
+      now: "2026-07-25T00:01:00.000Z",
+      ...input,
+    }).status, "error");
+    assert.equal(storage.read(), raw);
+  }
 });
 
 test("T-005 T-006 reports both initial detail write and safe cleanup write failures", () => {

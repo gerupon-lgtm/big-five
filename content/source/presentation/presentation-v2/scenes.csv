@@ -1,0 +1,4 @@
+scene_id,presentation_definition_version,display_order,label,icon_id,status
+pause,presentation-v2,1,ひと息つきたい,aroma-pause,approved
+reset,presentation-v2,2,気持ちを切り替えたい,aroma-reset,approved
+quiet-focus,presentation-v2,3,静かに取り組みたい,aroma-quiet-focus,approved

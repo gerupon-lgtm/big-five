@@ -1,4 +1,5 @@
 import { FACTOR_ORDER } from "../data/factor-order.js";
+import { displayScoreFromRational } from "./factor-result.js";
 
 const DIRECTIONS = new Set(["positive", "negative"]);
 
@@ -32,14 +33,13 @@ function factorResult(factorId, questions, answers) {
   const keyedSum = keyedAnswers.reduce((sum, answer) => sum + answer, 0);
   const itemCount = keyedAnswers.length;
   const rawMean = keyedSum / itemCount;
-  const displayNumerator = (keyedSum - keyedAnswers.length) * 25;
   const band = rawMean >= 3.5 ? "high" : rawMean <= 2.5 ? "low" : "middle";
   const squaredSum = keyedAnswers.reduce((sum, answer) => sum + (answer ** 2), 0);
   const variance = ((itemCount * squaredSum) - (keyedSum ** 2)) / (itemCount ** 2);
   return Object.freeze({
     factorId,
     rawMean,
-    displayScore: Math.floor(((displayNumerator * 2) + keyedAnswers.length) / (keyedAnswers.length * 2)),
+    displayScore: displayScoreFromRational(keyedSum, itemCount),
     band,
     salience: Math.abs(rawMean - 3),
     directionalSupportCount: band === "high"

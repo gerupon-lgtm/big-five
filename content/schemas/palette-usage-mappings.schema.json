@@ -3,9 +3,22 @@
   "fileName": "palette-usage-mappings.csv",
   "columns": [
     { "name": "palette_id", "type": "id", "required": true },
+    { "name": "presentation_definition_version", "type": "version", "required": true },
     { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
-    { "name": "usage", "type": "enum", "values": ["primary", "secondary", "accent"], "required": true },
-    { "name": "color", "type": "text", "required": true },
+    { "name": "background_source", "type": "enum", "values": ["primary", "secondary", "accent"], "required": true },
+    { "name": "background_mix_with", "type": "enum", "values": ["none", "white", "black"], "required": true },
+    { "name": "background_mix_percent", "type": "integer", "minimum": 0, "required": true },
+    { "name": "surface_source", "type": "enum", "values": ["primary", "secondary", "accent"], "required": true },
+    { "name": "surface_mix_with", "type": "enum", "values": ["none", "white", "black"], "required": true },
+    { "name": "surface_mix_percent", "type": "integer", "minimum": 0, "required": true },
+    { "name": "accent_source", "type": "enum", "values": ["primary", "secondary", "accent"], "required": true },
+    { "name": "accent_mix_with", "type": "enum", "values": ["none", "white", "black"], "required": true },
+    { "name": "accent_mix_percent", "type": "integer", "minimum": 0, "required": true },
+    { "name": "chart_source", "type": "enum", "values": ["primary", "secondary", "accent"], "required": true },
+    { "name": "chart_mix_with", "type": "enum", "values": ["none", "white", "black"], "required": true },
+    { "name": "chart_mix_percent", "type": "integer", "minimum": 0, "required": true },
+    { "name": "text_candidate_1", "type": "text", "required": true },
+    { "name": "text_candidate_2", "type": "text", "required": true },
     { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
   ]
 }
