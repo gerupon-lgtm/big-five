@@ -2,12 +2,12 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.18 |
+| 設計版 | 0.19 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-08-03 |
-| 要件正典 | 要件定義書v1.39 |
+| 要件正典 | 要件定義書v1.40 |
 | 初期リリース | `mvp-0.1.0` |
-| 現在リリース | `mvp-1.0.0` |
+| 現在リリース | `mvp-1.0.1` |
 
 ## 1. トレーサビリティ表（正典）
 
@@ -26,7 +26,7 @@
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007, T-008C | `card-template-v2`は承認済み`kokoro-wreath-v2.png`を猫の背面へ合成する。透明素材、画像拡大、プレビュー／Web Share／保存の同一PNG Blobを回帰確認。結果画面の因子領域へ同操作を追加しない |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007, T-008C | ブランド→モード→称号→副題→見出しなし理由→固定順因子→アロマ→注意→任意URLの共有文、単一CTA、同一PNG Blob、コピー／選択可能テキストの代替を回帰確認 |
 | F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A, T-008C | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。T-008Cでは20問preview終了時にResultSnapshotを残して対応ProgressRecordだけを削除する。今回の共有追補におけるF-013の範囲も、この完了状態の確定だけであり、Blob／Object URLの寿命はF-013へ分類しない |
-| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007 | `mvp-1.0.0`を正典とし、開始画面・共有物を含む版契約へ反映済み |
+| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011 | `mvp-1.0.1`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A, T-008C | 保存失敗時の中断・preview終了、live結果維持、ID不一致の履歴継続を安全側で無効化、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
@@ -65,7 +65,7 @@
 | T-008 | 全画面統合・レスポンシブ・a11y | F-001〜F-016, F-018 | 主要フローを360px・PC・キーボードで完結 |
 | T-009 | 説明・プライバシー・CSP | F-001, F-002, F-007, F-014, F-015 | 限界、非送信、削除、版、CSPを確認可能 |
 | T-010 | ベータ匿名集計API・DB・事前説明 | F-017 | OCIへ匿名集計し、二重送信・通信失敗でも診断結果を維持 |
-| T-011 | GitHub Pages CI/CD・運用 | F-014, NF-01, NF-04, NF-06 | テスト成功時だけPagesへ配信、切戻し可能。2026-07-28のQA一時プレビューは`codex/big-five-q006`から現行ES Modules runtimeだけを公開し、approved releaseの選択、JSON runtimeの有効化、T-011完了を意味しない |
+| T-011 | GitHub Pages CI/CD・運用 | F-014, NF-01, NF-04, NF-06 | テスト成功時だけPagesへ配信し、AppMetaのアプリ版からCSS・ES Modules・画像・manifestのキャッシュバスターを自動生成。QA一時プレビューはapproved releaseの選択、JSON runtimeの有効化、T-011完了を意味しない |
 | T-012 | MVP受入・ブラウザ検証 | 全機能/NF | 要件17.1と主要異常系を検証し記録 |
 
 ## 3. フェーズ

@@ -28,6 +28,21 @@ test("T-005 F-016 requests only the selected character path once", async () => {
   assert.deepEqual(result, { status: "loaded", image, alt: entry.alt });
 });
 
+test("T-011 NF-01 appends the canonical app version without changing the manifest path", async () => {
+  const requested = [];
+  const result = await loadCharacterImage(entry, {
+    cacheVersion: "mvp-1.0.1",
+    async decodeImage(path) {
+      requested.push(path);
+      return { path };
+    },
+  });
+
+  assert.equal(result.status, "loaded");
+  assert.deepEqual(requested, [`${entry.imagePath}?v=mvp-1.0.1`]);
+  assert.equal(entry.imagePath.includes("?"), false);
+});
+
 test("T-005 F-015 preserves approved alt on one failed decode", async () => {
   const requested = [];
 
@@ -78,4 +93,22 @@ test("T-005 F-016 rejects an invalid decoder", async () => {
       message: "CHARACTER_DECODER_INVALID",
     },
   );
+});
+
+test("T-011 NF-01 rejects an invalid cache version before decoding", async () => {
+  let decodeCalls = 0;
+  await assert.rejects(
+    loadCharacterImage(entry, {
+      cacheVersion: "mvp-1.0.1?stale=true",
+      async decodeImage() {
+        decodeCalls += 1;
+        return {};
+      },
+    }),
+    {
+      name: "TypeError",
+      message: "CHARACTER_CACHE_VERSION_INVALID",
+    },
+  );
+  assert.equal(decodeCalls, 0);
 });

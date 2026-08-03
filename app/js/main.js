@@ -183,6 +183,10 @@ export function startApp({
   let pendingInternalHashChange = null;
   const effectiveDecodeImage = decodeImage ??
     createBrowserImageDecoder(windowObject);
+  const loadVersionedCharacterImage = (entry, options) => loadCharacterImage(
+    entry,
+    { ...options, cacheVersion: appMeta.appVersion },
+  );
   const baseObserveViewport = observeViewport ??
     createViewportObserver(windowObject);
   let activeViewportCleanups = [];
@@ -377,7 +381,7 @@ export function startApp({
         return resolveCharacterEntry(validatedCharacterManifest, characterId);
       },
       decodeImage: effectiveDecodeImage,
-      loadCharacterImage,
+      loadCharacterImage: loadVersionedCharacterImage,
       observeViewport: effectiveObserveViewport,
     });
   }
@@ -772,7 +776,7 @@ export function startApp({
       ),
       characterEntry,
       decodeImage: effectiveDecodeImage,
-      loadCharacterImage,
+      loadCharacterImage: loadVersionedCharacterImage,
       observeViewport: effectiveObserveViewport,
       historyDetail,
       historyPreviewInProgress: historyDetail && previewProgress !== null,

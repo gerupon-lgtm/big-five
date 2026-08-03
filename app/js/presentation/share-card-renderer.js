@@ -2,6 +2,7 @@ import {
   chooseCharacterTreatment,
   collectOpaqueEdgePixels,
 } from "../domain/share-card-visibility.js";
+import { isAppVersion } from "../domain/version-model.js";
 
 const FACTOR_COLORS = Object.freeze([
   "#EF6471",
@@ -733,6 +734,17 @@ async function loadOptionalImage(path, dependencies) {
   }
 }
 
+function cacheVersionedCharacterPath(path, appVersion) {
+  if (
+    typeof path !== "string" ||
+    path.includes("?") ||
+    !isAppVersion(appVersion)
+  ) {
+    throw new TypeError("SHARE_CHARACTER_CACHE_VERSION_INVALID");
+  }
+  return `${path}?v=${encodeURIComponent(appVersion)}`;
+}
+
 export async function renderShareCard(model, dependencies) {
   if (
     !["card-template-v1", "card-template-v2"].includes(
@@ -771,7 +783,10 @@ export async function renderShareCard(model, dependencies) {
   let character = null;
   if (model.character) {
     try {
-      const image = await dependencies.loadImage(model.character.path);
+      const image = await dependencies.loadImage(cacheVersionedCharacterPath(
+        model.character.path,
+        model.versions.appVersion,
+      ));
       const analysis = analyzeCharacter(image, model.character, {
         ...dependencies,
         backgroundHex: model.palette.background,

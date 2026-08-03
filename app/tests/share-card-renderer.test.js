@@ -11,6 +11,10 @@ import {
 } from "../js/domain/palette-usage.js";
 import { renderShareCard } from "../js/presentation/share-card-renderer.js";
 
+function isCharacterPath(path) {
+  return typeof path === "string" && /\.webp(?:\?|$)/.test(path);
+}
+
 function makeModel({
   character = {
   path: "./assets/characters/cat.webp",
@@ -20,7 +24,7 @@ function makeModel({
   },
   titleReason = "五つの因子を見渡した結果です。",
   factorScores = [75, 60, 50, 40, 25],
-  appVersion = "mvp-1.0.0",
+  appVersion = "mvp-1.0.1",
   cardTemplateVersion = "card-template-v2",
   modeLabel = "50問 詳細結果",
   disclaimer = "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
@@ -166,7 +170,7 @@ function recordingDependencies({
   };
   const loadImage = async (path) => {
     operations.push(["loadImage", path]);
-    if (failCharacter && path.endsWith(".webp")) throw new Error("cat missing");
+    if (failCharacter && isCharacterPath(path)) throw new Error("cat missing");
     if (failWreath && path.endsWith("kokoro-wreath-v2.png")) {
       throw new Error("wreath missing");
     }
@@ -219,7 +223,7 @@ test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and
   assert.ok(texts.includes("～Big Five 自己理解支援ツール～"));
   assert.ok(texts.includes("香りをイメージするための素材例です"));
   assert.ok(texts.includes("これは性格の優劣や心理学上の正式なタイプを示すものではありません。"));
-  assert.ok(texts.includes("mvp-1.0.0"));
+  assert.ok(texts.includes("mvp-1.0.1"));
   assert.equal(texts.some((text) =>
     text.includes("card-template-v2") ||
     text.includes("presentation-v2") ||
@@ -237,7 +241,10 @@ test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and
   const finalCatDraw = operations.find((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
-    operation[2].endsWith(".webp"));
+    isCharacterPath(operation[2]));
+  assert.ok(operations.some((operation) =>
+    operation[0] === "loadImage" &&
+    operation[1] === "./assets/characters/cat.webp?v=mvp-1.0.1"));
   assert.deepEqual(finalCatDraw.slice(3), [225, 330, 630, 630]);
   assert.equal(operations.some((operation) =>
     operation[0] === "loadImage" &&
@@ -307,7 +314,7 @@ test("T-007 F-011 composites the approved v2 wreath asset behind the cat", async
   const catDrawIndex = operations.findIndex((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
-    operation[2].endsWith(".webp"));
+    isCharacterPath(operation[2]));
   assert.ok(wreathDrawIndex >= 0);
   assert.ok(wreathDrawIndex < catDrawIndex);
 });
@@ -346,7 +353,7 @@ test("T-007 F-015 keeps the title card usable when the optional wreath asset fai
   assert.ok(operations.some((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
-    operation[2].endsWith(".webp")));
+    isCharacterPath(operation[2])));
   assert.ok(operations.some((operation) =>
     operation[0] === "fillText" &&
     operation[1] === "main" &&
@@ -393,7 +400,7 @@ test("T-008C F-011 renders only the approved open raster wreath for v2", async (
   const firstCharacterDraw = operations.findIndex((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
-    operation[2].endsWith(".webp"));
+    isCharacterPath(operation[2]));
   assert.ok(operations.indexOf(wreathDraw) < firstCharacterDraw);
 
   const backdropArc = operations.findIndex((operation) =>
@@ -435,7 +442,7 @@ test("T-007 F-011 fills aroma whitespace without overlapping footer copy", async
   const version = operations.find((operation) =>
     operation[0] === "fillText"
     && operation[1] === "main"
-    && operation[2] === "mvp-1.0.0");
+    && operation[2] === "mvp-1.0.1");
   assert.equal(aromaNote[4], 1649);
   assert.equal(version[4], 1756);
 });
@@ -465,7 +472,7 @@ test("T-007 F-011 separates the preview note, two-line disclaimer, mode, and ver
   assert.equal(textPositions.get(disclaimer.split("\n")[0]), 1670);
   assert.equal(textPositions.get(disclaimer.split("\n")[1]), 1690);
   assert.equal(textPositions.get("20問 簡易プレビュー"), 1728);
-  assert.equal(textPositions.get("mvp-1.0.0"), 1756);
+  assert.equal(textPositions.get("mvp-1.0.1"), 1756);
 });
 
 test("T-007 F-015 preserves a text-complete card when the cat fails", async () => {
@@ -477,7 +484,7 @@ test("T-007 F-015 preserves a text-complete card when the cat fails", async () =
   assert.equal(operations.some((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
-    operation[2].endsWith(".webp")), false);
+    isCharacterPath(operation[2])), false);
   assert.ok(operations.some((operation) =>
     operation[0] === "fillText" &&
     operation[2] === "五つの風を見渡す観測者"));
@@ -561,7 +568,7 @@ test("T-007 F-016 uses cat shadow separation without adding a white backdrop", a
   const catDraws = operations.filter((operation) =>
     operation[0] === "drawImage" &&
     operation[1] === "main" &&
-    operation[2].endsWith(".webp"));
+    isCharacterPath(operation[2]));
   const legacyPlateIndex = operations.findIndex((operation) =>
     operation[0] === "fillRect" &&
     operation[1] === "main" &&

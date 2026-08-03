@@ -11,6 +11,8 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 
+import { isAppVersion } from "../../app/js/domain/version-model.js";
+
 const REQUIRED_FILES = new Set([
   ".nojekyll",
   "assets/brand/kokoro-parea-icon-192.png",
@@ -130,7 +132,7 @@ function addNoIndex(html) {
   );
 }
 
-async function copyTree({ source, destination, extension }) {
+async function copyTree({ source, destination, extension, transform = null }) {
   const rootInfo = await lstat(source)
     .catch(() => { throw qaError("QA_PREVIEW_SOURCE_INVALID"); });
   if (!rootInfo.isDirectory() || rootInfo.isSymbolicLink()) {
@@ -146,12 +148,95 @@ async function copyTree({ source, destination, extension }) {
     if (info.isSymbolicLink()) throw qaError("QA_PREVIEW_SOURCE_INVALID");
     if (info.isDirectory()) {
       await mkdir(destinationPath, { recursive: true });
-      await copyTree({ source: sourcePath, destination: destinationPath, extension });
+      await copyTree({
+        source: sourcePath,
+        destination: destinationPath,
+        extension,
+        transform,
+      });
     } else if (info.isFile() && path.extname(entry.name) === extension) {
-      await cp(sourcePath, destinationPath, { force: false });
+      if (transform) {
+        await writeFile(
+          destinationPath,
+          transform(await readFile(sourcePath, "utf8")),
+          "utf8",
+        );
+      } else {
+        await cp(sourcePath, destinationPath, { force: false });
+      }
     } else {
       throw qaError("QA_PREVIEW_SOURCE_INVALID");
     }
+  }
+}
+
+function extractAppVersion(source) {
+  const matches = [...source.matchAll(/\bappVersion\s*:\s*["']([^"']+)["']/g)];
+  if (matches.length !== 1 || !isAppVersion(matches[0][1])) {
+    throw qaError("QA_PREVIEW_SOURCE_INVALID");
+  }
+  return matches[0][1];
+}
+
+function appendCacheVersion(reference, appVersion) {
+  if (reference.includes("?")) throw qaError("QA_PREVIEW_SOURCE_INVALID");
+  return `${reference}?v=${encodeURIComponent(appVersion)}`;
+}
+
+function versionHtmlReferences(html, appVersion) {
+  return html.replace(
+    /((?:href|src)=["'])(\.\/(?:assets|css|js|manifest)\/[^"'?]+\.(?:css|js|png|svg|webp|webmanifest))(["'])/g,
+    (_match, before, reference, after) =>
+      `${before}${appendCacheVersion(reference, appVersion)}${after}`,
+  );
+}
+
+function versionJavaScriptReferences(source, appVersion) {
+  return source
+    .replace(
+      /(["'])(\.\.?\/[^"'?\r\n]+\.js)(["'])/g,
+      (_match, before, reference, after) =>
+        `${before}${appendCacheVersion(reference, appVersion)}${after}`,
+    )
+    .replace(
+      /(["'])(\.\/assets\/[^"'?\r\n]+\.(?:png|svg|webp))(["'])/g,
+      (_match, before, reference, after) =>
+        `${before}${appendCacheVersion(reference, appVersion)}${after}`,
+    );
+}
+
+function versionCssReferences(source, appVersion) {
+  return source.replace(
+    /(url\(\s*["']?)(\.\.?\/[^"')?]+\.(?:png|svg|webp|woff2?))(["']?\s*\))/g,
+    (_match, before, reference, after) =>
+      `${before}${appendCacheVersion(reference, appVersion)}${after}`,
+  );
+}
+
+function versionManifestReferences(source, appVersion) {
+  let manifest;
+  try {
+    manifest = JSON.parse(source);
+  } catch {
+    throw qaError("QA_PREVIEW_SOURCE_INVALID");
+  }
+  if (!Array.isArray(manifest.icons) || manifest.icons.length === 0) {
+    throw qaError("QA_PREVIEW_SOURCE_INVALID");
+  }
+  manifest.icons = manifest.icons.map((icon) => {
+    if (!icon || typeof icon.src !== "string") {
+      throw qaError("QA_PREVIEW_SOURCE_INVALID");
+    }
+    return { ...icon, src: appendCacheVersion(icon.src, appVersion) };
+  });
+  return `${JSON.stringify(manifest, null, 2)}\n`;
+}
+
+function assertCanonicalCacheReferences(content, pattern, appVersion) {
+  const references = [...content.matchAll(pattern)].map((match) => match[1]);
+  const suffix = `?v=${encodeURIComponent(appVersion)}`;
+  if (references.length === 0 || references.some((reference) => !reference.endsWith(suffix))) {
+    throw qaError("QA_PREVIEW_ARTIFACT_INVALID");
   }
 }
 
@@ -182,6 +267,10 @@ export async function auditQaPreviewArtifact(outputDir) {
       throw qaError("QA_PREVIEW_ARTIFACT_INVALID");
     }
     const html = await readFile(path.join(root, "index.html"), "utf8");
+    const appVersion = extractAppVersion(await readFile(
+      path.join(root, "js", "config", "app-meta.js"),
+      "utf8",
+    ));
     const requiredRobotsMeta =
       '<meta name="robots" content="noindex,nofollow">';
     if (html.split(requiredRobotsMeta).length - 1 !== 1 ||
@@ -190,6 +279,38 @@ export async function auditQaPreviewArtifact(outputDir) {
         ) ?? []).length !== 1 ||
         await readFile(path.join(root, "robots.txt"), "utf8") !==
           "User-agent: *\nDisallow: /\n") {
+      throw qaError("QA_PREVIEW_ARTIFACT_INVALID");
+    }
+    assertCanonicalCacheReferences(
+      html,
+      /(?:href|src)=["'](\.\/(?:assets|css|js|manifest)\/[^"']+\.(?:css|js|png|svg|webp|webmanifest)(?:\?v=[^"']+)?)['"]/g,
+      appVersion,
+    );
+    const expectedCacheSuffix = `?v=${encodeURIComponent(appVersion)}`;
+    for (const file of files.filter(
+      (file) => file.startsWith("js/") && file.endsWith(".js"),
+    )) {
+      const source = await readFile(path.join(root, ...file.split("/")), "utf8");
+      const references = [
+        ...[...source.matchAll(
+          /["'](\.\.?\/[^"']+\.js(?:\?v=[^"']+)?)['"]/g,
+        )].map((match) => match[1]),
+        ...[...source.matchAll(
+          /["'](\.\/assets\/[^"']+\.(?:png|svg|webp)(?:\?v=[^"']+)?)['"]/g,
+        )].map((match) => match[1]),
+      ];
+      if (references.some((reference) => !reference.endsWith(expectedCacheSuffix))) {
+        throw qaError("QA_PREVIEW_ARTIFACT_INVALID");
+      }
+    }
+    const manifest = JSON.parse(await readFile(
+      path.join(root, "manifest", "app.webmanifest"),
+      "utf8",
+    ));
+    if (!Array.isArray(manifest.icons) || manifest.icons.length === 0 ||
+        manifest.icons.some((icon) =>
+          typeof icon?.src !== "string" ||
+          !icon.src.endsWith(expectedCacheSuffix))) {
       throw qaError("QA_PREVIEW_ARTIFACT_INVALID");
     }
     let totalBytes = 0;
@@ -217,6 +338,10 @@ export async function assembleQaPreview({ appDir, outputDir, allowedParentDir })
   }
   const app = await realpath(requestedApp)
     .catch(() => { throw qaError("QA_PREVIEW_SOURCE_INVALID"); });
+  const appVersion = extractAppVersion(await readFile(
+    path.join(app, "js", "config", "app-meta.js"),
+    "utf8",
+  ).catch(() => { throw qaError("QA_PREVIEW_SOURCE_INVALID"); }));
   const { output, parent } = await assertSafeOutput(outputDir, allowedParentDir);
   await prepareSafeOutputPath({ output, parent });
   await rm(output, { recursive: true, force: true });
@@ -229,7 +354,10 @@ export async function assembleQaPreview({ appDir, outputDir, allowedParentDir })
   }
   await writeFile(
     path.join(output, "index.html"),
-    addNoIndex(await readFile(path.join(app, "index.html"), "utf8")),
+    versionHtmlReferences(
+      addNoIndex(await readFile(path.join(app, "index.html"), "utf8")),
+      appVersion,
+    ),
     "utf8",
   );
   await mkdir(path.join(output, "css"));
@@ -237,12 +365,14 @@ export async function assembleQaPreview({ appDir, outputDir, allowedParentDir })
     source: path.join(app, "css"),
     destination: path.join(output, "css"),
     extension: ".css",
+    transform: (source) => versionCssReferences(source, appVersion),
   });
   await mkdir(path.join(output, "js"));
   await copyTree({
     source: path.join(app, "js"),
     destination: path.join(output, "js"),
     extension: ".js",
+    transform: (source) => versionJavaScriptReferences(source, appVersion),
   });
   await mkdir(path.join(output, "assets", "characters"), { recursive: true });
   await copyTree({
@@ -267,6 +397,14 @@ export async function assembleQaPreview({ appDir, outputDir, allowedParentDir })
       destination: path.join(output, ...relativePath.split("/")),
     });
   }
+  await writeFile(
+    path.join(output, "manifest", "app.webmanifest"),
+    versionManifestReferences(
+      await readFile(path.join(app, "manifest", "app.webmanifest"), "utf8"),
+      appVersion,
+    ),
+    "utf8",
+  );
   await writeFile(path.join(output, ".nojekyll"), "", "utf8");
   await writeFile(
     path.join(output, "robots.txt"),

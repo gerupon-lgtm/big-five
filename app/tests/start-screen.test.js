@@ -5,7 +5,7 @@ import { renderStartScreen } from "../js/presentation/start-screen.js";
 import { collectElements, collectText, createFakeScreen } from "./helpers/fake-dom.js";
 
 const versionModel = Object.freeze({
-  versionLabel: "バージョン mvp-1.0.0",
+  versionLabel: "バージョン mvp-1.0.1",
   diagnosticVersionLabel: "診断データの版",
   diagnosticVersionItems: Object.freeze(["質問 ipip-ja-50-question-set-v1"]),
 });
@@ -60,7 +60,7 @@ test("T-005 S-001 offers a new diagnosis action and accurate available-flow copy
   );
   const visibleVersion = collectElements(host).find(({ className }) =>
     className === "start-app-version");
-  assert.equal(visibleVersion.textContent, "バージョン mvp-1.0.0");
+  assert.equal(visibleVersion.textContent, "バージョン mvp-1.0.1");
   const footer = collectElements(host).find(({ className }) =>
     className === "start-footer");
   assert.equal(footer.tagName, "footer");
@@ -232,7 +232,7 @@ test("T-008A S-001 keeps the diagnostic label and version details inside the dia
       .textContent,
     "診断データの版",
   );
-  assert.match(collectText(diagnosticVersion), /バージョン mvp-1\.0\.0/);
+  assert.match(collectText(diagnosticVersion), /バージョン mvp-1\.0\.1/);
   assert.match(collectText(diagnosticVersion), /質問 ipip-ja-50-question-set-v1/);
 });
 

@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.14 |
+| 設計版 | 0.15 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-08-03 |
-| 入力要件 | 要件定義書v1.39 |
+| 入力要件 | 要件定義書v1.40 |
 | 実行方式 | 通常版はブラウザ内完結。ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -478,6 +478,7 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 ## 15. セキュリティとプライバシー
 
 - HTTPSと同一オリジン静的アセット。
+- Pages向け成果物の組立時に`app/js/config/app-meta.js`の`appVersion`を唯一の正典として読み、HTMLのCSS・entry module・manifest・ブランド画像、全ES Modules import、runtime画像参照、manifest iconへ同じ`?v=<appVersion>`を付ける。character manifestの保存値は変更せず、画像要求時だけ同じ版を付ける。成果物監査は欠落・旧版混在を拒否するため、以後はAppMetaの版更新だけでキャッシュバスターも同期する。
 - 秘密情報・APIキーを配布物へ置かない。
 - ユーザー入力をHTMLとして挿入しない。
 - CSPで可能な範囲の`default-src 'self'`等を適用する。正確なポリシーは実装時に全資産を列挙して決める。
