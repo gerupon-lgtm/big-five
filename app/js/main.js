@@ -19,9 +19,11 @@ import { selectResultPalette } from "./domain/result-palette-selection.js";
 import { createStartVersionViewModel } from "./domain/version-model.js";
 import {
   choosePreviewExit,
+  completeDetail,
   continueAfterPreview,
   createProgressRecord,
   goBack,
+  isDetailReviewProgress,
 } from "./domain/response-state.js";
 import { createDiagnosticResultSnapshot } from "./domain/diagnostic-result.js";
 import {
@@ -174,6 +176,7 @@ export function startApp({
   const screenHost = documentObject.getElementById("app");
   let historyNotice = null;
   let currentProgress = null;
+  let detailReviewQuestionVisible = false;
   let questionnaireStorageStatus = "ok";
   let liveResult = null;
   let resultActionNotice = null;
@@ -351,6 +354,7 @@ export function startApp({
         });
         if (outcome.status === "ok") {
           currentProgress = null;
+          detailReviewQuestionVisible = false;
           liveResult = null;
           questionnaireStorageStatus = "ok";
           resultActionNotice = null;
@@ -435,15 +439,24 @@ export function startApp({
           liveResult = { snapshot, persistenceFailed: persisted.status !== "ok" };
           setRoute(`#/result?resultId=${encodeURIComponent(snapshot.resultId)}`);
         },
+        onBack() { goBackCurrentQuestion(); },
+        onPause() { pauseCurrentProgress(); },
+        onDiscard() { discardCurrentProgress(); },
+      });
+      return;
+    }
+    const isDetailReview = isDetailReviewProgress(currentProgress, {
+      definition: DiagnosticDefinition,
+      meta: appMeta,
+    }) && !detailReviewQuestionVisible;
+    if (isDetailReview) {
+      renderQuestionnaireScreen(screenHost, {
+        phase: "detail-review",
+        storageStatus: questionnaireStorageStatus,
+      }, {
+        onComplete() { completeCurrentDetail(); },
         onBack() {
-          const transition = goBack(currentProgress, {
-            definition: DiagnosticDefinition,
-            meta: appMeta,
-            now: nowProvider(),
-          });
-          const saved = transitionAndSave({ storage: getStorage(), transition, definition: DiagnosticDefinition, meta: appMeta, now: nowProvider() });
-          currentProgress = saved.progress;
-          questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
+          detailReviewQuestionVisible = true;
           renderQuestionnaireRoute();
         },
         onPause() { pauseCurrentProgress(); },
@@ -466,13 +479,7 @@ export function startApp({
       storageStatus: questionnaireStorageStatus,
     }, {
       onAnswer(answer) { answerCurrentQuestion(answer); },
-      onBack() {
-        const transition = goBack(currentProgress, { definition: DiagnosticDefinition, meta: appMeta, now: nowProvider() });
-        const saved = transitionAndSave({ storage: getStorage(), transition, definition: DiagnosticDefinition, meta: appMeta, now: nowProvider() });
-        currentProgress = saved.progress;
-        questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
-        renderQuestionnaireRoute();
-      },
+      onBack() { goBackCurrentQuestion(); },
       onPause() { pauseCurrentProgress(); },
       onDiscard() { discardCurrentProgress(); },
     });
@@ -497,6 +504,7 @@ export function startApp({
     });
     if (outcome.status === "ok") {
       currentProgress = null;
+      detailReviewQuestionVisible = false;
       questionnaireStorageStatus = "ok";
       setRoute("#/start");
       return;
@@ -511,17 +519,39 @@ export function startApp({
       definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
     });
     currentProgress = transition.progress;
+    detailReviewQuestionVisible = transition.kind === "in-progress" &&
+      isDetailReviewProgress(currentProgress, { definition: DiagnosticDefinition, meta: appMeta });
     questionnaireStorageStatus = transition.persistence.status === "ok" ? "ok" : "error";
-    if (transition.kind !== "detail-complete") {
-      renderQuestionnaireRoute();
-      return;
-    }
+    renderQuestionnaireRoute();
+  }
+
+  function goBackCurrentQuestion() {
+    const transition = goBack(currentProgress, {
+      definition: DiagnosticDefinition,
+      meta: appMeta,
+      now: nowProvider(),
+    });
+    const saved = transitionAndSave({
+      storage: getStorage(), transition, definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
+    });
+    currentProgress = saved.progress;
+    questionnaireStorageStatus = saved.persistence.status === "ok" ? "ok" : "error";
+    renderQuestionnaireRoute();
+  }
+
+  function completeCurrentDetail() {
+    const transition = completeDetail(currentProgress, {
+      definition: DiagnosticDefinition,
+      meta: appMeta,
+      now: nowProvider(),
+    });
     const snapshot = createSnapshot({ answers: transition.answers, questionCount: 50, mode: "detail50" });
     const persisted = saveResultSnapshot({
       storage: getStorage(), snapshot, diagnosisId: DiagnosticDefinition.diagnosisId,
       definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
     });
     currentProgress = null;
+    detailReviewQuestionVisible = false;
     questionnaireStorageStatus = "ok";
     liveResult = { snapshot, persistenceFailed: persisted.status !== "ok" };
     setRoute(`#/result?resultId=${encodeURIComponent(snapshot.resultId)}`);
@@ -649,6 +679,7 @@ export function startApp({
             return;
           }
           currentProgress = null;
+          detailReviewQuestionVisible = false;
           liveResult = null;
           resultActionNotice = null;
           setRoute("#/start");

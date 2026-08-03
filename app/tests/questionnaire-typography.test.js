@@ -26,6 +26,7 @@ test("T-008A F-003 keeps the approved questionnaire typography scoped to S-002",
   const options = declarationsFor(styles, ".answer-options");
   const option = declarationsFor(styles, ".answer-option");
   const previewActions = declarationsFor(styles, ".preview-decision-actions");
+  const detailActions = declarationsFor(styles, ".detail-completion-actions");
   const previewHeading = declarationsFor(styles, ".questionnaire-screen > h1");
 
   assert.match(
@@ -50,6 +51,9 @@ test("T-008A F-003 keeps the approved questionnaire typography scoped to S-002",
   assert.match(option, /padding:\s*14px 16px/);
 
   assert.match(previewActions, /margin-top:\s*32px/);
+  assert.match(detailActions, /display:\s*grid/);
+  assert.match(detailActions, /gap:\s*12px/);
+  assert.match(detailActions, /margin-top:\s*32px/);
   assert.match(
     previewHeading,
     /font-size:\s*clamp\(1\.8rem,\s*7vw,\s*3rem\)/,

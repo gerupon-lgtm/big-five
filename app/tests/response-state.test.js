@@ -6,6 +6,7 @@ import { DiagnosticDefinition } from "../js/data/diagnostic-definition.js";
 import {
   answerCurrent,
   choosePreviewExit,
+  completeDetail,
   continueAfterPreview,
   createProgressRecord,
   goBack,
@@ -122,16 +123,67 @@ test("T-004 F-003 permits only complete-preview exits and keeps continueHidden s
   assert.equal("share" in hidden, false);
 });
 
-test("T-004 F-003 returns valid terminal progress and the complete 50-answer map", () => {
+test("T-004 F-003 requires an explicit completion after the fiftieth answer", () => {
   const previewComplete = answerUntil(createProgress(), 20).progress;
   const hidden = choosePreviewExit(previewComplete, "continueHidden", { definition: DiagnosticDefinition, meta: appMeta, now: NOW });
-  const terminal = answerUntil(hidden.progress, 50, 20);
+  const review = answerUntil(hidden.progress, 50, 20);
 
+  assert.equal(review.kind, "detail-review-required");
+  assert.equal(review.progress.currentIndex, 49);
+  assert.equal(Object.keys(review.progress.answers).length, 50);
+  assert.deepEqual(Object.keys(review).sort(), ["kind", "progress"]);
+
+  const revised = answerCurrent(review.progress, {
+    questionId: DiagnosticDefinition.detailQuestionIds[49],
+    value: 4,
+  }, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T00:59:30.000Z" });
+  assert.equal(revised.kind, "detail-review-required");
+  assert.equal(revised.progress.currentIndex, 49);
+  assert.equal(revised.progress.answers[DiagnosticDefinition.detailQuestionIds[49]], 4);
+
+  const terminal = completeDetail(revised.progress, {
+    definition: DiagnosticDefinition,
+    meta: appMeta,
+    now: "2026-07-25T01:00:00.000Z",
+  });
   assert.equal(terminal.kind, "detail-complete");
-  assert.equal(terminal.progress.currentIndex, 49);
-  assert.equal(Object.keys(terminal.progress.answers).length, 50);
   assert.equal(Object.keys(terminal.answers).length, 50);
   assert.deepEqual(Object.keys(terminal).sort(), ["answers", "kind", "progress"]);
+});
+
+test("T-004 F-003 rejects detail completion until all fifty answers exist", () => {
+  const previewComplete = answerUntil(createProgress(), 20).progress;
+  const hidden = choosePreviewExit(previewComplete, "continueHidden", { definition: DiagnosticDefinition, meta: appMeta, now: NOW });
+
+  assert.throws(
+    () => completeDetail(hidden.progress, {
+      definition: DiagnosticDefinition,
+      meta: appMeta,
+      now: "2026-07-25T01:00:00.000Z",
+    }),
+    /RESPONSE_INVALID_TRANSITION/,
+  );
+});
+
+test("T-004 F-003 reviews answered detail questions sequentially through question fifty", () => {
+  const previewComplete = answerUntil(createProgress(), 20).progress;
+  const hidden = choosePreviewExit(previewComplete, "continueHidden", { definition: DiagnosticDefinition, meta: appMeta, now: NOW });
+  const review = answerUntil(hidden.progress, 50, 20).progress;
+  const fortyNinth = goBack(review, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T01:11:00.000Z" });
+
+  const revisedFortyNinth = answerCurrent(fortyNinth.progress, {
+    questionId: DiagnosticDefinition.detailQuestionIds[48],
+    value: 2,
+  }, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T01:12:00.000Z" });
+  assert.equal(revisedFortyNinth.kind, "in-progress");
+  assert.equal(revisedFortyNinth.progress.currentIndex, 49);
+
+  const revisedFiftieth = answerCurrent(revisedFortyNinth.progress, {
+    questionId: DiagnosticDefinition.detailQuestionIds[49],
+    value: 5,
+  }, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T01:13:00.000Z" });
+  assert.equal(revisedFiftieth.kind, "detail-review-required");
+  assert.equal(revisedFiftieth.progress.currentIndex, 49);
 });
 
 test("T-004 F-003 continues to detail after a shown preview without relabeling it hidden", () => {

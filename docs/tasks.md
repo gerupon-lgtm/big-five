@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.17 |
+| 設計版 | 0.18 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-08-02 |
-| 要件正典 | 要件定義書v1.38 |
+| 更新日 | 2026-08-03 |
+| 要件正典 | 要件定義書v1.39 |
 | 初期リリース | `mvp-0.1.0` |
 | 現在リリース | `mvp-1.0.0` |
 
@@ -15,7 +15,7 @@
 |---|---|---|---|---|---|---|
 | F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008A, T-008 | 共通ヘッダー、`SELF CHECK`／`自分のことを知る`、承認済みBig Five・IPIP説明、初期状態で見出しだけを示す愛猫もなか紹介文の段階展開、同幅の開始・再開操作、現在版表示を実装・browser smoke済み |
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approvalは2026-07-28に完了 |
-| F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 他画面と同じ通常の共通ヘッダー、緑の進捗／設問`h1`、折り返さない`中断してトップへ`、設問20px・回答文字16px・回答ボタン高56pxを実装・320／360／414px browser smoke済み |
+| F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A | 共通ヘッダー、回答・戻る・中断・破棄に加え、50問目後の完答確認から結果表示または回答見直しを選ぶ明示確定を実装 |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A, T-008C | 20問`showPreview`のsnapshot `resultId`は`progressId`と同じ値。履歴継続は両ID、mode、20回答、VersionTupleの完全一致だけを許可し、旧異IDを推測再リンクしない。schema field/version追加なし |
 | F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A, T-008C | 20問・診断直後／履歴・回答継続中／履歴・確定済みの操作と可視性を分離。因子は一回で保存済み本文を全カテゴリ表示 |
 | F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A, T-008C | 50問・診断直後／履歴の操作を分離。因子は一回で保存済み本文を全カテゴリ表示 |
@@ -181,9 +181,9 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 
 #### 完了記録（2026-07-25）
 
-- 状態: 完了（F-003、F-004、F-013、F-015のT-004範囲）。`response-state` に固定順の回答・戻る・置換・20問出口・50問終端を、`progress-storage` に正式キーの保存・再開・対象限定破棄・遷移直後の自動保存coordinatorを実装した。`continueHidden` は進捗だけを返し、20問の結果・称号・キャラクター・共有モデルを生成しない。`showPreview`後の詳細継続は表示済みdecisionを保持する。
-- 保存契約: schema 1、破損JSON、将来schema、壊れた進捗、版不一致、読込不能、容量不足、削除失敗を安定コードへ変換し、既存値を不意に上書きしない。save/discard時は無関係な壊れた進捗・結果だけを除去し、保存失敗時もメモリ上の状態と50問終端回答を維持する。完答結果成立後のResultSnapshot保存とProgressRecord削除はT-005 live controllerへ接続済みである。
-- 検証: 公開seam 14件成功（開始・固定順、入力汚染拒否、戻る置換、両20問出口、showPreview後の継続、hidden非露出、50問終端、自動保存、保存再開、破損/将来/版不一致、無関係データsanitize、保存/削除失敗）。詳細は `.superpowers/sdd/task-t004-report.md` を参照。
+- 状態: 完了（F-003、F-004、F-013、F-015のT-004範囲）。`response-state` に固定順の回答・戻る・置換・20問出口・50問完答確認・明示確定を、`progress-storage` に正式キーの保存・再開・対象限定破棄・遷移直後の自動保存coordinatorを実装した。`continueHidden` は進捗だけを返し、20問の結果・称号・キャラクター・共有モデルを生成しない。`showPreview`後の詳細継続は表示済みdecisionを保持する。
+- 保存契約: schema 1、破損JSON、将来schema、壊れた進捗、版不一致、読込不能、容量不足、削除失敗を安定コードへ変換し、既存値を不意に上書きしない。save/discard時は無関係な壊れた進捗・結果だけを除去し、保存失敗時もメモリ上の50回答を維持する。「結果を見る」後のResultSnapshot保存とProgressRecord削除はT-005 live controllerへ接続済みである。
+- 検証: 固定順、入力汚染拒否、戻る置換、両20問出口、showPreview後の継続、hidden非露出、50問完答確認、明示確定、完答後の見直し、自動保存・再開、保存失敗を公開seamとlive controllerで確認する。詳細は `.superpowers/sdd/task-t004-report.md` を参照。
 - S-002表示層（2026-07-26）: `renderQuestionnaireScreen`に設問、自然言語の5件法、現在位置、選択済み状態、戻る、破棄、20問分岐の二択を実装した。保存失敗は設問画面と20問分岐画面の両方でだけ`role="alert"`通知し、回答は継続できる。`preview-choice`は因子、スコア、称号、猫、色、共有データを入力にもDOMにも含めない。focused 10件、Spec/Standards独立レビュー、全359件、静的検証に成功した。router・state・storageとのlive接続は2026-07-27に完了した。
 - 次タスク: T-007。結果画面へ接続済みの選択パレットとココロアロマ代表3件を純粋な共有カードモデル、正式Canvas、共有・保存・コピーUIへつなぐ。
 
@@ -535,7 +535,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 ### T-011 GitHub Pages CI/CD・運用
 
 - 依存: T-009
-- 状態（2026-07-28）: QA一時プレビューは`codex/big-five-q006`から現行ES Modules runtimeだけを公開する。approved releaseの選択、JSON runtimeの有効化、T-011本番デプロイ完了を意味しない。
+- 状態（2026-08-03）: 正式公開originは`https://kokoro.sikumilab.com`に確定し、現行ES Modules runtimeと主要画像の表示を確認済み。approved releaseの選択、JSON runtimeの有効化、Actions・切戻し・監視を含むT-011全体の完了を意味しない。
 - 開始ゲート: Q-008、Q-010
 - 作業:
   - GitHub Actionsでテスト・静的検証・Pagesデプロイ。
@@ -573,7 +573,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 | Q-014結果・履歴・中断再開UI | 回答中断、preview終了、状態別再開、新規開始確認、結果hero、実スコアを反映する5因子行・棒、因子1回で全カテゴリ本文を表示、最下部へ集約した設問構成／4方法sheet、診断直後50問トップ導線、保存済み結果の履歴一覧導線、簡潔な履歴、固定比較導線、履歴管理dialog、`result-text-v2`の称号別ヒントを実装 | T-008A/T-008C完了。2026-07-31以降の結果UX追補のPages再確認はT-011で管理 |
 | 結果・履歴画面統合 | 基盤、Q-013結果DOM、T-007共有UI、履歴preview、比較表示、常時パレット、矢印付きアロマ、方法カード前の称号カードCTA、共有画面副ボタン統一まで実装済み | T-005/T-007/T-008A/T-008B/T-008C/T-008 |
 | 共有画像の最終仕様 | 1080×1800（3:5）PNG、中央ブランド、称号、補正版透過ラスタリース、透過猫の全体表示、固定5因子、透過素材画付きアロマ3件の縦配置、注記・モード・アプリ版を実装済み | Q-007実装済み。補正版リースは2026-08-02ユーザー承認済み |
-| Pages公開方式の最終値 | リポジトリ・URL未決 | Q-008 |
+| Pages公開方式の最終値 | 正式公開URLは確定。公開元リポジトリ、Actions、切戻し・監視の最終値は未決 | Q-008 |
 | 51猫アセット | 全51体の正典source PNG・1024px WebP・制作来歴候補・再利用部品・台帳証跡・altを制作・技術確認済み。runtime manifest、整合検査、単一画像遅延loader、live／保存済み結果画面・共有Canvasまで接続済み | Q-012の正式なapproved release選択は未完了 |
 | 色・香り実データ | `presentation-v2`の153パレットと用途色BはP-0、3場面・29香調・25素材・29素材関連はP-1、全51称号の選択・代替パレット・香り関連はP-2〜P-6で承認済み。ES Modules runtime、結果DOM、共有Canvas・共有テキストへ接続済み | T-007へ接続済み。共有テキストは代表3件の素材例を含む |
 

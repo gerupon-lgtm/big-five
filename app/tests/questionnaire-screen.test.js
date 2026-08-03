@@ -45,6 +45,24 @@ function previewViewModel(overrides = {}) {
   };
 }
 
+function detailReviewViewModel(overrides = {}) {
+  return {
+    phase: "detail-review",
+    storageStatus: "ok",
+    ...overrides,
+  };
+}
+
+function detailReviewActions(overrides = {}) {
+  return {
+    onComplete() {},
+    onBack() {},
+    onPause() {},
+    onDiscard() {},
+    ...overrides,
+  };
+}
+
 function buttons(host) {
   return collectElements(host).filter(({ tagName }) => tagName === "button");
 }
@@ -226,10 +244,32 @@ test("T-008A F-004 delegates back, pause, and discard from the preview decision"
   assert.deepEqual(calls, ["back", "pause", "discard"]);
 });
 
+test("T-004 S-002 keeps fifty answers editable until the user explicitly views the result", () => {
+  const { host } = createFakeScreen();
+  const calls = [];
+
+  renderQuestionnaireScreen(host, detailReviewViewModel(), detailReviewActions({
+    onComplete: () => calls.push("complete"),
+    onBack: () => calls.push("back"),
+  }));
+
+  const text = collectText(host);
+  assert.match(text, /50 \/ 50問/);
+  assert.match(text, /50問の回答が完了しました/);
+  assert.match(text, /結果を見る/);
+  assert.match(text, /回答へ戻る/);
+  assert.doesNotMatch(text, /称号|スコア|猫|パレット|アロマ/);
+
+  buttons(host).find(({ textContent }) => textContent === "回答へ戻る").dispatch("click");
+  buttons(host).find(({ textContent }) => textContent === "結果を見る").dispatch("click");
+  assert.deepEqual(calls, ["back", "complete"]);
+});
+
 test("T-004 S-002 renders every control as a non-submit button", () => {
   for (const [viewModel, actions] of [
     [questionViewModel(), questionActions()],
     [previewViewModel(), previewActions()],
+    [detailReviewViewModel(), detailReviewActions()],
   ]) {
     const { host } = createFakeScreen();
     renderQuestionnaireScreen(host, viewModel, actions);
@@ -245,6 +285,7 @@ test("T-008A S-002 uses the shared standard header action and keeps discard in s
   for (const [viewModel, actions] of [
     [questionViewModel(), questionActions()],
     [previewViewModel(), previewActions()],
+    [detailReviewViewModel(), detailReviewActions()],
   ]) {
     const { host } = createFakeScreen();
     renderQuestionnaireScreen(host, viewModel, actions);
@@ -321,6 +362,11 @@ test("T-004 S-002 rejects malformed exact view models and action dependencies", 
       host,
       previewViewModel(),
       { ...previewActions(), onUnexpectedAction() {} },
+    ),
+    () => renderQuestionnaireScreen(
+      host,
+      detailReviewViewModel(),
+      { ...detailReviewActions(), onComplete: undefined },
     ),
   ];
 

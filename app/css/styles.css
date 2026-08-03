@@ -1883,7 +1883,8 @@ dd {
   margin-top: 24px;
 }
 
-.preview-decision-actions {
+.preview-decision-actions,
+.detail-completion-actions {
   display: grid;
   gap: 12px;
   margin-top: 32px;

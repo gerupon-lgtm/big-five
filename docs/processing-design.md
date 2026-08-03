@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.13 |
+| 設計版 | 0.14 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-08-02 |
-| 入力要件 | 要件定義書v1.38 |
+| 更新日 | 2026-08-03 |
+| 入力要件 | 要件定義書v1.39 |
 | 実行方式 | 通常版はブラウザ内完結。ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -80,16 +80,22 @@
 4. 簡易プレビューの`簡易プレビューで終了する`は、保存済みResultSnapshotを維持し、対応する完全一致ProgressRecordだけを削除する。削除失敗時は結果画面に留まり、終了済みと誤表示せず、再試行できる通知を出す。ResultSnapshotが履歴へ保存できていないlive結果ではこの操作を有効化せず、結果を失わない`50問へ進む`を案内する。
 5. 互換ProgressRecordがある新規開始は、利用者の確認後だけ同じ診断種別の進捗を新規ProgressRecordへ置き換える。取消では書込みを行わず、ResultSnapshotには触れない。
 
-### 3.3 T-004の公開シーム
+### 3.3 50問完答確認
 
-- `response-state` はDOM・ブラウザAPIに依存しない。新規ProgressRecord、現在設問への回答、戻る、置換、20問出口、50問終端を純粋値として返す。
+1. 50問目の回答は`detail-review-required`と50回答を持つProgressRecordを返し、直ちに保存する。この時点では採点・ResultSnapshot生成・進捗削除を行わない。
+2. 完答確認と50問目は保存形式を変えず、`currentIndex: 49`と50回答を維持する。「回答へ戻る」で50問目を再表示している間だけpresentation controllerの画面内状態で区別する。さらに前へ戻った場合、回答済み設問を順に再表示し、50問目の回答後に再び完答確認へ進む。
+3. 「結果を見る」だけが`completeDetail`を呼び、50回答を結果生成callerへ渡す。ResultSnapshot保存とProgressRecord削除は従来どおり同一保存境界で行う。
+
+### 3.4 T-004の公開シーム
+
+- `response-state` はDOM・ブラウザAPIに依存しない。新規ProgressRecord、現在設問への回答、戻る、置換、20問出口、50問完答確認、明示確定を純粋値として返す。
 - 回答入力は current question ID と own data property の整数 `1..5` だけを受け入れる。未知ID、過去設問、継承値、accessor、欠損、範囲外、小数は `RESPONSE_INVALID_INPUT` として拒否する。
-- 20問完答の `showPreview` は `preview-ready` を返すだけで採点・画面生成を行わない。`continueHidden` は `detail-continued` と進捗だけを返す。50問目の `detail-complete` は保存可能な完答進捗と50件の回答地図を返し、結果画面・履歴・共有はT-005以降の責務とする。
+- 20問完答の `showPreview` は `preview-ready` を返すだけで採点・画面生成を行わない。`continueHidden` は `detail-continued` と進捗だけを返す。50問目は`detail-review-required`と完答進捗だけを返し、別操作の`completeDetail`が`detail-complete`と50件の回答地図を返す。結果画面・履歴・共有はT-005以降の責務とする。
 - `progress-storage` は注入されたストレージを使う。`STORAGE_CORRUPT`、`STORAGE_INCOMPATIBLE`、`STORAGE_UNAVAILABLE`、`STORAGE_SAVE_FAILED`、`STORAGE_DELETE_FAILED` と `PROGRESS_INCOMPATIBLE` を安定した内部コードとして返し、例外を呼出側へ漏らさない。
 - `persistTransition`、`answerAndSave`、`transitionAndSave` は遷移eventのProgressRecordを直ちに保存する。保存失敗でもeventとメモリ上の進捗を返す。50問完答後にResultSnapshotを保存してProgressRecordを削除する処理はT-005の呼出側責務とする。
-- S-002表示層は設問phaseと20問分岐phaseだけを受ける。設問phaseは5件法と現在位置、戻る、中断、破棄を、分岐phaseは`showPreview`と`continueHidden`、中断、破棄を描画する。中断はProgressRecordを保持し、破棄は確認後に削除する別callbackとする。保存失敗は両phaseで通知するが回答操作を無効化しない。分岐phaseへスコア、因子、称号、キャラクター、パレット、共有モデルを渡さない。
+- S-002表示層は設問phase、20問分岐phase、50問完答確認phaseを受ける。設問phaseは5件法と現在位置、戻る、中断、破棄を、20問分岐は`showPreview`と`continueHidden`を、50問完答確認は「結果を見る」と「回答へ戻る」を描画する。中断はProgressRecordを保持し、破棄は確認後に削除する別callbackとする。保存失敗は各phaseで通知するが操作を無効化しない。分岐・完答確認phaseへスコア、因子、称号、キャラクター、パレット、共有モデルを渡さない。
 
-### 3.4 CSVコンテンツ作成からruntimeへの移行境界
+### 3.5 CSVコンテンツ作成からruntimeへの移行境界
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤として、`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。人はCSVだけを編集し、生成`app/content/` JSONを編集・コミットしない。
 
@@ -233,7 +239,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 
 ## 7. 履歴保存
 
-`createResultSnapshot`、保存済み13フィールドを再検証する`validateResultSnapshot`、結果保存API`saveResultSnapshot({ storage, snapshot, diagnosisId, definition, meta, now })`、履歴読込API`loadResultHistory({ storage, now })`、個別削除API`deleteResultSnapshot({ storage, resultId, confirmed, now })`、全削除API`deleteAllData({ storage, confirmed, now })`は実装済みである。S-001/S-002のlive controllerは、20問`showPreview`と50問`detail-complete`から本番snapshotを生成し、この保存APIと独立結果画面へ接続する。20問`continueHidden`ではresultId割当・採点・結果保存を行わない。
+`createResultSnapshot`、保存済み13フィールドを再検証する`validateResultSnapshot`、結果保存API`saveResultSnapshot({ storage, snapshot, diagnosisId, definition, meta, now })`、履歴読込API`loadResultHistory({ storage, now })`、個別削除API`deleteResultSnapshot({ storage, resultId, confirmed, now })`、全削除API`deleteAllData({ storage, confirmed, now })`は実装済みである。S-001/S-002のlive controllerは、20問`showPreview`と50問完答確認後の`detail-complete`から本番snapshotを生成し、この保存APIと独立結果画面へ接続する。20問`continueHidden`と50問目回答直後の`detail-review-required`ではresultId割当・採点・結果保存を行わない。
 
 1. `crypto.randomUUID()`でRFC 4122 UUID形状のresultIdを生成する。
 2. ResultSnapshotの13フィールドexact schemaを検証する。`answers`と`diagnosisId`は受け付けない。

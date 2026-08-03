@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { appMeta } from "../js/config/app-meta.js";
 import { DiagnosticDefinition, QuestionDefinitions } from "../js/data/diagnostic-definition.js";
-import { answerCurrent, choosePreviewExit, createProgressRecord } from "../js/domain/response-state.js";
+import { answerCurrent, choosePreviewExit, completeDetail, createProgressRecord } from "../js/domain/response-state.js";
 import { createResultSnapshot } from "../js/domain/result-snapshot.js";
 import { scoreDiagnostic } from "../js/domain/scoring.js";
 import {
@@ -179,7 +179,7 @@ test("T-004 F-013 reports deletion failure and retains the target progress", () 
   });
 });
 
-test("T-004 F-004 persists every transition including terminal completion without losing in-memory state on save failure", () => {
+test("T-004 F-004 persists the fifty-answer review before explicit completion without losing in-memory state on save failure", () => {
   const storage = memoryStorage();
   const first = answerAndSave({
     storage, progress: progress(), answer: { questionId: DiagnosticDefinition.previewQuestionIds[0], value: 2 },
@@ -197,11 +197,18 @@ test("T-004 F-004 persists every transition including terminal completion withou
   for (let index = 20; index < 50; index += 1) {
     const event = answerCurrent(state, { questionId: DiagnosticDefinition.detailQuestionIds[index], value: 3 }, { definition: DiagnosticDefinition, meta: appMeta, now: `2026-07-25T01:${String(index - 20).padStart(2, "0")}:00.000Z` });
     state = event.progress;
-    if (event.kind === "detail-complete") {
+    if (event.kind === "detail-review-required") {
       const persisted = transitionAndSave({ storage, transition: event, definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T01:30:00.000Z" });
       assert.equal(persisted.persistence.status, "ok");
       assert.equal(persisted.progress.currentIndex, 49);
       assert.equal(Object.keys(JSON.parse(storage.read()).progressByDiagnosis[DiagnosticDefinition.diagnosisId].answers).length, 50);
+      const completed = completeDetail(persisted.progress, {
+        definition: DiagnosticDefinition,
+        meta: appMeta,
+        now: "2026-07-25T01:31:00.000Z",
+      });
+      assert.equal(completed.kind, "detail-complete");
+      assert.equal(Object.keys(completed.answers).length, 50);
     }
   }
 

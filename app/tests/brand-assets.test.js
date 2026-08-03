@@ -89,8 +89,8 @@ test("T-007 F-001 publishes the canonical brand metadata and deterministic icons
   const index = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(index, /<title>ココロパレア｜Big Five 自己理解支援ツール<\/title>/);
   assert.match(index, /name="description"\s+content="Big Fiveを使って自分の傾向を振り返る自己理解支援ツール"/);
-  assert.match(index, /rel="canonical"\s+href="https:\/\/kokoroparea\.gerupon\.uk\/"/);
-  assert.match(index, /property="og:url"\s+content="https:\/\/kokoroparea\.gerupon\.uk\/"/);
+  assert.match(index, /rel="canonical"\s+href="https:\/\/kokoro\.sikumilab\.com\/"/);
+  assert.match(index, /property="og:url"\s+content="https:\/\/kokoro\.sikumilab\.com\/"/);
   assert.match(index, /rel="manifest"\s+href="\.\/manifest\/app\.webmanifest"/);
   assert.match(index, /rel="icon"\s+href="\.\/assets\/brand\/kokoro-parea-mark\.svg"\s+type="image\/svg\+xml"/);
   assert.doesNotMatch(index, /gerupo\.uk|kokoropalea/);

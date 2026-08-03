@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.15 |
+| 設計版 | 0.16 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-08-02 |
-| 入力要件 | 要件定義書v1.38 |
+| 更新日 | 2026-08-03 |
+| 入力要件 | 要件定義書v1.39 |
 | 対象 | スマートフォン優先、PC対応 |
 
 ## 1. 画面方式
@@ -50,7 +50,9 @@ flowchart TD
     Preview -->|追加30問| Answer
     Preview -->|中断・進捗保持| Start
     Preview -->|20問で終了・進捗削除| History
-    Answer -->|50問完答| Detail["S-004 詳細結果"]
+    Answer -->|50問完答| DetailReview{"回答完了"}
+    DetailReview -->|回答へ戻る| Answer
+    DetailReview -->|結果を見る| Detail["S-004 詳細結果"]
     Preview --> Share["S-005 共有プレビュー"]
     Detail --> Share
     History --> Preview
@@ -118,7 +120,7 @@ flowchart TD
 
 ## 6. S-002 回答
 
-`renderQuestionnaireScreen`とlive controllerの回答・保存・分岐、2026-07-27承認の共通ヘッダー、明示的な中断、状態別再開、簡易プレビュー終了、新規開始時の置換確認は実装・テスト済みである。`#/answer`で設問phaseと20問分岐phaseをexact view modelとして分離し、回答、戻る、中断、破棄、互換途中回答の再開を既存state/storage APIへ接続する。保存失敗時もメモリ上の回答を維持して通知する。20問の`continueHidden`は結果を作らず21問目へ進み、`showPreview`と50問完答だけがanswer-freeのResultSnapshotを生成する。
+`renderQuestionnaireScreen`とlive controllerの回答・保存・分岐、2026-07-27承認の共通ヘッダー、明示的な中断、状態別再開、簡易プレビュー終了、新規開始時の置換確認は実装・テスト済みである。`#/answer`で設問phase、20問分岐phase、50問完答確認phaseをexact view modelとして分離し、回答、戻る、中断、破棄、互換途中回答の再開を既存state/storage APIへ接続する。保存失敗時もメモリ上の回答を維持して通知する。20問の`continueHidden`は結果を作らず21問目へ進み、`showPreview`と50問完答確認の「結果を見る」だけがanswer-freeのResultSnapshotを生成する。
 
 ### 表示
 
@@ -157,6 +159,13 @@ flowchart TD
 後者ではスコア、仮称号、仮猫、色候補を描画せず、21問目へ進む。
 
 20問完答・選択前に中断した場合は、再開時にこの分岐へ戻す。簡易プレビュー表示後のProgressRecordは追加30問用として保持し、開始画面の「残り30問を再開する」から21問目へ進める。
+
+### 50問完答時
+
+- 50問目の回答後は即時にResultSnapshotを生成せず、「50問の回答が完了しました」を表示する。
+- 「結果を見る」で回答を確定し、50問詳細結果を生成・保存する。
+- 「回答へ戻る」で50問目へ戻り、既存回答を表示したまま見直し・変更できる。さらに前の設問へ戻った場合も、回答済み設問を順に再表示し、再び50問目まで到達すると同じ完答確認へ戻る。
+- 完答確認中も中断・破棄を利用でき、結果確定前の50回答はProgressRecordとして保持する。
 
 ### バリデーション
 

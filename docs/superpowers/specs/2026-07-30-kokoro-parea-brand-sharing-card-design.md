@@ -41,9 +41,9 @@ F-013との接続は、20問プレビュー完了時にResultSnapshotを残し�
 
 ### 2.3 正式公開URL
 
-- 正式公開URL: `https://kokoroparea.gerupon.uk`
-- 所有ドメイン: `gerupon.uk`
-- URL表記: 小文字の`kokoroparea`を使い、`kokoropalea`、`gerupo.uk`、ハイフン付き表記を別名として併用しない
+- 正式公開URL: `https://kokoro.sikumilab.com`
+- 所有ドメイン: `sikumilab.com`
+- URL表記: 小文字の`kokoro`を使い、旧URLやハイフン付き表記を別名として併用しない
 
 このURLは`APP_META.brand.publicOrigin`としてアプリの入口を表す公開originであり、個別の診断結果を公開するURLでも共有文の暗黙URLでもない。MVPでは結果ごとの公開パス、公開ID、QRコードを生成しない。共有文だけに使う任意の`APP_META.brand.shareUrl`は空文字を既定とし、空白・資格情報のないHTTPS URLだけを受理する。空文字ならURL行と余分な空行を生成せず、有効値だけを標準注意書きの後へ空行1つを挟んで追加する。結果画面とカード画像には表示しない。DNSレコード、GitHub Pagesのcustom domain、HTTPS、canonical URLの設定は公開工程で同時に検証する。
 
@@ -286,7 +286,7 @@ S-005は次へ到達できるようにする。
 ### 10.1 自動テスト
 
 - ブランド正典が`ココロパレア`と画面用サブタイトルを返す
-- 公開originの正典が`https://kokoroparea.gerupon.uk`を返し、個別結果URLを生成しない
+- 公開originの正典が`https://kokoro.sikumilab.com`を返し、個別結果URLを生成しない
 - 全画面の共通ヘッダーが波線なしの同一文言を表示する
 - 全画面の共通ヘッダーが同じブランドアイコンSVGを表示し、`5`の文字アイコンを残さない
 - ブランドアイコンの固定色、中央円の半径、花びら順が正典と一致し、結果や選択パレットで変化しない
@@ -318,7 +318,7 @@ S-005は次へ到達できるようにする。
 - 明色・中間色・暗色、猫と同色・近似色の代表fixtureで輪郭を識別できる
 - プレビュー、Web Share、PNG保存が同じBlobから作られ、完成PNGのピクセル内容が一致する
 - キーボードでS-005の共有、保存、コピー、結果へ戻るへ到達できる
-- 公開時に`kokoroparea.gerupon.uk`のDNS、GitHub Pages custom domain、HTTPS、canonical URLが一致する
+- 公開時に`kokoro.sikumilab.com`のDNS、GitHub Pages custom domain、HTTPS、canonical URLが一致する
 
 ## 11. 文書同期
 
@@ -345,7 +345,7 @@ Q-007は本設計で解決済みへ移す。Q-013のP-0〜P-6人手承認は完�
 ## 13. 完了条件
 
 - アプリ名が`ココロパレア`へ統一される
-- 正式公開URLが`https://kokoroparea.gerupon.uk`へ統一され、個別結果URLと混同されない
+- 正式公開URLが`https://kokoro.sikumilab.com`へ統一され、個別結果URLと混同されない
 - `5`の文字アイコンが、五色の花びらと小さなアイボリー中心円からなる確定ブランドアイコンへ置き換わる
 - アプリ画面は波線なし、共有カードは波線ありの固定表示となる
 - 現行アプリUIを維持し、ヘッダー名称変更で操作の重なりを発生させない

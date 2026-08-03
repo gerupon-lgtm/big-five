@@ -20,6 +20,7 @@ const QUESTION_KEYS = Object.freeze([
   "storageStatus",
 ]);
 const PREVIEW_KEYS = Object.freeze(["phase", "storageStatus"]);
+const DETAIL_REVIEW_KEYS = Object.freeze(["phase", "storageStatus"]);
 const QUESTION_ACTION_KEYS = Object.freeze([
   "onAnswer",
   "onBack",
@@ -28,6 +29,12 @@ const QUESTION_ACTION_KEYS = Object.freeze([
 ]);
 const PREVIEW_ACTION_KEYS = Object.freeze([
   "onPreviewDecision",
+  "onBack",
+  "onPause",
+  "onDiscard",
+]);
+const DETAIL_REVIEW_ACTION_KEYS = Object.freeze([
+  "onComplete",
   "onBack",
   "onPause",
   "onDiscard",
@@ -74,6 +81,12 @@ function isQuestionViewModel(viewModel) {
 function isPreviewViewModel(viewModel) {
   return hasExactKeys(viewModel, PREVIEW_KEYS)
     && viewModel.phase === "preview-choice"
+    && (viewModel.storageStatus === "ok" || viewModel.storageStatus === "error");
+}
+
+function isDetailReviewViewModel(viewModel) {
+  return hasExactKeys(viewModel, DETAIL_REVIEW_KEYS)
+    && viewModel.phase === "detail-review"
     && (viewModel.storageStatus === "ok" || viewModel.storageStatus === "error");
 }
 
@@ -201,11 +214,49 @@ function renderPreviewChoice(main, viewModel, actions) {
   main.append(management);
 }
 
+function renderDetailReview(main, viewModel, actions) {
+  appendAppHeader(main, {
+    action: {
+      label: "中断してトップへ",
+      onClick: actions.onPause,
+    },
+  });
+  appendScreenHeading(main, {
+    kicker: "50 / 50問",
+    title: "50問の回答が完了しました",
+    titleClassName: "detail-review-title",
+  });
+  appendTextElement(
+    main,
+    "p",
+    "回答を見直す場合は戻ることができます。内容を確定すると結果を表示します。",
+    "lead compact-lead",
+  );
+
+  if (viewModel.storageStatus === "error") {
+    renderStorageError(main);
+  }
+
+  const decisions = main.ownerDocument.createElement("div");
+  decisions.className = "detail-completion-actions";
+  addButton(decisions, "結果を見る", "primary-button", actions.onComplete);
+  addButton(decisions, "回答へ戻る", "secondary-button", actions.onBack);
+  main.append(decisions);
+
+  const management = main.ownerDocument.createElement("details");
+  management.className = "questionnaire-management";
+  appendTextElement(management, "summary", "その他の操作");
+  addButton(management, "回答を破棄", "danger-button", actions.onDiscard);
+  main.append(management);
+}
+
 export function renderQuestionnaireScreen(host, viewModel, actions) {
   const valid = isQuestionViewModel(viewModel)
     ? hasRequiredActions(actions, QUESTION_ACTION_KEYS)
     : isPreviewViewModel(viewModel)
-      && hasRequiredActions(actions, PREVIEW_ACTION_KEYS);
+      ? hasRequiredActions(actions, PREVIEW_ACTION_KEYS)
+      : isDetailReviewViewModel(viewModel)
+        && hasRequiredActions(actions, DETAIL_REVIEW_ACTION_KEYS);
   if (
     !valid
     || host === null
@@ -221,8 +272,10 @@ export function renderQuestionnaireScreen(host, viewModel, actions) {
 
   if (viewModel.phase === "question") {
     renderQuestion(main, viewModel, actions);
-  } else {
+  } else if (viewModel.phase === "preview-choice") {
     renderPreviewChoice(main, viewModel, actions);
+  } else {
+    renderDetailReview(main, viewModel, actions);
   }
   host.replaceChildren(main);
 }

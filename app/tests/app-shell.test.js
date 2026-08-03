@@ -1247,15 +1247,25 @@ test("T-008A F-013 never deletes a replacement progress from a stale preview", (
   );
 });
 
-test("T-005 S-004 renders detail after fifty answers and atomically clears progress on successful snapshot save", () => {
+test("T-005 S-004 reviews the fiftieth answer before explicitly saving and rendering detail", () => {
   let raw = null;
   const { host } = createAppHarness({ storage: { getItem: () => raw, setItem(_key, value) { raw = value; } } });
   clickButton(host, "診断を始める");
   for (let index = 0; index < 20; index += 1) answerCurrent(host);
   clickButton(host, "結果を見ずに、あと30問続ける");
   for (let index = 0; index < 30; index += 1) answerCurrent(host);
+  assert.match(collectText(host), /50問の回答が完了しました/);
+  let envelope = JSON.parse(raw);
+  assert.equal(Object.keys(envelope.progressByDiagnosis[DiagnosticDefinition.diagnosisId].answers).length, 50);
+  assert.equal(envelope.results.length, 0);
+
+  clickButton(host, "回答へ戻る");
+  assert.match(collectText(host), /50 \/ 50問/);
+  clickButton(host, "4 やや当てはまる");
+  assert.match(collectText(host), /50問の回答が完了しました/);
+  clickButton(host, "結果を見る");
   assert.match(collectText(host), /50問詳細結果/);
-  const envelope = JSON.parse(raw);
+  envelope = JSON.parse(raw);
   assert.deepEqual(envelope.progressByDiagnosis, {});
   assert.equal(envelope.results.length, 1);
   assert.doesNotMatch(JSON.stringify(envelope.results[0]), /answers/);
@@ -1294,6 +1304,7 @@ test("detail50 snapshot gets a new resultId", () => {
   for (let index = 0; index < 20; index += 1) answerCurrent(host);
   clickButton(host, "結果を見ずに、あと30問続ける");
   for (let index = 0; index < 30; index += 1) answerCurrent(host);
+  clickButton(host, "結果を見る");
 
   const snapshot = JSON.parse(raw).results.find(({ mode }) => mode === "detail50");
   assert.notEqual(snapshot.resultId, progressId);
@@ -1514,6 +1525,7 @@ test("T-005 S-004 keeps an unsaved detail live result and starts a fresh empty p
   for (let index = 0; index < 20; index += 1) answerCurrent(host);
   clickButton(host, "結果を見ずに、あと30問続ける");
   for (let index = 0; index < 30; index += 1) answerCurrent(host);
+  clickButton(host, "結果を見る");
   assert.match(collectText(host), /50問詳細結果/);
   assert.match(collectText(host), /結果は表示できましたが、この端末の履歴には保存できませんでした。/);
   clickButton(host, "もう一度診断する");
@@ -1615,6 +1627,7 @@ test("T-008A F-015 confirms before leaving an unsaved live detail result and pre
   for (let index = 0; index < 20; index += 1) answerCurrent(host);
   clickButton(host, "結果を見ずに、あと30問続ける");
   for (let index = 0; index < 30; index += 1) answerCurrent(host);
+  clickButton(host, "結果を見る");
   const writesAtResult = writes;
 
   clickButton(host, "トップへ戻る");

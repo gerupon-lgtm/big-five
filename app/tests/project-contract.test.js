@@ -356,7 +356,7 @@ test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () =
 
   assertIncludesAll(requirements, [
     "ココロパレア",
-    "https://kokoroparea.gerupon.uk",
+    "https://kokoro.sikumilab.com",
     "1080×1800",
     "3:5",
     "320×480",
