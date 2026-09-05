@@ -26,6 +26,7 @@ import {
   isDetailReviewProgress,
 } from "./domain/response-state.js";
 import { createDiagnosticResultSnapshot } from "./domain/diagnostic-result.js";
+import { createSigotosocketLinkUrl } from "./domain/sigotosocket-link.js";
 import {
   answerAndSave,
   discardProgress,
@@ -761,6 +762,15 @@ export function startApp({
         });
         persistProgress(progress);
         setRoute("#/answer");
+      },
+      onLinkToSigotosocket(selected) {
+        const targetUrl = createSigotosocketLinkUrl(selected);
+        if (!targetUrl) {
+          resultActionNotice = "シゴトソケットへ渡す結果を準備できませんでした。結果を表示したままにしています。";
+          renderResult(snapshot, persistenceFailed, previewProgress, historyDetail);
+          return;
+        }
+        windowObject.location.href = targetUrl;
       },
       ...(presentation ? {
         onShare() {

@@ -2,11 +2,11 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.15 |
+| 設計版 | 0.16 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-08-03 |
-| 入力要件 | 要件定義書v1.40 |
-| 実行方式 | 通常版はブラウザ内完結。ベータ版だけOCI匿名集計APIを併用 |
+| 更新日 | 2026-09-05 |
+| 入力要件 | 要件定義書v1.41 |
+| 実行方式 | 通常版はブラウザ内完結。F-023は明示的な外部遷移、ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
 
@@ -24,6 +24,7 @@
 | character-loader | 該当猫の遅延読込 | あり |
 | radar-renderer | Canvas/SVG相当のレーダー描画モデル | Canvasのみ描画時 |
 | share-card | 共有画像・テキスト生成 | Canvas/Font/Blob |
+| sigotosocket-link | 50問の5因子数値から固定形式の連携URLを生成 | なし |
 | capability-detector | Share/Clipboard/Download能力判定 | あり |
 | router/controller | ハッシュルートと画面状態 | DOM/History |
 | beta-aggregation-client | ベータ通知、完答・カード利用集計、失敗分離 | Fetch/crypto |
@@ -99,7 +100,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤として、`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。人はCSVだけを編集し、生成`app/content/` JSONを編集・コミットしない。
 
-ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。現行ES Modules runtimeは`result-text-v2`を使い、v1の基本237件を履歴互換として残した上で、承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を反映する。v2は基本237件＋振り返り153件＝390件、結果文と根拠の対応行は267件であり、実行時の根拠定義自体は固定6件である。Q-013はP-0の153パレットと用途色B（背景84%・表面90%）およびWCAG、P-1の3場面・29香調・25素材・29素材関連、P-2〜P-6の全51称号に属する称号別選択を2026-07-31に承認し、承認済みCSVから`presentation-v2` ES Modules runtimeを決定的に生成・接続済みである。濃度は版付き`palette-usage-mappings.csv`の2列から解決し、基調色・rendererへ固定値を重複させない。approved JSON release未選択、Q-006関連行status未昇格、Q-012正式release未完了はrelease readinessを妨げる別条件として維持する。runtimeは生成済みES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
+ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。現行ES Modules runtimeは`result-text-v2`を使い、v1の基本237件を履歴互換として残した上で、承認済み修正27件とTR-0〜TR-4承認済み`titleReflection`153件を反映する。v2は基本237件＋振り返り153件＝390件、結果文と根拠の対応行は267件であり、実行時の根拠定義自体は固定6件である。Q-013はP-0の153パレットと用途色B（背景84%・表面90%）およびWCAG、P-1の3場面・29香調・25素材・29素材関連、P-2〜P-6の全51称号に属する称号別選択を2026-07-31に承認し、承認済みCSVから`presentation-v2` ES Modules runtimeを決定的に生成・接続済みである。濃度は版付き`palette-usage-mappings.csv`の2列から解決し、基調色・rendererへ固定値を重複させない。approved JSON release未選択、Q-006関連行status未昇格、Q-012正式release未完了はrelease readinessを妨げる別条件として維持する。runtimeは生成済みES Modulesを読み、JSON fetchは行わない。通常モードの自動外部通信は0件で、CSPの`connect-src 'none'`を変更しない。F-023だけは利用者操作による同一タブ遷移を行う。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 
 ## 4. 採点
 
@@ -429,6 +430,14 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 - SHARE_FONT_UNAVAILABLE
 - SHARE_PNG_UNAVAILABLE
 
+### 12.4 シゴトソケット結果連携
+
+1. controllerはS-004で表示中のResultSnapshotまたはlive結果を`createSigotosocketLinkUrl`へ渡す。
+2. domain処理は`mode === "detail50"`、5因子の過不足・重複、factorId、有限な`rawMean`と1〜5範囲を検証する。
+3. 固定順を`intellectImagination`、`conscientiousness`、`extraversion`、`agreeableness`、`emotionalStability`とし、各`Math.round(rawMean * 100)`を3桁化して15桁へ連結する。
+4. 有効なら`https://sigotosocket.sikumilab.com/#b5=v1-<15桁>`を返し、presentation callbackが`window.location.href`へ設定して同一タブ遷移する。fetch、フォーム送信、保存、ログ記録は行わない。
+5. 無効なら`null`を返す。controllerは内部値を表示せず利用者向け通知を出し、S-004を維持する。
+
 ## 13. 削除
 
 - 途中回答破棄: 対象diagnosisIdのProgressRecordだけを削除。
@@ -442,7 +451,7 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 ### 14.1 機能分離
 
 - AppMetaの`deploymentMode=beta`かつ`betaAggregationEnabled=true`のときだけ集計クライアントを有効化する。
-- 通常公開版はAPI URLを参照せず、完答・カード利用のいずれでもネットワーク送信しない。
+- 通常公開版は集計API URLを参照せず、完答・カード利用のいずれでも自動送信しない。F-023の明示遷移は集計処理へ含めない。
 - ベータ開始前にS-009で目的、送信項目、非保存項目、OCI送信、通常版非送信、外部フォーム別同意を表示する。
 
 ### 14.2 完答集計
@@ -482,7 +491,7 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 - 秘密情報・APIキーを配布物へ置かない。
 - ユーザー入力をHTMLとして挿入しない。
 - CSPで可能な範囲の`default-src 'self'`等を適用する。正確なポリシーは実装時に全資産を列挙して決める。
-- URL、通常版ログ、共有モデル、エラー報告に回答・結果を含めない。
+- アプリ内URL、通常版ログ、共有モデル、エラー報告に回答・結果を含めない。F-023の連携先URLフラグメントには5因子の数値だけを含める。
 - ベータ集計APIは回答を受信時の検証とカウント加算にだけ使い、イベント行・本文ログ・IPログを残さない。
 - API用DBロールは集計マスタ参照、カウンターUPSERT、短期冪等キー操作だけに限定する。
 - CORSはベータGitHub Pagesの確定オリジンだけを許可し、Cookieと認証情報を使用しない。

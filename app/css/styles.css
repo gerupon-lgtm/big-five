@@ -1345,6 +1345,19 @@ dd {
   margin-top: 28px;
 }
 
+.result-linkage-action {
+  display: grid;
+  flex: 1 1 100%;
+  justify-items: start;
+  gap: 8px;
+}
+
+.result-linkage-note {
+  margin: 0;
+  color: #49645f;
+  font-size: 0.9rem;
+}
+
 .result-actions > a.secondary-button {
   display: inline-flex;
   min-height: 44px;

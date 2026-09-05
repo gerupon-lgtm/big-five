@@ -84,7 +84,7 @@ npm.cmd run content:preview:palettes
 
 JSON runtime loadingとGitHub Pages/Actionsのactivationは、この基盤とは別の[activation plan](superpowers/plans/2026-07-26-csv-content-activation-pages.md)で扱います。activation後はActionsがvalidation、build、deployを自動実行し、人はCSVだけをコミットします。buildが失敗した場合、現在のデプロイは変更されません。
 
-この文書はfoundation時点の手順です。現在の通常モードは外部通信0件、CSPは`connect-src 'none'`のままであり、runtime JSON fetchやPages deploymentはまだ有効化されていません。
+この文書はfoundation時点の手順です。現在の通常モードは自動外部通信0件、CSPは`connect-src 'none'`のままであり、F-023だけは利用者操作によるシゴトソケットへの同一タブ遷移を行います。runtime JSON fetchやPages deploymentはまだ有効化されていません。
 
 ### Palette preview intensity note (2026-07-30)
 

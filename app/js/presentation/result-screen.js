@@ -770,6 +770,28 @@ function renderActions(
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onRetry?.());
   }
+  if (
+    snapshot.mode === "detail50"
+    && typeof actions.onLinkToSigotosocket === "function"
+  ) {
+    const linkage = controls.ownerDocument.createElement("div");
+    linkage.className = "result-linkage-action";
+    const button = appendTextElement(
+      linkage,
+      "button",
+      "シゴトソケットへ結果を渡す",
+      "secondary-button",
+    );
+    button.setAttribute("type", "button");
+    button.addEventListener("click", () => actions.onLinkToSigotosocket?.(snapshot));
+    appendTextElement(
+      linkage,
+      "p",
+      "5つの数値だけを渡します。回答そのものは渡しません。",
+      "result-linkage-note",
+    );
+    controls.append(linkage);
+  }
   if (historyDetail) {
     const historyLink = appendTextElement(
       controls,

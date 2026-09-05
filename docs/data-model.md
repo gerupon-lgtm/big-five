@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.10 |
+| 設計版 | 0.11 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-08-02 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.35 |
+| 更新日 | 2026-09-05 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.41 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -24,7 +24,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。`result-text-v1`は237件の不変な履歴互換版である。現行`result-text-v2`は基本237件にTR-0〜TR-4承認済みの称号別`titleReflection`153件を加えた390件で、基本文面には承認済みのv1→v2修正27件を含む。v2の結果文と根拠の対応行は267件、実行時の`ResultEvidenceDefinition`は固定6件であり、両者を同じ件数として扱わない。Q-013は`presentation-v2`の候補、compiler、監査、確認資料まで作成済みで、P-0の153パレットと用途色B（背景84%・表面90%）、P-1の3場面・29香調・25素材・29素材関連、P-2〜P-6の全51称号に属する称号別選択は承認済みである。用途色濃度は`palette-usage-mappings.csv`の2列で版管理し、基調色とruntimeロジックから分離する。approved production release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
 
-現在はES Modulesがruntime compatibility authorityであり、Q-013は承認済みCSVから生成した`presentation-v2`を使用する。`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。JSON runtime activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
+現在はES Modulesがruntime compatibility authorityであり、Q-013は承認済みCSVから生成した`presentation-v2`を使用する。`app/content/`のJSONは生成時だけのignore対象である。通常モードの自動外部通信は0件、CSPは`connect-src 'none'`を維持する。F-023だけは利用者操作でシゴトソケットへ同一タブ遷移する。JSON runtime activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
 
 ## 2. 静的定義
 
@@ -34,7 +34,7 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つの
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
-| appVersion | string | ○ | `mvp-1.0.0`等 |
+| appVersion | string | ○ | `mvp-1.1.0`等 |
 | storageSchemaVersion | integer | ○ | 端末保存スキーマ版 |
 | cardTemplateVersion | string | ○ | 共有カード描画版 |
 | characterManifestVersion | string | ○ | 猫アセット対応版 |
@@ -429,6 +429,10 @@ schema 1の`presentation-v1`は素材例を持たない履歴互換契約とし�
 - 共有テキストは同じモデルから、ブランド、モード、`称号：...`、称号副題、見出しなしの称号理由、固定順5因子、`ココロアロマ`の場面／香調／素材例、標準注意書き、任意URLの順で生成する。生回答、`titleReflection`、内部版ID、`この称号になった理由`見出しは含めない。
 - `shareUrl`は共有テキストにだけ投影する。空文字ならURLブロックを省略し、有効HTTPS URLだけを注意書きの後の1空行を挟んで追加する。`publicOrigin`、`resultId`、端末情報、公開結果URL、未知フィールドをモデルへ投影しない。
 - 共有物は保存しない。ResultSnapshotだけを永続的な再生成元とし、PNG BlobとObject URLは共有画面の生存期間に限って保持・解放する。プレビュー、Web Share、ダウンロードは同じPNG Blobを再利用する。rendererは`card-template-v1`の旧円形リースと`card-template-v2`の補正版透過ラスタリースを版で振り分ける。v2は64×64の分析Canvasで猫の不透明下端比率を求め、`contain`配置へ写像してリースの見える下端を約8px下へ揃える。分析またはリース読込が失敗してもカード本文とテキスト共有を維持し、未対応版では誤った画像を生成せずテキスト共有へフォールバックする。
+
+### 3.9 SigotosocketLinkCode
+
+F-023の連携値は永続データモデルではなく、利用者がボタンを押した時だけResultSnapshotまたはlive結果から生成する一時値である。`v1-`に続く15桁は固定5因子順の`Math.round(rawMean * 100)`を各3桁で連結し、各値を100〜500へ制限する。生回答、称号ID、色ID、日時、端末情報、利用者識別子は含めず、localStorage、ログ、共有モデルへ保存しない。
 
 ## 4. 比較互換性
 

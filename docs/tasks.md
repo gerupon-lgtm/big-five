@@ -2,12 +2,12 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.19 |
+| 設計版 | 0.20 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-08-03 |
-| 要件正典 | 要件定義書v1.40 |
+| 更新日 | 2026-09-05 |
+| 要件正典 | 要件定義書v1.41 |
 | 初期リリース | `mvp-0.1.0` |
-| 現在リリース | `mvp-1.0.1` |
+| 現在リリース | `mvp-1.1.0` |
 
 ## 1. トレーサビリティ表（正典）
 
@@ -26,11 +26,12 @@
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007, T-008C | `card-template-v2`は承認済み`kokoro-wreath-v2.png`を猫の背面へ合成する。透明素材、画像拡大、プレビュー／Web Share／保存の同一PNG Blobを回帰確認。結果画面の因子領域へ同操作を追加しない |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007, T-008C | ブランド→モード→称号→副題→見出しなし理由→固定順因子→アロマ→注意→任意URLの共有文、単一CTA、同一PNG Blob、コピー／選択可能テキストの代替を回帰確認 |
 | F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A, T-008C | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。T-008Cでは20問preview終了時にResultSnapshotを残して対応ProgressRecordだけを削除する。今回の共有追補におけるF-013の範囲も、この完了状態の確定だけであり、Blob／Object URLの寿命はF-013へ分類しない |
-| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011 | `mvp-1.0.1`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
+| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011, T-032 | `mvp-1.1.0`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A, T-008C | 保存失敗時の中断・preview終了、live結果維持、ID不一致の履歴継続を安全側で無効化、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
 | F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-008C, T-010 | `ココロパレット`は常時3候補、ブランド緑の中央チェックで選択を示す。`ココロアロマ`は閉じた3画像ティーザーと右向き矢印から1回で6候補を開く。因子と相互排他になるのはアロマだけで、パレットは対象外。共有カードと共有テキストは代表3件の香り素材名を表示する |
+| F-023 | シゴトソケット結果連携 | S-004 | sigotosocket-link、result controller | ResultSnapshotのmode・FactorResult | T-032 | 50問の診断直後／履歴詳細だけに明示ボタンと注記を表示し、固定順15桁をURLフラグメントへ設定して同一タブ遷移。不正値時は結果を維持して非遷移 |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -43,10 +44,10 @@
 - 対応: Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤。`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。
 - 初期状態: 50問、固定20問、51称号、`result-text-v1` 237結果文、6根拠。E-0は`approved`、E-1〜E-5は`draft`、T-0〜T-4/F-1〜F-5/X-1〜X-2は人手approval metadataなしの`reviewed`。現在の`result-text-v2`は基本237件＋TR-0〜TR-4承認済み`titleReflection`153件＝390件、結果文と根拠の対応行267件で、実行時根拠定義は引き続き6件である。v2基本文面には承認済み修正27件を含む。CSV上のQ-012/Q-013とrelease manifest/historyはヘッダーのみで開始した。その後Q-012画像は別の版付き制作台帳・runtime manifestで制作・技術実装済みとなり、Q-013は`presentation-v2`の候補CSV、compiler、監査、確認資料まで作成し、P-0〜P-6承認後にES Modules runtimeを生成・接続した。正式なapproved JSON release選択は未完了である。
 - 運用: 人はコミット対象のCSVだけを編集し、`app/content/`の生成JSONを手編集・コミットしない。`npm.cmd run content:validate`で検証し、`npm.cmd run content:build`はapproved complete releaseがない現在`RELEASE_NOT_SELECTED`となる。
-- 移行状態: ES Modulesがruntime compatibility authorityで、runtime JSON fetchとPages deploymentは未実装。通常モードの外部通信は0件、CSPは`connect-src 'none'`を維持する。activation後のActions validate/build/deployは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
+- 移行状態: ES Modulesがruntime compatibility authorityで、runtime JSON fetchとPages deploymentは未実装。通常モードの自動外部通信は0件、CSPは`connect-src 'none'`を維持する。F-023の利用者操作による同一タブ遷移だけを例外とする。activation後のActions validate/build/deployは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 - 検証: `node --test app/tests/content-artifact-contract.test.js`、`npm.cmd run content:validate`、`npm.cmd test`、`npm.cmd run check`。Task 6のwarning-order minorは非ブロッキングとして記録し、完了済みfoundationを再開しない。
 
-要件F-001〜F-018に未対応行はない。Q待ちの項目は実装漏れではなく、各タスク開始条件として管理する。
+要件F-001〜F-018およびF-023に未対応行はない。Q待ちの項目は実装漏れではなく、各タスク開始条件として管理する。
 
 ## 2. 実装順
 
@@ -67,6 +68,7 @@
 | T-010 | ベータ匿名集計API・DB・事前説明 | F-017 | OCIへ匿名集計し、二重送信・通信失敗でも診断結果を維持 |
 | T-011 | GitHub Pages CI/CD・運用 | F-014, NF-01, NF-04, NF-06 | テスト成功時だけPagesへ配信し、AppMetaのアプリ版からCSS・ES Modules・画像・manifestのキャッシュバスターを自動生成。QA一時プレビューはapproved releaseの選択、JSON runtimeの有効化、T-011完了を意味しない |
 | T-012 | MVP受入・ブラウザ検証 | 全機能/NF | 要件17.1と主要異常系を検証し記録 |
+| T-032 | シゴトソケット結果連携 | F-006, F-014, F-015, F-023 | 50問詳細結果限定の明示導線、固定順15桁、同一タブ遷移、履歴詳細、不正値フォールバックを実装・検証 |
 
 ## 3. フェーズ
 
@@ -361,7 +363,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - presentation単体: questionnaire、start、result、history。
   - app-shell結合: 1〜19問、20問選択前、preview表示後、21〜49問、50問完答、新規開始取消／確定。
   - storage異常: 保存不可、preview snapshot未保存、progress削除失敗。
-  - Q-006 snapshot v1 7件／42件、v2 8件／45件、v2ゼロ-reflection fallback 7件／42件、部分組拒否、Q-012該当画像1件、通常外部送信0件の回帰。
+  - Q-006 snapshot v1 7件／42件、v2 8件／45件、v2ゼロ-reflection fallback 7件／42件、部分組拒否、Q-012該当画像1件、通常版の自動外部送信0件の回帰。F-023の明示遷移は別に検証する。
   - `npm.cmd test`、`npm.cmd run check`、`git diff --check`、実ブラウザsmoke。
 - 実装記録（2026-07-27、第1バッチ）:
   - `app-header`を開始・回答へ接続し、設問中／20問分岐の`中断してトップへ`と破棄を分離した。開始画面は直近進捗の状態に応じて`途中から再開する`／`残り30問を再開する`を切り替え、新規開始は取消時無変更・確定時だけ進捗を置換する。
@@ -388,7 +390,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 保存済み結果の履歴戻り追補（2026-07-31）: live結果と履歴から復元した結果を明示的に分け、後者だけヘッダーと最下部へ`履歴一覧に戻る`を表示する。履歴復元時は`トップへ戻る`と`もう一度診断する`を省略し、live結果の既存操作は維持する。result-screen／app-shell集中54件、全629件、静的検証、QA preview 112 filesを通過した。自動ブラウザ環境では端末保存が無効だったため履歴復元の実画面は作成できなかったが、保存不可フォールバックとconsole warning／error 0件を確認した。
   - 結果・履歴UI再整合検証（2026-07-30）: ローカル実ブラウザの320px、360px、960pxで横overflowなし、閉じたsheet 0件、同時1因子、360pxの因子名1行、sheetの閉じる1行、本文スクロール、アプリ内の個別／全削除確認、ブラウザ標準confirm未使用、console warning／error 0件を確認した。
   - 結果UX追補（2026-07-31）: スコア棒をインラインstyle依存からネイティブ`progress`へ変更し、CSP下でも0〜100の実スコアを反映する。初回修正では因子展開と同時に全本文を表示したが、利用者確認を受けて、因子を開く→「今の傾向」等のカテゴリ名を開く二段階へ戻す。同時1因子／1カテゴリとし、カテゴリ名自体で本文を開くため、汎用サマリと三段目の「詳しく見る」は置かない。文章ごとの内部根拠ID表示は削除し、設問構成、尺度、採点、限界、出典を最下部の「結果の根拠と見方」へ集約する。
-  - 残る懸念: approved JSON release未選択、Q-012の正式releaseである。補正版リースは2026-08-02にユーザー承認済みである。通常runtimeの外部送信0件と`connect-src 'none'`は維持する。
+  - 残る懸念: approved JSON release未選択、Q-012の正式releaseである。補正版リースは2026-08-02にユーザー承認済みである。通常runtimeの自動外部送信0件と`connect-src 'none'`は維持し、F-023の明示遷移だけを例外とする。
 
 ### T-008B 結果履歴・比較・色香りUI追補
 
@@ -494,13 +496,13 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 作業:
   - S-008へ尺度、スコア、限界、端末保存、削除、版を実装。
   - CSP、混在コンテンツ防止、秘密情報検査を追加。
-  - 通常公開で外部送信がないことを検証。
+  - 通常公開で自動外部送信がないことを検証。F-023の利用者操作による同一タブ遷移だけを例外とする。
 - 完了条件:
   - 「自己理解支援ツール」、非臨床、非能力・採用、非公式称号を確認できる。
   - 外部APIキー・秘密・分析送信がない。
 - 検証方法:
   - 静的配布物の秘密パターンスキャン。
-  - ブラウザネットワーク記録で通常フローの外部送信0件。
+  - ブラウザネットワーク記録で通常フローの自動外部送信0件。F-023の明示遷移は操作時だけ発生することを別途確認する。
   - HTTP資産、inline script、CSP違反を検出。
 
 ### T-010 ベータ匿名集計API・DB・事前説明
@@ -516,7 +518,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 対象APIのアクセスログ・アプリログからIP、User-Agent、Referer、本文、回答値、称号ID、色IDを除外。
   - Googleフォーム等への任意リンクはAPIと分離し、診断・集計キーを引き渡さない。
 - 完了条件:
-  - 通常版の回答・結果・共有フローは外部送信0件。
+  - 通常版の回答・結果・共有フローは自動外部送信0件。F-023の利用者操作による同一タブ遷移だけを例外とする。
   - ベータ版は事前説明を確認でき、20問／50問完答ごとに設問選択肢、称号、完了数が各1回だけ加算される。
   - 色選択だけでは加算せず、色付きカード保存・OS共有成功時だけ操作別に1回加算される。
   - DBには集計行と短期冪等キーハッシュ以外の個人単位データが存在しない。
@@ -564,6 +566,20 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 自動単体・結合・ブラウザスモーク。
   - iOS Safari、Android Chrome、PC Chrome/Edge/Safariの現行・1世代前。
   - 保存不可、破損、猫失敗、Canvas失敗、共有不可を含む。
+
+### T-032 シゴトソケット結果連携
+
+- 対応機能: F-006、F-014、F-015、F-023
+- 状態: 完了
+- 実装:
+  - `app/js/domain/sigotosocket-link.js`でdetail50と固定5因子を検証し、各`Math.round(rawMean * 100)`を3桁化した15桁URLを生成する。
+  - S-004の診断直後と履歴詳細へ正確なボタン・注記を追加し、20問プレビュー・履歴一覧・共有画面からは除外する。
+  - controllerは有効URLだけを`window.location.href`へ設定し、不正結果では通知して画面を維持する。
+- 検証:
+  - 正常例、因子順の入力非依存、欠落・重複・未知因子・範囲外・NaN、preview除外をNodeテストで確認する。
+  - 診断直後／履歴詳細の表示、20問非表示、同一タブの完全URLをpresentation/controllerテストで確認する。
+  - 全テスト、静的検証、コンテンツ検証、QA Pages成果物生成、実ブラウザsmokeを通す。
+- プライバシー: 生回答、称号ID、色ID、日時、端末情報、利用者識別子を連携値へ含めず、fetch・保存・ログ記録を追加しない。
 
 ## 5. 未対応・保留
 
