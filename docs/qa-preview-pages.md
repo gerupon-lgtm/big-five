@@ -9,10 +9,10 @@
 https://gerupon-lgtm.github.io/big-five/
 
 - 正式確認URL: https://kokoro.sikumilab.com/
-- QA対象commit: `db1e05f00a7f3bf88e6f6c619cee25f2a6b536e3`
+- QA対象commit: `b5416c485b9539ef544fb0d95bb65f6fbbd6ba58`
 - branch: `codex/big-five-q006`
-- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/33965878596
-- 2026-09-05確認: build／deploy成功。正式確認URLで`mvp-1.1.0`を確認し、F-023の`sigotosocket-link.js`、結果画面の明示ボタン、版付きentry importはいずれもHTTP 200
+- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/33967246271
+- 2026-09-05確認: build／deploy成功。正式確認URLで`mvp-1.1.1`を確認し、F-023の短い説明、トップページへの同一タブ補助リンク、軽く強調した受け渡しボタン、`sigotosocket-link.js`はいずれも配信済み。360px実ブラウザで横overflowなし、固定形式URLへの同一タブ遷移、console error／warning 0件を確認
 
 ## 初期設定
 
