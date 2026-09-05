@@ -2,11 +2,11 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.8 |
+| 設計版 | 0.9 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-28 |
-| 入力要件 | 要件定義書v1.13 |
-| 実行方式 | 通常版はブラウザ内完結。ベータ版だけOCI匿名集計APIを併用 |
+| 更新日 | 2026-09-05 |
+| 入力要件 | 要件定義書v1.15 |
+| 実行方式 | 通常版はブラウザ内完結。F-023は明示操作で外部遷移し、ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
 
@@ -24,6 +24,7 @@
 | character-loader | 該当猫の遅延読込 | あり |
 | radar-renderer | Canvas/SVG相当のレーダー描画モデル | Canvasのみ描画時 |
 | share-card | 共有画像・テキスト生成 | Canvas/Font/Blob |
+| sigotosocket-link | 50問の5因子を固定順の版付きURLフラグメントへ変換 | なし |
 | capability-detector | Share/Clipboard/Download能力判定 | あり |
 | router/controller | ハッシュルートと画面状態 | DOM/History |
 | beta-aggregation-client | ベータ通知、完答・カード利用集計、失敗分離 | Fetch/crypto |
@@ -93,7 +94,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤として、`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。人はCSVだけを編集し、生成`app/content/` JSONを編集・コミットしない。
 
-ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの外部通信は0件で、CSPの`connect-src 'none'`を変更しない。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
+ただし、現在はCSVのapproved releaseがなく、release CSVはヘッダーのみである。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、これらの行statusとは別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。runtimeは既存ES Modulesを読み、JSON fetchは行わない。通常モードの自動外部通信は0件で、CSPの`connect-src 'none'`を変更しない。F-023の利用者操作による外部遷移だけを例外とする。Actionsによるvalidate/build/deployとruntime JSON loadingは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 
 ## 4. 採点
 
@@ -410,6 +411,18 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 - CLIPBOARD_DENIED
 - DOWNLOAD_UNAVAILABLE
 
+### 12.4 シゴトソケット結果連携
+
+`createSigotosocketLinkUrl(snapshot)`はDOM、location、localStorage、ネットワークへ依存しない純粋関数とする。
+
+1. 入力が`mode: detail50`であることを確認する。`preview20`は`null`を返す。
+2. `factors`が固定5因子を重複・未知IDなしで1件ずつ持つことを確認する。
+3. `factor-order-v1`順に`rawMean * 100`を`Math.round`し、100〜500の整数であることを確認して3桁へゼロ埋めする。
+4. `v1-`と15桁本体を連結し、`https://sigotosocket.sikumilab.com/#b5=<code>`を返す。
+5. 結果画面の明示操作でだけ`location.href`へ代入し、同じタブで遷移する。生成失敗時は結果画面を維持し、壊れたコードを渡さない。
+
+出力へ生回答、称号ID、猫ID、パレットID、resultId、日時を含めない。フラグメントはHTTPリクエストへ含まれず、受け側が取込後に`#/start`へ置換して得点入りURLを残さない契約とする。通常版の`connect-src 'none'`は変更せず、診断完答時の自動通信も追加しない。
+
 ## 13. 削除
 
 - 途中回答破棄: 対象diagnosisIdのProgressRecordだけを削除。
@@ -462,7 +475,7 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 - 秘密情報・APIキーを配布物へ置かない。
 - ユーザー入力をHTMLとして挿入しない。
 - CSPで可能な範囲の`default-src 'self'`等を適用する。正確なポリシーは実装時に全資産を列挙して決める。
-- URL、通常版ログ、共有モデル、エラー報告に回答・結果を含めない。
+- アプリ内URL、通常版ログ、共有モデル、エラー報告に回答・結果を含めない。F-023の外部遷移URLフラグメントだけは、明示操作時に5因子の内部平均を含める例外とする。
 - ベータ集計APIは回答を受信時の検証とカウント加算にだけ使い、イベント行・本文ログ・IPログを残さない。
 - API用DBロールは集計マスタ参照、カウンターUPSERT、短期冪等キー操作だけに限定する。
 - CORSはベータGitHub Pagesの確定オリジンだけを許可し、Cookieと認証情報を使用しない。
@@ -486,6 +499,7 @@ neutral frame、明暗を兼ねる内側outline、猫画像のshadowは猫を再
 | ベータ要求二重送信 | 同一冪等キーは1回だけ加算 | 成功扱い | 204で終了 | 同一requestIdを2回送信 |
 | ベータ要求の一部不正 | 全集計をロールバック | 結果を維持 | 再送しない | 不正設問を混入 |
 | 集計同時更新 | 原子的UPSERT | 通常終了 | 非該当 | 100並列加算 |
+| シゴトソケット連携入力不正 | URLを生成せず外部遷移しない | 結果画面と通知を維持 | 再表示後に結果を確認 | 欠損・重複・未知因子・値域外を注入 |
 
 ## 17. 移植・権威データの検証
 

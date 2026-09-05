@@ -8,8 +8,8 @@ import {
   createStartVersionViewModel,
 } from "../js/domain/version-model.js";
 
-test("AppMeta is the canonical mvp-0.1.0 normal-build metadata", () => {
-  assert.equal(appMeta.appVersion, "mvp-0.1.0");
+test("AppMeta is the canonical mvp-0.2.0 normal-build metadata", () => {
+  assert.equal(appMeta.appVersion, "mvp-0.2.0");
   assert.equal(appMeta.deploymentMode, "normal");
   assert.equal(appMeta.betaAggregationEnabled, false);
   assert.equal(appMeta.betaApiBaseUrl, null);
@@ -30,8 +30,8 @@ test("diagnostic, start, and share models read the same canonical version regist
   };
 
   assert.deepEqual(startModel, {
-    appVersion: "mvp-0.1.0",
-    versionLabel: "バージョン mvp-0.1.0",
+    appVersion: "mvp-0.2.0",
+    versionLabel: "バージョン mvp-0.2.0",
     diagnosticVersions: expectedDiagnosticVersions,
     diagnosticVersionLabel: "診断バージョン",
     diagnosticVersionItems: [
@@ -41,7 +41,7 @@ test("diagnostic, start, and share models read the same canonical version regist
     ],
   });
   assert.deepEqual(shareMetadata, {
-    appVersion: "mvp-0.1.0",
+    appVersion: "mvp-0.2.0",
     diagnosticVersions: expectedDiagnosticVersions,
   });
   assert.equal(Object.isFrozen(startModel.diagnosticVersionItems), true);

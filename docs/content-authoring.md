@@ -55,4 +55,4 @@ npm.cmd run content:validate
 
 JSON runtime loadingとGitHub Pages/Actionsのactivationは、この基盤とは別の[activation plan](superpowers/plans/2026-07-26-csv-content-activation-pages.md)で扱います。activation後はActionsがvalidation、build、deployを自動実行し、人はCSVだけをコミットします。buildが失敗した場合、現在のデプロイは変更されません。
 
-この文書はfoundation時点の手順です。現在の通常モードは外部通信0件、CSPは`connect-src 'none'`のままであり、runtime JSON fetchやPages deploymentはまだ有効化されていません。
+この文書はfoundation時点の手順です。現在の通常モードは自動外部通信0件、CSPは`connect-src 'none'`のままであり、runtime JSON fetchやPages deploymentはまだ有効化されていません。F-023だけは利用者の明示操作で外部サイトへ遷移します。

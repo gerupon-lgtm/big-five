@@ -2,11 +2,11 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.8 |
+| 設計版 | 0.9 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-28 |
-| 要件正典 | 要件定義書v1.13 |
-| 初期リリース | `mvp-0.1.0` |
+| 更新日 | 2026-09-05 |
+| 要件正典 | 要件定義書v1.15 |
+| 初期リリース | `mvp-0.2.0` |
 
 ## 1. トレーサビリティ表（正典）
 
@@ -30,6 +30,7 @@
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面接続を実装。共有接続待ち |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
 | F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-010 | Q-013設計済み。香り素材マスタを含む実データ待ち |
+| F-023 | シゴトソケット結果連携 | S-004 | sigotosocket-link、同一タブ遷移 | ResultSnapshotから生成する一時LinkCode | T-032 | 実装・単体／画面／controller結合テスト済み |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -42,10 +43,10 @@
 - 対応: Q-006およびT-005/F-002/F-005/F-006/F-016のコンテンツ作成基盤。`content/source/`のCSV、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testを実装した。
 - 初期状態: 50問、固定20問、51称号、237結果文、6根拠。E-0は`approved`、E-1〜E-5は`draft`、T-0〜T-4/F-1〜F-5/X-1〜X-2は人手approval metadataなしの`reviewed`。CSV上のQ-012/Q-013とrelease manifest/historyはヘッダーのみで開始した。その後Q-012画像は別の版付き制作台帳・runtime manifestで制作・技術実装済みとなったが、正式なapproved release選択は未完了である。Q-013とCSV approved releaseも未作成のままである。
 - 運用: 人はコミット対象のCSVだけを編集し、`app/content/`の生成JSONを手編集・コミットしない。`npm.cmd run content:validate`で検証し、`npm.cmd run content:build`はapproved complete releaseがない現在`RELEASE_NOT_SELECTED`となる。
-- 移行状態: ES Modulesがruntime compatibility authorityで、runtime JSON fetchとPages deploymentは未実装。通常モードの外部通信は0件、CSPは`connect-src 'none'`を維持する。activation後のActions validate/build/deployは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
+- 移行状態: ES Modulesがruntime compatibility authorityで、runtime JSON fetchとPages deploymentは未実装。通常モードの自動外部通信は0件、CSPは`connect-src 'none'`を維持し、F-023の利用者操作による外部遷移だけを例外とする。activation後のActions validate/build/deployは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で扱う。
 - 検証: `node --test app/tests/content-artifact-contract.test.js`、`npm.cmd run content:validate`、`npm.cmd test`、`npm.cmd run check`。Task 6のwarning-order minorは非ブロッキングとして記録し、完了済みfoundationを再開しない。
 
-要件F-001〜F-018に未対応行はない。Q待ちの項目は実装漏れではなく、各タスク開始条件として管理する。
+要件F-001〜F-018およびF-023に未対応行はない。Q待ちの項目は実装漏れではなく、各タスク開始条件として管理する。
 
 ## 2. 実装順
 
@@ -64,6 +65,7 @@
 | T-010 | ベータ匿名集計API・DB・事前説明 | F-017 | OCIへ匿名集計し、二重送信・通信失敗でも診断結果を維持 |
 | T-011 | GitHub Pages CI/CD・運用 | F-014, NF-01, NF-04, NF-06 | テスト成功時だけPagesへ配信、切戻し可能。2026-07-28のQA一時プレビューは`codex/big-five-q006`から現行ES Modules runtimeだけを公開し、approved releaseの選択、JSON runtimeの有効化、T-011完了を意味しない |
 | T-012 | MVP受入・ブラウザ検証 | 全機能/NF | 要件17.1と主要異常系を検証し記録 |
+| T-032 | シゴトソケット結果連携 | F-023 | 50問だけの5因子を`v1`フラグメントへ変換し、明示操作で同じタブへ渡す |
 
 ## 3. フェーズ
 
@@ -77,7 +79,7 @@ T-004 → T-005 → T-006 → T-008A
 
 ### フェーズC: 共有・品質・公開
 
-T-007 → T-008 → T-009 → T-011 → T-012
+T-007 → T-008 → T-009 → T-011 → T-012。T-032はT-005完了後に独立実装できる。
 
 ### ベータ
 
@@ -335,7 +337,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - presentation単体: questionnaire、start、result、history。
   - app-shell結合: 1〜19問、20問選択前、preview表示後、21〜49問、50問完答、新規開始取消／確定。
   - storage異常: 保存不可、preview snapshot未保存、progress削除失敗。
-  - Q-006 snapshot 7件／42件、Q-012該当画像1件、通常外部送信0件の回帰。
+- Q-006 snapshot 7件／42件、Q-012該当画像1件、通常フローの自動外部送信0件とF-023の明示遷移限定の回帰。
   - `npm.cmd test`、`npm.cmd run check`、`git diff --check`、実ブラウザsmoke。
 - 実装記録（2026-07-27、第1バッチ）:
   - `app-header`を開始・回答へ接続し、設問中／20問分岐の`中断してトップへ`と破棄を分離した。開始画面は直近進捗の状態に応じて`途中から再開する`／`残り30問を再開する`を切り替え、新規開始は取消時無変更・確定時だけ進捗を置換する。
@@ -375,13 +377,13 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 作業:
   - S-008へ尺度、スコア、限界、端末保存、削除、版を実装。
   - CSP、混在コンテンツ防止、秘密情報検査を追加。
-  - 通常公開で外部送信がないことを検証。
+- 通常公開で自動外部送信がなく、F-023だけが利用者の明示操作で外部遷移することを検証。
 - 完了条件:
   - 「自己理解支援ツール」、非臨床、非能力・採用、非公式称号を確認できる。
   - 外部APIキー・秘密・分析送信がない。
 - 検証方法:
   - 静的配布物の秘密パターンスキャン。
-  - ブラウザネットワーク記録で通常フローの外部送信0件。
+- ブラウザネットワーク記録で通常フローの自動外部送信0件。F-023の明示操作時だけは外部遷移を許容する。
   - HTTP資産、inline script、CSP違反を検出。
 
 ### T-010 ベータ匿名集計API・DB・事前説明
@@ -397,7 +399,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 対象APIのアクセスログ・アプリログからIP、User-Agent、Referer、本文、回答値、称号ID、色IDを除外。
   - Googleフォーム等への任意リンクはAPIと分離し、診断・集計キーを引き渡さない。
 - 完了条件:
-  - 通常版の回答・結果・共有フローは外部送信0件。
+- 通常版の回答・結果・共有フローは自動外部送信0件。F-023の明示操作時だけは外部遷移を許容する。
   - ベータ版は事前説明を確認でき、20問／50問完答ごとに設問選択肢、称号、完了数が各1回だけ加算される。
   - 色選択だけでは加算せず、色付きカード保存・OS共有成功時だけ操作別に1回加算される。
   - DBには集計行と短期冪等キーハッシュ以外の個人単位データが存在しない。
@@ -445,6 +447,30 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 自動単体・結合・ブラウザスモーク。
   - iOS Safari、Android Chrome、PC Chrome/Edge/Safariの現行・1世代前。
   - 保存不可、破損、猫失敗、Canvas失敗、共有不可を含む。
+
+### T-032 シゴトソケット結果連携
+
+- 対応機能: F-023。シゴトソケット側F-010の受け取り契約に対応。
+- 依存: T-003、T-005
+- 状態: 完了（2026-09-05、`mvp-0.2.0`）
+- 作業:
+  - 50問ResultSnapshotの固定5因子を`v1`の15桁コードへ変換する純粋関数を実装する。
+  - S-004の操作群へ指定ボタンとデータ範囲の説明を追加する。
+  - 同じタブでシゴトソケットへ遷移し、20問・不正入力では遷移しない。
+  - 要件、画面、処理、データ、API契約の文書を同期する。
+- 完了条件:
+  - `https://sigotosocket.sikumilab.com/#b5=v1-342288401195267`の仕様例を再現できる。
+  - 因子順は`factor-order-v1`を参照し、配列入力順には依存しない。
+  - 欠損、重複、未知因子、非有限値、100〜500の値域外ではURLを生成しない。
+  - 連携操作は50問詳細結果に1つだけ表示し、20問・履歴一覧・共有カードには表示しない。
+  - 生回答、称号ID、猫・色ID、resultId、日時、連携コードを保存・ログ出力しない。
+  - `connect-src 'none'`と診断完答時の自動通信0件を維持する。
+- 検証方法:
+  - `node --test app/tests/sigotosocket-link.test.js app/tests/result-screen.test.js app/tests/version-contract.test.js`
+  - `npm.cmd test`
+  - `npm.cmd run check`
+  - 実ブラウザで50問結果の表示、同一タブ遷移、戻る、320px／360pxの横overflowを確認する。
+- 検証結果（2026-09-05）: 513テストと静的検証が成功。実Chromiumで指定ボタン・説明が各1件、320px／360pxの横overflowなし、`#b5=v1-300300300300300`への同一タブ遷移、戻るで同じ詳細結果へ復帰することを確認した。
 
 ## 5. 未対応・保留
 

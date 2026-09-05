@@ -2,17 +2,17 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.8 |
+| 設計版 | 0.9 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-28 |
-| 入力要件 | 要件定義書v1.13 |
+| 更新日 | 2026-09-05 |
+| 入力要件 | 要件定義書v1.15 |
 | 対象 | スマートフォン優先、PC対応 |
 
 ## 1. 画面方式
 
 - 【想定】1つの`index.html`を入口とするクライアントサイドアプリ。
 - 【想定】GitHub Pagesの404を避けるため`#/start`等のハッシュルートを使う。
-- URLへ回答・スコア・結果・個人情報を含めない。
+- アプリ内ルートのURLへ回答・スコア・結果・個人情報を含めない。F-023の明示操作だけは、5因子の内部平均を外部遷移先のURLフラグメントへ一時的に載せる。
 - 直接アクセス時は端末保存と現在状態を検証し、安全な画面へ遷移する。
 - ブラウザバックだけに依存せず、画面内に明示的な戻る・中断・破棄導線を用意する。
 
@@ -20,7 +20,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は実装済みで、人は`content/source/`のCSVだけを編集する。3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testがあるが、画面はまだ既存ES Modulesをruntime compatibility authorityとして使い、`app/content/` JSONをfetchしない。
 
-初期件数は50問、固定20問、51称号、237結果文、6根拠である。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。通常モードは外部通信0件、CSPは`connect-src 'none'`である。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
+初期件数は50問、固定20問、51称号、237結果文、6根拠である。各コンテンツ行のstatusは、E-0が`approved`、E-1〜E-5が`draft`、T/F/Xの対象行が`reviewed`のままで、Q-006関連行をrelease用の`approved`へ昇格していない。一方、別管理のQ-006全18 approval gateは2026-07-28にすべてapprovedとなり、`result-text-v1`のContent Approvalは完了している。approved release未選択、Q-006関連行status未昇格、Q-012正式release未完了、Q-013 production data未作成はrelease readinessを妨げる別条件として維持する。通常モードは自動外部通信0件、CSPは`connect-src 'none'`であり、F-023だけが利用者の明示操作で外部サイトへ遷移する。JSON runtime loadingとPages deploymentは`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`で後続対応する。
 
 ## 2. 画面一覧
 
@@ -29,7 +29,7 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSVコンテンツ作成基盤は�
 | S-001 | `#/start` | 開始 | F-001, F-004, F-007, F-009, F-014 |
 | S-002 | `#/answer` | 回答 | F-002, F-003, F-004, F-013, F-015 |
 | S-003 | `#/result?resultId=<UUID>`（`mode=preview20`） | 基本結果 | F-005, F-007, F-008, F-014, F-016, F-018 |
-| S-004 | `#/result?resultId=<UUID>`（`mode=detail50`） | 詳細結果 | F-006, F-007, F-008, F-014, F-016, F-018 |
+| S-004 | `#/result?resultId=<UUID>`（`mode=detail50`） | 詳細結果 | F-006, F-007, F-008, F-014, F-016, F-018, F-023 |
 | S-005 | `#/share` | 共有プレビュー | F-011, F-012, F-014, F-015, F-016, F-018 |
 | S-006 | `#/history` | 履歴 | F-009, F-010, F-013, F-014, F-015 |
 | S-007 | `#/compare` | 比較 | F-010, F-015 |
@@ -51,6 +51,7 @@ flowchart TD
     Preview -->|中断・進捗保持| Start
     Preview -->|20問で終了・進捗削除| History
     Answer -->|50問完答| Detail["S-004 詳細結果"]
+    Detail -->|5因子だけを明示的に渡す| Sigotosocket["シゴトソケット"]
     Preview --> Share["S-005 共有プレビュー"]
     Detail --> Share
     History --> Preview
@@ -208,10 +209,13 @@ Q-006の版付き結果文、合成、snapshotとlive完答callerは実装・独
 - 境界・僅差時の補足
 - 猫カード／共有カードプレビューの近くに置く色候補と、猫由来と誤認させない香調候補。各香調の説明直後に1〜3件の「香りの素材例」を表示する
 - 共有、履歴、再診断、「トップへ戻る」
+- 操作群の「シゴトソケットへ結果を渡す」と、その直近の「5つの数値だけを渡します。回答そのものは渡しません。」。20問結果、履歴一覧カード、共有カードには表示しない
 
 猫画像、Canvasまたは共有APIが失敗しても、称号、結果文、根拠への導線、共有テキストへの経路を同じ結果画面から利用できるようにする。Clipboardも利用できない場合は選択可能テキストへ到達可能にする。
 
 `トップへ戻る`は保存済みResultSnapshotなら確認なしで`#/start`へ移動する。履歴保存に失敗したlive結果では、戻ると再表示できないことを確認し、取消時は同じ結果画面を維持する。
+
+`シゴトソケットへ結果を渡す`は、保存済み・liveを問わず有効な50問ResultSnapshotから5因子だけを`v1`コード化し、`https://sigotosocket.sikumilab.com/#b5=<code>`へ同じタブで遷移する。コードを生成できない場合は結果画面を維持して通知し、壊れたURLへ遷移しない。
 
 2026-07-28の実ブラウザ検証では、320px、360px、960pxの結果画面で横overflowがないこと、因子と詳細の単一開閉、設問構成sheetと4方法sheet、保存済み50問結果のトップ直接遷移を確認し、console error／warningは0件だった。
 
@@ -359,7 +363,7 @@ Q-007確定前の【想定】:
 | S-002 回答中 | S-001/再開 | 次問または20問分岐 | 前問／破棄 | 中断は進捗保持、互換途中回答を最初の未回答から復元 | 初期質問 | 入力維持して再試行 |
 | S-002 20問分岐 | 20問完答 | S-003または21問目 | 回答へ戻る／中断 | 分岐状態を復元 | 非該当 | 結果を見せず選択再表示 |
 | S-003 基本結果 | 20問分岐/履歴 | S-002/S-005/S-006 | 中断／20問で終了 | 継続進捗があれば21問目、結果は履歴から復元 | 非該当 | テキスト結果を維持 |
-| S-004 詳細結果 | 50問完答/履歴 | S-005/S-006 | S-001 | 履歴から復元 | 非該当 | テキスト結果を維持 |
+| S-004 詳細結果 | 50問完答/履歴 | S-005/S-006/シゴトソケット | S-001 | 履歴から復元 | 非該当 | テキスト結果を維持し、連携コード不正時は外部遷移しない |
 | S-005 共有 | 結果 | OS共有/保存/コピー | 元結果 | 再生成 | 画像失敗時テキスト | 段階フォールバック |
 | S-006 履歴 | S-001/結果 | 結果/S-007 | S-001 | 再読込 | 診断開始 | 破損行を除外 |
 | S-007 比較 | S-006 | S-006 | S-006 | 選択IDを再検証 | 2件未満なら案内 | 再選択 |

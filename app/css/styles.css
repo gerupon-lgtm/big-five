@@ -725,6 +725,19 @@ dd {
   margin-top: 28px;
 }
 
+.result-linkage-action {
+  display: grid;
+  flex: 1 1 100%;
+  justify-items: start;
+  gap: 8px;
+}
+
+.result-linkage-note {
+  margin: 0;
+  color: #49645f;
+  font-size: 0.9rem;
+}
+
 .primary-button {
   border-color: #26705c;
   background: #26705c;

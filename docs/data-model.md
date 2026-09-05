@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.8 |
+| 設計版 | 0.9 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-07-28 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.13 |
+| 更新日 | 2026-09-05 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.15 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -24,7 +24,7 @@
 
 Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つのrelease schema、4つのコンパイラ、決定的な7 JSON builder、atomic writer、CSV/ES Modules parity testは実装済みである。初期データは50問、固定20問、51称号、237結果文、6根拠である。E-0は`approved`、E-1〜E-5は`draft`、T/F/Xは人手approval metadataなしの`reviewed`であり、Q-013は未作成、release CSVはヘッダーのみである。Q-012の画像制作・アクセシビリティ承認・runtime manifestは別の版付き制作台帳から完成済みで、CSVのapproved releaseやruntime JSON fetchが未作成であることとは区別する。
 
-現在は既存ES Modulesがruntime compatibility authorityで、`app/content/`のJSONは生成時だけのignore対象である。通常モードは外部通信0件、CSPは`connect-src 'none'`を維持する。activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
+現在は既存ES Modulesがruntime compatibility authorityで、`app/content/`のJSONは生成時だけのignore対象である。通常モードは自動外部通信0件、CSPは`connect-src 'none'`を維持する。F-023だけは利用者の明示操作で外部サイトへ遷移する。activation後はCSVだけを人が更新しActionsがJSONを生成するが、そのruntime/Pages移行は`docs/superpowers/plans/2026-07-26-csv-content-activation-pages.md`の別計画である。
 
 ## 2. 静的定義
 
@@ -34,7 +34,7 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つの
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
-| appVersion | string | ○ | `mvp-0.1.0`等 |
+| appVersion | string | ○ | `mvp-0.2.0`等 |
 | storageSchemaVersion | integer | ○ | 端末保存スキーマ版 |
 | cardTemplateVersion | string | ○ | 共有カード描画版 |
 | characterManifestVersion | string | ○ | 猫アセット対応版 |
@@ -406,6 +406,20 @@ schema 1の`presentation-v1`は素材例を持たない現行互換契約とし�
 | evidenceRefs | string[] | ○ | 診断時の根拠参照ID |
 
 `ResultTextDefinition`から`id`、`version`、`section`、`text`、`evidenceRefs`だけを投影するexact 5フィールドschemaである。`claimKind`、`appliesTo`、`previewAllowed`、未知フィールド、生回答を含めない。`composeResultTexts`とsnapshot生成時に深く複製し、各recordと`evidenceRefs`をdeep freezeする。
+
+### 3.8 SigotosocketLinkCode（一時値）
+
+F-023の連携コードは保存モデルではなく、50問詳細結果の明示操作時にResultSnapshotから生成する一時文字列である。
+
+```text
+v1-CCCCCCCCCCCCCCC
+```
+
+- `C`は`factor-order-v1`順の5因子`rawMean`を100倍・四捨五入した3桁整数で、各値は100〜500とする。
+- コード全体は版`v1`、ハイフン、15桁の半角数字だけで構成する。
+- URLは`https://sigotosocket.sikumilab.com/#b5=<code>`とし、クエリ文字列へ載せない。
+- 生回答、称号ID、猫ID、パレットID、resultId、日時を含めない。
+- StorageEnvelope、ResultSnapshot、共有モデル、ログへ連携コードを保存しない。
 
 ## 4. 比較互換性
 
