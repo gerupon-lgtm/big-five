@@ -2,16 +2,17 @@
 
 ## 目的と範囲
 
-このURLは現行のES Modules実装をブラウザ確認するためのQA一時公開である。Q-013のP-0〜P-6人手承認と`presentation-v2` ES Modules runtime生成・接続は完了しているが、approved JSON releaseの選択、JSON runtime、Q-012正式release、Q-013の結果DOM・共有Canvas接続、T-011本番デプロイの完了を意味しない。
+このURLは現行のES Modules実装をブラウザ確認するためのQA一時公開である。Q-013のP-0〜P-6人手承認、`presentation-v2` ES Modules runtime、結果DOM、共有Canvasへの接続は完了しているが、approved JSON releaseの選択、JSON runtime、Q-012正式release、T-011本番デプロイの完了を意味しない。
 
 ## URL
 
 https://gerupon-lgtm.github.io/big-five/
 
-- QA対象commit: `2e8ac664543d20bd48ab2461f348ad24fd71279b`
+- 正式確認URL: https://kokoro.sikumilab.com/
+- QA対象commit: `db1e05f00a7f3bf88e6f6c619cee25f2a6b536e3`
 - branch: `codex/big-five-q006`
-- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/30467272599
-- 2026-07-30確認: build／deploy成功。公開先の`app-meta.js`は`result-text-v2`、`title-reflection-definitions.js`は承認済みTR文面を返し、いずれもHTTP 200
+- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/33965878596
+- 2026-09-05確認: build／deploy成功。正式確認URLで`mvp-1.1.0`を確認し、F-023の`sigotosocket-link.js`、結果画面の明示ボタン、版付きentry importはいずれもHTTP 200
 
 ## 初期設定
 
