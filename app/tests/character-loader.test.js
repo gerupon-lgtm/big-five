@@ -31,7 +31,7 @@ test("T-005 F-016 requests only the selected character path once", async () => {
 test("T-011 NF-01 appends the canonical app version without changing the manifest path", async () => {
   const requested = [];
   const result = await loadCharacterImage(entry, {
-    cacheVersion: "mvp-1.1.0",
+    cacheVersion: "mvp-1.1.1",
     async decodeImage(path) {
       requested.push(path);
       return { path };
@@ -39,7 +39,7 @@ test("T-011 NF-01 appends the canonical app version without changing the manifes
   });
 
   assert.equal(result.status, "loaded");
-  assert.deepEqual(requested, [`${entry.imagePath}?v=mvp-1.1.0`]);
+  assert.deepEqual(requested, [`${entry.imagePath}?v=mvp-1.1.1`]);
   assert.equal(entry.imagePath.includes("?"), false);
 });
 

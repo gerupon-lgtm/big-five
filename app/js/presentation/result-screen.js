@@ -780,16 +780,29 @@ function renderActions(
       linkage,
       "button",
       "シゴトソケットへ結果を渡す",
-      "secondary-button",
+      "secondary-button result-linkage-button",
     );
     button.setAttribute("type", "button");
     button.addEventListener("click", () => actions.onLinkToSigotosocket?.(snapshot));
     appendTextElement(
       linkage,
       "p",
+      "シゴトソケットは、Big Fiveの結果を仕事で活かすヒントにつなげるWebアプリです。",
+      "result-linkage-description",
+    );
+    appendTextElement(
+      linkage,
+      "p",
       "5つの数値だけを渡します。回答そのものは渡しません。",
       "result-linkage-note",
     );
+    const aboutLink = appendTextElement(
+      linkage,
+      "a",
+      "シゴトソケットについて見る",
+      "result-linkage-about",
+    );
+    aboutLink.setAttribute("href", "https://sigotosocket.sikumilab.com/");
     controls.append(linkage);
   }
   if (historyDetail) {

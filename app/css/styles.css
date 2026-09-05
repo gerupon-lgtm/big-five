@@ -1352,10 +1352,29 @@ dd {
   gap: 8px;
 }
 
+.result-linkage-button {
+  min-height: 48px;
+  border-width: 2px;
+  background: #e8f3ee;
+  box-shadow: 0 3px 10px rgb(38 112 92 / 14%);
+}
+
+.result-linkage-description {
+  max-width: 38rem;
+  margin: 2px 0 0;
+  color: #274c43;
+  line-height: 1.7;
+}
+
 .result-linkage-note {
   margin: 0;
   color: #49645f;
   font-size: 0.9rem;
+}
+
+.result-linkage-about {
+  font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .result-actions > a.secondary-button {

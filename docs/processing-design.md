@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.16 |
+| 設計版 | 0.17 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-09-05 |
-| 入力要件 | 要件定義書v1.41 |
+| 入力要件 | 要件定義書v1.42 |
 | 実行方式 | 通常版はブラウザ内完結。F-023は明示的な外部遷移、ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -437,6 +437,7 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 3. 固定順を`intellectImagination`、`conscientiousness`、`extraversion`、`agreeableness`、`emotionalStability`とし、各`Math.round(rawMean * 100)`を3桁化して15桁へ連結する。
 4. 有効なら`https://sigotosocket.sikumilab.com/#b5=v1-<15桁>`を返し、presentation callbackが`window.location.href`へ設定して同一タブ遷移する。fetch、フォーム送信、保存、ログ記録は行わない。
 5. 無効なら`null`を返す。controllerは内部値を表示せず利用者向け通知を出し、S-004を維持する。
+6. presentationは受け渡しボタンに軽い強調を付け、短いサービス説明と`https://sigotosocket.sikumilab.com/`へ同一タブで移動する補助リンクを同じ枠へ表示する。
 
 ## 13. 削除
 

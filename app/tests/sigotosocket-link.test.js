@@ -107,9 +107,19 @@ test("T-032 F-023 shows one explicit handoff action on a 50-question result", ()
   });
 
   assert.match(collectText(host), /5つの数値だけを渡します。回答そのものは渡しません。/);
+  assert.match(
+    collectText(host),
+    /シゴトソケットは、Big Fiveの結果を仕事で活かすヒントにつなげるWebアプリです。/,
+  );
   const buttons = collectElements(host).filter(({ tagName, textContent }) =>
     tagName === "button" && textContent === "シゴトソケットへ結果を渡す");
   assert.equal(buttons.length, 1);
+  assert.match(buttons[0].className, /result-linkage-button/);
+  const links = collectElements(host).filter(({ tagName, textContent }) =>
+    tagName === "a" && textContent === "シゴトソケットについて見る");
+  assert.equal(links.length, 1);
+  assert.equal(links[0].getAttribute("href"), "https://sigotosocket.sikumilab.com/");
+  assert.equal(links[0].getAttribute("target"), null);
   buttons[0].dispatch("click");
   assert.deepEqual(handedOff, [snapshot]);
 });
