@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import os from "node:os";
@@ -29,6 +30,7 @@ const SCRIPT_PATH = path.join(
   "scripts/content/render-palette-preview.mjs",
 );
 const COMMITTED_PREVIEW = path.join(ROOT, "docs/palette-preview.html");
+const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
 test("share-card preview definition fixes factor colors and sample values", () => {
   assert.equal(shareCardPreviewDefinition.version, "share-card-preview-v3");
@@ -439,8 +441,10 @@ test("P-0 preview CLI is deterministic and matches the committed HTML", async (t
     readFile(secondPath),
     readFile(COMMITTED_PREVIEW),
   ]);
-  assert.deepEqual(first, second);
-  assert.deepEqual(first, committed);
+  // Keep mismatch diagnostics bounded: deep-equality output for this multi-MB
+  // generated file can exhaust virtual memory while formatting the failure.
+  assert.equal(sha256(first), sha256(second));
+  assert.equal(sha256(first), sha256(committed));
 });
 
 test("browser-side edited colors remain in parity with canonical palette usage", async () => {
