@@ -102,7 +102,7 @@ test("T-004 S-002 renders one question with natural five-point labels and curren
     ({ textContent }) => textContent === "4 やや当てはまる",
   );
   assert.equal(selected.attributes.get("aria-pressed"), "true");
-  assert.match(text, /前へ/);
+  assert.match(text, /前の質問/);
   assert.match(text, /回答を破棄/);
   assert.doesNotMatch(text, /ipip-001|questionId|selectedValue|storageStatus/);
 });
@@ -121,7 +121,7 @@ test("T-008A F-004 delegates answer, back, pause, and discard as separate action
   buttons(host)
     .find(({ textContent }) => textContent === "5 とても当てはまる")
     .dispatch("click");
-  buttons(host).find(({ textContent }) => textContent === "前へ").dispatch("click");
+  buttons(host).find(({ textContent }) => textContent === "前の質問").dispatch("click");
   buttons(host)
     .find(({ textContent }) => textContent === "中断してトップへ")
     .dispatch("click");
@@ -162,7 +162,7 @@ test("T-036 F-004 shows completion only while reviewing all completed answers", 
   assert.deepEqual(calls, ["complete"]);
 });
 
-test("T-004 F-003 disables back navigation on the first question only", () => {
+test("T-037 F-003 labels previous-question navigation consistently and disables it only on the first question", () => {
   for (const [currentIndex, expectedDisabled] of [[0, true], [1, false]]) {
     const { host } = createFakeScreen();
 
@@ -173,9 +173,38 @@ test("T-004 F-003 disables back navigation on the first question only", () => {
     );
 
     assert.equal(
-      buttons(host).find(({ textContent }) => textContent === "前へ").disabled,
+      buttons(host).find(({ textContent }) => textContent === "前の質問").disabled,
       expectedDisabled,
     );
+  }
+});
+
+test("T-037 S-002 shows deterministic questionnaire progress before the current count", () => {
+  for (const [currentIndex, totalCount, expectedWidth] of [
+    [0, 20, "5%"],
+    [9, 20, "50%"],
+    [49, 50, "100%"],
+  ]) {
+    const { host } = createFakeScreen();
+    renderQuestionnaireScreen(
+      host,
+      questionViewModel({ currentIndex, totalCount }),
+      questionActions(),
+    );
+
+    const track = collectElements(host)
+      .find(({ className }) => className === "questionnaire-progress-track");
+    assert.ok(track);
+    assert.equal(track.attributes.get("role"), "progressbar");
+    assert.equal(track.attributes.get("aria-valuemin"), "1");
+    assert.equal(track.attributes.get("aria-valuemax"), String(totalCount));
+    assert.equal(track.attributes.get("aria-valuenow"), String(currentIndex + 1));
+    const bar = collectElements(track)
+      .find(({ className }) => className === "questionnaire-progress-bar");
+    assert.equal(bar.style.width, expectedWidth);
+    const count = collectElements(host)
+      .find(({ className }) => className.includes("questionnaire-progress-count"));
+    assert.ok(count);
   }
 });
 

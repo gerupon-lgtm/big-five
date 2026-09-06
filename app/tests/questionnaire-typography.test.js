@@ -23,6 +23,8 @@ test("T-008A F-003 keeps the approved questionnaire typography scoped to S-002",
     ".questionnaire-screen > .questionnaire-question",
   );
   const progress = declarationsFor(styles, ".questionnaire-progress");
+  const progressTrack = declarationsFor(styles, ".questionnaire-progress-track");
+  const progressBar = declarationsFor(styles, ".questionnaire-progress-bar");
   const options = declarationsFor(styles, ".answer-options");
   const option = declarationsFor(styles, ".answer-option");
   const previewActions = declarationsFor(styles, ".preview-decision-actions");
@@ -42,6 +44,14 @@ test("T-008A F-003 keeps the approved questionnaire typography scoped to S-002",
     /font-size:\s*clamp\(0\.875rem,\s*0\.8rem \+ 0\.4vw,\s*1rem\)/,
   );
   assert.match(progress, /line-height:\s*1\.5/);
+  assert.match(progress, /font-weight:\s*700/);
+  assert.match(progressTrack, /height:\s*12px/);
+  assert.match(progressTrack, /margin-bottom:\s*8px/);
+  assert.match(progressTrack, /border-radius:\s*999px/);
+  assert.match(progressTrack, /overflow:\s*hidden/);
+  assert.match(progressBar, /height:\s*100%/);
+  assert.match(progressBar, /min-width:\s*12px/);
+  assert.match(progressBar, /background:\s*#26705c/);
 
   assert.match(options, /gap:\s*12px/);
   assert.match(options, /margin-top:\s*24px/);

@@ -111,6 +111,21 @@ function renderStorageError(parent) {
   alert.setAttribute("role", "alert");
 }
 
+function appendQuestionnaireProgress(parent, currentIndex, totalCount) {
+  const documentObject = parent.ownerDocument;
+  const track = documentObject.createElement("div");
+  track.className = "questionnaire-progress-track";
+  track.setAttribute("role", "progressbar");
+  track.setAttribute("aria-valuemin", "1");
+  track.setAttribute("aria-valuemax", String(totalCount));
+  track.setAttribute("aria-valuenow", String(currentIndex + 1));
+  const bar = documentObject.createElement("div");
+  bar.className = "questionnaire-progress-bar";
+  bar.style.width = `${((currentIndex + 1) / totalCount) * 100}%`;
+  track.append(bar);
+  parent.append(track);
+}
+
 function renderQuestion(main, viewModel, actions) {
   appendAppHeader(main, {
     action: {
@@ -118,11 +133,13 @@ function renderQuestion(main, viewModel, actions) {
       onClick: actions.onPause,
     },
   });
-  appendScreenHeading(main, {
+  appendQuestionnaireProgress(main, viewModel.currentIndex, viewModel.totalCount);
+  const heading = appendScreenHeading(main, {
     kicker: `${viewModel.currentIndex + 1} / ${viewModel.totalCount}問`,
     title: viewModel.questionText,
     titleClassName: "questionnaire-question",
   });
+  heading.children[0].className += " questionnaire-progress questionnaire-progress-count";
 
   const options = main.ownerDocument.createElement("div");
   options.className = "answer-options";
@@ -151,6 +168,13 @@ function renderQuestion(main, viewModel, actions) {
 
   const navigation = main.ownerDocument.createElement("div");
   navigation.className = "questionnaire-navigation";
+  const backButton = addButton(
+    navigation,
+    "前の質問",
+    "secondary-button",
+    actions.onBack,
+  );
+  backButton.disabled = viewModel.currentIndex === 0;
   if (viewModel.completionAvailable) {
     addButton(
       navigation,
@@ -159,13 +183,6 @@ function renderQuestion(main, viewModel, actions) {
       actions.onComplete,
     );
   }
-  const backButton = addButton(
-    navigation,
-    "前へ",
-    "secondary-button",
-    actions.onBack,
-  );
-  backButton.disabled = viewModel.currentIndex === 0;
   main.append(navigation);
 
   const management = main.ownerDocument.createElement("details");
