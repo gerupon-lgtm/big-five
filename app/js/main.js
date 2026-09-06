@@ -383,6 +383,10 @@ export function startApp({
         resultActionNotice = null;
         setRoute(`#/result?resultId=${encodeURIComponent(resultId)}`);
       },
+      onLinkToSigotosocket(snapshot) {
+        const targetUrl = createSigotosocketLinkUrl(snapshot);
+        if (targetUrl) windowObject.location.href = targetUrl;
+      },
     }, {
       resolveCharacterEntry(characterId) {
         return resolveCharacterEntry(validatedCharacterManifest, characterId);

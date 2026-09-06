@@ -119,7 +119,7 @@ function renderResultCard(
   appendCardIdentity(card, snapshot, labels);
 
   if (
-    linkageMode === "sigotosocket"
+    snapshot.mode === "detail50"
     && typeof actions.onLinkToSigotosocket === "function"
   ) {
     const actionGroup = card.ownerDocument.createElement("div");

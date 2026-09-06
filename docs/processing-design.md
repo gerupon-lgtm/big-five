@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.17 |
+| 設計版 | 0.18 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-09-06 |
-| 入力要件 | 要件定義書v1.43 |
+| 入力要件 | 要件定義書v1.44 |
 | 実行方式 | 通常版はブラウザ内完結。F-023は明示的な外部遷移、ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -255,7 +255,7 @@ displayScore = round((rawMean - 1) / 4 * 100)
 11. 履歴順は`completedAt`の実時刻降順、同時刻は`resultId`辞書順とする。返却配列と各snapshotはdeep freezeする。
 12. 個別削除は確認後、指定`resultId`と一致する最初の有効ResultSnapshotだけを削除する。途中回答、非対象結果、破損結果の構造と順序を保持し、対象なしでは書き込まない。
 13. 全削除は確認後、現行StorageEnvelopeの`progressByDiagnosis`と`results`を空にする。保存成功後に画面controllerの`currentProgress`、`liveResult`、保存状態通知も初期化し、開始画面へ戻った時に再開操作を表示しない。確認取消、壊れたJSON、将来schema、保存失敗では保存値・画面内状態を変更しない。
-14. S-006は履歴0件でも`データの管理`から全削除へ到達できる。通常カードは猫サムネイル、称号、実施日時、20問／50問、結果表示導線だけを投影する。比較モードは選択ResultSnapshot IDを最大2件の一時状態として持ち、1件目は取消・再選択でき、互換結果だけを2件目候補として有効化する。2件選択だけでは遷移せず、固定アクションバーの明示実行でS-007へ進む。
+14. S-006は履歴0件でも`データの管理`から全削除へ到達できる。通常カードは猫サムネイル、称号、実施日時、20問／50問、結果表示導線を投影し、`detail50`だけにシゴトソケットへの直接受け渡しを追加する。`preview20`は結果表示導線だけを維持する。比較モードは選択ResultSnapshot IDを最大2件の一時状態として持ち、1件目は取消・再選択でき、互換結果だけを2件目候補として有効化する。2件選択だけでは遷移せず、固定アクションバーの明示実行でS-007へ進む。
 
 状態遷移:
 
@@ -434,16 +434,17 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 
 1. S-001はメインパネル直後へ閉じた連携説明を描画し、`#/sigotosocket`への明示導線を出す。
 2. `#/sigotosocket`のcontrollerは保存履歴を検証し、`mode === "detail50"`かつ有効URLを生成できるResultSnapshotだけをS-006の連携用表示へ渡す。対象がなければS-001へ戻して案内する。
-3. controllerはS-004で表示中のResultSnapshot、live結果、または連携用S-006で選んだResultSnapshotを`createSigotosocketLinkUrl`へ渡す。
-4. domain処理は`mode === "detail50"`、5因子の過不足・重複、factorId、有限な`rawMean`と1〜5範囲を検証する。
-5. 固定順を`intellectImagination`、`conscientiousness`、`extraversion`、`agreeableness`、`emotionalStability`とし、各`Math.round(rawMean * 100)`を3桁化して15桁へ連結する。
-6. 有効なら`https://sigotosocket.sikumilab.com/#b5=v1-<15桁>`を返し、presentation callbackが`window.location.href`へ設定して同一タブ遷移する。fetch、フォーム送信、保存、ログ記録は行わない。
-7. 無効なら`null`を返す。controllerは内部値を表示せず利用者向け通知を出し、S-004を維持する。
+3. 通常の`#/history`は全ての有効な履歴を表示し、`detail50`のカードだけに連携用S-006と同じC案の受け渡し操作を渡す。`preview20`には受け渡し操作を渡さない。
+4. controllerはS-004で表示中のResultSnapshot、live結果、通常履歴または連携用S-006で選んだResultSnapshotを`createSigotosocketLinkUrl`へ渡す。
+5. domain処理は`mode === "detail50"`、5因子の過不足・重複、factorId、有限な`rawMean`と1〜5範囲を検証する。
+6. 固定順を`intellectImagination`、`conscientiousness`、`extraversion`、`agreeableness`、`emotionalStability`とし、各`Math.round(rawMean * 100)`を3桁化して15桁へ連結する。
+7. 有効なら`https://sigotosocket.sikumilab.com/#b5=v1-<15桁>`を返し、presentation callbackが`window.location.href`へ設定して同一タブ遷移する。fetch、フォーム送信、保存、ログ記録は行わない。
+8. 無効なら`null`を返す。controllerは内部値を表示せず利用者向け通知を出し、現在画面を維持する。
+9. presentationは受け渡しボタンに軽い強調を付け、詳細結果では短いサービス説明と`https://sigotosocket.sikumilab.com/`へ同一タブで移動する補助リンクを同じ枠へ表示する。
 
 ### 12.5 画面遷移時の縦位置
 
 内部のpush／replace遷移とブラウザ`hashchange`は共通のroute-change処理を通す。新しい画面を描画した直後に`scrollTo({ top: 0, left: 0, behavior: "auto" })`を実行し、遷移前画面の縦スクロール位置を維持しない。結果画面内の開閉に伴う局所的な位置調整は画面遷移ではないため、この処理の対象外とする。
-6. presentationは受け渡しボタンに軽い強調を付け、短いサービス説明と`https://sigotosocket.sikumilab.com/`へ同一タブで移動する補助リンクを同じ枠へ表示する。
 
 ## 13. 削除
 
