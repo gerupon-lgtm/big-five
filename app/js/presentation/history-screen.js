@@ -4,7 +4,13 @@ import { appendAppHeader } from "./app-header.js";
 import { appendScreenHeading } from "./screen-heading.js";
 import { appendTextElement, formatCompletedAt } from "./screen-helpers.js";
 
-function appendCardIdentity(parent, snapshot, labels, phrasingOnly = false) {
+function appendCardIdentity(
+  parent,
+  snapshot,
+  labels,
+  phrasingOnly = false,
+  lastSigotosocketLinkedResultId = null,
+) {
   appendTextElement(
     parent,
     phrasingOnly ? "span" : "h2",
@@ -29,6 +35,28 @@ function appendCardIdentity(parent, snapshot, labels, phrasingOnly = false) {
       : "50問 詳細結果",
     "history-mode-badge",
   );
+  if (
+    snapshot.mode === "detail50"
+    && snapshot.resultId === lastSigotosocketLinkedResultId
+  ) {
+    const status = appendTextElement(
+      metadata,
+      "span",
+      "連携済",
+      "history-sigotosocket-status",
+    );
+    status.setAttribute(
+      "aria-label",
+      "最後にシゴトソケットへ連携した結果",
+    );
+    const icon = metadata.ownerDocument.createElement("img");
+    icon.className = "history-sigotosocket-status-icon";
+    icon.setAttribute("src", "./assets/brand/sigotosocket-icon-180.png");
+    icon.setAttribute("alt", "");
+    icon.setAttribute("width", "18");
+    icon.setAttribute("height", "18");
+    status.insertBefore(icon, status.firstChild);
+  }
   parent.append(metadata);
 }
 
@@ -110,13 +138,19 @@ function renderResultCard(
   labels,
   actions,
   dependencies,
-  linkageMode,
+  lastSigotosocketLinkedResultId,
 ) {
   const card = parent.ownerDocument.createElement("article");
   card.className = "history-card";
   card.setAttribute("data-result-id", snapshot.resultId);
   renderHistoryThumbnail(card, snapshot, dependencies);
-  appendCardIdentity(card, snapshot, labels);
+  appendCardIdentity(
+    card,
+    snapshot,
+    labels,
+    false,
+    lastSigotosocketLinkedResultId,
+  );
 
   if (
     snapshot.mode === "detail50"
@@ -171,6 +205,7 @@ function renderSelectableCard(
   selectedResultIds,
   comparison,
   onToggle,
+  lastSigotosocketLinkedResultId,
 ) {
   const card = parent.ownerDocument.createElement("article");
   card.className = "history-card comparison-mode";
@@ -184,7 +219,13 @@ function renderSelectableCard(
   toggle.disabled = comparison?.compatible === false
     || (selectedResultIds.length === 2 && !selected);
   renderHistoryThumbnail(toggle, snapshot, dependencies, true);
-  appendCardIdentity(toggle, snapshot, labels, true);
+  appendCardIdentity(
+    toggle,
+    snapshot,
+    labels,
+    true,
+    lastSigotosocketLinkedResultId,
+  );
   toggle.addEventListener("click", () => onToggle(snapshot));
   card.append(toggle);
 
@@ -740,7 +781,7 @@ export function renderHistoryScreen(
             historyState,
             actions,
             renderDependencies,
-            historyState.linkageMode,
+            historyState.lastSigotosocketLinkedResultId,
           );
           continue;
         }
@@ -755,6 +796,7 @@ export function renderHistoryScreen(
           selectedResultIds,
           comparison,
           toggleResult,
+          historyState.lastSigotosocketLinkedResultId,
         );
         selectableToggles.set(snapshot.resultId, toggle);
       }

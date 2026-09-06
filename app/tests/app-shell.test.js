@@ -46,7 +46,7 @@ test("startApp renders the start heading and canonical version from a hash route
       .textContent,
     "Big Five 自己理解支援ツール",
   );
-  assert.match(renderedText, /バージョン mvp-1\.3\.2/);
+  assert.match(renderedText, /バージョン mvp-1\.3\.3/);
   assert.match(renderedText, /ipip-ja-50-v1/);
   assert.match(renderedText, /ipip-ja-50-question-set-v1/);
   assert.match(renderedText, /ipip-ja-50-scoring-v1/);
@@ -542,7 +542,7 @@ test("T-005 F-016 startApp observes once before decoding the selected manifest i
   await new Promise((resolve) => setImmediate(resolve));
 
   assert.deepEqual(requested, [
-    "assets/characters/character-balanced.webp?v=mvp-1.3.2",
+    "assets/characters/character-balanced.webp?v=mvp-1.3.3",
   ]);
   assert.equal(observers[0].disconnectCalls, 1);
   const images = collectElements(host)
@@ -627,10 +627,12 @@ function createAppHarness({
   };
   const host = new FakeElement("div", documentObject);
   let hashchange;
+  let pageshow;
   const windowObject = {
     location: { hash },
     addEventListener(type, callback) {
       if (type === "hashchange") hashchange = callback;
+      if (type === "pageshow") pageshow = callback;
     },
     ...windowOverrides,
   };
@@ -652,6 +654,9 @@ function createAppHarness({
     navigateHash(nextHash) {
       windowObject.location.hash = nextHash;
       hashchange?.();
+    },
+    restoreFromBackForwardCache() {
+      pageshow?.({ persisted: true });
     },
   };
 }
@@ -710,6 +715,124 @@ test("T-035 F-023 hands off detail50 directly from normal history and excludes p
   assert.doesNotMatch(collectText(previewCard), /シゴトソケットへ渡す/);
 
   clickButton(host, "シゴトソケットへ渡す");
+  assert.match(windowObject.location.href, /^https:\/\/sigotosocket\.sikumilab\.com\/#b5=v1-/);
+});
+
+test("T-038 F-009 F-023 persists and moves the last Sigotosocket linkage marker", () => {
+  const markerKey = "big-five-self-understanding:sigotosocket-link:v1";
+  const newer = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000130",
+    completedAt: "2026-09-07T01:00:00.000Z",
+  });
+  const older = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000131",
+    completedAt: "2026-09-06T01:00:00.000Z",
+  });
+  const values = new Map([[FORMAL_STORAGE_KEY, JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: "2026-09-07T02:00:00.000Z",
+    progressByDiagnosis: {},
+    results: [newer, older],
+  })]]);
+  const storage = {
+    getItem(key) { return values.get(key) ?? null; },
+    setItem(key, value) { values.set(key, value); },
+  };
+  const { host, windowObject, restoreFromBackForwardCache } = createAppHarness({
+    hash: "#/history",
+    storage,
+  });
+
+  const handoff = (resultId) => {
+    const card = collectElements(host).find(
+      ({ className, attributes }) =>
+        className === "history-card" && attributes.get("data-result-id") === resultId,
+    );
+    collectElements(card).find(
+      ({ className }) => className.includes("history-link-to-sigotosocket"),
+    ).dispatch("click");
+  };
+  const statusResultIds = () => collectElements(host)
+    .filter(({ className }) => className === "history-card")
+    .filter((card) => collectElements(card).some(
+      ({ className }) => className === "history-sigotosocket-status",
+    ))
+    .map((card) => card.attributes.get("data-result-id"));
+
+  handoff(older.resultId);
+  assert.match(windowObject.location.href, /^https:\/\/sigotosocket\.sikumilab\.com\/#b5=v1-/);
+  assert.deepEqual(JSON.parse(values.get(markerKey)), {
+    schemaVersion: 1,
+    resultId: older.resultId,
+  });
+  restoreFromBackForwardCache();
+  assert.deepEqual(statusResultIds(), [older.resultId]);
+  assert.equal(
+    collectElements(host).find(
+      ({ className }) => className === "history-sigotosocket-status-icon",
+    ).attributes.get("src"),
+    "./assets/brand/sigotosocket-icon-180.png",
+  );
+
+  handoff(newer.resultId);
+  assert.deepEqual(JSON.parse(values.get(markerKey)), {
+    schemaVersion: 1,
+    resultId: newer.resultId,
+  });
+  restoreFromBackForwardCache();
+  assert.deepEqual(statusResultIds(), [newer.resultId]);
+});
+
+test("T-038 F-023 keeps the handoff working when the linkage marker cannot be saved", () => {
+  const markerKey = "big-five-self-understanding:sigotosocket-link:v1";
+  const detail = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000132",
+  });
+  const previous = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000133",
+    completedAt: "2026-09-06T01:00:00.000Z",
+  });
+  const values = new Map([[FORMAL_STORAGE_KEY, JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: "2026-09-07T02:00:00.000Z",
+    progressByDiagnosis: {},
+    results: [detail, previous],
+  })], [markerKey, JSON.stringify({ schemaVersion: 1, resultId: previous.resultId })]]);
+  let markerWrites = 0;
+  const storage = {
+    getItem(key) { return values.get(key) ?? null; },
+    setItem(key) {
+      if (key === markerKey) {
+        markerWrites += 1;
+        throw new Error("storage unavailable");
+      }
+    },
+    removeItem(key) {
+      values.delete(key);
+    },
+  };
+  const { host, windowObject, restoreFromBackForwardCache } = createAppHarness({
+    hash: "#/history",
+    storage,
+  });
+
+  const detailCard = collectElements(host).find(
+    ({ className, attributes }) =>
+      className === "history-card" && attributes.get("data-result-id") === detail.resultId,
+  );
+  collectElements(detailCard).find(
+    ({ className }) => className.includes("history-link-to-sigotosocket"),
+  ).dispatch("click");
+  restoreFromBackForwardCache();
+
+  assert.equal(markerWrites, 1);
+  assert.equal(values.has(markerKey), false);
+  assert.equal(
+    collectElements(host).filter(
+      ({ className }) => className === "history-sigotosocket-status",
+    ).length,
+    0,
+  );
   assert.match(windowObject.location.href, /^https:\/\/sigotosocket\.sikumilab\.com\/#b5=v1-/);
 });
 

@@ -18,6 +18,7 @@ const REQUIRED_FILES = new Set([
   "assets/brand/kokoro-parea-icon-192.png",
   "assets/brand/kokoro-parea-icon-512.png",
   "assets/brand/kokoro-parea-mark.svg",
+  "assets/brand/sigotosocket-icon-180.png",
   "assets/share-card/aroma-pause-v1.png",
   "assets/share-card/aroma-quiet-focus-v1.png",
   "assets/share-card/aroma-reset-v1.png",
@@ -390,6 +391,7 @@ export async function assembleQaPreview({ appDir, outputDir, allowedParentDir })
     "assets/brand/kokoro-parea-icon-192.png",
     "assets/brand/kokoro-parea-icon-512.png",
     "assets/brand/kokoro-parea-mark.svg",
+    "assets/brand/sigotosocket-icon-180.png",
     "manifest/app.webmanifest",
   ]) {
     await copyRequiredFile({

@@ -2,12 +2,12 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.24 |
+| 設計版 | 0.25 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-09-06 |
-| 要件正典 | 要件定義書v1.46 |
+| 更新日 | 2026-09-07 |
+| 要件正典 | 要件定義書v1.47 |
 | 初期リリース | `mvp-0.1.0` |
-| 現在リリース | `mvp-1.3.2` |
+| 現在リリース | `mvp-1.3.3` |
 
 ## 1. トレーサビリティ表（正典）
 
@@ -21,17 +21,17 @@
 | F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A, T-008C | 50問・診断直後／履歴の操作を分離。因子は一回で保存済み本文を全カテゴリ表示 |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A, T-008C | 名前付きレーダー、CSP下でも実スコアを反映する固定順5因子行・棒、因子／アロマ相互排他の一回開閉、因子領域に`拡大して見る`を置かないことを実装・テスト済み |
-| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A, T-008B, T-008C, T-035 | 履歴20問を厳密ID一致の回答継続中と確定済みに分離。50問カードだけにシゴトソケットへの直接受け渡しを追加 |
+| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A, T-008B, T-008C, T-035, T-038 | 履歴20問を厳密ID一致の回答継続中と確定済みに分離。50問カードだけにシゴトソケットへの直接受け渡しを追加し、最後に渡した1件へ`連携済`を表示 |
 | F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A, T-008B, T-008C | 同一0〜100表示軸、94px固定右列へ中央揃えした二段の差表示、固定桁、版情報のラベル化、ヘッダー`履歴一覧に戻る`、比較選択バーのモバイル二段表示まで実装済み |
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007, T-008C | `card-template-v2`は承認済み`kokoro-wreath-v2.png`を猫の背面へ合成する。透明素材、画像拡大、プレビュー／Web Share／保存の同一PNG Blobを回帰確認。結果画面の因子領域へ同操作を追加しない |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007, T-008C | ブランド→モード→称号→副題→見出しなし理由→固定順因子→アロマ→注意→任意URLの共有文、単一CTA、同一PNG Blob、コピー／選択可能テキストの代替を回帰確認 |
 | F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A, T-008C | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。T-008Cでは20問preview終了時にResultSnapshotを残して対応ProgressRecordだけを削除する。今回の共有追補におけるF-013の範囲も、この完了状態の確定だけであり、Blob／Object URLの寿命はF-013へ分類しない |
-| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011, T-032, T-033, T-035, T-036, T-037 | `mvp-1.3.2`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
+| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011, T-032, T-033, T-035, T-036, T-037, T-038 | `mvp-1.3.3`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A, T-008C | 保存失敗時の中断・preview終了、live結果維持、ID不一致の履歴継続を安全側で無効化、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
 | F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-008C, T-010 | `ココロパレット`は常時3候補、ブランド緑の中央チェックで選択を示す。`ココロアロマ`は閉じた3画像ティーザーと右向き矢印から1回で6候補を開く。因子と相互排他になるのはアロマだけで、パレットは対象外。共有カードと共有テキストは代表3件の香り素材名を表示する |
-| F-023 | シゴトソケット結果連携 | S-001, S-004, S-006 | sigotosocket-link、router/controller | ResultSnapshotのmode・FactorResult | T-032, T-033, T-035 | 任意連携の説明、通常履歴内の50問カード、50問だけの連携用履歴、詳細結果からの明示操作を提供。20問カードは除外し、固定順15桁をURLフラグメントへ設定して同一タブ遷移する |
+| F-023 | シゴトソケット結果連携 | S-001, S-004, S-006 | sigotosocket-link、sigotosocket-link-state、router/controller | ResultSnapshotのmode・FactorResult・最終連携resultId | T-032, T-033, T-035, T-038 | 任意連携の説明、通常履歴内の50問カード、50問だけの連携用履歴、詳細結果からの明示操作を提供。20問カードは除外し、固定順15桁をURLフラグメントへ設定して同一タブ遷移する。最後に渡した1件だけを履歴で識別する |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -74,6 +74,7 @@
 | T-035 | 通常履歴のシゴトソケット直接連携 | F-009, F-014, F-023, NF-02 | 通常履歴の50問カードだけにC案の直接受け渡しを表示し、20問カードは従来表示を維持 |
 | T-036 | 完答後の任意位置からの確定 | F-003, F-004, F-014, F-015 | 完答確認から戻った場合だけ各回答画面に`回答を完了する`を表示し、50回答が揃っていれば任意位置から結果を確定 |
 | T-037 | 回答画面の進捗・操作表記統一 | F-003, F-014, NF-02 | 通常時・見直し時の前問操作を`前の質問`へ統一し、太字の回答数直前へ20問／50問の診断区分基準で緑のプログレスバーを表示 |
+| T-038 | シゴトソケット最終連携結果の履歴表示 | F-009, F-014, F-023, NF-02 | 最後に渡した50問詳細結果1件だけへ小さなアイコンと`連携済`を表示し、別結果の受け渡しで表示対象を移す |
 
 ## 3. フェーズ
 
@@ -635,6 +636,16 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - `role=progressbar`とARIA値を持つ緑のプログレスバーを置き、その直後の`n / 20問`または`n / 50問`を太字にする。
   - 進捗率は現在の診断区分を分母とし、20問では1問目5%・10問目50%・20問目100%、50問では50問目100%とする。
 - 検証: presentationテストで通常・見直しの文言、進捗率とARIAを確認し、CSS契約テストで太字、色、高さ、余白を確認する。
+
+### T-038 シゴトソケット最終連携結果の履歴表示
+
+- 対応機能: F-009、F-014、F-023、NF-02
+- 状態: 完了
+- 実装:
+  - 受け渡し遷移の直前に、対象ResultSnapshotのUUIDだけを正式履歴エンベロープとは独立した版付きlocalStorageへ1件保存する。別結果では上書きする。
+  - 通常履歴・連携用履歴・比較選択表示で、一致する有効な50問詳細結果だけに18pxのシゴトソケットアイコンと`連携済`を表示する。20問結果には表示しない。
+  - 読込値はexact schemaとUUIDで検証する。保存失敗でも受け渡し遷移を続け、旧状態を消して同一セッションでは未連携表示を強制する。全削除成功時は独立状態を削除する。受信成否と連携先での削除は追跡しない。
+- 検証: history presentationで一致カードだけに表示されること、app-shellでブラウザBackのBFCache復元後に別結果へ表示が移ること、旧状態がある保存失敗時にも遷移し`連携済`を消すことを確認する。390px幅の実ブラウザでアイコン・文言・横overflow・consoleを確認する。
 
 ## 5. 未対応・保留
 
