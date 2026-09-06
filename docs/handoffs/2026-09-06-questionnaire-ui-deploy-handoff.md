@@ -134,14 +134,18 @@
 - 再起動後の小分けテストで、先頭25ファイル（`app-header.test.js`〜`kokoro-aroma-review.test.js`）は各終了コード0。
 - `palette-usage.test.js`、`palette-variation.test.js`、`presentation-approval-stage.test.js`は個別に終了コード0。
 
-## 6. 未完了・成功扱いにしてはいけない項目
+## 6. 再開後に完了した検証
 
-- ココロパレアの一括`npm.cmd test`は、テスト出力上は進行したがCodexの実行セッションが完了直後に消え、最終終了コードを取得できなかった。**成功扱いにしない。**
-- `palette-label-alignment.test.js`と`palette-preview-tool.test.js`は再起動後の小分け実行で成功ドットを確認したが、その5ファイル組全体の最終終了コードをセッション消失により取得できなかった。必要なら2ファイルを個別再実行する。
-- ココロパレアの残りappテスト（`presentation-definition.test.js`以降）と`prototype-big-five/tests/*.test.js`を、最大5ファイルずつ実行して各終了コード0を取得する。
-- 差分全体の最終レビュー、コミット、push、PR／merge、Pagesデプロイ、公開URL確認、デプロイ記録更新は未実施。
+- ココロパレア正式版は66ファイルを最大5ファイルずつ実行し、705件成功・失敗0・全バッチ終了コード0を取得した。
+- ココロパレアのプロトタイプは7ファイルを最大5ファイルずつ実行し、39件成功・失敗0・全バッチ終了コード0を取得した。正式版との合計は744件。
+- `palette-label-alignment.test.js`は2件成功、`palette-preview-tool.test.js`は生成物を同期した後に10件成功・失敗0。後者はメモリ枯渇の再発防止変更後にも10件成功・失敗0・約1.5秒で終了した。
+- ココロパレアの`check`、`content:validate`、`qa:preview:build`、`character:check`を再確認し、終了コード0を取得した。コンテンツ検証は既知の警告657・エラー0、QA artifactは125ファイル・10,773,354 bytes。
+- シゴトソケットは33ファイルを最大5ファイルずつ再実行し、278件成功・失敗0・全バッチ終了コード0を取得した。`check`、`version:check`、`items:check`、`character:check`も終了コード0。
+- 両リポジトリで`git diff --check`を通し、仕様観点と実装規約観点の差分レビューを行った。旧ボタン文言、設問文字トークン、タスクと機能IDの対応、テスト件数、重複CSSを修正し、破棄時に保存済み結果を残すテストを強化した。再レビュー後に未解決指摘はない。
 
-## 7. 推奨する再開手順
+## 7. 実施した再開手順
+
+以下は2026-09-06にすべて完了した。将来同じ状態から再開する場合の順序として残す。
 
 1. 両フォルダで`git status --short`を確認し、この資料記載の変更が残っていることを確認する。
 2. ココロパレアの未確認テストを最大5ファイル単位で実行する。30秒を超えたら10秒単位で出力をpollする。出力とCPUが止まった場合だけ、その組を停止し1ファイルずつ実行する。
@@ -188,3 +192,25 @@ Windowsイベントログ（System、Resource-Exhaustion-Detector、イベント
 - 停止は問題のあるテストプロセスだけを対象にし、全Nodeプロセスの一括終了や作業ツリーの削除はしない。
 - 長い検証は最大5ファイル単位にし、各単位の終了コードを記録する。利用者への進捗報告は遅くとも10分以内に行う。
 - エラー1455、イベントID 2004、`codex.exe`のイベントID 1000が同時期に出た場合は、アプリの表示不具合より先に仮想メモリ枯渇を疑う。
+
+## 10. デプロイと公開確認の完了記録
+
+### ココロパレア
+
+- 実装コミット: `5e3c32c`、再発防止コミット: `90d3737`
+- Pull Request: https://github.com/gerupon-lgtm/big-five/pull/27
+- main merge commit: `301f0dcb49d47caddacea84f4bb3d5a2c8555c1c`
+- Pages workflow: https://github.com/gerupon-lgtm/big-five/actions/runs/34020401043（build／deploy成功）
+- 公開URL: https://kokoro.sikumilab.com/
+- HTTPで`mvp-1.3.2`と新しい回答画面ソースを確認した。390×844の実ブラウザで20問から50問完答・見直しまで通し、太字の回答数、緑の進捗、ARIA、前問文言、見直し操作順、横overflow 0、console error／warning 0を確認した。
+
+### シゴトソケット
+
+- 実装コミット／main fast-forward: `775663bb8e982dce6725d464a3063ac0516852ab`
+- 実装Pages workflow: https://github.com/gerupon-lgtm/sigotosocket/actions/runs/34019875438（成功）
+- 公開記録コミット: `98058080310426ce70d76f4707d77bb8df919dee`
+- 記録コミット後の最終Pages workflow: https://github.com/gerupon-lgtm/sigotosocket/actions/runs/34020195860（成功）
+- 公開URL: https://sigotosocket.sikumilab.com/
+- HTTPで`v0.2.5`と新しい回答画面ソースを確認した。390×844の実ブラウザで45問完答・見直しまで通し、太字の回答数、ARIA、5件法文言、前問・破棄文言、見直し操作順、透明なヘッダー、破棄キャンセル時の進捗維持、横overflow 0、console error／warning 0を確認した。
+
+公開確認スクリプトと画像は`C:\Users\user\.codex\visualizations\2026\09\06\01a07592-9e40-7f70-a764-f565dc1dfb33`に保存した。リポジトリ外の検証成果物であり、コミット対象にはしない。

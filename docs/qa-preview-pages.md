@@ -9,11 +9,12 @@
 https://gerupon-lgtm.github.io/big-five/
 
 - 正式確認URL: https://kokoro.sikumilab.com/
-- QA対象commit: `df5f3935299225e92c9d8acfc3a08659359d8cfb`
+- QA対象commit: `301f0dcb49d47caddacea84f4bb3d5a2c8555c1c`
 - branch: `main`
-- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/34007184098
-- 2026-09-06確認: build／deploy成功。正式確認URLで`mvp-1.3.1`を確認した。50問完答確認から「回答へ戻る」を選ぶと、49問目を含む任意の見直し位置に「回答を完了する」が表示され、その位置から詳細結果を確定できる。通常回答中と完答確認には同ボタンを表示しない。390pxでボタンの重なり・横overflowなし、結果保存後に新規診断を開始しても履歴件数を維持することを確認
-- 直前の公開記録: commit `6e234f2`、Actions run `34004502886`で`mvp-1.3.0`を公開し、通常履歴の50問詳細結果だけにシゴトソケットへの直接受け渡しを表示する導線を確認済み
+- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/34020401043
+- 2026-09-06確認: build／deploy成功。正式確認URLのHTMLと`app-meta.js`がHTTP 200で、`mvp-1.3.2`を配信していることを確認した。390×844の実ブラウザで、回答数の太字、緑の進捗バー、1問目のARIA現在値1・最大値20、無効な「前の質問」、20問から50問完答までの遷移、見直し時の左「前の質問」／右「回答を完了する」、横overflow 0、console error／warning 0を確認した
+- 直前の公開記録: commit `df5f3935299225e92c9d8acfc3a08659359d8cfb`、Actions run `34007184098`で`mvp-1.3.1`を公開。50問完答確認から「回答へ戻る」を選ぶと、49問目を含む任意の見直し位置に「回答を完了する」が表示され、その位置から詳細結果を確定できる。通常回答中と完答確認には同ボタンを表示しない。390pxでボタンの重なり・横overflowなし、結果保存後に新規診断を開始しても履歴件数を維持することを確認済み
+- それ以前の公開記録: commit `6e234f2`、Actions run `34004502886`で`mvp-1.3.0`を公開し、通常履歴の50問詳細結果だけにシゴトソケットへの直接受け渡しを表示する導線を確認済み
 
 ## 初期設定
 
