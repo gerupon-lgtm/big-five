@@ -230,6 +230,8 @@ test("T-033 F-023 places a closed Sigotosocket guide after the main panel", () =
   assert.ok(main.children.indexOf(guide) < main.children.indexOf(version));
   assert.match(collectText(guide), /シゴトソケットとの連携方法/);
   assert.match(collectText(guide), /それぞれ単独で利用できます/);
+  assert.match(collectText(guide), /詳細結果画面では「この結果をシゴトソケットへ渡す」/);
+  assert.match(collectText(guide), /連携用の履歴一覧では「シゴトソケットへ渡す」/);
   assert.match(collectText(guide), /5つの数値だけを渡します/);
   assert.match(collectText(guide), /最後に渡した結果だけが反映されます/);
   const selectionLink = collectElements(guide).find(({ tagName, textContent }) =>

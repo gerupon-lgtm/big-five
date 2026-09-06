@@ -51,7 +51,7 @@ function appendLinkageGuide(parent) {
   const steps = documentObject.createElement("ol");
   for (const step of [
     "ココロパレアで50問の詳細結果を用意します。履歴があれば、回答し直す必要はありません。",
-    "詳細結果画面、または連携用の履歴一覧から「シゴトソケットへ渡す」を押します。",
+      "詳細結果画面では「この結果をシゴトソケットへ渡す」、連携用の履歴一覧では「シゴトソケットへ渡す」を押します。",
     "シゴトソケットへ移動し、仕事の興味と性格傾向を組み合わせた結果を確認します。シゴトソケットの結果がまだない場合は、45問を終えると反映されます。",
   ]) {
     appendTextElement(steps, "li", step);

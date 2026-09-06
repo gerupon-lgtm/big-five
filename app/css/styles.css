@@ -939,8 +939,9 @@ dd {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 128px;
   grid-column: 1 / -1;
+  justify-self: center;
   gap: 16px;
-  width: 100%;
+  width: max(100%, 307px);
   margin-top: 10px;
 }
 
@@ -951,6 +952,10 @@ dd {
   font-size: 1rem;
   letter-spacing: normal;
   white-space: nowrap;
+}
+
+.history-card-actions--linkage .history-link-to-sigotosocket {
+  padding-inline: 2px;
 }
 
 .history-card-actions--linkage .history-open-result {
@@ -2198,7 +2203,9 @@ noscript {
 @media (max-width: 340px) {
   .history-card-actions--linkage {
     grid-template-columns: 1fr;
+    justify-self: stretch;
     gap: 10px;
+    width: 100%;
   }
 
   .app-header {
