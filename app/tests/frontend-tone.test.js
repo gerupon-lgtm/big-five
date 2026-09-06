@@ -268,6 +268,21 @@ test("T-008A uses the approved one-row 320px header fallback", async () => {
   assert.match(compactStyles, /\.app-header-action\s*\{[^}]*font-size:\s*0\.7rem[^}]*white-space:\s*nowrap/s);
 });
 
+test("T-033 keeps the Sigotosocket action label optically balanced at 360px", async () => {
+  const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
+  const linkageActions = styles.match(/\.history-card-actions--linkage\s*\{([^}]*)\}/)?.[1] ?? "";
+  const handoffButton = styles.match(/\.history-card-actions--linkage \.history-link-to-sigotosocket\s*\{([^}]*)\}/)?.[1] ?? "";
+  const compactActions = styles.match(/@media \(max-width: 359px\)\s*\{\s*\.history-card-actions--linkage\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+  assert.match(linkageActions, /grid-template-columns:\s*minmax\(0,\s*1fr\) 128px/);
+  assert.match(linkageActions, /gap:\s*16px/);
+  assert.match(linkageActions, /width:\s*max\(100%,\s*321px\)/);
+  assert.match(handoffButton, /padding-inline:\s*6px/);
+  assert.match(handoffButton, /letter-spacing:\s*-0\.06em/);
+  assert.match(compactActions, /grid-template-columns:\s*1fr/);
+  assert.match(compactActions, /width:\s*100%/);
+});
+
 test("T-007 S-005 keeps the initial share card inside the viewport", async () => {
   const styles = await readFile(new URL("../css/styles.css", import.meta.url), "utf8");
 

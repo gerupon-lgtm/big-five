@@ -941,7 +941,7 @@ dd {
   grid-column: 1 / -1;
   justify-self: center;
   gap: 16px;
-  width: max(100%, 307px);
+  width: max(100%, 321px);
   margin-top: 10px;
 }
 
@@ -955,7 +955,8 @@ dd {
 }
 
 .history-card-actions--linkage .history-link-to-sigotosocket {
-  padding-inline: 2px;
+  padding-inline: 6px;
+  letter-spacing: -0.06em;
 }
 
 .history-card-actions--linkage .history-open-result {
@@ -2200,7 +2201,7 @@ noscript {
   font-size: 0.88rem;
 }
 
-@media (max-width: 340px) {
+@media (max-width: 359px) {
   .history-card-actions--linkage {
     grid-template-columns: 1fr;
     justify-self: stretch;
@@ -2208,6 +2209,13 @@ noscript {
     width: 100%;
   }
 
+  .history-card-actions--linkage .history-link-to-sigotosocket {
+    padding-inline: 10px;
+    letter-spacing: normal;
+  }
+}
+
+@media (max-width: 340px) {
   .app-header {
     gap: 4px;
     flex-wrap: nowrap;
