@@ -36,6 +36,50 @@ function appendSproutIcon(parent) {
   parent.append(medallion);
 }
 
+function appendLinkageGuide(parent) {
+  const documentObject = parent.ownerDocument;
+  const guide = documentObject.createElement("details");
+  guide.className = "start-linkage-guide";
+  appendTextElement(guide, "summary", "シゴトソケットとの連携方法");
+  const body = documentObject.createElement("div");
+  body.className = "start-linkage-guide-body";
+  appendTextElement(
+    body,
+    "p",
+    "ココロパレアとシゴトソケットは、それぞれ単独で利用できます。2つの結果を合わせて見たい場合だけ連携してください。",
+  );
+  const steps = documentObject.createElement("ol");
+  for (const step of [
+    "ココロパレアで50問の詳細結果を用意します。履歴があれば、回答し直す必要はありません。",
+    "詳細結果画面、または連携用の履歴一覧から「シゴトソケットへ渡す」を押します。",
+    "シゴトソケットへ移動し、仕事の興味と性格傾向を組み合わせた結果を確認します。シゴトソケットの結果がまだない場合は、45問を終えると反映されます。",
+  ]) {
+    appendTextElement(steps, "li", step);
+  }
+  body.append(steps);
+  appendTextElement(
+    body,
+    "p",
+    "5つの数値だけを渡します。回答そのものは渡しません。",
+    "start-linkage-note",
+  );
+  appendTextElement(
+    body,
+    "p",
+    "渡せる結果は1件です。最後に渡した結果だけが反映されます。ココロパレアの履歴はそのまま残ります。",
+    "start-linkage-note",
+  );
+  const selectionLink = appendTextElement(
+    body,
+    "a",
+    "連携する結果を選ぶ",
+    "secondary-button start-linkage-selection-link",
+  );
+  selectionLink.setAttribute("href", "#/sigotosocket");
+  guide.append(body);
+  parent.append(guide);
+}
+
 export function renderStartScreen(host, versionModel, actions = {}, options = {}) {
   const documentObject = host.ownerDocument ?? document;
   const main = documentObject.createElement("main");
@@ -135,6 +179,16 @@ export function renderStartScreen(host, versionModel, actions = {}, options = {}
     historyControl.disabled = true;
   }
   overview.append(secondaryNavigation);
+  if (options.notice) {
+    const notice = appendTextElement(
+      main,
+      "p",
+      options.notice,
+      "notice info-notice start-notice",
+    );
+    notice.setAttribute("role", "status");
+  }
+  appendLinkageGuide(main);
   appendTextElement(
     main,
     "p",

@@ -112,7 +112,7 @@ test("T-032 F-023 shows one explicit handoff action on a 50-question result", ()
     /シゴトソケットは、Big Fiveの結果を仕事で活かすヒントにつなげるWebアプリです。/,
   );
   const buttons = collectElements(host).filter(({ tagName, textContent }) =>
-    tagName === "button" && textContent === "シゴトソケットへ結果を渡す");
+      tagName === "button" && textContent === "この結果をシゴトソケットへ渡す");
   assert.equal(buttons.length, 1);
   assert.match(buttons[0].className, /result-linkage-button/);
   const links = collectElements(host).filter(({ tagName, textContent }) =>
@@ -138,7 +138,7 @@ test("T-032 F-023 also exposes the action when a saved detail result is opened f
   });
 
   assert.equal(collectElements(host).filter(({ tagName, textContent }) =>
-    tagName === "button" && textContent === "シゴトソケットへ結果を渡す").length, 1);
+      tagName === "button" && textContent === "この結果をシゴトソケットへ渡す").length, 1);
 });
 
 test("T-032 F-023 does not expose the handoff from a 20-question preview", () => {
@@ -157,7 +157,7 @@ test("T-032 F-023 does not expose the handoff from a 20-question preview", () =>
   });
 
   const text = collectText(host);
-  assert.doesNotMatch(text, /シゴトソケットへ結果を渡す/);
+  assert.doesNotMatch(text, /この結果をシゴトソケットへ渡す/);
   assert.doesNotMatch(text, /5つの数値だけを渡します/);
 });
 
@@ -197,7 +197,7 @@ test("T-032 F-023 moves the current tab to the exact handoff URL", () => {
   });
 
   const button = collectElements(host).find(({ tagName, textContent }) =>
-    tagName === "button" && textContent === "シゴトソケットへ結果を渡す");
+      tagName === "button" && textContent === "この結果をシゴトソケットへ渡す");
   assert.ok(button);
   button.dispatch("click");
   assert.equal(

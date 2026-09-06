@@ -5,7 +5,7 @@
 | 設計版 | 0.12 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-09-05 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.42 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.43 |
 | 永続化 | 静的配布物＋ブラウザ`localStorage`＋ベータ限定OCI PostgreSQL集計 |
 
 ## 1. 設計原則
@@ -34,7 +34,7 @@ Q-006およびT-005/F-002/F-005/F-006/F-016のCSV作成基盤として、3つの
 
 | 項目 | 型 | 必須 | 説明 |
 |---|---|---|---|
-| appVersion | string | ○ | `mvp-1.1.1`等 |
+| appVersion | string | ○ | `mvp-1.2.0`等 |
 | storageSchemaVersion | integer | ○ | 端末保存スキーマ版 |
 | cardTemplateVersion | string | ○ | 共有カード描画版 |
 | characterManifestVersion | string | ○ | 猫アセット対応版 |

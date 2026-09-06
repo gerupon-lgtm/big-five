@@ -181,6 +181,7 @@ export function startApp({
   let questionnaireStorageStatus = "ok";
   let liveResult = null;
   let resultActionNotice = null;
+  let startNotice = null;
   let pendingInternalHashChange = null;
   const effectiveDecodeImage = decodeImage ??
     createBrowserImageDecoder(windowObject);
@@ -260,14 +261,19 @@ export function startApp({
     pendingInternalHashChange = hash;
     historyObject.pushState?.(null, "", hash);
     windowObject.location.hash = hash;
-    renderCurrentRoute();
+    renderRouteChange();
   }
 
   function replaceRoute(hash) {
     pendingInternalHashChange = hash;
     historyObject.replaceState(null, "", hash);
     windowObject.location.hash = hash;
+    renderRouteChange();
+  }
+
+  function renderRouteChange() {
     renderCurrentRoute();
+    windowObject.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
   }
 
   function isShownPreviewProgressForSnapshot(progress, snapshot) {
@@ -376,6 +382,47 @@ export function startApp({
         liveResult = null;
         resultActionNotice = null;
         setRoute(`#/result?resultId=${encodeURIComponent(resultId)}`);
+      },
+    }, {
+      resolveCharacterEntry(characterId) {
+        return resolveCharacterEntry(validatedCharacterManifest, characterId);
+      },
+      decodeImage: effectiveDecodeImage,
+      loadCharacterImage: loadVersionedCharacterImage,
+      observeViewport: effectiveObserveViewport,
+    });
+  }
+
+  function renderSigotosocketRoute() {
+    const historyState = loadResultHistory({
+      storage: getStorage(),
+      now: nowProvider(),
+    });
+    const eligibleResults = historyState.status === "ok"
+      ? historyState.results.filter((snapshot) =>
+        snapshot.mode === "detail50"
+        && createSigotosocketLinkUrl(snapshot) !== null)
+      : [];
+    if (eligibleResults.length === 0) {
+      startNotice = historyState.status === "ok"
+        ? "シゴトソケットへ渡せる50問の詳細結果はまだありません。50問を終えると、ここから結果を選べます。"
+        : "保存された結果を確認できなかったため、開始画面を表示しています。";
+      replaceRoute("#/start");
+      return;
+    }
+    renderHistoryScreen(screenHost, {
+      ...historyState,
+      results: eligibleResults,
+      factorLabels,
+      titleLabels,
+      linkageMode: "sigotosocket",
+    }, {
+      onOpenResult(resultId) {
+        setRoute(`#/result?resultId=${encodeURIComponent(resultId)}`);
+      },
+      onLinkToSigotosocket(snapshot) {
+        const targetUrl = createSigotosocketLinkUrl(snapshot);
+        if (targetUrl) windowObject.location.href = targetUrl;
       },
     }, {
       resolveCharacterEntry(characterId) {
@@ -977,6 +1024,10 @@ export function startApp({
       renderHistoryRoute();
       return;
     }
+    if (route.id === "sigotosocket") {
+      renderSigotosocketRoute();
+      return;
+    }
     if (route.id === "compare") {
       renderComparisonRoute(route);
       return;
@@ -1003,6 +1054,8 @@ export function startApp({
     const historyState = loadResultHistory({
       storage: getStorage(), now: nowProvider(),
     });
+    const effectiveStartNotice = startNotice;
+    startNotice = null;
     renderStartScreen(screenHost, createStartVersionViewModel(appMeta), {
       onStartNew() {
         if (
@@ -1042,6 +1095,7 @@ export function startApp({
           && resumeProgress.previewDecision === "showPreview"
         ? "残り30問を再開する"
         : "途中から再開する",
+      notice: effectiveStartNotice,
     });
   }
 
@@ -1051,9 +1105,9 @@ export function startApp({
       return;
     }
     pendingInternalHashChange = null;
-    renderCurrentRoute();
+    renderRouteChange();
   });
-  renderCurrentRoute();
+  renderRouteChange();
 }
 
 if (typeof document !== "undefined" && typeof window !== "undefined") {

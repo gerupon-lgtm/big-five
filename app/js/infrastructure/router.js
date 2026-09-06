@@ -18,6 +18,13 @@ export function resolveRoute(hash) {
       didFallback: false,
     });
   }
+  if (hash === "#/sigotosocket") {
+    return Object.freeze({
+      id: "sigotosocket",
+      canonicalHash: hash,
+      didFallback: false,
+    });
+  }
 
   const [path, query = ""] = typeof hash === "string" ? hash.split("?", 2) : [];
   if (path === "#/result") {

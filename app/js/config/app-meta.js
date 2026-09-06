@@ -19,14 +19,14 @@ const brand = Object.freeze({
 });
 
 export const appMeta = Object.freeze({
-  appVersion: "mvp-1.1.1",
+  appVersion: "mvp-1.2.0",
   storageSchemaVersion: 1,
   cardTemplateVersion: "card-template-v2",
   characterManifestVersion: "character-manifest-v1",
   presentationDefinitionVersion: "presentation-v2",
   diagnosticVersions,
   brand,
-  releasedAt: "2026-09-05T00:00:00+09:00",
+  releasedAt: "2026-09-06T00:00:00+09:00",
   deploymentMode: "normal",
   betaAggregationEnabled: false,
   betaApiBaseUrl: null,

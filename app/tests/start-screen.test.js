@@ -5,7 +5,7 @@ import { renderStartScreen } from "../js/presentation/start-screen.js";
 import { collectElements, collectText, createFakeScreen } from "./helpers/fake-dom.js";
 
 const versionModel = Object.freeze({
-  versionLabel: "バージョン mvp-1.1.1",
+  versionLabel: "バージョン mvp-1.2.0",
   diagnosticVersionLabel: "診断データの版",
   diagnosticVersionItems: Object.freeze(["質問 ipip-ja-50-question-set-v1"]),
 });
@@ -60,7 +60,7 @@ test("T-005 S-001 offers a new diagnosis action and accurate available-flow copy
   );
   const visibleVersion = collectElements(host).find(({ className }) =>
     className === "start-app-version");
-  assert.equal(visibleVersion.textContent, "バージョン mvp-1.1.1");
+  assert.equal(visibleVersion.textContent, "バージョン mvp-1.2.0");
   const footer = collectElements(host).find(({ className }) =>
     className === "start-footer");
   assert.equal(footer.tagName, "footer");
@@ -211,6 +211,47 @@ test("T-008A S-001 groups primary start content into one panel without nesting a
   assert.equal(main.children.includes(diagnosticVersion), true);
 });
 
+test("T-033 F-023 places a closed Sigotosocket guide after the main panel", () => {
+  const { host } = createFakeScreen();
+
+  renderStartScreen(host, versionModel, {});
+
+  const main = host.children[0];
+  const panel = collectElements(main)
+    .find(({ className }) => className === "start-main-panel");
+  const guide = collectElements(main)
+    .find(({ className }) => className === "start-linkage-guide");
+  const version = collectElements(main)
+    .find(({ className }) => className === "start-app-version");
+  assert.ok(guide);
+  assert.equal(guide.tagName, "details");
+  assert.equal(guide.attributes.has("open"), false);
+  assert.ok(main.children.indexOf(panel) < main.children.indexOf(guide));
+  assert.ok(main.children.indexOf(guide) < main.children.indexOf(version));
+  assert.match(collectText(guide), /シゴトソケットとの連携方法/);
+  assert.match(collectText(guide), /それぞれ単独で利用できます/);
+  assert.match(collectText(guide), /5つの数値だけを渡します/);
+  assert.match(collectText(guide), /最後に渡した結果だけが反映されます/);
+  const selectionLink = collectElements(guide).find(({ tagName, textContent }) =>
+    tagName === "a" && textContent === "連携する結果を選ぶ");
+  assert.equal(selectionLink.attributes.get("href"), "#/sigotosocket");
+});
+
+test("T-033 F-023 renders a start notice without opening the linkage guide", () => {
+  const { host } = createFakeScreen();
+
+  renderStartScreen(host, versionModel, {}, {
+    notice: "シゴトソケットへ渡せる50問の詳細結果はまだありません。",
+  });
+
+  const notice = collectElements(host)
+    .find(({ className }) => className === "notice info-notice start-notice");
+  const guide = collectElements(host)
+    .find(({ className }) => className === "start-linkage-guide");
+  assert.equal(notice.attributes.get("role"), "status");
+  assert.equal(guide.attributes.has("open"), false);
+});
+
 test("T-008A S-001 keeps the diagnostic label and version details inside the diagnostic disclosure", () => {
   const { host } = createFakeScreen();
 
@@ -232,7 +273,7 @@ test("T-008A S-001 keeps the diagnostic label and version details inside the dia
       .textContent,
     "診断データの版",
   );
-  assert.match(collectText(diagnosticVersion), /バージョン mvp-1\.1\.1/);
+  assert.match(collectText(diagnosticVersion), /バージョン mvp-1\.2\.0/);
   assert.match(collectText(diagnosticVersion), /質問 ipip-ja-50-question-set-v1/);
 });
 

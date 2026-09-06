@@ -2,12 +2,12 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.21 |
+| 設計版 | 0.22 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-09-05 |
-| 要件正典 | 要件定義書v1.42 |
+| 更新日 | 2026-09-06 |
+| 要件正典 | 要件定義書v1.43 |
 | 初期リリース | `mvp-0.1.0` |
-| 現在リリース | `mvp-1.1.1` |
+| 現在リリース | `mvp-1.2.0` |
 
 ## 1. トレーサビリティ表（正典）
 
@@ -26,12 +26,12 @@
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007, T-008C | `card-template-v2`は承認済み`kokoro-wreath-v2.png`を猫の背面へ合成する。透明素材、画像拡大、プレビュー／Web Share／保存の同一PNG Blobを回帰確認。結果画面の因子領域へ同操作を追加しない |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007, T-008C | ブランド→モード→称号→副題→見出しなし理由→固定順因子→アロマ→注意→任意URLの共有文、単一CTA、同一PNG Blob、コピー／選択可能テキストの代替を回帰確認 |
 | F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A, T-008C | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。T-008Cでは20問preview終了時にResultSnapshotを残して対応ProgressRecordだけを削除する。今回の共有追補におけるF-013の範囲も、この完了状態の確定だけであり、Blob／Object URLの寿命はF-013へ分類しない |
-| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011, T-032 | `mvp-1.1.1`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
+| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011, T-032, T-033 | `mvp-1.2.0`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A, T-008C | 保存失敗時の中断・preview終了、live結果維持、ID不一致の履歴継続を安全側で無効化、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
 | F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-008C, T-010 | `ココロパレット`は常時3候補、ブランド緑の中央チェックで選択を示す。`ココロアロマ`は閉じた3画像ティーザーと右向き矢印から1回で6候補を開く。因子と相互排他になるのはアロマだけで、パレットは対象外。共有カードと共有テキストは代表3件の香り素材名を表示する |
-| F-023 | シゴトソケット結果連携 | S-004 | sigotosocket-link、result controller | ResultSnapshotのmode・FactorResult | T-032 | 50問の診断直後／履歴詳細だけに明示ボタンと注記を表示し、固定順15桁をURLフラグメントへ設定して同一タブ遷移。不正値時は結果を維持して非遷移 |
+| F-023 | シゴトソケット結果連携 | S-001, S-004, S-006 | sigotosocket-link、router/controller | ResultSnapshotのmode・FactorResult | T-032, T-033 | 任意連携の説明、50問だけの連携用履歴、詳細結果からの明示操作を提供。固定順15桁をURLフラグメントへ設定して同一タブ遷移し、不正値時は結果を維持して非遷移 |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -69,6 +69,8 @@
 | T-011 | GitHub Pages CI/CD・運用 | F-014, NF-01, NF-04, NF-06 | テスト成功時だけPagesへ配信し、AppMetaのアプリ版からCSS・ES Modules・画像・manifestのキャッシュバスターを自動生成。QA一時プレビューはapproved releaseの選択、JSON runtimeの有効化、T-011完了を意味しない |
 | T-012 | MVP受入・ブラウザ検証 | 全機能/NF | 要件17.1と主要異常系を検証し記録 |
 | T-032 | シゴトソケット結果連携 | F-006, F-014, F-015, F-023 | 50問詳細結果限定の明示導線、固定順15桁、同一タブ遷移、履歴詳細、不正値フォールバックを実装・検証 |
+| T-033 | シゴトソケット連携導線拡張 | F-001, F-009, F-014, F-023, NF-02 | 開始画面の閉じた説明、50問だけの連携用履歴、C案の直接受け渡しを実装・検証 |
+| T-034 | 画面遷移時スクロール修正 | F-015, NF-03 | 内部操作・ブラウザhashchangeのいずれも遷移後に画面先頭を表示 |
 
 ## 3. フェーズ
 
@@ -581,6 +583,24 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 診断直後／履歴詳細の表示、20問非表示、同一タブの完全URLをpresentation/controllerテストで確認する。
   - 全テスト、静的検証、コンテンツ検証、QA Pages成果物生成、実ブラウザsmokeを通す。
 - プライバシー: 生回答、称号ID、色ID、日時、端末情報、利用者識別子を連携値へ含めず、fetch・保存・ログ記録を追加しない。
+
+### T-033 シゴトソケット連携導線拡張
+
+- 対応機能: F-001、F-009、F-014、F-023、NF-02
+- 状態: 完了
+- 実装:
+  - S-001の既存メインパネル直後へ、単独利用できることと連携手順を伝える閉じた説明カードを追加する。
+  - `#/sigotosocket`では有効な50問詳細結果だけを表示し、20問結果、途中回答、破損結果を候補へ含めない。
+  - 各カードはC案として`シゴトソケットへ渡す`を左、16px間隔、幅128pxの`結果を見る`を右へ置く。文字は16px・通常字間とし、340px以下だけ縦積みにする。
+  - 対象履歴がない場合は開始画面へ戻し、50問完了後に選べることを通知する。
+- 検証: presentation、router、app-shellのNodeテストにより、初期閉鎖、DOM位置、候補絞り込み、ボタン順、完全URL遷移、対象なし通知を確認する。
+
+### T-034 画面遷移時スクロール修正
+
+- 対応機能: F-015、NF-03
+- 状態: 完了
+- 実装: 内部のpush／replace遷移とブラウザ`hashchange`を共通のroute-change処理へ集約し、描画後に`scrollTo({ top: 0, left: 0, behavior: "auto" })`を実行する。
+- 検証: 内部ボタン遷移と外部hash遷移の両方で、縦位置の先頭復帰をNode結合テストする。
 
 ## 5. 未対応・保留
 

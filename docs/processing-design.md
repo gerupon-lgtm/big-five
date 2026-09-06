@@ -4,8 +4,8 @@
 |---|---|
 | 設計版 | 0.17 |
 | 作成日 | 2026-07-20 |
-| 更新日 | 2026-09-05 |
-| 入力要件 | 要件定義書v1.42 |
+| 更新日 | 2026-09-06 |
+| 入力要件 | 要件定義書v1.43 |
 | 実行方式 | 通常版はブラウザ内完結。F-023は明示的な外部遷移、ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -432,11 +432,17 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 
 ### 12.4 シゴトソケット結果連携
 
-1. controllerはS-004で表示中のResultSnapshotまたはlive結果を`createSigotosocketLinkUrl`へ渡す。
-2. domain処理は`mode === "detail50"`、5因子の過不足・重複、factorId、有限な`rawMean`と1〜5範囲を検証する。
-3. 固定順を`intellectImagination`、`conscientiousness`、`extraversion`、`agreeableness`、`emotionalStability`とし、各`Math.round(rawMean * 100)`を3桁化して15桁へ連結する。
-4. 有効なら`https://sigotosocket.sikumilab.com/#b5=v1-<15桁>`を返し、presentation callbackが`window.location.href`へ設定して同一タブ遷移する。fetch、フォーム送信、保存、ログ記録は行わない。
-5. 無効なら`null`を返す。controllerは内部値を表示せず利用者向け通知を出し、S-004を維持する。
+1. S-001はメインパネル直後へ閉じた連携説明を描画し、`#/sigotosocket`への明示導線を出す。
+2. `#/sigotosocket`のcontrollerは保存履歴を検証し、`mode === "detail50"`かつ有効URLを生成できるResultSnapshotだけをS-006の連携用表示へ渡す。対象がなければS-001へ戻して案内する。
+3. controllerはS-004で表示中のResultSnapshot、live結果、または連携用S-006で選んだResultSnapshotを`createSigotosocketLinkUrl`へ渡す。
+4. domain処理は`mode === "detail50"`、5因子の過不足・重複、factorId、有限な`rawMean`と1〜5範囲を検証する。
+5. 固定順を`intellectImagination`、`conscientiousness`、`extraversion`、`agreeableness`、`emotionalStability`とし、各`Math.round(rawMean * 100)`を3桁化して15桁へ連結する。
+6. 有効なら`https://sigotosocket.sikumilab.com/#b5=v1-<15桁>`を返し、presentation callbackが`window.location.href`へ設定して同一タブ遷移する。fetch、フォーム送信、保存、ログ記録は行わない。
+7. 無効なら`null`を返す。controllerは内部値を表示せず利用者向け通知を出し、S-004を維持する。
+
+### 12.5 画面遷移時の縦位置
+
+内部のpush／replace遷移とブラウザ`hashchange`は共通のroute-change処理を通す。新しい画面を描画した直後に`scrollTo({ top: 0, left: 0, behavior: "auto" })`を実行し、遷移前画面の縦スクロール位置を維持しない。結果画面内の開閉に伴う局所的な位置調整は画面遷移ではないため、この処理の対象外とする。
 6. presentationは受け渡しボタンに軽い強調を付け、短いサービス説明と`https://sigotosocket.sikumilab.com/`へ同一タブで移動する補助リンクを同じ枠へ表示する。
 
 ## 13. 削除

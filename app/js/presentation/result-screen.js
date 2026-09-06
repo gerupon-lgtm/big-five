@@ -779,7 +779,7 @@ function renderActions(
     const button = appendTextElement(
       linkage,
       "button",
-      "シゴトソケットへ結果を渡す",
+      "この結果をシゴトソケットへ渡す",
       "secondary-button result-linkage-button",
     );
     button.setAttribute("type", "button");

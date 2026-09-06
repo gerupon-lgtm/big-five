@@ -46,7 +46,7 @@ test("startApp renders the start heading and canonical version from a hash route
       .textContent,
     "Big Five 自己理解支援ツール",
   );
-  assert.match(renderedText, /バージョン mvp-1\.1\.1/);
+  assert.match(renderedText, /バージョン mvp-1\.2\.0/);
   assert.match(renderedText, /ipip-ja-50-v1/);
   assert.match(renderedText, /ipip-ja-50-question-set-v1/);
   assert.match(renderedText, /ipip-ja-50-scoring-v1/);
@@ -542,7 +542,7 @@ test("T-005 F-016 startApp observes once before decoding the selected manifest i
   await new Promise((resolve) => setImmediate(resolve));
 
   assert.deepEqual(requested, [
-    "assets/characters/character-balanced.webp?v=mvp-1.1.1",
+    "assets/characters/character-balanced.webp?v=mvp-1.2.0",
   ]);
   assert.equal(observers[0].disconnectCalls, 1);
   const images = collectElements(host)
@@ -614,6 +614,7 @@ function createAppHarness({
   hash = "#/start",
   storage,
   confirmProvider = () => true,
+  windowOverrides = {},
   ...appOptions
 } = {}) {
   const documentObject = {
@@ -631,6 +632,7 @@ function createAppHarness({
     addEventListener(type, callback) {
       if (type === "hashchange") hashchange = callback;
     },
+    ...windowOverrides,
   };
   let uuid = 1;
   startApp({
@@ -653,6 +655,75 @@ function createAppHarness({
     },
   };
 }
+
+test("T-033 F-023 shows only eligible detail results on the Sigotosocket selection route", () => {
+  const detail = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000123",
+  });
+  const preview = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000124",
+    questionCount: 20,
+  });
+  const raw = JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: "2026-09-06T12:00:00.000Z",
+    progressByDiagnosis: {},
+    results: [preview, detail],
+  });
+  const { host, windowObject } = createAppHarness({
+    hash: "#/sigotosocket",
+    storage: { getItem: () => raw },
+  });
+
+  assert.match(collectText(host), /シゴトソケットへ渡す結果を選ぶ/);
+  assert.equal(collectElements(host).filter(({ className }) =>
+    className === "history-card").length, 1);
+  clickButton(host, "シゴトソケットへ渡す");
+  assert.match(windowObject.location.href, /^https:\/\/sigotosocket\.sikumilab\.com\/#b5=v1-/);
+});
+
+test("T-033 F-023 returns to start with guidance when no detail result can be handed off", () => {
+  const preview = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000125",
+    questionCount: 20,
+  });
+  const raw = JSON.stringify({
+    schemaVersion: 1,
+    updatedAt: "2026-09-06T12:00:00.000Z",
+    progressByDiagnosis: {},
+    results: [preview],
+  });
+  const { host, windowObject } = createAppHarness({
+    hash: "#/sigotosocket",
+    storage: { getItem: () => raw },
+  });
+
+  assert.equal(windowObject.location.hash, "#/start");
+  assert.match(
+    collectText(host),
+    /シゴトソケットへ渡せる50問の詳細結果はまだありません/,
+  );
+});
+
+test("T-034 resets the vertical position after internal and browser hash transitions", () => {
+  const scrollCalls = [];
+  const { host, navigateHash } = createAppHarness({
+    storage: { getItem: () => null, setItem() {} },
+    windowOverrides: {
+      scrollTo(options) {
+        scrollCalls.push(options);
+      },
+    },
+  });
+  scrollCalls.length = 0;
+
+  clickButton(host, "診断を始める");
+  assert.deepEqual(scrollCalls, [{ top: 0, left: 0, behavior: "auto" }]);
+
+  scrollCalls.length = 0;
+  navigateHash("#/history");
+  assert.deepEqual(scrollCalls, [{ top: 0, left: 0, behavior: "auto" }]);
+});
 
 test("T-007 S-005 opens one generated share card and revokes it when returning", async () => {
   let raw = null;

@@ -32,6 +32,14 @@ test("T-006 S-006 resolves the history hash without a server-side route", () => 
   });
 });
 
+test("T-033 F-023 resolves the dedicated Sigotosocket handoff route", () => {
+  assert.deepEqual(resolveRoute("#/sigotosocket"), {
+    id: "sigotosocket",
+    canonicalHash: "#/sigotosocket",
+    didFallback: false,
+  });
+});
+
 test("T-006 S-007 resolves comparison result IDs and keeps missing IDs on the comparison route", () => {
   assert.deepEqual(resolveRoute("#/compare?before=before-id&after=after-id"), {
     id: "compare",

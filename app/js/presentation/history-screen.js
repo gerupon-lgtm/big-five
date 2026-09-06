@@ -104,24 +104,62 @@ function renderHistoryThumbnail(
   }
 }
 
-function renderResultCard(parent, snapshot, labels, actions, dependencies) {
+function renderResultCard(
+  parent,
+  snapshot,
+  labels,
+  actions,
+  dependencies,
+  linkageMode,
+) {
   const card = parent.ownerDocument.createElement("article");
   card.className = "history-card";
   card.setAttribute("data-result-id", snapshot.resultId);
   renderHistoryThumbnail(card, snapshot, dependencies);
   appendCardIdentity(card, snapshot, labels);
 
-  const openButton = appendTextElement(
-    card,
-    "button",
-    "結果を見る",
-    "primary-button history-open-result",
-  );
-  openButton.setAttribute("type", "button");
-  openButton.addEventListener(
-    "click",
-    () => actions.onOpenResult?.(snapshot.resultId),
-  );
+  if (
+    linkageMode === "sigotosocket"
+    && typeof actions.onLinkToSigotosocket === "function"
+  ) {
+    const actionGroup = card.ownerDocument.createElement("div");
+    actionGroup.className = "history-card-actions history-card-actions--linkage";
+    const handoffButton = appendTextElement(
+      actionGroup,
+      "button",
+      "シゴトソケットへ渡す",
+      "secondary-button history-link-to-sigotosocket",
+    );
+    handoffButton.setAttribute("type", "button");
+    handoffButton.addEventListener(
+      "click",
+      () => actions.onLinkToSigotosocket?.(snapshot),
+    );
+    const openButton = appendTextElement(
+      actionGroup,
+      "button",
+      "結果を見る",
+      "primary-button history-open-result",
+    );
+    openButton.setAttribute("type", "button");
+    openButton.addEventListener(
+      "click",
+      () => actions.onOpenResult?.(snapshot.resultId),
+    );
+    card.append(actionGroup);
+  } else {
+    const openButton = appendTextElement(
+      card,
+      "button",
+      "結果を見る",
+      "primary-button history-open-result",
+    );
+    openButton.setAttribute("type", "button");
+    openButton.addEventListener(
+      "click",
+      () => actions.onOpenResult?.(snapshot.resultId),
+    );
+  }
   parent.append(card);
 }
 
@@ -639,21 +677,30 @@ export function renderHistoryScreen(
       : dependencies;
     const main = documentObject.createElement("main");
     main.className = "app-shell history-screen";
+    const isSigotosocketSelection = historyState.linkageMode === "sigotosocket";
     appendAppHeader(main, {
       action: { label: "トップ画面へ", href: "#/start" },
     });
     appendScreenHeading(main, {
-      kicker: "HISTORY",
-      title: "診断結果の履歴",
-      titleClassName: "history-title",
+      kicker: isSigotosocketSelection ? "CONNECT" : "HISTORY",
+      title: isSigotosocketSelection
+        ? "シゴトソケットへ渡す結果を選ぶ"
+        : "診断結果の履歴",
+      titleClassName: isSigotosocketSelection
+        ? "history-title history-title--linkage"
+        : "history-title",
     });
     appendTextElement(
       main,
       "p",
-      "結果はこの端末のブラウザ内にだけ保存されます。",
+      isSigotosocketSelection
+        ? "50問の詳細結果から1件を選んで渡せます。ココロパレアの履歴はそのまま残ります。"
+        : "結果はこの端末のブラウザ内にだけ保存されます。",
       "lead compact-lead history-lead",
     );
-    renderHistoryHeader(main, historyState, actions);
+    if (!isSigotosocketSelection) {
+      renderHistoryHeader(main, historyState, actions);
+    }
     renderOperationNotice(main, actions.operationNotice);
 
     if (historyState.status === "error") {
@@ -693,6 +740,7 @@ export function renderHistoryScreen(
             historyState,
             actions,
             renderDependencies,
+            historyState.linkageMode,
           );
           continue;
         }
@@ -713,7 +761,11 @@ export function renderHistoryScreen(
       main.append(list);
     }
 
-    if (historyState.status === "ok" && historyState.results.length > 0) {
+    if (
+      historyState.status === "ok"
+      && historyState.results.length > 0
+      && !isSigotosocketSelection
+    ) {
       renderComparisonBar(
         main,
         comparisonMode,

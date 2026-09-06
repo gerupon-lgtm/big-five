@@ -5,7 +5,7 @@
 | 設計版 | 0.3 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-09-05 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.42 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.43 |
 | 対応機能 | F-017、F-023 |
 | 対象環境 | 通常版のF-023、ベータ版のF-017 |
 
@@ -193,7 +193,7 @@ Q-011で保持期間が確定した場合は24時間の想定値を更新する�
 F-023はAPI通信ではなく、50問詳細結果から外部Webアプリへ明示遷移するブラウザ契約である。
 
 - 遷移先: `https://sigotosocket.sikumilab.com/#b5=v1-<15桁>`
-- 起動条件: 診断直後または履歴から開いた`detail50`で、利用者が`シゴトソケットへ結果を渡す`を押したときだけ
+- 起動条件: 診断直後または履歴から開いた`detail50`で、利用者が`この結果をシゴトソケットへ渡す`を押したときだけ
 - 渡す値: 固定因子順の`Math.round(rawMean * 100)`を各3桁で連結した5件
 - 渡さない値: 生回答、称号ID、色ID、日時、端末情報、利用者識別子
 - 遷移方式: `window.location.href`による同一タブ遷移

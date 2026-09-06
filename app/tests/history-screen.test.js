@@ -80,6 +80,47 @@ test("T-008A F-009 renders only the compact normal-card contract", () => {
   assert.deepEqual(opened, [target.resultId]);
 });
 
+test("T-033 F-023 renders the selected C action layout for each eligible result", () => {
+  const { host } = createFakeScreen();
+  const target = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000122",
+  });
+  const handedOff = [];
+  const opened = [];
+
+  renderHistoryScreen(
+    host,
+    {
+      status: "ok",
+      results: [target],
+      linkageMode: "sigotosocket",
+      ...screenLabels,
+    },
+    {
+      onOpenResult: (resultId) => opened.push(resultId),
+      onLinkToSigotosocket: (snapshot) => handedOff.push(snapshot),
+    },
+  );
+
+  const text = collectText(host);
+  assert.match(text, /シゴトソケットへ渡す結果を選ぶ/);
+  assert.match(text, /50問の詳細結果から1件を選んで渡せます/);
+  assert.doesNotMatch(text, /結果を比較する|履歴削除/);
+  const actions = collectElements(host)
+    .find(({ className }) => className === "history-card-actions history-card-actions--linkage");
+  assert.deepEqual(
+    actions.children.map(({ textContent }) => textContent),
+    ["シゴトソケットへ渡す", "結果を見る"],
+  );
+  assert.equal(actions.children[0].className, "secondary-button history-link-to-sigotosocket");
+  assert.equal(actions.children[1].className, "primary-button history-open-result");
+
+  clickButton(host, "シゴトソケットへ渡す");
+  clickButton(host, "結果を見る");
+  assert.deepEqual(handedOff, [target]);
+  assert.deepEqual(opened, [target.resultId]);
+});
+
 test("T-008A F-009 loads only the matching Q-012 thumbnail after viewport entry", async () => {
   const { host } = createFakeScreen();
   const target = createTestResultSnapshot({
