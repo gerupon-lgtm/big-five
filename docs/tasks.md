@@ -5,9 +5,9 @@
 | 設計版 | 0.24 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-09-06 |
-| 要件正典 | 要件定義書v1.45 |
+| 要件正典 | 要件定義書v1.46 |
 | 初期リリース | `mvp-0.1.0` |
-| 現在リリース | `mvp-1.3.1` |
+| 現在リリース | `mvp-1.3.2` |
 
 ## 1. トレーサビリティ表（正典）
 
@@ -15,7 +15,7 @@
 |---|---|---|---|---|---|---|
 | F-001 | 開始・注意事項 | S-001, S-008 | 起動・説明モデル | AppMeta, DiagnosticDefinition | T-001, T-008A, T-008 | 共通ヘッダー、`SELF CHECK`／`自分のことを知る`、承認済みBig Five・IPIP説明、初期状態で見出しだけを示す愛猫もなか紹介文の段階展開、同幅の開始・再開操作、現在版表示を実装・browser smoke済み |
 | F-002 | 尺度・設問版管理 | S-002, S-008 | 定義検証、採点、結果文根拠検証 | DiagnosticDefinition, QuestionDefinition, ResultEvidenceDefinition, ResultTextDefinition | T-002, T-005 | Q-006版付き定義実装済み。Content Approvalは2026-07-28に完了 |
-| F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A, T-036 | 共通ヘッダー、回答・戻る・中断・破棄に加え、50問目後の完答確認、戻った後だけ各回答画面から任意に完了できる明示確定を実装 |
+| F-003 | 回答 | S-002 | questionnaire | ProgressRecord | T-004, T-008A, T-036, T-037 | 共通ヘッダー、回答・前の質問・中断・破棄に加え、50問目後の完答確認、戻った後だけ各回答画面から任意に完了できる明示確定、太字の回答数とプログレスバーを実装 |
 | F-004 | 途中保存・再開 | S-001, S-002 | storage-adapter | StorageEnvelope, ProgressRecord | T-004, T-008A, T-008C | 20問`showPreview`のsnapshot `resultId`は`progressId`と同じ値。履歴継続は両ID、mode、20回答、VersionTupleの完全一致だけを許可し、旧異IDを推測再リンクしない。schema field/version追加なし |
 | F-005 | 基本結果 | S-003 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A, T-008C | 20問・診断直後／履歴・回答継続中／履歴・確定済みの操作と可視性を分離。因子は一回で保存済み本文を全カテゴリ表示 |
 | F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A, T-008C | 50問・診断直後／履歴の操作を分離。因子は一回で保存済み本文を全カテゴリ表示 |
@@ -26,7 +26,7 @@
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007, T-008C | `card-template-v2`は承認済み`kokoro-wreath-v2.png`を猫の背面へ合成する。透明素材、画像拡大、プレビュー／Web Share／保存の同一PNG Blobを回帰確認。結果画面の因子領域へ同操作を追加しない |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007, T-008C | ブランド→モード→称号→副題→見出しなし理由→固定順因子→アロマ→注意→任意URLの共有文、単一CTA、同一PNG Blob、コピー／選択可能テキストの代替を回帰確認 |
 | F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A, T-008C | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。T-008Cでは20問preview終了時にResultSnapshotを残して対応ProgressRecordだけを削除する。今回の共有追補におけるF-013の範囲も、この完了状態の確定だけであり、Blob／Object URLの寿命はF-013へ分類しない |
-| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011, T-032, T-033, T-035, T-036 | `mvp-1.3.1`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
+| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011, T-032, T-033, T-035, T-036, T-037 | `mvp-1.3.2`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A, T-008C | 保存失敗時の中断・preview終了、live結果維持、ID不一致の履歴継続を安全側で無効化、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
@@ -73,6 +73,7 @@
 | T-034 | 画面遷移時スクロール修正 | F-015, NF-03 | 内部操作・ブラウザhashchangeのいずれも遷移後に画面先頭を表示 |
 | T-035 | 通常履歴のシゴトソケット直接連携 | F-009, F-014, F-023, NF-02 | 通常履歴の50問カードだけにC案の直接受け渡しを表示し、20問カードは従来表示を維持 |
 | T-036 | 完答後の任意位置からの確定 | F-003, F-004, F-014, F-015 | 完答確認から戻った場合だけ各回答画面に`回答を完了する`を表示し、50回答が揃っていれば任意位置から結果を確定 |
+| T-037 | 回答画面の進捗・操作表記統一 | F-003, F-014, NF-02 | 通常時・見直し時の前問操作を`前の質問`へ統一し、太字の回答数直前へ20問／50問の診断区分基準で緑のプログレスバーを表示 |
 
 ## 3. フェーズ
 
@@ -624,6 +625,16 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
   - 見直し中は現在の設問位置にかかわらず、50回答が揃っていれば`completeDetail`で結果を確定する。通常回答中には同操作を出さない。
   - 見直し状態は保存schemaを増やさず画面内で保持し、再読込時は50回答から完答確認へ戻す。
 - 検証: presentationで通常時非表示／見直し時表示とcallbackを確認し、domainで任意`currentIndex`の50回答だけを完了可能と確認する。app-shellで50問目→完答確認→回答へ戻る→49問目→回答完了→結果保存を通す。
+
+### T-037 回答画面の進捗・操作表記統一
+
+- 対応機能: F-003、F-014、NF-02
+- 状態: 完了
+- 実装:
+  - 通常回答と完答後の見直しで、前問操作の文言を既存の`前へ`から`前の質問`へ置き換える。
+  - `role=progressbar`とARIA値を持つ緑のプログレスバーを置き、その直後の`n / 20問`または`n / 50問`を太字にする。
+  - 進捗率は現在の診断区分を分母とし、20問では1問目5%・10問目50%・20問目100%、50問では50問目100%とする。
+- 検証: presentationテストで通常・見直しの文言、進捗率とARIAを確認し、CSS契約テストで太字、色、高さ、余白を確認する。
 
 ## 5. 未対応・保留
 

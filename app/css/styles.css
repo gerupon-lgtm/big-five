@@ -2002,6 +2002,23 @@ dd {
   font-size: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
   line-height: 1.5;
   letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+.questionnaire-progress-track {
+  height: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #d6e4df;
+}
+
+.questionnaire-progress-bar {
+  height: 100%;
+  min-width: 12px;
+  border-radius: 999px;
+  background: #26705c;
+  transition: width 0.2s ease;
 }
 
 .questionnaire-screen > h1 {
@@ -2047,6 +2064,7 @@ dd {
 .questionnaire-navigation {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   gap: 10px;
   margin-top: 28px;
 }

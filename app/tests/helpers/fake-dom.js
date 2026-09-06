@@ -7,6 +7,7 @@ export class FakeElement {
     this.listeners = new Map();
     this.textContent = "";
     this.className = "";
+    this.style = {};
     this.disabled = false;
     this.hidden = false;
     this.open = false;
