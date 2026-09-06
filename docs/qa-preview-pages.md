@@ -9,10 +9,10 @@
 https://gerupon-lgtm.github.io/big-five/
 
 - 正式確認URL: https://kokoro.sikumilab.com/
-- QA対象commit: `d4057fca6695e11f1a3d8787846cf6743d3a792f`
+- QA対象commit: `6e234f270384766e9ac88f6aa77d784896f69161`
 - branch: `main`
-- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/34002108451
-- 2026-09-06確認: build／deploy成功。正式確認URLで`mvp-1.2.0`を確認し、開始画面の閉じた連携説明、50問詳細結果だけを選べる連携用履歴、結果画面と履歴一覧で区別した受け渡し文言、画面遷移後の先頭復帰を配信済み。390px／360pxではC案を1行、359px以下では縦積みとし、正式URLの390px実ブラウザで左ボタンの左右余白約12.8px、間隔16px、右ボタン128px、横overflowなし、console error／warning 0件を確認
+- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/34004502886
+- 2026-09-06確認: build／deploy成功。正式確認URLで`mvp-1.3.0`を確認し、通常履歴の50問詳細結果だけに`シゴトソケットへ渡す`を表示し、20問簡易プレビューは`結果を見る`だけとなる仕様を配信済み。390pxでは左177px・間隔16px・右128pxのC案を1行、320pxでは両ボタン254pxの縦積みで表示し、いずれも横overflowなし、console error／warning 0件を確認。通常履歴の受け渡しから同一タブでシゴトソケットへ遷移し、既存結果への反映案内まで確認
 
 ## 初期設定
 
