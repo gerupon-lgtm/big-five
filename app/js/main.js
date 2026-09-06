@@ -532,12 +532,14 @@ export function startApp({
       currentIndex: currentProgress.currentIndex,
       totalCount: currentProgress.mode === "preview20" ? 20 : 50,
       selectedValue: currentProgress.answers[questionId] ?? null,
+      completionAvailable: detailReviewQuestionVisible,
       storageStatus: questionnaireStorageStatus,
     }, {
       onAnswer(answer) { answerCurrentQuestion(answer); },
       onBack() { goBackCurrentQuestion(); },
       onPause() { pauseCurrentProgress(); },
       onDiscard() { discardCurrentProgress(); },
+      onComplete() { completeCurrentDetail(); },
     });
   }
 
@@ -570,13 +572,13 @@ export function startApp({
   }
 
   function answerCurrentQuestion(answer) {
+    const wasReviewingDetail = detailReviewQuestionVisible;
     const transition = answerAndSave({
       storage: getStorage(), progress: currentProgress, answer,
       definition: DiagnosticDefinition, meta: appMeta, now: nowProvider(),
     });
     currentProgress = transition.progress;
-    detailReviewQuestionVisible = transition.kind === "in-progress" &&
-      isDetailReviewProgress(currentProgress, { definition: DiagnosticDefinition, meta: appMeta });
+    detailReviewQuestionVisible = wasReviewingDetail;
     questionnaireStorageStatus = transition.persistence.status === "ok" ? "ok" : "error";
     renderQuestionnaireRoute();
   }

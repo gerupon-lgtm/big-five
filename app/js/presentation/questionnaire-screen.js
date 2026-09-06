@@ -17,6 +17,7 @@ const QUESTION_KEYS = Object.freeze([
   "currentIndex",
   "totalCount",
   "selectedValue",
+  "completionAvailable",
   "storageStatus",
 ]);
 const PREVIEW_KEYS = Object.freeze(["phase", "storageStatus"]);
@@ -26,6 +27,7 @@ const QUESTION_ACTION_KEYS = Object.freeze([
   "onBack",
   "onPause",
   "onDiscard",
+  "onComplete",
 ]);
 const PREVIEW_ACTION_KEYS = Object.freeze([
   "onPreviewDecision",
@@ -67,6 +69,8 @@ function isQuestionViewModel(viewModel) {
     && Number.isInteger(viewModel.totalCount)
     && (viewModel.totalCount === 20 || viewModel.totalCount === 50)
     && viewModel.currentIndex < viewModel.totalCount
+    && typeof viewModel.completionAvailable === "boolean"
+    && (!viewModel.completionAvailable || viewModel.totalCount === 50)
     && (
       viewModel.selectedValue === null
       || (
@@ -147,6 +151,14 @@ function renderQuestion(main, viewModel, actions) {
 
   const navigation = main.ownerDocument.createElement("div");
   navigation.className = "questionnaire-navigation";
+  if (viewModel.completionAvailable) {
+    addButton(
+      navigation,
+      "回答を完了する",
+      "primary-button questionnaire-complete-button",
+      actions.onComplete,
+    );
+  }
   const backButton = addButton(
     navigation,
     "前へ",

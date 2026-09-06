@@ -46,7 +46,7 @@ test("startApp renders the start heading and canonical version from a hash route
       .textContent,
     "Big Five 自己理解支援ツール",
   );
-  assert.match(renderedText, /バージョン mvp-1\.3\.0/);
+  assert.match(renderedText, /バージョン mvp-1\.3\.1/);
   assert.match(renderedText, /ipip-ja-50-v1/);
   assert.match(renderedText, /ipip-ja-50-question-set-v1/);
   assert.match(renderedText, /ipip-ja-50-scoring-v1/);
@@ -542,7 +542,7 @@ test("T-005 F-016 startApp observes once before decoding the selected manifest i
   await new Promise((resolve) => setImmediate(resolve));
 
   assert.deepEqual(requested, [
-    "assets/characters/character-balanced.webp?v=mvp-1.3.0",
+    "assets/characters/character-balanced.webp?v=mvp-1.3.1",
   ]);
   assert.equal(observers[0].disconnectCalls, 1);
   const images = collectElements(host)
@@ -1363,9 +1363,11 @@ test("T-005 S-004 reviews the fiftieth answer before explicitly saving and rende
 
   clickButton(host, "回答へ戻る");
   assert.match(collectText(host), /50 \/ 50問/);
-  clickButton(host, "4 やや当てはまる");
-  assert.match(collectText(host), /50問の回答が完了しました/);
-  clickButton(host, "結果を見る");
+  assert.match(collectText(host), /回答を完了する/);
+  clickButton(host, "前へ");
+  assert.match(collectText(host), /49 \/ 50問/);
+  assert.match(collectText(host), /回答を完了する/);
+  clickButton(host, "回答を完了する");
   assert.match(collectText(host), /50問詳細結果/);
   envelope = JSON.parse(raw);
   assert.deepEqual(envelope.progressByDiagnosis, {});

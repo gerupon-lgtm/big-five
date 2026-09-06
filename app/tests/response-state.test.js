@@ -186,6 +186,22 @@ test("T-004 F-003 reviews answered detail questions sequentially through questio
   assert.equal(revisedFiftieth.progress.currentIndex, 49);
 });
 
+test("T-036 F-003 can complete from any question while reviewing fifty answers", () => {
+  const previewComplete = answerUntil(createProgress(), 20).progress;
+  const hidden = choosePreviewExit(previewComplete, "continueHidden", { definition: DiagnosticDefinition, meta: appMeta, now: NOW });
+  const review = answerUntil(hidden.progress, 50, 20).progress;
+  const fortyNinth = goBack(review, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T01:14:00.000Z" }).progress;
+  const fortyEighth = goBack(fortyNinth, { definition: DiagnosticDefinition, meta: appMeta, now: "2026-07-25T01:15:00.000Z" }).progress;
+
+  const terminal = completeDetail(fortyEighth, {
+    definition: DiagnosticDefinition,
+    meta: appMeta,
+    now: "2026-07-25T01:16:00.000Z",
+  });
+  assert.equal(terminal.kind, "detail-complete");
+  assert.equal(Object.keys(terminal.answers).length, 50);
+});
+
 test("T-004 F-003 continues to detail after a shown preview without relabeling it hidden", () => {
   const previewChoice = answerUntil(createProgress(), 20).progress;
   const preview = choosePreviewExit(previewChoice, "showPreview", { definition: DiagnosticDefinition, meta: appMeta, now: NOW });

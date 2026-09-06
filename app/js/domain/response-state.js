@@ -229,7 +229,6 @@ export function answerCurrent(progress, answer, { definition, now, meta } = {}) 
 
 function isDetailReviewState(state, questionIds) {
   return state.mode === "detail50" &&
-    state.currentIndex === questionIds.detailIds.length - 1 &&
     Object.keys(state.answers).length === questionIds.detailIds.length;
 }
 
