@@ -12,6 +12,7 @@ function questionViewModel(overrides = {}) {
     currentIndex: 0,
     totalCount: 20,
     selectedValue: null,
+    completionAvailable: false,
     storageStatus: "ok",
     ...overrides,
   };
@@ -23,6 +24,7 @@ function questionActions(overrides = {}) {
     onBack() {},
     onPause() {},
     onDiscard() {},
+    onComplete() {},
     ...overrides,
   };
 }
@@ -131,6 +133,33 @@ test("T-008A F-004 delegates answer, back, pause, and discard as separate action
     ["pause"],
     ["discard"],
   ]);
+});
+
+test("T-036 F-004 shows completion only while reviewing all completed answers", () => {
+  const regular = createFakeScreen();
+  renderQuestionnaireScreen(
+    regular.host,
+    questionViewModel({ totalCount: 50, currentIndex: 12 }),
+    questionActions(),
+  );
+  assert.doesNotMatch(collectText(regular.host), /回答を完了する/);
+
+  const review = createFakeScreen();
+  const calls = [];
+  renderQuestionnaireScreen(
+    review.host,
+    questionViewModel({
+      totalCount: 50,
+      currentIndex: 12,
+      selectedValue: 3,
+      completionAvailable: true,
+    }),
+    questionActions({ onComplete: () => calls.push("complete") }),
+  );
+  buttons(review.host)
+    .find(({ textContent }) => textContent === "回答を完了する")
+    .dispatch("click");
+  assert.deepEqual(calls, ["complete"]);
 });
 
 test("T-004 F-003 disables back navigation on the first question only", () => {
