@@ -62,6 +62,31 @@ test("artifact inspector accepts generated JSON with an approved evidence locato
   });
 });
 
+test("artifact inspector accepts compiled presentation v2 material references without authoring relations", async () => {
+  await withArtifactFixture({
+    "presentation.json": JSON.stringify({
+      schemaVersion: 2,
+      fragranceMaterials: [{
+        materialId: "material-lavender",
+        version: "presentation-v2",
+        displayName: "Lavender",
+        materialKind: "plant-name",
+      }],
+      fragrances: [{
+        fragranceId: "fragrance-pause-calm",
+        version: "presentation-v2",
+        sceneId: "pause",
+        accordLabel: "Calm",
+        description: "A quiet atmospheric suggestion.",
+        materialIds: ["material-lavender"],
+        disclaimerId: "fragrance-disclaimer-v1",
+      }],
+    }),
+  }, async (rootDir) => {
+    assert.deepEqual(inspectArtifact(rootDir), { checkedFiles: 1, checkedJsonFiles: 1 });
+  });
+});
+
 test("artifact inspector rejects prohibited artifact file types and authoring paths", async () => {
   await assertArtifactRejected({ "source.csv": "id,status" }, /ARTIFACT_INSPECTION_FAILED.*\.csv/);
   await assertArtifactRejected({ "notes.md": "draft notes" }, /ARTIFACT_INSPECTION_FAILED.*\.md/);
@@ -222,7 +247,9 @@ test("canonical documents state the CSV authoring foundation without activation 
     assert.match(text, /content\/source|CSV/);
   }
   const joined = documents.join("\n");
-  assert.match(joined, /Content Approval pending/);
+  assert.match(joined, /Q-006.*Content Approval.*(?:完了|approved)|Content Approval.*(?:完了|approved).*Q-006/);
+  assert.match(joined, /TR-0〜TR-4.*(?:承認|approved)/);
+  assert.match(joined, /approved release.*(?:未選択|ありません)/);
   assert.match(joined, /connect-src 'none'/);
   assert.match(joined, /2026-07-26-csv-content-activation-pages\.md/);
   assert.match(joined, /ES Modules/);

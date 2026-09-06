@@ -33,11 +33,11 @@ const SNAPSHOT_FIELDS = [
 const VERSION_FIELDS = Object.freeze(Object.keys(createVersionTuple(appMeta)));
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TITLE_SECTIONS = ["titleSubtitle", "titleReason"];
-const PREVIEW_SECTIONS = Object.freeze([
+const V1_PREVIEW_SECTIONS = Object.freeze([
   ...TITLE_SECTIONS,
   ...FACTOR_ORDER.map(() => "observation"),
 ]);
-const DETAIL_SECTIONS = Object.freeze([
+const V1_DETAIL_SECTIONS = Object.freeze([
   ...TITLE_SECTIONS,
   ...[
     "observation",
@@ -49,6 +49,18 @@ const DETAIL_SECTIONS = Object.freeze([
     "question",
     "action",
   ].flatMap((section) => FACTOR_ORDER.map(() => section)),
+]);
+const V2_PREVIEW_SECTIONS = Object.freeze([
+  ...TITLE_SECTIONS,
+  "titleReflection",
+  ...V1_PREVIEW_SECTIONS.slice(TITLE_SECTIONS.length),
+]);
+const V2_DETAIL_SECTIONS = Object.freeze([
+  ...TITLE_SECTIONS,
+  "titleReflection",
+  "titleReflection",
+  "titleReflection",
+  ...V1_DETAIL_SECTIONS.slice(TITLE_SECTIONS.length),
 ]);
 
 function invalidSnapshot() {
@@ -89,13 +101,35 @@ function validVersionTuple(value) {
 }
 
 function validRenderedTexts({ renderedTexts, factors, titleId }, mode, resultTextVersion) {
-  const expectedSections = mode === "preview20" ? PREVIEW_SECTIONS : DETAIL_SECTIONS;
+  const v1Sections = mode === "preview20" ? V1_PREVIEW_SECTIONS : V1_DETAIL_SECTIONS;
+  const v2Sections = mode === "preview20" ? V2_PREVIEW_SECTIONS : V2_DETAIL_SECTIONS;
+  let expectedSections;
+  if (resultTextVersion === "result-text-v1") {
+    expectedSections = v1Sections;
+  } else if (resultTextVersion === "result-text-v2") {
+    if (renderedTexts.length === v1Sections.length) {
+      expectedSections = v1Sections;
+    } else if (renderedTexts.length === v2Sections.length) {
+      expectedSections = v2Sections;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
   const factorSections = mode === "preview20"
     ? ["observation"]
     : ["observation", "strength", "tradeoff", "work", "relationship", "stress", "question", "action"];
+  const reflectionCount = expectedSections.filter(
+    (section) => section === "titleReflection",
+  ).length;
   const expectedIds = [
     `${titleId}-subtitle`,
     `${titleId}-reason`,
+    ...Array.from(
+      { length: reflectionCount },
+      (_, index) => `title-reflection-${titleId.slice("title-".length)}-${index + 1}`,
+    ),
     ...factorSections.flatMap((section) => factors.map(
       ({ factorId, band }) => `${mode}-${factorId}-${band}-${section}`,
     )),

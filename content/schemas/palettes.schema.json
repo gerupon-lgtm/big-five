@@ -6,7 +6,11 @@
     { "name": "presentation_definition_version", "type": "version", "required": true },
     { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
     { "name": "label", "type": "text", "required": true },
+    { "name": "primary_color", "type": "text", "required": true },
+    { "name": "secondary_color", "type": "text", "required": true },
+    { "name": "accent_color", "type": "text", "required": true },
     { "name": "description", "type": "text", "required": true },
+    { "name": "content_review_note", "type": "text", "required": false },
     { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
   ]
 }

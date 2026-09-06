@@ -6,12 +6,23 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { DiagnosticDefinition, FactorDefinitions, QuestionDefinitions } from "../js/data/diagnostic-definition.js";
+import { FactorResultTextDefinitions } from "../js/data/factor-result-text-definitions.js";
 import { ResultEvidenceDefinitions } from "../js/data/result-evidence-definitions.js";
 import { ResultTextDefinitions } from "../js/data/result-text-definitions.js";
+import {
+  FragranceMaterialDefinitions,
+  FragranceSuggestions,
+  PaletteDefinitions,
+  PaletteUsageMappingDefinitions,
+  PresentationDefinitionSet,
+} from "../js/data/presentation-definitions.js";
 import { TitleProfileDefinitions } from "../js/data/title-profile-definitions.js";
+import { TitleResultTextDefinitions } from "../js/data/title-result-text-definitions.js";
+import { appMeta } from "../js/config/app-meta.js";
 import { compileDiagnosisContent } from "../../scripts/content/compile-diagnosis.mjs";
 import { compileResultContent } from "../../scripts/content/compile-result-content.mjs";
 import { compileRelease, validateAuthoringTree } from "../../scripts/content/content-compiler.mjs";
+import { loadPresentationReviewModel } from "../../scripts/content/render-presentation-review.mjs";
 import { loadTableSchema } from "../../scripts/content/schema-loader.mjs";
 import { loadCsvTable } from "../../scripts/content/table-loader.mjs";
 import { exportCurrentContent } from "../../scripts/content/export-current-content.mjs";
@@ -20,6 +31,10 @@ const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const SOURCE = path.join(ROOT, "content", "source");
 const SCHEMAS = path.join(ROOT, "content", "schemas");
 const APPROVAL_IDS = ["E-0", "E-1", "E-2", "E-3", "E-4", "E-5", "T-0", "T-1", "T-2", "T-3", "T-4", "F-1", "F-2", "F-3", "F-4", "F-5", "X-1", "X-2"];
+const LEGACY_RESULT_TEXT_DEFINITIONS = Object.freeze([
+  ...TitleResultTextDefinitions,
+  ...FactorResultTextDefinitions,
+]);
 
 async function table(sourceDir, relative) {
   const schema = await loadTableSchema(path.join(SCHEMAS, `${path.basename(relative, ".csv")}.schema.json`));
@@ -54,9 +69,11 @@ async function loadAndCompileDiagnosis(sourceDir) {
   });
 }
 
-async function loadAndCompileResultContent(sourceDir) {
+async function loadAndCompileResultContent(
+  sourceDir,
+  resultTextVersion = "result-text-v1",
+) {
   const titleVersion = "title-rule-v1";
-  const resultTextVersion = "result-text-v1";
   const evidenceVersion = "result-evidence-v1";
   const [profileRows, profileFactorRows, textRows, textEvidenceRows, evidenceRows, evidenceClaimRows] = await Promise.all([
     table(sourceDir, `titles/${titleVersion}/title-profiles.csv`),
@@ -73,6 +90,12 @@ async function loadAndCompileResultContent(sourceDir) {
     textEvidenceRows: textEvidenceRows.rows,
     evidenceRows: evidenceRows.rows,
     evidenceClaimRows: evidenceClaimRows.rows,
+    titleReflectionRows: resultTextVersion === "result-text-v2"
+      ? (await table(
+        sourceDir,
+        `result-texts/${resultTextVersion}/title-reflection-comments.csv`,
+      )).rows
+      : [],
     titleRuleVersion: titleVersion,
     resultTextVersion,
   });
@@ -92,8 +115,8 @@ test("T-007 exporter creates an isolated normalized source tree once and never o
     previewMappings: 20,
     titles: 51,
     titleFactors: 90,
-    resultTexts: 237,
-    resultTextEvidence: 267,
+    resultTexts: 390,
+    resultTextEvidence: 420,
     evidenceDefinitions: 6,
     evidenceClaims: 12,
     approvals: 18,
@@ -125,10 +148,27 @@ test("T-007 migrated CSV deep-equals the current formal definitions through load
   const diagnosis = await loadAndCompileDiagnosis(SOURCE);
   assert.deepEqual(diagnosis.questions, QuestionDefinitions);
   assert.deepEqual(diagnosis.factors, FactorDefinitions);
-  assert.deepEqual(diagnosis.diagnostic, DiagnosticDefinition);
+  assert.deepEqual(diagnosis.diagnostic, {
+    ...DiagnosticDefinition,
+    resultTextVersion: "result-text-v1",
+  });
 
-  const result = await loadAndCompileResultContent(SOURCE);
+  const result = await loadAndCompileResultContent(SOURCE, "result-text-v2");
   assert.deepEqual(result.titleProfiles, TitleProfileDefinitions);
+  const presentation = await loadPresentationReviewModel({ sourceDir: SOURCE });
+  assert.deepEqual(presentation.titleProfiles, TitleProfileDefinitions);
+  assert.deepEqual(presentation.definitionSet, PresentationDefinitionSet);
+  assert.deepEqual(PaletteDefinitions, PresentationDefinitionSet.palettes);
+  assert.deepEqual(
+    PaletteUsageMappingDefinitions,
+    PresentationDefinitionSet.paletteUsageMappings,
+  );
+  assert.deepEqual(FragranceSuggestions, PresentationDefinitionSet.fragrances);
+  assert.deepEqual(
+    FragranceMaterialDefinitions,
+    PresentationDefinitionSet.fragranceMaterials,
+  );
+  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v2");
   assert.deepEqual(result.textDefinitions, ResultTextDefinitions);
   assert.deepEqual(result.evidenceDefinitions, ResultEvidenceDefinitions);
 });
@@ -236,7 +276,39 @@ test("T-007 production source records exact statuses and remains authorable with
   }
   const authoring = await validateAuthoringTree({ sourceDir: SOURCE });
   assert.ok(authoring.warnings.some(({ code }) => code === "RELEASE_NOT_SELECTED"));
-  assert.ok(authoring.warnings.some(({ code }) => code === "PRESENTATION_CATALOG_PENDING"));
+  assert.equal(
+    authoring.warnings.some(({ code }) => code === "PRESENTATION_CATALOG_PENDING"),
+    false,
+  );
+  const presentationApprovals = await table(
+    SOURCE,
+    "approvals/presentation-content-approvals.csv",
+  );
+  assert.deepEqual(
+    presentationApprovals.rows.map((row) => [
+      row.gate_id,
+      row.status,
+      row.approved_by,
+      row.approved_on,
+    ]),
+    [
+      ["P-0", "approved", "user", "2026-07-31"],
+      ["P-1", "approved", "user", "2026-07-31"],
+      ["P-2", "approved", "user", "2026-07-31"],
+      ["P-3", "approved", "user", "2026-07-31"],
+      ["P-4", "approved", "user", "2026-07-31"],
+      ["P-5", "approved", "user", "2026-07-31"],
+      ["P-6", "approved", "user", "2026-07-31"],
+    ],
+  );
+  assert.equal(
+    authoring.warnings.filter(({ code, sourceName }) =>
+      code === "CONTENT_NOT_APPROVED" &&
+      path.basename(sourceName) === "presentation-content-approvals.csv")
+      .length,
+    0,
+  );
+  assert.equal(appMeta.presentationDefinitionVersion, "presentation-v2");
   assert.ok(authoring.warnings.some(({ code }) => code === "CHARACTER_CATALOG_PENDING"));
   await assert.rejects(() => compileRelease({ sourceDir: SOURCE }), (error) => error.code === "RELEASE_NOT_SELECTED");
 });

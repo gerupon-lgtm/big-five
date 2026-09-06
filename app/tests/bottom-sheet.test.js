@@ -36,6 +36,13 @@ test("T-008A F-008 opens and closes one accessible bottom sheet", () => {
   assert.equal(launcher.attributes.get("aria-expanded"), "false");
   assert.equal(dialog.attributes.has("open"), false);
   assert.match(collectText(dialog), /Big Fiveの5因子/);
+  assert.equal(
+    collectElements(dialog).find(({ className }) =>
+      className === "bottom-sheet-header").children.at(-1),
+    close,
+  );
+  assert.ok(collectElements(dialog).some(({ className }) =>
+    className === "bottom-sheet-body"));
 
   launcher.dispatch("click");
   assert.equal(launcher.attributes.get("aria-expanded"), "true");
@@ -44,6 +51,30 @@ test("T-008A F-008 opens and closes one accessible bottom sheet", () => {
   close.dispatch("click");
   assert.equal(launcher.attributes.get("aria-expanded"), "false");
   assert.equal(dialog.attributes.has("open"), false);
+});
+
+test("T-008A F-008 closes only for the bottom-sheet backdrop", () => {
+  const { host } = createFakeScreen();
+  const launcher = appendBottomSheetLauncher(host, {
+    id: "method-backdrop",
+    label: "測定の土台",
+    title: "測定の土台",
+    body: "Big Fiveの5因子を測定の土台にしています。",
+  });
+  const dialog = collectElements(host).find(
+    ({ tagName }) => tagName === "dialog",
+  );
+  const body = collectElements(dialog).find(
+    ({ className }) => className === "bottom-sheet-body",
+  );
+
+  launcher.dispatch("click");
+  dialog.dispatch("click", { target: body });
+  assert.equal(dialog.open, true);
+
+  dialog.dispatch("click", { target: dialog });
+  assert.equal(dialog.open, false);
+  assert.equal(host.ownerDocument.activeElement, launcher);
 });
 
 test("T-008A F-015 rejects incomplete bottom sheet input", () => {
@@ -174,5 +205,17 @@ test("T-008A F-008 inline bottom-sheet fallback is explicitly non-fixed", async 
   assert.match(
     css,
     /\.bottom-sheet\.bottom-sheet--inline\s*\{[^}]*position:\s*static;/s,
+  );
+  assert.match(
+    css,
+    /\.bottom-sheet-body\s*\{[^}]*overflow-y:\s*auto;/s,
+  );
+  assert.match(
+    css,
+    /\.bottom-sheet:not\(\[open\]\)\s*\{[^}]*display:\s*none;/s,
+  );
+  assert.match(
+    css,
+    /\.bottom-sheet-header > \.secondary-button\s*\{[^}]*white-space:\s*nowrap;/s,
   );
 });

@@ -18,12 +18,28 @@ export function resolveRoute(hash) {
       didFallback: false,
     });
   }
+  if (hash === "#/sigotosocket") {
+    return Object.freeze({
+      id: "sigotosocket",
+      canonicalHash: hash,
+      didFallback: false,
+    });
+  }
 
   const [path, query = ""] = typeof hash === "string" ? hash.split("?", 2) : [];
   if (path === "#/result") {
     const params = new URLSearchParams(query);
     return Object.freeze({
       id: "result",
+      canonicalHash: hash,
+      didFallback: false,
+      resultId: params.get("resultId"),
+    });
+  }
+  if (path === "#/share") {
+    const params = new URLSearchParams(query);
+    return Object.freeze({
+      id: "share",
       canonicalHash: hash,
       didFallback: false,
       resultId: params.get("resultId"),

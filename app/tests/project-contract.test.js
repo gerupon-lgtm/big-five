@@ -11,6 +11,7 @@ const documentPaths = {
   dataModel: "docs/data-model.md",
   screens: "docs/screens.md",
   processing: "docs/processing-design.md",
+  basicDesign: "docs/基本設計サマリ.md",
   t005Spec: "docs/superpowers/specs/2026-07-25-t005-result-character-presentation-design.md",
   tasks: "docs/tasks.md",
   evidenceLedger: "docs/research/2026-07-25-q006-result-content-evidence.md",
@@ -51,6 +52,33 @@ test("formal app satisfies the static project contract", async () => {
   assert.equal(result.runtimeVersionOccurrences, 1);
   assert.ok(result.checkedJavaScriptFiles >= 5);
   assert.equal(result.prototypeImports, 0);
+});
+
+test("major design documents reference the canonical requirements version", async () => {
+  const [requirements, screens, processing, tasks, basicDesign] = await Promise.all([
+    readProjectDocument(documentPaths.requirements),
+    readProjectDocument(documentPaths.screens),
+    readProjectDocument(documentPaths.processing),
+    readProjectDocument(documentPaths.tasks),
+    readProjectDocument(documentPaths.basicDesign),
+  ]);
+  const requirementVersion = requirements.match(/^\|\s*文書版\s*\|\s*(\d+\.\d+)\s*\|$/m)?.[1];
+
+  assert.ok(requirementVersion, "canonical requirements version is missing");
+  for (const [document, name, field] of [
+    [screens, documentPaths.screens, "入力要件"],
+    [processing, documentPaths.processing, "入力要件"],
+    [tasks, documentPaths.tasks, "要件正典"],
+  ]) {
+    assert.ok(
+      document.includes(`| ${field} | 要件定義書v${requirementVersion} |`),
+      `${name} does not reference requirements v${requirementVersion}`,
+    );
+  }
+  assert.ok(
+    basicDesign.includes(`要件定義 | \`docs/requirements/2026-07-20-big-five-self-understanding-requirements.md\` v${requirementVersion}`),
+    `${documentPaths.basicDesign} does not reference requirements v${requirementVersion}`,
+  );
 });
 
 test("Q-006 data model documents the exact evidence, text, rendered, and snapshot schemas", async () => {
@@ -306,14 +334,90 @@ test("Q-006 screens preserve text sharing fallbacks independently in preview and
     "問いかけ",
     "行動ヒント",
     "42件",
-    "説明を見る",
-    "※因子名の「説明を見る」から、それぞれの意味を確認できます。",
+    "詳しく見る",
+    "因子を選ぶと、詳しい結果を確認できます。",
     "猫画像",
     "Canvas",
     "共有API",
     "共有テキスト",
     "選択可能テキスト",
   ], documentPaths.screens);
+});
+
+test("T-007 documents the implemented Kokoro Parea sharing pipeline", async () => {
+  const [requirements, dataModel, screens, processing, basicDesign, tasks] = await Promise.all([
+    readProjectDocument(documentPaths.requirements),
+    readProjectDocument(documentPaths.dataModel),
+    readProjectDocument(documentPaths.screens),
+    readProjectDocument(documentPaths.processing),
+    readProjectDocument(documentPaths.basicDesign),
+    readProjectDocument(documentPaths.tasks),
+  ]);
+
+  assertIncludesAll(requirements, [
+    "ココロパレア",
+    "https://kokoro.sikumilab.com",
+    "1080×1800",
+    "3:5",
+    "320×480",
+    "kokoro-wreath-v2.png",
+    "左右各1本の淡い暖色円弧基線",
+  ], documentPaths.requirements);
+  assertIncludesAll(dataModel, [
+    "createShareCardModel",
+    "1080×1800",
+    "titleReflection",
+    "共有物は保存しない",
+    "透過素材画付き代表3件",
+  ], documentPaths.dataModel);
+  assertIncludesAll(screens, [
+    "#/share?resultId=<UUID>",
+    "data-share-view",
+    "card",
+    "details",
+    "zoom",
+    "320×480",
+    "完成カードをSVGからラスタライズしない",
+    "同じ副ボタンのトンマナ",
+  ], documentPaths.screens);
+  assertIncludesAll(processing, [
+    "createShareCardModel",
+    "renderShareCard",
+    "sharePng",
+    "SHARE_CANVAS_UNAVAILABLE",
+    "SHARE_FONT_UNAVAILABLE",
+    "SHARE_PNG_UNAVAILABLE",
+    "プレビューとダウンロードは同じ1080×1800 PNG Blob",
+    "通常結果画面は境界注意の後に単一の称号カードCTA",
+  ], documentPaths.processing);
+  assertIncludesAll(tasks, [
+    "状態: IMPLEMENTED_AND_VISUALLY_APPROVED（2026-08-02）",
+    "#/share?resultId=<UUID>",
+    "1080×1800",
+    "猫ごとのalpha下端追従",
+  ], documentPaths.tasks);
+  assertIncludesAll(basicDesign, [
+    "1080×1800",
+    "kokoro-wreath-v2.png",
+    "実Canvas確認済み",
+    "猫ごとのalpha下端",
+  ], documentPaths.basicDesign);
+  for (const [document, name] of [
+    [requirements, documentPaths.requirements],
+    [basicDesign, documentPaths.basicDesign],
+    [tasks, documentPaths.tasks],
+  ]) {
+    assert.doesNotMatch(document, /共有画像の寸法、形式、トリミング、文字量\s*\|\s*ユーザー\s*\|\s*共有画面実装前/);
+    assert.doesNotMatch(document, /正式共有Canvasとproduction release CSVは未完了/);
+    assert.doesNotMatch(document, /共有画像の最終仕様\s*\|\s*寸法・文字量未決/);
+    assert.doesNotMatch(document, /視覚承認待ち/, `${name} retains stale visual approval status`);
+  }
+  for (const document of [requirements, screens, basicDesign, tasks]) {
+    assert.doesNotMatch(
+      document,
+      /【想定】`～あなたらしさから着想した色～`/,
+    );
+  }
 });
 
 test("Q-006 records every content gate as approved and the overall gate as resolved", async () => {
@@ -490,6 +594,6 @@ test("QA Pages runbook separates preview deployment from production release", as
   assert.match(runbook, /T-011.*完了.*意味しない/s);
   assert.match(tasks, /F-005.*result-text-v1.*2026-07-28.*完了/);
   assert.match(tasks, /F-006.*result-text-v1.*2026-07-28.*完了/);
-  assert.match(tasks, /titleReflection.*pending/);
+  assert.match(tasks, /TR-0〜TR-4承認済み`titleReflection`153件＝390件/);
   assert.match(tasks, /QA一時プレビュー.*T-011.*完了.*意味しない/s);
 });

@@ -2,11 +2,17 @@
 
 ## 目的と範囲
 
-このURLは現行のES Modules実装をブラウザ確認するためのQA一時公開である。approved releaseの選択、JSON runtime、Q-012正式release、Q-013 production data、T-011本番デプロイの完了を意味しない。
+このURLは現行のES Modules実装をブラウザ確認するためのQA一時公開である。Q-013のP-0〜P-6人手承認、`presentation-v2` ES Modules runtime、結果DOM、共有Canvasへの接続は完了しているが、approved JSON releaseの選択、JSON runtime、Q-012正式release、T-011本番デプロイの完了を意味しない。
 
 ## URL
 
 https://gerupon-lgtm.github.io/big-five/
+
+- 正式確認URL: https://kokoro.sikumilab.com/
+- QA対象commit: `b5416c485b9539ef544fb0d95bb65f6fbbd6ba58`
+- branch: `codex/big-five-q006`
+- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/33967246271
+- 2026-09-05確認: build／deploy成功。正式確認URLで`mvp-1.1.1`を確認し、F-023の短い説明、トップページへの同一タブ補助リンク、軽く強調した受け渡しボタン、`sigotosocket-link.js`はいずれも配信済み。360px実ブラウザで横overflowなし、固定形式URLへの同一タブ遷移、console error／warning 0件を確認
 
 ## 初期設定
 
@@ -29,6 +35,9 @@ https://gerupon-lgtm.github.io/big-five/
 - 結果を見ずに50問へ進む動作
 - 20問結果から追加30問へ進む動作
 - 50問完答後の詳細結果
+- 20問結果で`振り返りのヒント`が1件だけ表示され、展開操作がないこと
+- 50問結果で1件目が表示され、`ほかのヒントを見る`から残り2件をまとめて開閉できること
+- 振り返りがない旧履歴またはゼロ-reflection fallbackでも、称号・因子・7件／42件の結果文を維持すること
 - レーダー、結果文、共有の代替表示、履歴結果、保存画面
 - 履歴、途中保存、結果保存の表示確認と、互換結果2件の比較
 - 個別削除、全削除
@@ -36,7 +45,11 @@ https://gerupon-lgtm.github.io/big-five/
 - DevTools Networkで通常版の診断フローの外部通信0件
 - console error・warning 0件
 
-共有カード、香り、`titleReflection`、データ承認の未完了事項は対象外とする。
+共有カード、共有テキスト、色・香りの結果DOM、approved JSON release選択、Q-012正式releaseは対象外とする。`presentation-v2` ES Modules runtime自体は生成・接続済みである。`titleReflection`は共有候補抽出の純粋境界で除外済みだが、実際の共有UIはT-007未実装のため、このQAでは共有物への非混入をブラウザ確認できない。
+
+## `result-text-v2`追加QAの状態
+
+`result-text-v2`のpreview 8件、detail 45件、ゼロ-reflection fallback 7件／42件、部分的な振り返りsnapshotの拒否は自動テストで確認済みである。2026-07-30のローカル実ブラウザQAでは、20問回答からpreview、追加30問、detailまで通し、previewはヒント1件だけ、detailは1件＋`ほかのヒントを見る`で追加2件を一括展開することを確認した。表示順は称号理由、振り返り、5因子で、開閉はnative button、`aria-expanded`、focusを維持する。320px、360px、960pxはいずれも横overflowなし、console error／warning 0件だった。共有候補からの除外は自動テストで確認済みだが、T-007共有UI未実装のため共有物のブラウザ確認は行っていない。commit `2e8ac66`のPages build／deployと公開assetのHTTP 200・v2内容を確認し、この追加QAを完了した。
 
 ## Redeploy
 

@@ -81,6 +81,22 @@ const DETAIL_SECTIONS = [
   "action",
 ];
 
+const V2_PREVIEW_SECTIONS = [
+  "titleSubtitle",
+  "titleReason",
+  "titleReflection",
+  ...PREVIEW_SECTIONS.slice(2),
+];
+
+const V2_DETAIL_SECTIONS = [
+  "titleSubtitle",
+  "titleReason",
+  "titleReflection",
+  "titleReflection",
+  "titleReflection",
+  ...DETAIL_SECTIONS.slice(2),
+];
+
 function makeFactors() {
   return FACTOR_IDS.map((factorId) => ({
     factorId,
@@ -98,17 +114,29 @@ function makeRenderedTexts(
   version = "result-text-v1",
   mode = "detail50",
 ) {
-  return sections.map((section, index) => ({
-    id: index === 0
-      ? "title-balanced-subtitle"
-      : index === 1
-        ? "title-balanced-reason"
-        : `${mode}-${FACTOR_IDS[(index - 2) % FACTOR_IDS.length]}-middle-${section}`,
-    version,
-    section,
-    text: `診断時の表示文 ${index + 1}`,
-    evidenceRefs: [`evidence-${index + 1}`],
-  }));
+  let reflectionOrder = 0;
+  let factorIndex = 0;
+  return sections.map((section, index) => {
+    let id;
+    if (index === 0) {
+      id = "title-balanced-subtitle";
+    } else if (index === 1) {
+      id = "title-balanced-reason";
+    } else if (section === "titleReflection") {
+      reflectionOrder += 1;
+      id = `title-reflection-balanced-${reflectionOrder}`;
+    } else {
+      id = `${mode}-${FACTOR_IDS[factorIndex % FACTOR_IDS.length]}-middle-${section}`;
+      factorIndex += 1;
+    }
+    return {
+      id,
+      version,
+      section,
+      text: `診断時の表示文 ${index + 1}`,
+      evidenceRefs: [`evidence-${index + 1}`],
+    };
+  });
 }
 
 function makeVersionTuple() {
@@ -157,6 +185,17 @@ function makePreviewInput() {
   input.resultModel.boundaryFlags[0].threshold = 0.25;
   input.resultModel.boundaryFlags[0].questionCount = 20;
   input.resultModel.renderedTexts = makeRenderedTexts(PREVIEW_SECTIONS, "result-text-v1", "preview20");
+  return input;
+}
+
+function makeV2Input(mode = "detail50") {
+  const input = mode === "preview20" ? makePreviewInput() : makeValidInput();
+  input.versionTuple.resultTextVersion = "result-text-v2";
+  input.resultModel.renderedTexts = makeRenderedTexts(
+    mode === "preview20" ? V2_PREVIEW_SECTIONS : V2_DETAIL_SECTIONS,
+    "result-text-v2",
+    mode,
+  );
   return input;
 }
 
@@ -237,11 +276,19 @@ test("T-006 F-006 snapshot preserves displayed content as an isolated immutable 
 test("T-006 F-006 accepts the complete preview and detail display shapes", () => {
   const preview = createResultSnapshot(makePreviewInput());
   const detail = createResultSnapshot(makeValidInput());
+  const previewV2 = createResultSnapshot(makeV2Input("preview20"));
+  const detailV2 = createResultSnapshot(makeV2Input());
 
   assert.equal(preview.renderedTexts.length, 7);
   assert.deepEqual(preview.renderedTexts.map(({ section }) => section), PREVIEW_SECTIONS);
   assert.equal(detail.renderedTexts.length, 42);
   assert.deepEqual(detail.renderedTexts.map(({ section }) => section), DETAIL_SECTIONS);
+  assert.equal(previewV2.renderedTexts.length, 8);
+  assert.deepEqual(previewV2.renderedTexts.map(({ section }) => section), V2_PREVIEW_SECTIONS);
+  assert.equal(detailV2.renderedTexts.length, 45);
+  assert.deepEqual(detailV2.renderedTexts.map(({ section }) => section), V2_DETAIL_SECTIONS);
+  assertDeeplyFrozen(previewV2);
+  assertDeeplyFrozen(detailV2);
 });
 
 test("T-006 F-006 composeResultModel accepts canonical non-empty classification boundary flags", () => {
@@ -368,7 +415,7 @@ test("T-006 F-006 requires the exact complete nine-field VersionTuple", () => {
 });
 
 test("T-006 F-006 preserves coherent historical versions without requiring current AppMeta values", () => {
-  const input = makeValidInput();
+  const input = makeV2Input();
   input.versionTuple = {
     scaleVersion: "ipip-ja-50-v2",
     questionVersion: "ipip-ja-50-question-set-v2",
@@ -380,13 +427,52 @@ test("T-006 F-006 preserves coherent historical versions without requiring curre
     cardTemplateVersion: "card-template-v2",
     appVersion: "mvp-0.2.0",
   };
-  input.resultModel.renderedTexts = makeRenderedTexts(DETAIL_SECTIONS, "result-text-v2", "detail50");
   input.cardTemplateVersion = "card-template-v2";
 
   const snapshot = createResultSnapshot(input);
 
   assert.deepEqual(snapshot.versionTuple, input.versionTuple);
   assert.equal(snapshot.renderedTexts.every(({ version }) => version === "result-text-v2"), true);
+});
+
+test("T-006 T-008A strictly rejects incomplete, reordered, or duplicate v2 reflection snapshots", () => {
+  const incompleteDetail = makeV2Input();
+  incompleteDetail.resultModel.renderedTexts.splice(3, 1);
+
+  const reordered = makeV2Input();
+  [reordered.resultModel.renderedTexts[2], reordered.resultModel.renderedTexts[3]] =
+    [reordered.resultModel.renderedTexts[3], reordered.resultModel.renderedTexts[2]];
+
+  const duplicate = makeV2Input();
+  duplicate.resultModel.renderedTexts[3].id = duplicate.resultModel.renderedTexts[2].id;
+
+  for (const [label, input] of [
+    ["incomplete detail", incompleteDetail],
+    ["reordered detail", reordered],
+    ["duplicate detail", duplicate],
+  ]) {
+    assertSnapshotInvalid(input, label);
+  }
+});
+
+test("T-006 T-008A accepts v2 zero-reflection fallback but rejects v1 reflections", () => {
+  const v1WithReflection = makePreviewInput();
+  v1WithReflection.resultModel.renderedTexts.splice(2, 0, {
+    id: "title-reflection-balanced-1",
+    version: "result-text-v1",
+    section: "titleReflection",
+    text: "診断時の振り返り文",
+    evidenceRefs: ["evidence-reflection"],
+  });
+
+  const v2PreviewWithoutReflection = makeV2Input("preview20");
+  v2PreviewWithoutReflection.resultModel.renderedTexts.splice(2, 1);
+  const v2DetailWithoutReflection = makeV2Input();
+  v2DetailWithoutReflection.resultModel.renderedTexts.splice(2, 3);
+
+  assertSnapshotInvalid(v1WithReflection, "v1 with reflection");
+  assert.equal(createResultSnapshot(v2PreviewWithoutReflection).renderedTexts.length, 7);
+  assert.equal(createResultSnapshot(v2DetailWithoutReflection).renderedTexts.length, 42);
 });
 
 test("T-006 F-006 rejects rendered-text and card version mismatches", () => {

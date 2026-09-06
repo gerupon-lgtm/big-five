@@ -17,6 +17,16 @@ const factorLabels = Object.freeze({
   emotionalStability: "情緒安定性",
 });
 
+function assertComparisonHeader(host) {
+  const headerAction = collectElements(host)
+    .find(({ className }) => className === "app-header-action");
+  assert.equal(headerAction.tagName, "a");
+  assert.equal(headerAction.textContent, "履歴一覧に戻る");
+  assert.equal(headerAction.attributes.get("href"), "#/history");
+  assert.match(collectText(host), /COMPARISON/);
+  assert.match(collectText(host), /診断結果の比較/);
+}
+
 test("T-006 S-007 renders chronological raw-mean deltas with non-color direction labels", () => {
   const { host } = createFakeScreen();
   const before = createTestResultSnapshot({
@@ -40,16 +50,71 @@ test("T-006 S-007 renders chronological raw-mean deltas with non-color direction
   });
 
   const text = collectText(host);
+  assertComparisonHeader(host);
   assert.match(text, /診断結果の比較/);
   assert.match(text, /古い結果/);
   assert.match(text, /今回の結果/);
   assert.match(text, /知性・想像力/);
+  assert.match(text, /50 → 75/);
+  assert.match(text, /75 → 50/);
+  assert.doesNotMatch(text, /3 → 4|4 → 3/);
   assert.match(text, /＋25.*増加/);
   assert.match(text, /−25.*減少/);
   assert.match(text, /±0.*変化なし/);
   assert.match(text, /性格の確定的な変化を示すものではありません/);
   assert.match(text, /回答時の状況や自己認識でも変動/);
   assert.doesNotMatch(text, /answers/);
+  const deltas = collectElements(host).filter(({ className }) =>
+    className === "display-delta");
+  assert.equal(deltas.length, 5);
+  assert.ok(deltas.every((delta) =>
+    delta.children[0]?.className === "display-delta-value"
+    && delta.children[1]?.className === "display-delta-label"));
+  const transitions = collectElements(host).filter(({ className }) =>
+    className === "raw-mean-transition");
+  assert.ok(transitions.every((transition) =>
+    transition.children[0]?.className === "comparison-score-value"
+    && transition.children[1]?.className === "comparison-score-arrow"
+    && transition.children[2]?.className === "comparison-score-value"));
+  const conditions = collectElements(host).find(({ className }) =>
+    className === "comparison-condition-list");
+  assert.equal(conditions.tagName, "dl");
+  assert.match(collectText(conditions), /設問数.*尺度版.*設問版.*採点版/);
+});
+
+test("T-008B S-007 calculates the signed delta from the two displayed integers", () => {
+  const { host } = createFakeScreen();
+  const before = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000011",
+  });
+  const after = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000012",
+    completedAt: "2026-07-26T12:00:00.000Z",
+  });
+  const comparison = compareResultSnapshots(before, after);
+  const factorDeltas = comparison.factorDeltas.map((factor, index) =>
+    index === 0
+      ? {
+          ...factor,
+          beforeRawMean: 2.1,
+          afterRawMean: 2.4,
+          deltaRawMean: 0.3,
+        }
+      : factor);
+
+  renderComparisonScreen(host, {
+    status: "ok",
+    before,
+    after,
+    comparison: { ...comparison, factorDeltas },
+    factorLabels,
+  });
+
+  const factorList = collectElements(host).find(({ className }) =>
+    className === "comparison-factor-list");
+  const [firstFactor] = factorList.children;
+  assert.match(collectText(firstFactor), /28.*→.*35.*＋7.*増加/);
+  assert.doesNotMatch(collectText(firstFactor), /＋8/);
 });
 
 test("T-006 S-007 explains differing presentation versions without blocking compatible scores", () => {
@@ -81,6 +146,8 @@ test("T-006 S-007 explains differing presentation versions without blocking comp
   assert.match(text, /表示表現の版が異なります/);
   assert.match(text, /result-text-v1/);
   assert.match(text, /result-text-v2/);
+  assert.match(text, /結果文版/);
+  assert.doesNotMatch(text, /resultTextVersion/);
 });
 
 test("T-006 S-007 treats a different selected character asset as a presentation-version difference", () => {
@@ -103,7 +170,8 @@ test("T-006 S-007 treats a different selected character asset as a presentation-
   });
 
   const text = collectText(host);
-  assert.match(text, /characterAssetVersion/);
+  assert.match(text, /キャラクター画像版/);
+  assert.doesNotMatch(text, /characterAssetVersion/);
   assert.match(text, /character-balanced-v1/);
   assert.match(text, /character-balanced-asset-v2/);
 });
@@ -116,6 +184,7 @@ test("T-006 S-007 returns missing, deleted, and incompatible selections to histo
   ]) {
     const { host } = createFakeScreen();
     renderComparisonScreen(host, state);
+    assertComparisonHeader(host);
     assert.match(collectText(host), message);
     assert.ok(collectElements(host).some(({ attributes }) => attributes.get("href") === "#/history"));
   }

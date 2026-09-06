@@ -45,6 +45,9 @@ const CATEGORY_DEFINITIONS = Object.freeze([
     summary: "振り返りの問いと小さな行動を確認します。",
   }),
 ]);
+const FACTOR_SECTIONS = Object.freeze(new Set(
+  CATEGORY_DEFINITIONS.flatMap(({ sections }) => sections),
+));
 
 function invalidDisclosureModel() {
   throw new TypeError("RESULT_DISCLOSURE_MODEL_INVALID");
@@ -99,12 +102,14 @@ function buildDisclosureModel(snapshot, labels) {
     savedSnapshot.factors.map(({ factorId }) => [factorId, []]),
   );
 
-  savedSnapshot.renderedTexts.slice(2).forEach((record, index) => {
-    const factor = savedSnapshot.factors[index % savedSnapshot.factors.length];
-    const records = factorRecords.get(factor?.factorId);
-    if (!records) invalidDisclosureModel();
-    records.push(record);
-  });
+  savedSnapshot.renderedTexts
+    .filter(({ section }) => FACTOR_SECTIONS.has(section))
+    .forEach((record, index) => {
+      const factor = savedSnapshot.factors[index % savedSnapshot.factors.length];
+      const records = factorRecords.get(factor?.factorId);
+      if (!records) invalidDisclosureModel();
+      records.push(record);
+    });
 
   return deepFreeze(savedSnapshot.factors.map((factor) => ({
     factorId: factor.factorId,
@@ -131,6 +136,22 @@ function buildDisclosureModel(snapshot, labels) {
 export function createResultDisclosureModel(snapshot, labels) {
   try {
     return buildDisclosureModel(snapshot, labels);
+  } catch {
+    invalidDisclosureModel();
+  }
+}
+
+export function createTitleReflectionDisclosureModel(snapshot) {
+  try {
+    const savedSnapshot = validateResultSnapshot(snapshot);
+    const records = savedSnapshot.renderedTexts
+      .filter(({ section }) => section === "titleReflection")
+      .map(cloneRenderedText);
+    const expectedCount = savedSnapshot.mode === "preview20" ? 1 : 3;
+    return deepFreeze({
+      mode: savedSnapshot.mode,
+      records: records.length === expectedCount ? records : [],
+    });
   } catch {
     invalidDisclosureModel();
   }

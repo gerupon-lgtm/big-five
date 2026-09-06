@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "fileName": "fragrance-materials.csv",
+  "columns": [
+    { "name": "material_id", "type": "id", "required": true },
+    { "name": "presentation_definition_version", "type": "version", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "display_name", "type": "text", "required": true },
+    { "name": "material_kind", "type": "enum", "values": ["plant-name", "essential-oil-name"], "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

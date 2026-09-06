@@ -19,6 +19,15 @@ const ROOT_DIR = fileURLToPath(new URL("../../", import.meta.url));
 const SCHEMA_DIR = path.join(ROOT_DIR, "content", "schemas");
 const RESOURCE_KINDS = Object.freeze(["diagnosis", "questions", "titles", "result-texts", "evidence", "presentation", "characters"]);
 const APPROVAL_IDS = Object.freeze(["E-0", "E-1", "E-2", "E-3", "E-4", "E-5", "T-0", "T-1", "T-2", "T-3", "T-4", "F-1", "F-2", "F-3", "F-4", "F-5", "X-1", "X-2"]);
+const PRESENTATION_APPROVAL_GATES = Object.freeze([
+  Object.freeze({ gateId: "P-0", scope: "palette-mapping-wcag" }),
+  Object.freeze({ gateId: "P-1", scope: "fragrance-vocabulary-materials" }),
+  Object.freeze({ gateId: "P-2", scope: "titles-balanced-and-single-01-11" }),
+  Object.freeze({ gateId: "P-3", scope: "titles-pair-01-10" }),
+  Object.freeze({ gateId: "P-4", scope: "titles-pair-11-20" }),
+  Object.freeze({ gateId: "P-5", scope: "titles-pair-21-30" }),
+  Object.freeze({ gateId: "P-6", scope: "titles-pair-31-40" }),
+]);
 const RELEASE_FIELDS = Object.freeze(["release_id", "app_version", "diagnosis_id", "diagnostic_definition_version", "scale_version", "question_version", "scoring_version", "result_evidence_version", "result_text_version", "title_rule_version", "character_manifest_version", "presentation_definition_version", "card_template_version", "status"]);
 const VERSION_DIRS = Object.freeze({
   diagnostic_definition_version: "diagnoses",
@@ -40,12 +49,15 @@ const TABLES = Object.freeze([
   ["profileFactorRows", "titles", "title_rule_version", "title-profile-factors.csv"],
   ["textRows", "result-texts", "result_text_version", "result-texts.csv"],
   ["textEvidenceRows", "result-texts", "result_text_version", "result-text-evidence.csv"],
+  ["titleReflectionRows", "result-texts", "result_text_version", "title-reflection-comments.csv", true],
   ["evidenceRows", "evidence", "result_evidence_version", "result-evidence.csv"],
   ["evidenceClaimRows", "evidence", "result_evidence_version", "result-evidence-claims.csv"],
   ["sceneRows", "presentation", "presentation_definition_version", "scenes.csv"],
   ["paletteRows", "presentation", "presentation_definition_version", "palettes.csv"],
   ["paletteUsageRows", "presentation", "presentation_definition_version", "palette-usage-mappings.csv"],
   ["fragranceRows", "presentation", "presentation_definition_version", "fragrances.csv"],
+  ["fragranceMaterialRows", "presentation", "presentation_definition_version", "fragrance-materials.csv"],
+  ["fragranceMaterialExampleRows", "presentation", "presentation_definition_version", "fragrance-material-examples.csv"],
   ["selectorRows", "presentation", "presentation_definition_version", "presentation-selectors.csv"],
   ["selectorPaletteRows", "presentation", "presentation_definition_version", "selector-palettes.csv"],
   ["selectorFragranceRows", "presentation", "presentation_definition_version", "selector-fragrances.csv"],
@@ -53,7 +65,7 @@ const TABLES = Object.freeze([
 ]);
 const CORE_TABLE_NAMES = new Set([
   "diagnosisRows", "sourceRows", "limitationRows", "factorRows", "questionRows",
-  "previewRows", "profileRows", "profileFactorRows", "textRows", "textEvidenceRows",
+  "previewRows", "profileRows", "profileFactorRows", "textRows", "textEvidenceRows", "titleReflectionRows",
   "evidenceRows", "evidenceClaimRows",
 ]);
 const CORE_TABLES = TABLES.filter(([name]) => CORE_TABLE_NAMES.has(name));
@@ -119,6 +131,19 @@ async function loadNamedTable(sourceDir, segments, schemaName) {
   }
 }
 
+async function loadOptionalNamedTable(sourceDir, segments, schemaName) {
+  try {
+    return await loadNamedTable(sourceDir, segments, schemaName);
+  } catch (error) {
+    if (!(error instanceof ContentError) || error.code !== "RELEASE_RESOURCE_MISSING") throw error;
+    const schema = await loadSchema(schemaName);
+    return {
+      rows: [],
+      sourceName: path.posix.join(...segments, schema.fileName),
+    };
+  }
+}
+
 async function discoverVersions(sourceDir, topDir, { optional = false } = {}) {
   let directory;
   try {
@@ -168,6 +193,27 @@ function validateApprovals(rows) {
   }
 }
 
+function validatePresentationApprovals(rows) {
+  if (rows.length !== PRESENTATION_APPROVAL_GATES.length || !rows.every((row, index) => {
+    const gate = PRESENTATION_APPROVAL_GATES[index];
+    return row.gate_id === gate.gateId &&
+      row.display_order === index + 1 &&
+      row.scope === gate.scope;
+  })) {
+    throw contentError("PRESENTATION_APPROVAL_PENDING", "Q-013承認ゲートのID、順序、または対象範囲が不正です。");
+  }
+  for (const row of rows) {
+    const hasApproval = row.approved_by.trim() !== "" || row.approved_on.trim() !== "";
+    if (row.status === "approved") {
+      if (!row.approved_by.trim() || !validDate(row.approved_on)) {
+        throw contentError("PRESENTATION_APPROVAL_PENDING", "承認済みQ-013ゲートの承認者または日付が不正です。");
+      }
+    } else if (hasApproval) {
+      throw contentError("PRESENTATION_APPROVAL_PENDING", "未承認Q-013ゲートに承認者または日付を設定できません。");
+    }
+  }
+}
+
 function warningRows(catalogs) {
   return warningEntries(Object.entries(catalogs));
 }
@@ -194,10 +240,12 @@ function freezeCatalogs(catalogs) {
 
 async function loadTables(sourceDir, row, definitions) {
   const result = {};
-  for (const [name, topDir, versionField, fileName] of definitions) {
+  for (const [name, topDir, versionField, fileName, optional] of definitions) {
     const version = row[versionField];
     if (!safeReleaseId(version)) throw contentError("RELEASE_VERSION_REFERENCE_INVALID");
-    result[name] = await loadNamedTable(sourceDir, [topDir, version], fileName);
+    result[name] = optional
+      ? await loadOptionalNamedTable(sourceDir, [topDir, version], fileName)
+      : await loadNamedTable(sourceDir, [topDir, version], fileName);
   }
   return result;
 }
@@ -301,6 +349,7 @@ function validateResultVersions(titleCatalog, textCatalog, evidenceCatalog) {
         profileFactorRows: titleCatalogs.profileFactorRows.rows,
         textRows: textCatalogs.textRows.rows,
         textEvidenceRows: textCatalogs.textEvidenceRows.rows,
+        titleReflectionRows: textCatalogs.titleReflectionRows.rows,
         evidenceRows: evidenceCatalogs.evidenceRows.rows,
         evidenceClaimRows: evidenceCatalogs.evidenceClaimRows.rows,
         titleRuleVersion: titleVersion,
@@ -368,7 +417,7 @@ function compileCoreCatalogs(catalogs, row) {
       diagnosisRows: get("diagnosisRows"), sourceRows: get("sourceRows"), limitationRows: get("limitationRows"), factorRows: get("factorRows"), questionRows: get("questionRows"), previewRows: get("previewRows"),
     });
     const result = compileResultContent({
-      profileRows: get("profileRows"), profileFactorRows: get("profileFactorRows"), textRows: get("textRows"), textEvidenceRows: get("textEvidenceRows"), evidenceRows: get("evidenceRows"), evidenceClaimRows: get("evidenceClaimRows"), titleRuleVersion: row.title_rule_version, resultTextVersion: row.result_text_version,
+      profileRows: get("profileRows"), profileFactorRows: get("profileFactorRows"), textRows: get("textRows"), textEvidenceRows: get("textEvidenceRows"), titleReflectionRows: get("titleReflectionRows"), evidenceRows: get("evidenceRows"), evidenceClaimRows: get("evidenceClaimRows"), titleRuleVersion: row.title_rule_version, resultTextVersion: row.result_text_version,
     });
     return { diagnosis, result };
   } catch (error) {
@@ -380,7 +429,7 @@ function compileCoreCatalogs(catalogs, row) {
 function compilePresentationCatalog(catalogs, row, titleProfiles) {
   const get = (name) => catalogs[name].rows;
   return compilePresentationContent({
-    sceneRows: get("sceneRows"), paletteRows: get("paletteRows"), paletteUsageRows: get("paletteUsageRows"), fragranceRows: get("fragranceRows"), selectorRows: get("selectorRows"), selectorPaletteRows: get("selectorPaletteRows"), selectorFragranceRows: get("selectorFragranceRows"), titleProfiles,
+    sceneRows: get("sceneRows"), paletteRows: get("paletteRows"), paletteUsageRows: get("paletteUsageRows"), fragranceRows: get("fragranceRows"), fragranceMaterialRows: get("fragranceMaterialRows"), fragranceMaterialExampleRows: get("fragranceMaterialExampleRows"), selectorRows: get("selectorRows"), selectorPaletteRows: get("selectorPaletteRows"), selectorFragranceRows: get("selectorFragranceRows"), titleProfiles,
   }, row.presentation_definition_version);
 }
 
@@ -406,12 +455,19 @@ async function loadBaseCatalogs(sourceDir) {
   validateHistory(releaseHistory.rows);
   const approvals = await loadNamedTable(sourceDir, ["approvals"], "result-content-approvals.csv");
   validateApprovals(approvals.rows);
-  return { releaseManifest, releaseHistory, approvals };
+  const presentationApprovals = await loadNamedTable(sourceDir, ["approvals"], "presentation-content-approvals.csv");
+  validatePresentationApprovals(presentationApprovals.rows);
+  return { releaseManifest, releaseHistory, approvals, presentationApprovals };
 }
 
 export async function validateAuthoringTree({ sourceDir }) {
   const base = await loadBaseCatalogs(sourceDir);
-  const catalogs = { releaseManifest: base.releaseManifest, releaseHistory: base.releaseHistory, approvals: base.approvals };
+  const catalogs = {
+    releaseManifest: base.releaseManifest,
+    releaseHistory: base.releaseHistory,
+    approvals: base.approvals,
+    presentationApprovals: base.presentationApprovals,
+  };
   const extraWarnings = [];
   const authored = [];
   for (const definitions of VERSION_CATALOGS) {
@@ -487,8 +543,20 @@ function sameRelease(left, right) {
 
 function assertApprovedRows(catalogs) {
   for (const [name, table] of Object.entries(catalogs)) {
-    if (name === "releaseManifest" || name === "releaseHistory" || name === "approvals") continue;
+    if (name === "releaseManifest" || name === "releaseHistory" ||
+      name === "approvals" || name === "presentationApprovals") continue;
     if (!table.rows.every((row) => row.status === "approved")) throw contentError("RELEASE_CONTENT_NOT_APPROVED", "公開対象に未承認のコンテンツがあります。");
+  }
+}
+
+function assertPresentationReleaseEligible(catalogs) {
+  const gatesApproved = catalogs.presentationApprovals?.rows.length === PRESENTATION_APPROVAL_GATES.length &&
+    catalogs.presentationApprovals.rows.every((row) => row.status === "approved");
+  const rowsApproved = PRESENTATION_TABLES.every(([name]) =>
+    Array.isArray(catalogs[name]?.rows) &&
+    catalogs[name].rows.every((row) => row.status === "approved"));
+  if (!gatesApproved || !rowsApproved) {
+    throw contentError("PRESENTATION_APPROVAL_PENDING", "Q-013演出コンテンツの承認が完了していません。");
   }
 }
 
@@ -583,11 +651,16 @@ export async function compileRelease({ sourceDir, releaseId = undefined }) {
   if (release.app_version !== appMeta.appVersion || release.card_template_version !== appMeta.cardTemplateVersion) throw contentError("RELEASE_VERSION_REFERENCE_INVALID");
   const history = validated.catalogs.releaseHistory.rows.find((row) => row.release_id === release.release_id);
   if (!history || !sameRelease(history, release)) throw contentError("RELEASE_HISTORY_MISMATCH");
-  assertApprovedRows(validated.catalogs);
   const approvalStatus = Object.fromEntries(validated.catalogs.approvals.rows.map((row) => [row.gate_id, row.status]));
   const contentRows = ["profileRows", "profileFactorRows", "textRows", "textEvidenceRows", "evidenceRows", "evidenceClaimRows"].flatMap((name) => validated.catalogs[name].rows);
-  assertReleaseEligible({ rows: contentRows, approvals: approvalStatus });
+  assertReleaseEligible({
+    rows: contentRows,
+    titleReflectionRows: validated.catalogs.titleReflectionRows.rows,
+    approvals: approvalStatus,
+  });
+  assertPresentationReleaseEligible(validated.catalogs);
   assertCharacterReleaseEligible(validated.catalogs.characterRows.rows);
+  assertApprovedRows(validated.catalogs);
   if (!validated.catalogs.sceneRows || !validated.catalogs.characterRows) throw contentError("RELEASE_RESOURCE_MISSING");
   const core = compileCoreCatalogs(validated.catalogs, release);
   const compiled = compileOptionalCatalogs(validated.catalogs, release, core);

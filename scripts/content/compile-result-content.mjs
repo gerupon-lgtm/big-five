@@ -154,6 +154,54 @@ function projectTexts(textRows, textEvidenceRows, evidenceDefinitions, resultTex
   return textDefinitions;
 }
 
+export function projectTitleReflectionComments({ rows, titleIds, resultTextVersion }) {
+  try {
+    assertRows(rows);
+    if (rows.length === 0) {
+      if (resultTextVersion === "result-text-v1") return [];
+      invalid();
+    }
+    if (!Array.isArray(titleIds) || titleIds.length !== 51 ||
+      typeof resultTextVersion !== "string" || resultTextVersion.length === 0) invalid();
+    assertUnique(rows, ({ text_id }) => text_id);
+    const knownTitleIds = new Set(titleIds);
+    if (knownTitleIds.size !== titleIds.length ||
+      rows.length !== titleIds.length * 3 ||
+      rows.some((row) => !knownTitleIds.has(row.title_id) ||
+        row.result_text_version !== resultTextVersion ||
+        !STATUSES.has(row.status))) invalid();
+
+    const rowsByTitleId = groupOrdered(rows, "title_id");
+    if (rowsByTitleId.size !== titleIds.length) invalid();
+    const definitions = [];
+    for (const titleId of titleIds) {
+      const titleRows = rowsByTitleId.get(titleId);
+      if (!titleRows || titleRows.length !== 3 ||
+        !titleRows.every((row, index) =>
+          row.display_order === index + 1 &&
+          row.text_id === `title-reflection-${titleId.slice("title-".length)}-${index + 1}`)) invalid();
+      for (const row of titleRows) {
+        definitions.push({
+          id: row.text_id,
+          version: row.result_text_version,
+          appliesTo: { titleId: row.title_id },
+          section: "titleReflection",
+          claimKind: "reflectionPrompt",
+          text: row.text,
+          evidenceRefs: ["evidence-result-presentation-contract"],
+          previewAllowed: row.display_order === 1,
+        });
+      }
+    }
+    return definitions;
+  } catch {
+    throw new ContentError({
+      code: "RESULT_CONTENT_INVALID",
+      message: "称号別振り返りコメントのCSV定義が不正です。",
+    });
+  }
+}
+
 function assertTitleTextReferences(titleProfiles, textDefinitions) {
   for (const { titleId, summaryTextId } of titleProfiles) {
     if (!titleId.startsWith("title-") || summaryTextId !== `result-text-${titleId.slice("title-".length)}`) invalid();
@@ -170,17 +218,28 @@ export function compileResultContent({
   textEvidenceRows,
   evidenceRows,
   evidenceClaimRows,
+  titleReflectionRows = [],
   titleRuleVersion,
   resultTextVersion,
 }) {
   try {
     if (typeof titleRuleVersion !== "string" || titleRuleVersion.length === 0 ||
       typeof resultTextVersion !== "string" || resultTextVersion.length === 0) invalid();
-    assertStatuses([profileRows, profileFactorRows, textRows, textEvidenceRows, evidenceRows, evidenceClaimRows]);
-    assertCopySafe(profileRows, textRows);
+    assertStatuses([profileRows, profileFactorRows, textRows, textEvidenceRows, evidenceRows, evidenceClaimRows, titleReflectionRows]);
+    assertCopySafe(profileRows, [...textRows, ...titleReflectionRows]);
     const titleProfiles = projectTitleProfiles(profileRows, profileFactorRows, titleRuleVersion);
     const evidenceDefinitions = projectEvidence(evidenceRows, evidenceClaimRows);
-    const textDefinitions = projectTexts(textRows, textEvidenceRows, evidenceDefinitions, resultTextVersion);
+    const textDefinitions = [
+      ...projectTexts(textRows, textEvidenceRows, evidenceDefinitions, resultTextVersion),
+      ...projectTitleReflectionComments({
+        rows: titleReflectionRows,
+        titleIds: titleProfiles.map(({ titleId }) => titleId),
+        resultTextVersion,
+      }),
+    ];
+    if (titleReflectionRows.length > 0 &&
+      !evidenceDefinitions.some(({ evidenceId }) => evidenceId === "evidence-result-presentation-contract")) invalid();
+    validateResultTextDefinitions(textDefinitions);
     assertTitleTextReferences(titleProfiles, textDefinitions);
     const compiled = { titleProfiles, textDefinitions, evidenceDefinitions, resultTextVersion };
     validateResultContentDefinitions(compiled);
@@ -193,8 +252,9 @@ export function compileResultContent({
   }
 }
 
-export function assertReleaseEligible({ rows, approvals }) {
+export function assertReleaseEligible({ rows, titleReflectionRows = [], approvals }) {
   if (!Array.isArray(rows) || !rows.every((row) => row && row.status === "approved") ||
+    !Array.isArray(titleReflectionRows) || !titleReflectionRows.every((row) => row && row.status === "approved") ||
     !approvals || typeof approvals !== "object" || APPROVAL_GATES.some((gate) => approvals[gate] !== "approved")) {
     throw new ContentError({ code: "CONTENT_APPROVAL_PENDING", message: "結果コンテンツの承認が完了していません。" });
   }

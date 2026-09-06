@@ -6,6 +6,7 @@ import { validateResultTextDefinitions } from "./result-text.js";
 
 const ROOT_FIELDS = ["diagnostic", "factors", "questions"];
 const DIRECTIONS = new Set(["positive", "negative"]);
+const RESULT_TEXT_VERSIONS = new Set(["result-text-v1", "result-text-v2"]);
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -108,7 +109,7 @@ export function validateResultContentDefinitions(input) {
   validateResultTextDefinitions(textDefinitions);
   if (!Array.isArray(titleProfiles) || !titleProfiles.every((profile) =>
     isRecord(profile) && typeof profile.titleId === "string" && profile.titleId.length > 0) ||
-    resultTextVersion !== "result-text-v1") failResultContent();
+    !RESULT_TEXT_VERSIONS.has(resultTextVersion)) failResultContent();
   const evidenceIds = new Set(evidenceDefinitions.map(({ evidenceId }) => evidenceId));
   const titleIds = new Set(titleProfiles.map(({ titleId }) => titleId));
   if (!textDefinitions.every(({ version, evidenceRefs, appliesTo }) =>

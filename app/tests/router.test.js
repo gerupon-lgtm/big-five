@@ -32,6 +32,14 @@ test("T-006 S-006 resolves the history hash without a server-side route", () => 
   });
 });
 
+test("T-033 F-023 resolves the dedicated Sigotosocket handoff route", () => {
+  assert.deepEqual(resolveRoute("#/sigotosocket"), {
+    id: "sigotosocket",
+    canonicalHash: "#/sigotosocket",
+    didFallback: false,
+  });
+});
+
 test("T-006 S-007 resolves comparison result IDs and keeps missing IDs on the comparison route", () => {
   assert.deepEqual(resolveRoute("#/compare?before=before-id&after=after-id"), {
     id: "compare",
@@ -72,5 +80,23 @@ test("T-005 S-002 resolves the canonical answer hash without a server-side route
     id: "answer",
     canonicalHash: "#/answer",
     didFallback: false,
+  });
+});
+
+test("T-007 S-005 resolves one canonical share result route", () => {
+  assert.deepEqual(
+    resolveRoute("#/share?resultId=00000000-0000-4000-8000-000000000001"),
+    {
+      id: "share",
+      canonicalHash: "#/share?resultId=00000000-0000-4000-8000-000000000001",
+      didFallback: false,
+      resultId: "00000000-0000-4000-8000-000000000001",
+    },
+  );
+  assert.deepEqual(resolveRoute("#/share"), {
+    id: "share",
+    canonicalHash: "#/share",
+    didFallback: false,
+    resultId: null,
   });
 });

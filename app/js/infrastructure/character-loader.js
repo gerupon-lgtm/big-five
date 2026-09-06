@@ -1,4 +1,6 @@
-export async function loadCharacterImage(entry, { decodeImage }) {
+import { isAppVersion } from "../domain/version-model.js";
+
+export async function loadCharacterImage(entry, { decodeImage, cacheVersion } = {}) {
   if (
     !entry ||
     typeof entry.imagePath !== "string" ||
@@ -9,9 +11,15 @@ export async function loadCharacterImage(entry, { decodeImage }) {
   if (typeof decodeImage !== "function") {
     throw new TypeError("CHARACTER_DECODER_INVALID");
   }
+  if (cacheVersion !== undefined && !isAppVersion(cacheVersion)) {
+    throw new TypeError("CHARACTER_CACHE_VERSION_INVALID");
+  }
 
   try {
-    const image = await decodeImage(entry.imagePath);
+    const imagePath = cacheVersion === undefined
+      ? entry.imagePath
+      : `${entry.imagePath}?v=${encodeURIComponent(cacheVersion)}`;
+    const image = await decodeImage(imagePath);
     return { status: "loaded", image, alt: entry.alt };
   } catch {
     return { status: "unavailable", image: null, alt: entry.alt };

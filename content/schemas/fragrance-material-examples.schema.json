@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "fileName": "fragrance-material-examples.csv",
+  "columns": [
+    { "name": "fragrance_id", "type": "id", "required": true },
+    { "name": "material_id", "type": "id", "required": true },
+    { "name": "presentation_definition_version", "type": "version", "required": true },
+    { "name": "display_order", "type": "integer", "minimum": 1, "required": true },
+    { "name": "status", "type": "enum", "values": ["draft", "reviewed", "approved", "rejected"], "required": true }
+  ]
+}

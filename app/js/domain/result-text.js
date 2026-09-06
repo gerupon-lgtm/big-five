@@ -3,7 +3,7 @@ import { FACTOR_ORDER } from "../data/factor-order.js";
 const DEFINITION_FIELDS = ["id", "version", "appliesTo", "section", "claimKind", "text", "evidenceRefs", "previewAllowed"];
 const CONDITION_FIELDS = ["mode", "questionCount", "factorId", "band", "titleId"];
 export const RESULT_TEXT_SECTIONS = Object.freeze([
-  "titleSubtitle", "titleReason", "observation", "strength", "tradeoff",
+  "titleSubtitle", "titleReason", "titleReflection", "observation", "strength", "tradeoff",
   "work", "relationship", "stress", "question", "action",
 ]);
 export const RESULT_CLAIM_KINDS = Object.freeze([
@@ -12,6 +12,7 @@ export const RESULT_CLAIM_KINDS = Object.freeze([
 const CLAIM_KIND_BY_SECTION = Object.freeze({
   titleSubtitle: "entertainmentReason",
   titleReason: "entertainmentReason",
+  titleReflection: "reflectionPrompt",
   observation: "scaleObservation",
   strength: "reflectionPrompt",
   tradeoff: "reflectionPrompt",
@@ -58,7 +59,17 @@ function validDefinitionReachability(appliesTo, previewAllowed) {
 }
 
 function validPreviewSection(previewAllowed, section) {
-  return !previewAllowed || ["titleSubtitle", "titleReason", "observation"].includes(section);
+  return !previewAllowed ||
+    ["titleSubtitle", "titleReason", "titleReflection", "observation"].includes(section);
+}
+
+function validTitleReflection(definition) {
+  if (definition.section !== "titleReflection") return true;
+  const { id, appliesTo, previewAllowed } = definition;
+  if (Object.keys(appliesTo).length !== 1 || !Object.hasOwn(appliesTo, "titleId")) return false;
+  const prefix = `title-reflection-${appliesTo.titleId.slice("title-".length)}-`;
+  const match = id.startsWith(prefix) ? id.slice(prefix.length).match(/^[123]$/) : null;
+  return match !== null && previewAllowed === (match[0] === "1");
 }
 
 export function validateResultTextDefinitions(definitions) {
@@ -70,6 +81,7 @@ export function validateResultTextDefinitions(definitions) {
     validAppliesTo(appliesTo) &&
     validDefinitionReachability(appliesTo, previewAllowed) &&
     validPreviewSection(previewAllowed, section) &&
+    validTitleReflection({ id, appliesTo, section, previewAllowed }) &&
     RESULT_TEXT_SECTIONS.includes(section) &&
     RESULT_CLAIM_KINDS.includes(claimKind) && CLAIM_KIND_BY_SECTION[section] === claimKind &&
     typeof text === "string" &&

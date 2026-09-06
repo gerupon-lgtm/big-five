@@ -13,7 +13,10 @@
     "character:inspect": "node scripts/characters/inspect-character.mjs",
     "character:manifest": "node scripts/characters/generate-manifest.mjs",
     "character:check": "node scripts/characters/check-character-assets.mjs",
+    "brand:build": "node scripts/brand/build-brand-icons.mjs",
     "content:validate": "node scripts/content/validate-content.mjs --source content/source",
+    "content:review:aroma": "node scripts/content/render-kokoro-aroma-review.mjs --source content/source --output docs/kokoro-aroma-review.md",
+    "content:preview:palettes": "node scripts/content/render-palette-preview.mjs --source content/source --output docs/palette-preview.html",
     "content:build": "node scripts/content/build-content.mjs --source content/source --output app/content --allowed-parent app",
     "qa:preview:build": "node scripts/qa/build-qa-preview.mjs --app app --output dist/qa-preview --allowed-parent ."
   },

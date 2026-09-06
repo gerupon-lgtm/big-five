@@ -245,6 +245,139 @@ test("T-005 schema and table loaders accept compatibility references without wea
   }
 });
 
+test("T-008A title reflection authoring schema requires the exact six-column contract", async () => {
+  const schema = await loadTableSchema(new URL(
+    "../../content/schemas/title-reflection-comments.schema.json",
+    import.meta.url,
+  ));
+  assert.deepEqual(schema.columns.map(({ name }) => name), [
+    "text_id",
+    "result_text_version",
+    "title_id",
+    "display_order",
+    "text",
+    "status",
+  ]);
+
+  await withCsv(
+    [
+      "text_id,result_text_version,title_id,display_order,text,status",
+      "title-reflection-balanced-1,result-text-v2,title-balanced,1,振り返り文,approved",
+      "",
+    ].join("\n"),
+    async (filePath) => {
+      const table = await loadCsvTable({ filePath, schema });
+      assert.equal(table.rows.length, 1);
+      assert.equal(table.rows[0].display_order, 1);
+    },
+  );
+
+  await withCsv(
+    [
+      "text_id,result_text_version,title_id,display_order,text,status,unexpected",
+      "title-reflection-balanced-1,result-text-v2,title-balanced,1,振り返り文,approved,extra",
+      "",
+    ].join("\n"),
+    async (filePath) => {
+      await assert.rejects(
+        loadCsvTable({ filePath, schema }),
+        (error) => error instanceof ContentError && error.code === "CSV_COLUMNS_INVALID",
+      );
+    },
+  );
+});
+
+test("T-005 F-018 Q-013 presentation v2 schemas require the exact authoring columns", async () => {
+  const expected = {
+    scenes: [
+      "scene_id", "presentation_definition_version", "display_order", "label", "icon_id", "status",
+    ],
+    fragrances: [
+      "fragrance_id", "presentation_definition_version", "display_order", "scene_id", "family_id",
+      "accord_label", "description", "disclaimer_id", "status",
+    ],
+    palettes: [
+      "palette_id", "presentation_definition_version", "display_order", "label",
+      "primary_color", "secondary_color", "accent_color", "description",
+      "content_review_note", "status",
+    ],
+    "palette-usage-mappings": [
+      "palette_id", "presentation_definition_version", "display_order",
+      "background_source", "background_mix_with", "background_mix_percent",
+      "surface_source", "surface_mix_with", "surface_mix_percent",
+      "accent_source", "accent_mix_with", "accent_mix_percent",
+      "chart_source", "chart_mix_with", "chart_mix_percent",
+      "text_candidate_1", "text_candidate_2", "status",
+    ],
+    "fragrance-materials": [
+      "material_id", "presentation_definition_version", "display_order",
+      "display_name", "material_kind", "status",
+    ],
+    "fragrance-material-examples": [
+      "fragrance_id", "material_id", "presentation_definition_version",
+      "display_order", "status",
+    ],
+  };
+  for (const [name, columns] of Object.entries(expected)) {
+    const schema = await loadTableSchema(new URL(
+      `../../content/schemas/${name}.schema.json`,
+      import.meta.url,
+    ));
+    assert.deepEqual(schema.columns.map(({ name: columnName }) => columnName), columns);
+  }
+});
+
+test("T-005 F-018 Q-013 approval ledger has the exact schema and current gate stages", async () => {
+  const schema = await loadTableSchema(new URL(
+    "../../content/schemas/presentation-content-approvals.schema.json",
+    import.meta.url,
+  ));
+  assert.deepEqual(schema.columns.map(({ name }) => name), [
+    "gate_id",
+    "display_order",
+    "scope",
+    "status",
+    "approved_by",
+    "approved_on",
+    "note",
+  ]);
+  assert.deepEqual(schema.columns[2], {
+    name: "scope",
+    type: "enum",
+    values: [
+      "palette-mapping-wcag",
+      "fragrance-vocabulary-materials",
+      "titles-balanced-and-single-01-11",
+      "titles-pair-01-10",
+      "titles-pair-11-20",
+      "titles-pair-21-30",
+      "titles-pair-31-40",
+    ],
+    required: true,
+  });
+
+  const approvals = (await loadCsvTable({
+    filePath: new URL(
+      "../../content/source/approvals/presentation-content-approvals.csv",
+      import.meta.url,
+    ),
+    schema,
+  })).rows;
+  assert.deepEqual(
+    approvals.map(({ gate_id, display_order, status, approved_by, approved_on }) =>
+      [gate_id, display_order, status, approved_by, approved_on]),
+    [
+      ["P-0", 1, "approved", "user", "2026-07-31"],
+      ["P-1", 2, "approved", "user", "2026-07-31"],
+      ["P-2", 3, "approved", "user", "2026-07-31"],
+      ["P-3", 4, "approved", "user", "2026-07-31"],
+      ["P-4", 5, "approved", "user", "2026-07-31"],
+      ["P-5", 6, "approved", "user", "2026-07-31"],
+      ["P-6", 7, "approved", "user", "2026-07-31"],
+    ],
+  );
+});
+
 test("T-012 report includes source, one-based row, column, code, and Japanese message", () => {
   const report = formatContentErrors([
     new ContentError({
