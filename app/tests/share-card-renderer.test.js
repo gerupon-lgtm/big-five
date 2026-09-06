@@ -24,7 +24,7 @@ function makeModel({
   },
   titleReason = "五つの因子を見渡した結果です。",
   factorScores = [75, 60, 50, 40, 25],
-  appVersion = "mvp-1.2.0",
+  appVersion = "mvp-1.3.0",
   cardTemplateVersion = "card-template-v2",
   modeLabel = "50問 詳細結果",
   disclaimer = "これは性格の優劣や心理学上の正式なタイプを示すものではありません。",
@@ -223,7 +223,7 @@ test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and
   assert.ok(texts.includes("～Big Five 自己理解支援ツール～"));
   assert.ok(texts.includes("香りをイメージするための素材例です"));
   assert.ok(texts.includes("これは性格の優劣や心理学上の正式なタイプを示すものではありません。"));
-  assert.ok(texts.includes("mvp-1.2.0"));
+  assert.ok(texts.includes("mvp-1.3.0"));
   assert.equal(texts.some((text) =>
     text.includes("card-template-v2") ||
     text.includes("presentation-v2") ||
@@ -244,7 +244,7 @@ test("T-007 F-011 renders the fixed card order, five bars, three aroma rows, and
     isCharacterPath(operation[2]));
   assert.ok(operations.some((operation) =>
     operation[0] === "loadImage" &&
-    operation[1] === "./assets/characters/cat.webp?v=mvp-1.2.0"));
+    operation[1] === "./assets/characters/cat.webp?v=mvp-1.3.0"));
   assert.deepEqual(finalCatDraw.slice(3), [225, 330, 630, 630]);
   assert.equal(operations.some((operation) =>
     operation[0] === "loadImage" &&
@@ -442,7 +442,7 @@ test("T-007 F-011 fills aroma whitespace without overlapping footer copy", async
   const version = operations.find((operation) =>
     operation[0] === "fillText"
     && operation[1] === "main"
-    && operation[2] === "mvp-1.2.0");
+    && operation[2] === "mvp-1.3.0");
   assert.equal(aromaNote[4], 1649);
   assert.equal(version[4], 1756);
 });
@@ -472,7 +472,7 @@ test("T-007 F-011 separates the preview note, two-line disclaimer, mode, and ver
   assert.equal(textPositions.get(disclaimer.split("\n")[0]), 1670);
   assert.equal(textPositions.get(disclaimer.split("\n")[1]), 1690);
   assert.equal(textPositions.get("20問 簡易プレビュー"), 1728);
-  assert.equal(textPositions.get("mvp-1.2.0"), 1756);
+  assert.equal(textPositions.get("mvp-1.3.0"), 1756);
 });
 
 test("T-007 F-015 preserves a text-complete card when the cat fails", async () => {

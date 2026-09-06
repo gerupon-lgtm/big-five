@@ -2,12 +2,12 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.22 |
+| 設計版 | 0.23 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-09-06 |
-| 要件正典 | 要件定義書v1.43 |
+| 要件正典 | 要件定義書v1.44 |
 | 初期リリース | `mvp-0.1.0` |
-| 現在リリース | `mvp-1.2.0` |
+| 現在リリース | `mvp-1.3.0` |
 
 ## 1. トレーサビリティ表（正典）
 
@@ -21,17 +21,17 @@
 | F-006 | 詳細結果 | S-004 | scoring, result-composer | ResultTextDefinition, TitleReflectionCommentDefinition, ResultSnapshot | T-003, T-005, T-008A, T-008C | 50問・診断直後／履歴の操作を分離。因子は一回で保存済み本文を全カテゴリ表示 |
 | F-007 | 心理モデル表示 | S-001, S-003, S-004, S-008 | explanation model | DiagnosticDefinition | T-008 | 確定 |
 | F-008 | 結果可視化 | S-003, S-004, S-007 | radar-renderer | FactorResult | T-005, T-008A, T-008C | 名前付きレーダー、CSP下でも実スコアを反映する固定順5因子行・棒、因子／アロマ相互排他の一回開閉、因子領域に`拡大して見る`を置かないことを実装・テスト済み |
-| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A, T-008B, T-008C | 履歴20問を厳密ID一致の回答継続中と確定済みに分離。どちらもヘッダー・下部の`履歴一覧に戻る`を表示 |
+| F-009 | 結果履歴 | S-001, S-006 | history store | ResultSnapshot | T-006, T-008A, T-008B, T-008C, T-035 | 履歴20問を厳密ID一致の回答継続中と確定済みに分離。50問カードだけにシゴトソケットへの直接受け渡しを追加 |
 | F-010 | 結果比較 | S-006, S-007 | compatibility, comparison | ResultSnapshot | T-006, T-008A, T-008B, T-008C | 同一0〜100表示軸、94px固定右列へ中央揃えした二段の差表示、固定桁、版情報のラベル化、ヘッダー`履歴一覧に戻る`、比較選択バーのモバイル二段表示まで実装済み |
 | F-011 | 共有プレビュー | S-005 | share-card preview | ShareCardModel | T-007, T-008C | `card-template-v2`は承認済み`kokoro-wreath-v2.png`を猫の背面へ合成する。透明素材、画像拡大、プレビュー／Web Share／保存の同一PNG Blobを回帰確認。結果画面の因子領域へ同操作を追加しない |
 | F-012 | 共有・保存 | S-005 | share/download/clipboard | 一時Blob、共有テキスト | T-007, T-008C | ブランド→モード→称号→副題→見出しなし理由→固定順因子→アロマ→注意→任意URLの共有文、単一CTA、同一PNG Blob、コピー／選択可能テキストの代替を回帰確認 |
 | F-013 | データ削除 | S-002, S-006 | storage delete | ProgressRecord, ResultSnapshot | T-004, T-006, T-008A, T-008C | `履歴削除`から開く履歴管理dialog、個別／全削除、preview終了、focus管理を実装済み。T-008Cでは20問preview終了時にResultSnapshotを残して対応ProgressRecordだけを削除する。今回の共有追補におけるF-013の範囲も、この完了状態の確定だけであり、Blob／Object URLの寿命はF-013へ分類しない |
-| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011, T-032, T-033 | `mvp-1.2.0`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
+| F-014 | バージョン表示 | 全画面・共有物 | version registry | AppMeta, VersionTuple | T-001, T-002, T-007, T-011, T-032, T-033, T-035 | `mvp-1.3.0`を正典とし、開始画面・共有物・公開成果物のキャッシュバスターへ反映済み |
 | F-015 | エラー・代替動作 | 全画面 | error mapping, fallbacks | error codes | T-004, T-006, T-007, T-008, T-008A, T-008C | 保存失敗時の中断・preview終了、live結果維持、ID不一致の履歴継続を安全側で無効化、履歴dialogのnative／fallback代替動作、共有系fallbackを実装済み |
 | F-016 | プロフィールキャラクター | S-003, S-004, S-005, S-006 | title-classifier, result-composer, character-loader | TitleProfileDefinition, ResultTextDefinition, CharacterManifest | T-003, T-005, T-007 | 51称号、Q-012 release資産・manifest・単一画像遅延loader・live／保存済み結果画面、正式共有カード接続、代表3体の全体表示・無切り抜き検証まで完了 |
 | F-017 | ベータ匿名集計 | S-001, S-009, 結果・共有 | beta aggregation API、atomic upsert | beta_* masters/counts/idempotency | T-010 | 設計確定。公開前にQ-011運用値 |
 | F-018 | 色・香り提案 | S-003, S-004, S-005 | presentation selector, share-card, color action aggregate | PaletteDefinition, FragranceSuggestion, FragranceMaterialDefinition, beta_color_card_action_counts | T-005, T-007, T-008B, T-008C, T-010 | `ココロパレット`は常時3候補、ブランド緑の中央チェックで選択を示す。`ココロアロマ`は閉じた3画像ティーザーと右向き矢印から1回で6候補を開く。因子と相互排他になるのはアロマだけで、パレットは対象外。共有カードと共有テキストは代表3件の香り素材名を表示する |
-| F-023 | シゴトソケット結果連携 | S-001, S-004, S-006 | sigotosocket-link、router/controller | ResultSnapshotのmode・FactorResult | T-032, T-033 | 任意連携の説明、50問だけの連携用履歴、詳細結果からの明示操作を提供。固定順15桁をURLフラグメントへ設定して同一タブ遷移し、不正値時は結果を維持して非遷移 |
+| F-023 | シゴトソケット結果連携 | S-001, S-004, S-006 | sigotosocket-link、router/controller | ResultSnapshotのmode・FactorResult | T-032, T-033, T-035 | 任意連携の説明、通常履歴内の50問カード、50問だけの連携用履歴、詳細結果からの明示操作を提供。20問カードは除外し、固定順15桁をURLフラグメントへ設定して同一タブ遷移する |
 | NF-01 | 性能 | 全画面 | 遅延読込、計測 | asset manifest | T-005, T-011 | 確定 |
 | NF-02 | 対応環境・レスポンシブ | 全画面 | browser smoke | - | T-008, T-012 | 確定 |
 | NF-03 | アクセシビリティ | 全画面 | a11y checks | alt、代替テキスト | T-008, T-012 | 確定 |
@@ -71,6 +71,7 @@
 | T-032 | シゴトソケット結果連携 | F-006, F-014, F-015, F-023 | 50問詳細結果限定の明示導線、固定順15桁、同一タブ遷移、履歴詳細、不正値フォールバックを実装・検証 |
 | T-033 | シゴトソケット連携導線拡張 | F-001, F-009, F-014, F-023, NF-02 | 開始画面の閉じた説明、50問だけの連携用履歴、C案の直接受け渡しを実装・検証 |
 | T-034 | 画面遷移時スクロール修正 | F-015, NF-03 | 内部操作・ブラウザhashchangeのいずれも遷移後に画面先頭を表示 |
+| T-035 | 通常履歴のシゴトソケット直接連携 | F-009, F-014, F-023, NF-02 | 通常履歴の50問カードだけにC案の直接受け渡しを表示し、20問カードは従来表示を維持 |
 
 ## 3. フェーズ
 
@@ -575,7 +576,7 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 状態: 完了
 - 実装:
   - `app/js/domain/sigotosocket-link.js`でdetail50と固定5因子を検証し、各`Math.round(rawMean * 100)`を3桁化した15桁URLを生成する。
-  - S-004の診断直後と履歴詳細へ正確なボタン・注記を追加し、20問プレビュー・履歴一覧・共有画面からは除外する。
+  - S-004の診断直後と履歴詳細へ正確なボタン・注記を追加し、20問プレビュー・共有画面からは除外する。通常履歴の50問カードへの短い導線はT-035で追加した。
   - 受け渡しボタンを副ボタンより少しだけ強調し、短い説明とトップページへ同一タブで移動する補助リンクを同じ枠へ追加する。
   - controllerは有効URLだけを`window.location.href`へ設定し、不正結果では通知して画面を維持する。
 - 検証:
@@ -601,6 +602,17 @@ T-010はMVP通常公開から分離して実装できる。外部ベータ公開
 - 状態: 完了
 - 実装: 内部のpush／replace遷移とブラウザ`hashchange`を共通のroute-change処理へ集約し、描画後に`scrollTo({ top: 0, left: 0, behavior: "auto" })`を実行する。
 - 検証: 内部ボタン遷移と外部hash遷移の両方で、縦位置の先頭復帰をNode結合テストする。
+
+### T-035 通常履歴のシゴトソケット直接連携
+
+- 対応機能: F-009、F-014、F-023、NF-02
+- 状態: 完了
+- 実装:
+  - 通常の`#/history`でも、有効な50問詳細結果（`mode=detail50`）のカードだけに`シゴトソケットへ渡す`を表示する。
+  - 既存のC案レイアウトを再利用し、左に受け渡し、16px間隔、右に幅128pxの`結果を見る`を配置する。360px以上は横並び、359px以下は縦積みにする。
+  - 20問簡易プレビューは従来どおり`結果を見る`だけを表示し、連携候補にしない。
+  - 利用者が受け渡しを押した場合だけ、固定順15桁のURLフラグメントを付けてシゴトソケットへ同一タブ遷移する。
+- 検証: presentationとapp-shellのNodeテストで50問限定表示、20問非表示、操作順、対象snapshot、完全URL遷移を確認し、全体回帰と実ブラウザsmokeを行う。
 
 ## 5. 未対応・保留
 

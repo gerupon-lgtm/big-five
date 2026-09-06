@@ -80,6 +80,49 @@ test("T-008A F-009 renders only the compact normal-card contract", () => {
   assert.deepEqual(opened, [target.resultId]);
 });
 
+test("T-035 F-023 normal history offers Sigotosocket handoff only for detail50", () => {
+  const { host } = createFakeScreen();
+  const preview = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000120",
+    questionCount: 20,
+  });
+  const detail = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000121",
+  });
+  const handedOff = [];
+
+  renderHistoryScreen(
+    host,
+    { status: "ok", results: [preview, detail], ...screenLabels },
+    {
+      onOpenResult() {},
+      onLinkToSigotosocket: (snapshot) => handedOff.push(snapshot),
+    },
+  );
+
+  const previewCard = historyCards(host).find(
+    (card) => card.attributes.get("data-result-id") === preview.resultId,
+  );
+  const detailCard = historyCards(host).find(
+    (card) => card.attributes.get("data-result-id") === detail.resultId,
+  );
+  assert.deepEqual(
+    collectElements(previewCard)
+      .filter(({ tagName }) => tagName === "button")
+      .map(({ textContent }) => textContent),
+    ["結果を見る"],
+  );
+  assert.deepEqual(
+    collectElements(detailCard)
+      .filter(({ tagName }) => tagName === "button")
+      .map(({ textContent }) => textContent),
+    ["シゴトソケットへ渡す", "結果を見る"],
+  );
+
+  clickButton(detailCard, "シゴトソケットへ渡す");
+  assert.deepEqual(handedOff, [detail]);
+});
+
 test("T-033 F-023 renders the selected C action layout for each eligible result", () => {
   const { host } = createFakeScreen();
   const target = createTestResultSnapshot({
