@@ -9,10 +9,10 @@
 https://gerupon-lgtm.github.io/big-five/
 
 - 正式確認URL: https://kokoro.sikumilab.com/
-- QA対象commit: `b5416c485b9539ef544fb0d95bb65f6fbbd6ba58`
-- branch: `codex/big-five-q006`
-- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/33967246271
-- 2026-09-05確認: build／deploy成功。正式確認URLで`mvp-1.1.1`を確認し、F-023の短い説明、トップページへの同一タブ補助リンク、軽く強調した受け渡しボタン、`sigotosocket-link.js`はいずれも配信済み。360px実ブラウザで横overflowなし、固定形式URLへの同一タブ遷移、console error／warning 0件を確認
+- QA対象commit: `d4057fca6695e11f1a3d8787846cf6743d3a792f`
+- branch: `main`
+- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/34002108451
+- 2026-09-06確認: build／deploy成功。正式確認URLで`mvp-1.2.0`を確認し、開始画面の閉じた連携説明、50問詳細結果だけを選べる連携用履歴、結果画面と履歴一覧で区別した受け渡し文言、画面遷移後の先頭復帰を配信済み。390px／360pxではC案を1行、359px以下では縦積みとし、正式URLの390px実ブラウザで左ボタンの左右余白約12.8px、間隔16px、右ボタン128px、横overflowなし、console error／warning 0件を確認
 
 ## 初期設定
 
@@ -53,7 +53,7 @@ https://gerupon-lgtm.github.io/big-five/
 
 ## Redeploy
 
-`codex/big-five-q006`へQA対象の変更をpushすると、対象ブランチの更新後にRedeployする。失敗したrunはActions画面から原因を確認する。
+`main`は保護ルールに従ってPull Request経由で更新し、`Deploy QA preview to Pages`を`main`指定で手動起動してRedeployする。失敗したrunはActions画面から原因を確認する。
 
 ## 非公開
 
