@@ -123,6 +123,52 @@ test("T-035 F-023 normal history offers Sigotosocket handoff only for detail50",
   assert.deepEqual(handedOff, [detail]);
 });
 
+test("T-038 F-009 F-023 marks only the last result handed to Sigotosocket", () => {
+  const { host } = createFakeScreen();
+  const linked = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000128",
+    completedAt: "2026-09-07T01:00:00.000Z",
+  });
+  const other = createTestResultSnapshot({
+    resultId: "00000000-0000-4000-8000-000000000129",
+    completedAt: "2026-09-06T01:00:00.000Z",
+  });
+
+  renderHistoryScreen(
+    host,
+    {
+      status: "ok",
+      results: [linked, other],
+      lastSigotosocketLinkedResultId: linked.resultId,
+      ...screenLabels,
+    },
+    { onOpenResult() {}, onLinkToSigotosocket() {} },
+  );
+
+  const linkedCard = historyCards(host).find(
+    (card) => card.attributes.get("data-result-id") === linked.resultId,
+  );
+  const otherCard = historyCards(host).find(
+    (card) => card.attributes.get("data-result-id") === other.resultId,
+  );
+  const linkedStatuses = collectElements(linkedCard).filter(
+    ({ className }) => className === "history-sigotosocket-status",
+  );
+  const otherStatuses = collectElements(otherCard).filter(
+    ({ className }) => className === "history-sigotosocket-status",
+  );
+
+  assert.equal(linkedStatuses.length, 1);
+  assert.equal(linkedStatuses[0].textContent, "連携済");
+  assert.equal(otherStatuses.length, 0);
+  const icon = collectElements(linkedStatuses[0]).find(
+    ({ className }) => className === "history-sigotosocket-status-icon",
+  );
+  assert.equal(icon.tagName, "img");
+  assert.equal(icon.attributes.get("src"), "./assets/brand/sigotosocket-icon-180.png");
+  assert.equal(icon.attributes.get("alt"), "");
+});
+
 test("T-033 F-023 renders the selected C action layout for each eligible result", () => {
   const { host } = createFakeScreen();
   const target = createTestResultSnapshot({

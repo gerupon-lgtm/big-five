@@ -885,6 +885,29 @@ h1 {
   color: #526b66;
 }
 
+.history-sigotosocket-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  padding: 2px 7px 2px 5px;
+  border: 1px solid #b8c9dc;
+  border-radius: 6px;
+  background: #eef3f8;
+  color: #284b72;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.history-sigotosocket-status-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+
 .character-label {
   color: #45635d;
 }

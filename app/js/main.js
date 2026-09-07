@@ -42,6 +42,11 @@ import {
 import { loadCharacterImage } from "./infrastructure/character-loader.js";
 import { resolveRoute } from "./infrastructure/router.js";
 import {
+  clearSigotosocketLinkState,
+  loadLastSigotosocketLinkedResultId,
+  saveLastSigotosocketLinkedResultId,
+} from "./infrastructure/sigotosocket-link-state.js";
+import {
   copyShareText,
   detectShareCapabilities,
   downloadPng,
@@ -183,6 +188,7 @@ export function startApp({
   let resultActionNotice = null;
   let startNotice = null;
   let pendingInternalHashChange = null;
+  let lastSigotosocketLinkedResultIdOverride;
   const effectiveDecodeImage = decodeImage ??
     createBrowserImageDecoder(windowObject);
   const loadVersionedCharacterImage = (entry, options) => loadCharacterImage(
@@ -332,6 +338,30 @@ export function startApp({
     });
   }
 
+  function handoffToSigotosocket(snapshot) {
+    const targetUrl = createSigotosocketLinkUrl(snapshot);
+    if (!targetUrl) return false;
+    const effectiveStorage = getStorage();
+    const saved = saveLastSigotosocketLinkedResultId({
+      storage: effectiveStorage,
+      resultId: snapshot.resultId,
+    });
+    if (saved) {
+      lastSigotosocketLinkedResultIdOverride = undefined;
+    } else {
+      clearSigotosocketLinkState({ storage: effectiveStorage });
+      lastSigotosocketLinkedResultIdOverride = null;
+    }
+    windowObject.location.href = targetUrl;
+    return true;
+  }
+
+  function getLastSigotosocketLinkedResultId(storageObject) {
+    return lastSigotosocketLinkedResultIdOverride !== undefined
+      ? lastSigotosocketLinkedResultIdOverride
+      : loadLastSigotosocketLinkedResultId({ storage: storageObject });
+  }
+
   function renderHistoryRoute() {
     const effectiveStorage = getStorage();
     const operationNotice = historyNotice;
@@ -341,6 +371,8 @@ export function startApp({
         storage: effectiveStorage,
         now: nowProvider(),
       }),
+      lastSigotosocketLinkedResultId:
+        getLastSigotosocketLinkedResultId(effectiveStorage),
       factorLabels,
       titleLabels,
     }, {
@@ -364,6 +396,8 @@ export function startApp({
           now: nowProvider(),
         });
         if (outcome.status === "ok") {
+          clearSigotosocketLinkState({ storage: effectiveStorage });
+          lastSigotosocketLinkedResultIdOverride = null;
           currentProgress = null;
           detailReviewQuestionVisible = false;
           liveResult = null;
@@ -384,8 +418,7 @@ export function startApp({
         setRoute(`#/result?resultId=${encodeURIComponent(resultId)}`);
       },
       onLinkToSigotosocket(snapshot) {
-        const targetUrl = createSigotosocketLinkUrl(snapshot);
-        if (targetUrl) windowObject.location.href = targetUrl;
+        handoffToSigotosocket(snapshot);
       },
     }, {
       resolveCharacterEntry(characterId) {
@@ -417,6 +450,8 @@ export function startApp({
     renderHistoryScreen(screenHost, {
       ...historyState,
       results: eligibleResults,
+      lastSigotosocketLinkedResultId:
+        getLastSigotosocketLinkedResultId(getStorage()),
       factorLabels,
       titleLabels,
       linkageMode: "sigotosocket",
@@ -425,8 +460,7 @@ export function startApp({
         setRoute(`#/result?resultId=${encodeURIComponent(resultId)}`);
       },
       onLinkToSigotosocket(snapshot) {
-        const targetUrl = createSigotosocketLinkUrl(snapshot);
-        if (targetUrl) windowObject.location.href = targetUrl;
+        handoffToSigotosocket(snapshot);
       },
     }, {
       resolveCharacterEntry(characterId) {
@@ -817,13 +851,10 @@ export function startApp({
         setRoute("#/answer");
       },
       onLinkToSigotosocket(selected) {
-        const targetUrl = createSigotosocketLinkUrl(selected);
-        if (!targetUrl) {
+        if (!handoffToSigotosocket(selected)) {
           resultActionNotice = "シゴトソケットへ渡す結果を準備できませんでした。結果を表示したままにしています。";
           renderResult(snapshot, persistenceFailed, previewProgress, historyDetail);
-          return;
         }
-        windowObject.location.href = targetUrl;
       },
       ...(presentation ? {
         onShare() {
@@ -1112,6 +1143,9 @@ export function startApp({
     }
     pendingInternalHashChange = null;
     renderRouteChange();
+  });
+  windowObject.addEventListener("pageshow", (event) => {
+    if (event?.persisted === true) renderCurrentRoute();
   });
   renderRouteChange();
 }

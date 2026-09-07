@@ -53,7 +53,7 @@ test("QA artifact derives every cache buster from the canonical app version", as
     allowedParentDir: parent,
   });
 
-  const version = "mvp-1.3.2";
+  const version = "mvp-1.3.3";
   const html = await readFile(join(output, "index.html"), "utf8");
   assert.match(html, new RegExp(`href="\\./css/styles\\.css\\?v=${version}"`));
   assert.match(html, new RegExp(`src="\\./js/main\\.js\\?v=${version}"`));
@@ -66,6 +66,9 @@ test("QA artifact derives every cache buster from the canonical app version", as
   assert.match(storage, new RegExp(`from "\\.\\./domain/iso-timestamp\\.js\\?v=${version}"`));
   const resultScreen = await readFile(join(output, "js", "presentation", "result-screen.js"), "utf8");
   assert.match(resultScreen, new RegExp(`aroma-pause-v1\\.png\\?v=${version}`));
+  const historyScreen = await readFile(join(output, "js", "presentation", "history-screen.js"), "utf8");
+  assert.match(historyScreen, new RegExp(`sigotosocket-icon-180\\.png\\?v=${version}`));
+  assert.ok((await readFile(join(output, "assets", "brand", "sigotosocket-icon-180.png"))).byteLength > 0);
 
   const manifest = await readFile(join(output, "manifest", "app.webmanifest"), "utf8");
   assert.match(manifest, new RegExp(`kokoro-parea-icon-192\\.png\\?v=${version}`));
@@ -82,7 +85,7 @@ test("QA artifact audit rejects one stale cache buster", async (t) => {
   });
   const mainPath = join(output, "js", "main.js");
   const main = await readFile(mainPath, "utf8");
-  await writeFile(mainPath, main.replace("?v=mvp-1.3.2", "?v=mvp-1.0.0"), "utf8");
+  await writeFile(mainPath, main.replace("?v=mvp-1.3.3", "?v=mvp-1.0.0"), "utf8");
 
   await assert.rejects(
     () => auditQaPreviewArtifact(output),
