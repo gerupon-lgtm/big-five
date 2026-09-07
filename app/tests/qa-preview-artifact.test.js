@@ -53,7 +53,7 @@ test("QA artifact derives every cache buster from the canonical app version", as
     allowedParentDir: parent,
   });
 
-  const version = "mvp-1.3.3";
+  const version = "mvp-1.3.4";
   const html = await readFile(join(output, "index.html"), "utf8");
   assert.match(html, new RegExp(`href="\\./css/styles\\.css\\?v=${version}"`));
   assert.match(html, new RegExp(`src="\\./js/main\\.js\\?v=${version}"`));
@@ -85,7 +85,7 @@ test("QA artifact audit rejects one stale cache buster", async (t) => {
   });
   const mainPath = join(output, "js", "main.js");
   const main = await readFile(mainPath, "utf8");
-  await writeFile(mainPath, main.replace("?v=mvp-1.3.3", "?v=mvp-1.0.0"), "utf8");
+  await writeFile(mainPath, main.replace("?v=mvp-1.3.4", "?v=mvp-1.0.0"), "utf8");
 
   await assert.rejects(
     () => auditQaPreviewArtifact(output),
