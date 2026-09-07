@@ -75,7 +75,7 @@ docs/
 
 ## バージョン管理
 
-- 現在版: `mvp-1.3.3`
+- 現在版: `mvp-1.3.4`
 - MVP: `mvp-MAJOR.MINOR.PATCH`
 - ベータ: `beta-MAJOR.MINOR.PATCH`
 - 正式版: `MAJOR.MINOR.PATCH`

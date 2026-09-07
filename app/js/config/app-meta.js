@@ -19,7 +19,7 @@ const brand = Object.freeze({
 });
 
 export const appMeta = Object.freeze({
-  appVersion: "mvp-1.3.3",
+  appVersion: "mvp-1.3.4",
   storageSchemaVersion: 1,
   cardTemplateVersion: "card-template-v2",
   characterManifestVersion: "character-manifest-v1",

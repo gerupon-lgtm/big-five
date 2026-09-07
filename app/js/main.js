@@ -352,6 +352,10 @@ export function startApp({
       clearSigotosocketLinkState({ storage: effectiveStorage });
       lastSigotosocketLinkedResultIdOverride = null;
     }
+    const currentRouteId = resolveRoute(windowObject.location.hash).id;
+    if (currentRouteId === "history" || currentRouteId === "sigotosocket") {
+      renderCurrentRoute();
+    }
     windowObject.location.href = targetUrl;
     return true;
   }

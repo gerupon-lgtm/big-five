@@ -2,10 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 設計版 | 0.19 |
+| 設計版 | 0.20 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-09-07 |
-| 入力要件 | 要件定義書v1.47 |
+| 入力要件 | 要件定義書v1.48 |
 | 実行方式 | 通常版はブラウザ内完結。F-023は明示的な外部遷移、ベータ版だけOCI匿名集計APIを併用 |
 
 ## 1. モジュール境界
@@ -440,7 +440,7 @@ T-007ではResultSnapshotから共有候補を抽出し、純粋な`createShareC
 4. controllerはS-004で表示中のResultSnapshot、live結果、通常履歴または連携用S-006で選んだResultSnapshotを`createSigotosocketLinkUrl`へ渡す。
 5. domain処理は`mode === "detail50"`、5因子の過不足・重複、factorId、有限な`rawMean`と1〜5範囲を検証する。
 6. 固定順を`intellectImagination`、`conscientiousness`、`extraversion`、`agreeableness`、`emotionalStability`とし、各`Math.round(rawMean * 100)`を3桁化して15桁へ連結する。
-7. 有効なら`https://sigotosocket.sikumilab.com/#b5=v1-<15桁>`を返す。controllerは遷移前に対象ResultSnapshotの`resultId`だけを独立した版付き端末内状態へ保存し、presentation callbackが`window.location.href`へ設定して同一タブ遷移する。連携コード、5因子、生回答は保存せず、fetch、フォーム送信、ログ記録は行わない。
+7. 有効なら`https://sigotosocket.sikumilab.com/#b5=v1-<15桁>`を返す。controllerは遷移前に対象ResultSnapshotの`resultId`だけを独立した版付き端末内状態へ保存する。通常履歴または連携用履歴では、保存直後に現在のルートを同期再描画して対象カードへ`連携済`を反映してから、presentation callbackが`window.location.href`へ設定して同一タブ遷移する。連携コード、5因子、生回答は保存せず、fetch、フォーム送信、ログ記録は行わない。
 8. 無効なら`null`を返す。controllerは内部値を表示せず利用者向け通知を出し、現在画面を維持する。
 9. presentationは受け渡しボタンに軽い強調を付け、詳細結果では短いサービス説明と`https://sigotosocket.sikumilab.com/`へ同一タブで移動する補助リンクを同じ枠へ表示する。
 10. 通常履歴と連携用履歴は端末内の`resultId`を検証し、一致する有効な`detail50`カード1件だけへ小さなアイコンと`連携済`を付ける。別結果を渡すと保存値を上書きし、表示対象を移す。比較選択表示でも同じ識別を維持する。
