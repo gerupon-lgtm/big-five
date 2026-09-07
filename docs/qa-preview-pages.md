@@ -9,12 +9,12 @@
 https://gerupon-lgtm.github.io/big-five/
 
 - 正式確認URL: https://kokoro.sikumilab.com/
-- QA対象commit: `9d0db7db46e41a2cddeffa2eb9d329f49c41e808`
+- QA対象commit: `d1e761a4b09337e76517b187fd292cbe1166401e`
 - branch: `main`
-- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/34077112987
-- 2026-09-07確認: PR #29をmainへマージし、build／deploy成功。正式確認URLのHTML、`app-meta.js`、履歴presentation、app shell、シゴトソケットアイコンがすべてHTTP 200で、`mvp-1.3.3`を配信していることを確認した。履歴presentationに`連携済`とアイコン参照、app shellにBFCache復元時の再描画を確認し、画像は`image/png`・5,280バイトだった。ローカルでは正式版712件、プロトタイプ39件、最終対象5ファイル102件、静的検証、QA成果物127ファイル、390×844の実ブラウザ表示を確認済み
-- 直前の公開記録: commit `301f0dcb49d47caddacea84f4bb3d5a2c8555c1c`、Actions run `34020401043`で`mvp-1.3.2`を公開。390×844の実ブラウザで、回答数の太字、緑の進捗バー、1問目のARIA現在値1・最大値20、無効な「前の質問」、20問から50問完答までの遷移、見直し時の左「前の質問」／右「回答を完了する」、横overflow 0、console error／warning 0を確認済み
-- それ以前の公開記録: commit `6e234f2`、Actions run `34004502886`で`mvp-1.3.0`を公開し、通常履歴の50問詳細結果だけにシゴトソケットへの直接受け渡しを表示する導線を確認済み
+- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/34079171877
+- 2026-09-07確認: PR #31をmainへマージし、build／deploy成功。最終連携IDの保存後に履歴DOMを更新せず外部遷移していたため、古いカード表示が復元される環境では手動更新が必要だった。通常履歴・連携用履歴ではID保存直後かつ外部遷移前に現在ルートを同期再描画するよう修正し、クリック直後・画面更新イベント前の`連携済`表示を回帰テストへ追加した。正式確認URLのHTML、`app-meta.js`、app shellがHTTP 200で、`mvp-1.3.4`と即時再描画処理を配信していることを確認した。ローカル対象5ファイル101件、静的検証、コンテンツ検証エラー0、QA成果物127ファイルを確認済み
+- 直前の公開記録: commit `9d0db7db46e41a2cddeffa2eb9d329f49c41e808`、Actions run `34077112987`で`mvp-1.3.3`を公開。最後に渡した50問詳細結果1件だけへの`連携済`表示、アイコン配信、BFCache復元時の再描画を確認済み
+- それ以前の公開記録: commit `301f0dcb49d47caddacea84f4bb3d5a2c8555c1c`、Actions run `34020401043`で`mvp-1.3.2`を公開。390×844の実ブラウザで回答進捗、50問完答までの遷移、横overflow 0、console error／warning 0を確認済み
 
 ## 初期設定
 
