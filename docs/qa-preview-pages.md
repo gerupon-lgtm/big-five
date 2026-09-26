@@ -9,9 +9,10 @@
 https://gerupon-lgtm.github.io/big-five/
 
 - 正式確認URL: https://kokoro.sikumilab.com/
-- QA対象commit: `d1e761a4b09337e76517b187fd292cbe1166401e`
+- QA対象commit: `ed32c672d439f12d413d05a56e67cb56ae9b97d3`
 - branch: `main`
-- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/34079171877
+- Actions: https://github.com/gerupon-lgtm/big-five/actions/runs/36232762514
+- 2026-09-26確認: PR #33をmainへマージし、Actions run `36232762514`で`mvp-1.3.5`を公開。20問・50問それぞれの測定根拠、出典ごとの役割、香りの一般的な安全注意を最小限の文言追加で明確化した。全67テストファイルを5ファイル以下の14バッチで実行し712件成功、静的検証成功、コンテンツ検証エラー0、QA成果物127ファイルを確認した。正式確認URLで新バージョンと修正文言の配信、横overflow 0を実ブラウザ確認済み
 - 2026-09-07確認: PR #31をmainへマージし、build／deploy成功。最終連携IDの保存後に履歴DOMを更新せず外部遷移していたため、古いカード表示が復元される環境では手動更新が必要だった。通常履歴・連携用履歴ではID保存直後かつ外部遷移前に現在ルートを同期再描画するよう修正し、クリック直後・画面更新イベント前の`連携済`表示を回帰テストへ追加した。正式確認URLのHTML、`app-meta.js`、app shellがHTTP 200で、`mvp-1.3.4`と即時再描画処理を配信していることを確認した。ローカル対象5ファイル101件、静的検証、コンテンツ検証エラー0、QA成果物127ファイルを確認済み
 - 直前の公開記録: commit `9d0db7db46e41a2cddeffa2eb9d329f49c41e808`、Actions run `34077112987`で`mvp-1.3.3`を公開。最後に渡した50問詳細結果1件だけへの`連携済`表示、アイコン配信、BFCache復元時の再描画を確認済み
 - それ以前の公開記録: commit `301f0dcb49d47caddacea84f4bb3d5a2c8555c1c`、Actions run `34020401043`で`mvp-1.3.2`を公開。390×844の実ブラウザで回答進捗、50問完答までの遷移、横overflow 0、console error／warning 0を確認済み
