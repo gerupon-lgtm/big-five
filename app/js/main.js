@@ -92,11 +92,15 @@ const diagnosticDefinitionRegistry = Object.freeze([
 ]);
 
 function createMethodInfo(definition, mode) {
+  const sourceLabel = (sourceId) =>
+    definition.source.find(({ id }) => id === sourceId)?.label ?? sourceId;
   return Object.freeze([
     Object.freeze({
       id: "basis",
       title: "測定の土台",
-      body: `${definition.scaleName}を用いて、Big Fiveの5因子を確認します。`,
+      body: mode === "preview20"
+        ? "IPIP公式掲載の日本語50項目のうち、英語版Mini-IPIPで選定された20項目に対応する日本語訳を使っています。"
+        : "IPIP日本語50項目版の全50項目への回答から算出しています。追加30項目だけの結果ではありません。",
     }),
     Object.freeze({
       id: "scoring",
@@ -114,7 +118,11 @@ function createMethodInfo(definition, mode) {
     Object.freeze({
       id: "sources",
       title: "出典・利用条件",
-      body: definition.source.map(({ label }) => label).join(" / "),
+      body: [
+        `50問の設問・日本語訳：${sourceLabel("ipip-japanese-markers")} / ${sourceLabel("ipip-50-item-scale")}`,
+        `20問プレビューの項目選定：${sourceLabel("donnellan-2006-mini-ipip")}`,
+        `IPIP資料の利用条件：${sourceLabel("ipip-permission")}`,
+      ].join(" "),
     }),
   ]);
 }

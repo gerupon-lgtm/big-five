@@ -1827,7 +1827,8 @@ dd {
 }
 
 .result-fragrance-note,
-.result-fragrance-disclaimer {
+.result-fragrance-disclaimer,
+.result-fragrance-safety-note {
   color: #526b66;
   font-size: 0.82rem;
   line-height: 1.65;
@@ -1837,7 +1838,8 @@ dd {
   margin: 18px 0 0;
 }
 
-.result-fragrance-disclaimer {
+.result-fragrance-disclaimer,
+.result-fragrance-safety-note {
   margin: 6px 0 0;
 }
 
