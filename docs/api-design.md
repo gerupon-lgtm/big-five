@@ -5,7 +5,7 @@
 | 設計版 | 0.5 |
 | 作成日 | 2026-07-20 |
 | 更新日 | 2026-09-07 |
-| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.48 |
+| 入力要件 | `docs/requirements/2026-07-20-big-five-self-understanding-requirements.md` v1.49 |
 | 対応機能 | F-017、F-023 |
 | 対象環境 | 通常版のF-023、ベータ版のF-017 |
 

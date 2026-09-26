@@ -814,6 +814,14 @@ test("T-005 F-018 opens all six Aroma candidates in the fixed three-scene order"
   }
   assert.match(text, /香りをイメージするための素材例です/);
   assert.match(text, /現在の心理状態や効果を示すものではありません/);
+  assert.match(text, /香りへの敏感さ/);
+  assert.match(text, /妊娠・授乳中/);
+  assert.match(text, /乳幼児やペット/);
+  assert.equal(
+    collectElements(fragrancePanel).filter(({ className }) =>
+      className === "result-fragrance-safety-note").length,
+    1,
+  );
   assert.doesNotMatch(text, /fragrance-|material-/);
   assert.equal(
     collectElements(fragrancePanel).filter(({ tagName }) => tagName === "details").length,

@@ -46,7 +46,7 @@ test("startApp renders the start heading and canonical version from a hash route
       .textContent,
     "Big Five 自己理解支援ツール",
   );
-  assert.match(renderedText, /バージョン mvp-1\.3\.4/);
+  assert.match(renderedText, /バージョン mvp-1\.3\.5/);
   assert.match(renderedText, /ipip-ja-50-v1/);
   assert.match(renderedText, /ipip-ja-50-question-set-v1/);
   assert.match(renderedText, /ipip-ja-50-scoring-v1/);
@@ -371,6 +371,11 @@ test("T-005/T-006 S-004 opens one saved detail result by resultId", () => {
   assert.match(text, /画像を利用できない場合も診断結果は有効です/);
   assert.doesNotMatch(text, /根拠を確認/);
   assert.match(text, /結果の根拠と見方/);
+  assert.match(text, /全50項目への回答から算出/);
+  assert.match(text, /追加30項目だけの結果ではありません/);
+  assert.match(text, /50問の設問・日本語訳：/);
+  assert.match(text, /20問プレビューの項目選定：/);
+  assert.match(text, /IPIP資料の利用条件：/);
   assert.doesNotMatch(text, /answers/);
   const elements = collectElements(host);
   assert.equal(elements.filter(({ tagName, attributes, textContent }) =>
@@ -542,7 +547,7 @@ test("T-005 F-016 startApp observes once before decoding the selected manifest i
   await new Promise((resolve) => setImmediate(resolve));
 
   assert.deepEqual(requested, [
-    "assets/characters/character-balanced.webp?v=mvp-1.3.4",
+    "assets/characters/character-balanced.webp?v=mvp-1.3.5",
   ]);
   assert.equal(observers[0].disconnectCalls, 1);
   const images = collectElements(host)
@@ -1081,6 +1086,7 @@ test("T-005 S-002 renders an answer-free live preview with the exact notice when
   const text = collectText(host);
   assert.match(text, /20問簡易プレビュー/);
   assert.match(text, /仮称号/);
+  assert.match(text, /英語版Mini-IPIPで選定された20項目に対応する日本語訳/);
   assert.match(text, /結果は表示できましたが、この端末の履歴には保存できませんでした。/);
   assert.doesNotMatch(text, /answers/);
   assert.equal(

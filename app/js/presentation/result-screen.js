@@ -394,6 +394,12 @@ function renderFragranceIdeas(parent, dependencies, panelGroup) {
     "あなたらしさから着想した雰囲気の候補であり、現在の心理状態や効果を示すものではありません。実際の使用方法を案内するものではありません。",
     "result-fragrance-disclaimer",
   );
+  appendTextElement(
+    panel,
+    "p",
+    "香りへの敏感さ、妊娠・授乳中、乳幼児やペットがいる環境などでは、香りに関する一般的な注意事項にも配慮してください。",
+    "result-fragrance-safety-note",
+  );
   const member = {
     id: "aroma",
     isOpen() {
